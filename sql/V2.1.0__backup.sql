@@ -72,8 +72,7 @@ INSERT INTO tools_backup.todolist_todolist (
     is_favorite,
     color_hex,
     display_order,
-    created_at,
-    updated_at
+    created_at
 )
 SELECT
     u.email,
@@ -83,8 +82,7 @@ SELECT
     t.is_favorite,
     t.color,
     t.display_order,
-    t.created_at,
-    t.updated_at
+    t.created_at
 FROM tools_todolist.todolist t
 JOIN tools_core.user u ON u.iduser = t.iduser;
 
@@ -96,8 +94,7 @@ INSERT INTO tools_backup.todolist_todo (
     is_completed,
     priority,
     display_order,
-    created_at,
-    updated_at
+    created_at
 )
 SELECT
     t.idtodo,
@@ -107,7 +104,6 @@ SELECT
     t.is_completed,
     t.priority,
     t.display_order,
-    t.created_at,
-    t.updated_at
+    t.created_at
 FROM tools_todolist.todo t
 JOIN tools_backup.todolist_todolist tl ON tl.idtodolist = t.idtodolist;
