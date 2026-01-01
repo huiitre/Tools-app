@@ -17,7 +17,6 @@ if [ "$FAILED" -ne 0 ]; then
     echo
     echo "<h2>Migration Flyway échouée</h2><pre>${BODY}</pre>"
   } | msmtp \
-        --debug \
         --host="${SMTP_HOST}" \
         --port="${SMTP_PORT}" \
         --auth=on \
@@ -28,7 +27,8 @@ if [ "$FAILED" -ne 0 ]; then
         --tls-trust-file=/etc/ssl/certs/ca-certificates.crt \
         "${MAIL_TO}"
 
-  exit 1
+  echo "Migration failed, container stays alive for watchtower."
 fi
 
-exit 0
+# Container reste UP pour que watchtower continue de le scanner
+tail -f /dev/null
