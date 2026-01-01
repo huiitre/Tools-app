@@ -81,7 +81,7 @@ SELECT
     t.name,
     t.is_active,
     t.is_favorite,
-    t.color_hex,
+    t.color,
     t.display_order,
     t.created_at,
     t.updated_at
