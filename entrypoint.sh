@@ -1,8 +1,11 @@
 #!/bin/sh
 
 LOG_FILE=/tmp/flyway.log
+FAILED=0
 
-if ! flyway migrate 2>&1 | tee "$LOG_FILE"; then
+flyway migrate >"$LOG_FILE" 2>&1 || FAILED=1
+
+if [ "$FAILED" -ne 0 ]; then
   BODY=$(sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/$/<br\/>/' "$LOG_FILE")
 
   {
@@ -27,3 +30,5 @@ if ! flyway migrate 2>&1 | tee "$LOG_FILE"; then
 
   exit 1
 fi
+
+exit 0
