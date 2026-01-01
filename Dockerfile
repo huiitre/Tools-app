@@ -3,7 +3,7 @@ FROM flyway/flyway:10
 USER root
 
 RUN apt-get update \
- && apt-get install -y sendmail \
+ && apt-get install -y msmtp ca-certificates \
  && rm -rf /var/lib/apt/lists/*
 
 COPY sql /flyway/sql
