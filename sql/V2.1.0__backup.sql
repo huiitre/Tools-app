@@ -33,7 +33,7 @@ INSERT INTO tools_backup.health_weight_log (
 SELECT
     u.email,
     h.logged_at,
-    h.weight,
+    h.weight_kg,
     h.notes
 FROM tools_health.weight_log h
 JOIN tools_core.user u ON u.iduser = h.iduser;
