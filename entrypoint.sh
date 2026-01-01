@@ -6,7 +6,7 @@ if ! flyway migrate 2>&1 | tee "$LOG_FILE"; then
   BODY=$(sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/$/<br\/>/' "$LOG_FILE")
 
   {
-    echo "From: ${MAIL_FROM}"
+    echo "From: ${SMTP_USER}"
     echo "To: ${MAIL_TO}"
     echo "Subject: [FLYWAY][QA] Migration FAILED"
     echo "MIME-Version: 1.0"
@@ -14,10 +14,12 @@ if ! flyway migrate 2>&1 | tee "$LOG_FILE"; then
     echo
     echo "<h2>Migration Flyway échouée</h2><pre>${BODY}</pre>"
   } | msmtp \
+        --debug \
         --host="${SMTP_HOST}" \
         --port="${SMTP_PORT}" \
         --auth=on \
         --user="${SMTP_USER}" \
+        --from="${SMTP_USER}" \
         --passwordeval="echo ${SMTP_PASSWORD}" \
         --tls=on \
         --tls-trust-file=/etc/ssl/certs/ca-certificates.crt \
