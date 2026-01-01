@@ -36,7 +36,7 @@ SELECT
     h.weight,
     h.notes
 FROM tools_health.weight_log h
-JOIN tools_core.user u ON u.id = h.iduser;
+JOIN tools_core.user u ON u.iduser = h.iduser;
 
 -----------------------------------------------------------
 -------------------- TOOLS TODOLIST -----------------------
@@ -53,7 +53,6 @@ CREATE TABLE IF NOT EXISTS tools_backup.todolist_todolist (
     updated_at TIMESTAMP NOT NULL
 );
 CREATE TABLE IF NOT EXISTS tools_backup.todolist_todo (
-    user_email TEXT NOT NULL,
     idtodo BIGINT NOT NULL,
     idtodolist BIGINT NOT NULL,
     name       VARCHAR(255) NOT NULL,
