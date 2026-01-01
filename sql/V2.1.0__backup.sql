@@ -86,7 +86,7 @@ SELECT
     t.created_at,
     t.updated_at
 FROM tools_todolist.todolist t
-JOIN tools_core.user u ON u.id = t.iduser;
+JOIN tools_core.user u ON u.iduser = t.iduser;
 
 INSERT INTO tools_backup.todolist_todo (
     idtodo,
