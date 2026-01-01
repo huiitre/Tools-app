@@ -1,12 +1,8 @@
 #!/bin/sh
-set -e
 
 LOG_FILE=/tmp/flyway.log
 
-flyway migrate 2>&1 | tee "$LOG_FILE"
-STATUS=${PIPESTATUS:-$?}
-
-if [ "$STATUS" -ne 0 ]; then
+if ! flyway migrate 2>&1 | tee "$LOG_FILE"; then
   BODY=$(sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/$/<br\/>/' "$LOG_FILE")
 
   {
