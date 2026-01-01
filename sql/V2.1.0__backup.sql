@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS tools_backup.todolist_todolist (
     color_hex  VARCHAR(7),
     display_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP NOT NULL
+    updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 CREATE TABLE IF NOT EXISTS tools_backup.todolist_todo (
     idtodo BIGINT NOT NULL,
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS tools_backup.todolist_todo (
     priority INTEGER NOT NULL DEFAULT 0,
     display_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP NOT NULL
+    updated_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
 INSERT INTO tools_backup.todolist_todolist (
