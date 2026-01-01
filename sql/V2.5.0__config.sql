@@ -1,6 +1,6 @@
 -- table config
-ALTER TABLE config
+ALTER TABLE tools_core.config
   DROP COLUMN scope;
 
-ALTER TABLE config
+ALTER TABLE tools_core.config
   RENAME COLUMN default_value TO value;
