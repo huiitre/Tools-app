@@ -36,7 +36,7 @@ SELECT
     h.weight,
     h.notes
 FROM tools_health.weight_log h
-JOIN tools_core.user u ON u.id = h.user_id;
+JOIN tools_core.user u ON u.id = h.iduser;
 
 -----------------------------------------------------------
 -------------------- TOOLS TODOLIST -----------------------
@@ -87,7 +87,7 @@ SELECT
     t.created_at,
     t.updated_at
 FROM tools_todolist.todolist t
-JOIN tools_core.user u ON u.id = t.user_id;
+JOIN tools_core.user u ON u.id = t.iduser;
 
 INSERT INTO tools_backup.todolist_todo (
     idtodo,
