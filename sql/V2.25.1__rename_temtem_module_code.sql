@@ -1,0 +1,1 @@
+update tools_core.module set code = 'temtem' where code = 'TOOLS_TEMTEM';
