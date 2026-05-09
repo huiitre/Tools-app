@@ -12,7 +12,7 @@
     "publish": {
       "provider": "github",
       "owner": "huiitre",
-      "repo": "Tools-web",
+      "repo": "Tools-app",
       "releaseType": "release"
     },
     "files": [
