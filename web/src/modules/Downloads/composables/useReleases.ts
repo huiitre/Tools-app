@@ -59,7 +59,7 @@ export function useReleases() {
 
   onMounted(async () => {
     try {
-      const res = await fetch('https://api.github.com/repos/huiitre/Tools-web/releases')
+      const res = await fetch('https://api.github.com/repos/huiitre/Tools-app/releases')
       const data: Release[] = await res.json()
 
       const parsed = data.map(parseRelease)

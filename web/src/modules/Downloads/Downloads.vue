@@ -37,7 +37,7 @@ const { latest, releases, loading, error } = useReleases()
             Linux (.AppImage)
           </a>
           <a
-            :href="`https://github.com/huiitre/Tools-web/releases/tag/v${latest.version}`"
+            :href="`https://github.com/huiitre/Tools-app/releases/tag/v${latest.version}`"
             class="btn btn-ghost"
             target="_blank"
             rel="noopener noreferrer"
@@ -66,7 +66,7 @@ const { latest, releases, loading, error } = useReleases()
             <div class="release-header">
               <div class="release-meta">
                 <a
-                  :href="`https://github.com/huiitre/Tools-web/releases/tag/v${release.version}`"
+                  :href="`https://github.com/huiitre/Tools-app/releases/tag/v${release.version}`"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="release-github"
