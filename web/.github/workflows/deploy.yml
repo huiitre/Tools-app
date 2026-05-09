@@ -1,0 +1,148 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      released: ${{ steps.version.outputs.released }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Semantic Release
+        id: semantic
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          NPM_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          npx semantic-release
+          echo "released=true" >> $GITHUB_OUTPUT
+
+      - name: Get version
+        id: version
+        run: |
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+          echo "released=${{ steps.semantic.outputs.released || 'false' }}" >> $GITHUB_OUTPUT
+
+  docker:
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: master
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg VITE_TOOLS_API_BASE_URL="https://api.tools.huiitre.fr" \
+            --build-arg VITE_GOOGLE_CLIENT_ID_WEB="${{ secrets.VITE_GOOGLE_CLIENT_ID_WEB }}" \
+            --build-arg VITE_GOOGLE_CLIENT_ID_ANDROID="${{ secrets.VITE_GOOGLE_CLIENT_ID_ANDROID }}" \
+            --build-arg VITE_GOOGLE_API_KEY="${{ secrets.VITE_GOOGLE_API_KEY }}" \
+            --build-arg VITE_GITHUB_CLIENT_ID="${{ secrets.VITE_GITHUB_CLIENT_ID }}" \
+            -t huiitre/tools_web:latest .
+
+      - name: Push Docker image
+        run: docker push huiitre/tools_web:latest
+
+  electron:
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: master
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install X11 dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev \
+            libxtst-dev \
+            libxi-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxt-dev
+
+      - name: Install dependencies
+        run: npm ci && npm install node-gyp
+
+      - name: Install Wine
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y wine64 wine32
+
+      - name: Build Vite Electron
+        run: ELECTRON=true npx vite build
+        env:
+          VITE_TOOLS_API_BASE_URL: https://api.tools.huiitre.fr
+          VITE_GOOGLE_CLIENT_ID_WEB: ${{ secrets.VITE_GOOGLE_CLIENT_ID_WEB }}
+          VITE_GOOGLE_CLIENT_ID_ANDROID: ${{ secrets.VITE_GOOGLE_CLIENT_ID_ANDROID }}
+          VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
+          VITE_GITHUB_CLIENT_ID: ${{ secrets.VITE_GITHUB_CLIENT_ID }}
+
+      - name: Build Electron Linux
+        run: npx electron-builder --linux --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Electron Windows
+        run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync-version:
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout qa
+        uses: actions/checkout@v3
+        with:
+          ref: qa
+          fetch-depth: 0
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Sync package.json from master
+        run: |
+          git fetch origin master
+          git checkout origin/master -- package.json
+          git config user.email "github-actions@github.com"
+          git config user.name "github-actions"
+          git add package.json
+          git diff --staged --quiet || git commit -m "chore: sync version from master"
+          git push origin qa

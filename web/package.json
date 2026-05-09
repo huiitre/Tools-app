@@ -1,0 +1,96 @@
+{
+  "name": "Tools",
+  "description": "Sandbox privée — modules utilitaires personnels",
+  "author": "Huiitre",
+  "private": true,
+  "version": "1.22.1",
+  "type": "module",
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "fr.huiitre.tools",
+    "productName": "Tools",
+    "publish": {
+      "provider": "github",
+      "owner": "huiitre",
+      "repo": "Tools-web",
+      "releaseType": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "npmRebuild": true,
+    "buildDependenciesFromSource": false,
+    "nodeGypRebuild": false,
+    "asarUnpack": [
+      "node_modules/uiohook-napi/**"
+    ],
+    "linux": {
+      "target": "AppImage",
+      "category": "Utility",
+      "artifactName": "Tools.huiitre.fr.AppImage",
+      "icon": "build/icon.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    }
+  },
+  "scripts": {
+    "build": "vue-tsc && vite build",
+    "build:android": "vue-tsc && vite build && cp -R ./dist/* ../../pro/distrilog/EasyMobile2.0/www/",
+    "deploy": "vue-tsc && vite build && python deploy.py",
+    "preview": "vite preview",
+    "lint:script": "eslint --ext .ts,vue --ignore-path .gitignore .",
+    "lint:markup": "vue-tsc --noEmit",
+    "reset": "rm -rf node_modules package-lock.json",
+    "dev": "vite --host --mode development",
+    "dev:qa": "vite --host --mode qa",
+    "dev:local": "vite --host --mode development",
+    "electron:watch": "ELECTRON_DEV=true electron electron/main.cjs",
+    "electron:dev": "ELECTRON=true npm run build && electron electron/main.cjs",
+    "electron:build": "ELECTRON=true npm run build && electron-builder"
+  },
+  "dependencies": {
+    "@floating-ui/vue": "^1.1.9",
+    "@fortawesome/fontawesome-svg-core": "^6.4.0",
+    "@fortawesome/free-brands-svg-icons": "^6.4.0",
+    "@fortawesome/free-regular-svg-icons": "^6.4.0",
+    "@fortawesome/free-solid-svg-icons": "^6.4.0",
+    "@fortawesome/vue-fontawesome": "^3.0.3",
+    "@headlessui/vue": "^1.7.23",
+    "@picocss/pico": "^2.1.1",
+    "@tanstack/vue-table": "^8.21.3",
+    "axios": "^1.1.3",
+    "electron-updater": "^6.8.3",
+    "mosha-vue-toastify": "^1.0.23",
+    "pinia": "^3.0.4",
+    "uiohook-napi": "^1.5.5",
+    "vue": "^3.2.47",
+    "vue-draggable-plus": "^0.6.1",
+    "vue-router": "^4.2.2"
+  },
+  "devDependencies": {
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/npm": "^12.0.2",
+    "@types/node": "^18.19.68",
+    "@typescript-eslint/eslint-plugin": "^5.43.0",
+    "@typescript-eslint/parser": "^5.43.0",
+    "@vitejs/plugin-vue": "^3.2.0",
+    "@vue/eslint-config-prettier": "^7.0.0",
+    "@vue/eslint-config-typescript": "^11.0.2",
+    "electron": "^41.2.0",
+    "electron-builder": "^26.8.1",
+    "eslint": "^8.27.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-vue": "^9.7.0",
+    "prettier": "^2.7.1",
+    "sass": "^1.56.1",
+    "semantic-release": "^24.2.9",
+    "typescript": "^4.6.4",
+    "vite": "^3.2.3",
+    "vite-plugin-pwa": "^0.21.1",
+    "vue-tsc": "^1.0.9"
+  }
+}

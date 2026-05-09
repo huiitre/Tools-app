@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valorant Shop | Tools</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <style>
+    :root {
+      --pico-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      padding: 2rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 1200px;
+      width: 100%;
+    }
+
+    .auth-form {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .auth-form.minimized {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      max-width: 300px;
+      z-index: 100;
+      background: var(--pico-card-background-color);
+      padding: 1rem;
+      border-radius: var(--pico-border-radius);
+      box-shadow: var(--pico-card-box-shadow);
+    }
+
+    .auth-form.minimized h1 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .auth-form.minimized details {
+      display: none;
+    }
+
+    .shop-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .shop-header h2 {
+      margin-bottom: 0.5rem;
+    }
+
+    .countdown {
+      color: var(--pico-primary);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+      opacity: 0;
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .skin-card {
+      background: var(--pico-card-background-color);
+      border-radius: var(--pico-border-radius);
+      overflow: hidden;
+      border: 1px solid var(--pico-card-border-color);
+      opacity: 0;
+      transform: translateY(20px);
+      animation: slideIn 0.4s ease forwards;
+    }
+
+    .skin-card:nth-child(1) { animation-delay: 0.1s; }
+    .skin-card:nth-child(2) { animation-delay: 0.2s; }
+    .skin-card:nth-child(3) { animation-delay: 0.3s; }
+    .skin-card:nth-child(4) { animation-delay: 0.4s; }
+
+    @keyframes slideIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .skin-image {
+      width: 100%;
+      height: 180px;
+      object-fit: contain;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      padding: 1rem;
+    }
+
+    .skin-info {
+      padding: 1rem;
+    }
+
+    .skin-name {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--pico-contrast);
+    }
+
+    .skin-price {
+      color: var(--pico-primary);
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .spinner {
+      border: 3px solid var(--pico-muted-border-color);
+      border-top: 3px solid var(--pico-primary);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 2rem auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    details summary {
+      cursor: pointer;
+      color: var(--pico-primary);
+    }
+
+    code {
+      background: var(--pico-code-background-color);
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="auth-form" id="authForm">
+      <h1>🎮 Valorant Daily Shop</h1>
+      <p>Consultez votre boutique quotidienne sans ouvrir le jeu</p>
+      
+      <details>
+        <summary>Comment récupérer mon token ?</summary>
+        <ol style="text-align: left; margin-top: 1rem;">
+          <li>Connectez-vous sur <a href="https://playvalorant.com" target="_blank">playvalorant.com</a></li>
+          <li>Ouvrez les DevTools (F12)</li>
+          <li>Allez dans <code>Application</code> → <code>Cookies</code> → <code>playvalorant.com</code></li>
+          <li>Cherchez <code>__Secure-access_token</code></li>
+          <li>Copiez toute la valeur</li>
+        </ol>
+      </details>
+
+      <input 
+        type="text" 
+        id="tokenInput" 
+        placeholder="Collez votre access token ici..." 
+        aria-label="Access Token"
+      >
+      <button id="submitBtn" onclick="fetchShop()">Afficher ma boutique</button>
+    </div>
+
+    <div id="loading" class="hidden">
+      <div class="spinner"></div>
+      <p style="text-align: center; color: var(--pico-muted-color);">Chargement de votre boutique...</p>
+    </div>
+
+    <div id="shopContainer" class="hidden">
+      <div class="shop-header">
+        <h2>📅 Boutique du jour</h2>
+        <div class="countdown" id="countdown">⏱️ Calcul...</div>
+      </div>
+      <div class="shop-grid" id="shopGrid"></div>
+    </div>
+  </div>
+
+  <script>
+    let countdownInterval;
+
+    function base64UrlDecode(str) {
+      str = str.replace(/-/g, '+').replace(/_/g, '/');
+      const pad = str.length % 4;
+      if (pad) {
+        if (pad === 1) {
+          throw new Error('Invalid token');
+        }
+        str += new Array(5 - pad).join('=');
+      }
+      return atob(str);
+    }
+
+    async function fetchShop() {
+      const token = document.getElementById('tokenInput').value.trim();
+      
+      if (!token) {
+        alert('Veuillez entrer votre access token');
+        return;
+      }
+
+      // Vérifier format JWT
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        alert('Token invalide. Assurez-vous de copier le token complet.');
+        return;
+      }
+
+      // Minimiser le formulaire
+      document.getElementById('authForm').classList.add('minimized');
+      document.getElementById('loading').classList.remove('hidden');
+
+      try {
+        // Extraire PUUID
+        const payload = JSON.parse(base64UrlDecode(parts[1]));
+        const puuid = payload.sub;
+
+        // Obtenir entitlement
+        const entitlementRes = await fetch('https://entitlements.auth.riotgames.com/api/token/v1', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const { entitlements_token } = await entitlementRes.json();
+
+        // Obtenir version client
+        const versionRes = await fetch('https://valorant-api.com/v1/version');
+        const versionData = await versionRes.json();
+        const clientVersion = versionData.data.riotClientVersion;
+
+        // Obtenir shop
+        const shopRes = await fetch(`https://pd.eu.a.pvp.net/store/v3/storefront/${puuid}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'X-Riot-Entitlements-JWT': entitlements_token,
+            'X-Riot-ClientPlatform': 'ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9',
+            'X-Riot-ClientVersion': clientVersion
+          },
+          body: '{}'
+        });
+        const shopData = await shopRes.json();
+
+        // Démarrer le countdown
+        const remainingSeconds = shopData.SkinsPanelLayout.SingleItemOffersRemainingDurationInSeconds;
+        const expiresAt = Date.now() + (remainingSeconds * 1000);
+
+        if (countdownInterval) clearInterval(countdownInterval);
+        
+        countdownInterval = setInterval(() => {
+          const remaining = Math.max(0, expiresAt - Date.now());
+          const h = Math.floor(remaining / 3600000);
+          const m = Math.floor((remaining % 3600000) / 60000);
+          const s = Math.floor((remaining % 60000) / 1000);
+          
+          document.getElementById('countdown').textContent = `⏱️ Expire dans ${h}h ${m}min ${s}s`;
+          
+          if (remaining === 0) clearInterval(countdownInterval);
+        }, 1000);
+
+        // Obtenir skins data
+        const skinsRes = await fetch('https://valorant-api.com/v1/weapons/skins?language=fr-FR');
+        const skinsData = await skinsRes.json();
+
+        // Mapper skins
+        const skinMap = {};
+        for (const skin of skinsData.data) {
+          skinMap[skin.uuid] = skin;
+          if (skin.levels) {
+            for (const level of skin.levels) {
+              skinMap[level.uuid] = skin;
+            }
+          }
+          if (skin.chromas) {
+            for (const chroma of skin.chromas) {
+              skinMap[chroma.uuid] = skin;
+            }
+          }
+        }
+
+        // Afficher les skins
+        const dailySkins = shopData.SkinsPanelLayout.SingleItemStoreOffers.map(offer => ({
+          id: offer.Rewards[0].ItemID,
+          cost: offer.Cost['85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741']
+        }));
+
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('shopContainer').classList.remove('hidden');
+
+        const shopGrid = document.getElementById('shopGrid');
+        shopGrid.innerHTML = '';
+
+        dailySkins.forEach(({ id, cost }) => {
+          const skin = skinMap[id];
+          const card = document.createElement('div');
+          card.className = 'skin-card';
+          card.innerHTML = `
+            <img src="${skin?.displayIcon || skin?.chromas?.[0]?.fullRender || ''}" alt="${skin?.displayName || 'Skin'}" class="skin-image">
+            <div class="skin-info">
+              <div class="skin-name">${skin?.displayName || 'Skin inconnu'}</div>
+              <div class="skin-price">${cost} VP</div>
+            </div>
+          `;
+          shopGrid.appendChild(card);
+        });
+
+      } catch (error) {
+        document.getElementById('loading').classList.add('hidden');
+        alert('Erreur : ' + error.message);
+        document.getElementById('authForm').classList.remove('minimized');
+      }
+    }
+  </script>
+</body>
+</html>
