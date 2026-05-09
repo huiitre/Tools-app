@@ -1,8 +1,11 @@
-name: Deploy QA
+name: Deploy Web QA
 
 on:
   push:
     branches: [ "qa" ]
+    paths:
+      - 'web/**'
+      - '.github/workflows/web-deploy-qa.yml'
 
 jobs:
   docker:
@@ -27,7 +30,9 @@ jobs:
             --build-arg VITE_GOOGLE_CLIENT_ID_ANDROID="${{ secrets.VITE_GOOGLE_CLIENT_ID_ANDROID }}" \
             --build-arg VITE_GOOGLE_API_KEY="${{ secrets.VITE_GOOGLE_API_KEY }}" \
             --build-arg VITE_GITHUB_CLIENT_ID="${{ secrets.VITE_GITHUB_CLIENT_ID }}" \
-            -t huiitre/tools_web:qa .
+            -t huiitre/tools_web:qa \
+            -f web/Dockerfile \
+            web
 
       - name: Push Docker image (QA)
         run: docker push huiitre/tools_web:qa

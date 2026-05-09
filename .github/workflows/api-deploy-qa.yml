@@ -1,9 +1,12 @@
-name: CI - Build & Push QA
+name: Deploy API QA
 
 on:
   push:
     branches:
       - qa
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-deploy-qa.yml'
 
 jobs:
   build-and-push:
@@ -25,8 +28,8 @@ jobs:
       - name: Build and push image (QA)
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: Dockerfile
+          context: ./api
+          file: ./api/Dockerfile
           push: true
           tags: |
             huiitre/tools_api_v3:qa

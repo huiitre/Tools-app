@@ -1,8 +1,11 @@
-name: Deploy Production
+name: Deploy Web Production
 
 on:
   push:
     branches: [ "master" ]
+    paths:
+      - 'web/**'
+      - '.github/workflows/web-deploy-prod.yml'
 
 jobs:
   release:
@@ -24,10 +27,12 @@ jobs:
           node-version: 20
 
       - name: Install dependencies
+        working-directory: ./web
         run: npm ci
 
       - name: Semantic Release
         id: semantic
+        working-directory: ./web
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           NPM_TOKEN: ${{ secrets.GH_PAT }}
@@ -37,6 +42,7 @@ jobs:
 
       - name: Get version
         id: version
+        working-directory: ./web
         run: |
           echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
           echo "released=${{ steps.semantic.outputs.released || 'false' }}" >> $GITHUB_OUTPUT
@@ -65,7 +71,9 @@ jobs:
             --build-arg VITE_GOOGLE_CLIENT_ID_ANDROID="${{ secrets.VITE_GOOGLE_CLIENT_ID_ANDROID }}" \
             --build-arg VITE_GOOGLE_API_KEY="${{ secrets.VITE_GOOGLE_API_KEY }}" \
             --build-arg VITE_GITHUB_CLIENT_ID="${{ secrets.VITE_GITHUB_CLIENT_ID }}" \
-            -t huiitre/tools_web:latest .
+            -t huiitre/tools_web:latest \
+            -f web/Dockerfile \
+            web
 
       - name: Push Docker image
         run: docker push huiitre/tools_web:latest
@@ -98,6 +106,7 @@ jobs:
             libxt-dev
 
       - name: Install dependencies
+        working-directory: ./web
         run: npm ci && npm install node-gyp
 
       - name: Install Wine
@@ -107,6 +116,7 @@ jobs:
           sudo apt-get install -y wine64 wine32
 
       - name: Build Vite Electron
+        working-directory: ./web
         run: ELECTRON=true npx vite build
         env:
           VITE_TOOLS_API_BASE_URL: https://api.tools.huiitre.fr
@@ -116,11 +126,13 @@ jobs:
           VITE_GITHUB_CLIENT_ID: ${{ secrets.VITE_GITHUB_CLIENT_ID }}
 
       - name: Build Electron Linux
+        working-directory: ./web
         run: npx electron-builder --linux --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Electron Windows
+        working-directory: ./web
         run: npx electron-builder --win --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -140,9 +152,9 @@ jobs:
       - name: Sync package.json from master
         run: |
           git fetch origin master
-          git checkout origin/master -- package.json
+          git checkout origin/master -- web/package.json
           git config user.email "github-actions@github.com"
           git config user.name "github-actions"
-          git add package.json
+          git add web/package.json
           git diff --staged --quiet || git commit -m "chore: sync version from master"
           git push origin qa

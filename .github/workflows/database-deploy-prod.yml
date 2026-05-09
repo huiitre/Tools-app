@@ -1,8 +1,11 @@
-name: Build & Push Flyway QA Image
+name: Deploy Database Production
 
 on:
   push:
-    branches: [ "qa" ]
+    branches: [ "master" ]
+    paths:
+      - 'database/**'
+      - '.github/workflows/database-deploy-prod.yml'
 
 jobs:
   build:
@@ -19,6 +22,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./database
+          file: ./database/Dockerfile
           push: true
-          tags: huiitre/tools-db-migration:qa
+          tags: huiitre/tools-db-migration:latest
