@@ -1,0 +1,185 @@
+<configuration scan="true" scanPeriod="30 seconds">
+	<conversionRule
+		conversionWord="clr"
+		converterClass="org.springframework.boot.logging.logback.ColorConverter"
+	/>
+	<conversionRule
+		conversionWord="wex"
+		converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"
+	/>
+	<conversionRule
+		conversionWord="wEx"
+		converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"
+	/>
+
+	<!-- =================== PROPRIÉTÉS =================== -->
+	<property name="LOG_PATH" value="logs" />
+	<!-- <property
+		name="LOG_PATTERN"
+		value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr([%t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n"
+	/> -->
+
+	<property
+    name="CONSOLE_LOG_PATTERN"
+    value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr([%t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n"
+	/>
+	<property
+    name="FILE_LOG_PATTERN"
+    value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%t] %-40.40logger{39} : %m%n"
+	/>
+
+	<!-- =================== APPENDERS =================== -->
+
+	<!-- Console -->
+	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>${CONSOLE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<!-- Application (tout ce qui n'est pas module/middleware) -->
+	<appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/application/%d{dd-MM-yyyy}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<!-- Middleware -->
+	<appender name="MIDDLEWARE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/middlewares/%d{dd-MM-yyyy}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<!-- Auth -->
+	<appender name="AUTH_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/auth/%d{dd-MM-yyyy}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<!-- Core -->
+	<appender name="CORE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/tools_core/%d{dd-MM-yyyy}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<!-- Dofus -->
+	<appender name="DOFUS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/tools_dofus/%d{dd-MM-yyyy}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<!-- Todolist -->
+	<appender name="TODOLIST_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/tools_todolist/%d{dd-MM-yyyy}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<!-- Healthy -->
+	<appender name="HEALTHY_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/tools_healthy/%d{dd-MM-yyyy}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<!-- Repartition -->
+	<appender name="REPARTITION_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_PATH}/tools_repartition/%d{dd-MM-yyyy}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<!-- =================== LOGGERS =================== -->
+
+	<!-- Middlewares -->
+	<logger name="fr.huiitre.tools.middlewares" level="DEBUG" additivity="false">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="MIDDLEWARE_FILE" />
+	</logger>
+
+	<!-- Auth infra (JWT, filters) -->
+	<logger name="fr.huiitre.tools.infrastructure.security" level="INFO" additivity="false">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="AUTH_FILE" />
+	</logger>
+
+	<!-- Auth API (login / refresh) -->
+	<logger name="fr.huiitre.tools.api.core.auth" level="INFO" additivity="false">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="AUTH_FILE" />
+	</logger>
+
+	<!-- Core -->
+	<logger name="fr.huiitre.tools.core" level="DEBUG" additivity="false">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="CORE_FILE" />
+	</logger>
+
+	<!-- Dofus -->
+	<logger name="fr.huiitre.tools.dofus" level="DEBUG" additivity="false">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="DOFUS_FILE" />
+	</logger>
+
+	<!-- Todolist -->
+	<logger name="fr.huiitre.tools.todolist" level="DEBUG" additivity="false">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="TODOLIST_FILE" />
+	</logger>
+
+	<!-- Healthy -->
+	<logger name="fr.huiitre.tools.healthy" level="DEBUG" additivity="false">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="HEALTHY_FILE" />
+	</logger>
+
+	<!-- Repartition -->
+	<logger name="fr.huiitre.tools.repartition" level="DEBUG" additivity="false">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="REPARTITION_FILE" />
+	</logger>
+
+	<!-- Root = application -->
+	<springProfile name="dev">
+		<root level="DEBUG">
+			<appender-ref ref="CONSOLE" />
+			<appender-ref ref="APP_FILE" />
+		</root>
+	</springProfile>
+
+	<springProfile name="!dev">
+		<root level="INFO">
+			<appender-ref ref="CONSOLE" />
+			<appender-ref ref="APP_FILE" />
+		</root>
+	</springProfile>
+
+</configuration>
