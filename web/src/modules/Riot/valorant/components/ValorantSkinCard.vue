@@ -5,7 +5,10 @@ import ValorantSkinActions from './ValorantSkinActions.vue'
 
 const props = defineProps<{ skin: ValorantSkin }>()
 
-const emit = defineEmits<{ preview: [url: string, name: string] }>()
+const emit = defineEmits<{
+  preview: [url: string, name: string]
+  filterTier: [tierUuid: string]
+}>()
 
 const displayIcon = computed(
   () => props.skin.iconUrl ?? props.skin.levels?.[0]?.displayIconUrl ?? null
@@ -15,7 +18,6 @@ function onImageClick() {
   if (displayIcon.value) emit('preview', displayIcon.value, props.skin.name)
 }
 </script>
-...
 
 <template>
   <article class="skin-card">
@@ -32,6 +34,15 @@ function onImageClick() {
       </div>
 
       <ValorantSkinActions :skin-id="skin.id" class="card-actions" />
+
+      <button
+        v-if="skin.tierUuid"
+        class="tier-filter-btn"
+        title="Voir la collection"
+        @click.stop="emit('filterTier', skin.tierUuid!)"
+      >
+        <i class="mdi mdi-layers-triple-outline" />
+      </button>
     </div>
 
     <div class="skin-name">{{ skin.name }}</div>
@@ -59,7 +70,7 @@ function onImageClick() {
 
     .skin-image { transform: scale(1.06); }
 
-    :deep(.action-btn) { opacity: 1; }
+    :deep(.action-btn), .tier-filter-btn { opacity: 1; }
   }
 }
 
@@ -109,6 +120,33 @@ function onImageClick() {
   }
 }
 
+.tier-filter-btn {
+  position: absolute;
+  bottom: 0.4rem;
+  right: 0.4rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, color 0.15s ease, background 0.15s ease;
+
+  i { font-size: 0.95rem; }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+  }
+}
+
 /* ── Name ────────────────────────────────────────────────────────────────── */
 .skin-name {
   padding: 0.6rem 0.75rem;
@@ -122,4 +160,3 @@ function onImageClick() {
   text-overflow: ellipsis;
 }
 </style>
-
