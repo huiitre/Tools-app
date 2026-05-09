@@ -26,6 +26,16 @@ const weaponId = ref<number | null>(null)
 const stateFilter = ref<FilterState>('all')
 const sortBy = ref<SortBy>('name')
 const sortDir = ref<SortDir>('asc')
+const activeTierUuid = ref<string | null>(null)
+
+const isAnyFilterActive = computed(() => {
+  return q.value.trim() !== '' ||
+    weaponId.value !== null ||
+    stateFilter.value !== 'all' ||
+    sortBy.value !== 'name' ||
+    sortDir.value !== 'asc' ||
+    activeTierUuid.value !== null
+})
 
 // Progressive Rendering
 const PAGE_SIZE = 48
@@ -40,6 +50,12 @@ const { open: openImagePreview } = useImagePreview()
 
 const filteredSkins = computed(() => {
   let result = [...skins.value]
+
+  // Collection Filter (Special State)
+  if (activeTierUuid.value) {
+    result = result.filter(s => s.tierUuid === activeTierUuid.value)
+    return result
+  }
 
   // Search
   if (q.value.trim()) {
@@ -73,7 +89,6 @@ const filteredSkins = computed(() => {
       valA = a.id
       valB = b.id
     } else if (sortBy.value === 'addedAt') {
-      // Get the most relevant date (owned preferred over watched)
       const dateA = riotStore.getOwnedAddedAt(a.id) ?? riotStore.getWatchedAddedAt(a.id) ?? '0'
       const dateB = riotStore.getOwnedAddedAt(b.id) ?? riotStore.getWatchedAddedAt(b.id) ?? '0'
       valA = dateA
@@ -109,11 +124,22 @@ function clearFilters() {
   stateFilter.value = 'all'
   sortBy.value = 'name'
   sortDir.value = 'asc'
+  activeTierUuid.value = null
   localStorage.removeItem(STORAGE_KEY_FILTERS)
 }
 
+function clearCollectionFilter() {
+  activeTierUuid.value = null
+  scrollToTop()
+}
+
+function setCollectionFilter(uuid: string) {
+  activeTierUuid.value = uuid
+  scrollToTop()
+}
+
 // Reset limit on filter/sort change
-watch([q, weaponId, stateFilter, sortBy, sortDir], () => {
+watch([q, weaponId, stateFilter, sortBy, sortDir, activeTierUuid], () => {
   limit.value = PAGE_SIZE
   scrollToTop()
 })
@@ -194,16 +220,17 @@ onUnmounted(() => {
         type="search"
         placeholder="Rechercher un skin..."
         class="search-input"
+        :disabled="!!activeTierUuid"
       />
 
-      <select v-model="weaponId" class="toolbar-select">
+      <select v-model="weaponId" class="toolbar-select" :disabled="!!activeTierUuid">
         <option :value="null">Toutes les armes</option>
         <option v-for="w in weapons" :key="w.id" :value="w.id">
           {{ w.name }}
         </option>
       </select>
 
-      <select v-model="stateFilter" class="toolbar-select state-select">
+      <select v-model="stateFilter" class="toolbar-select state-select" :disabled="!!activeTierUuid">
         <option value="all">Tous les skins</option>
         <option value="owned">Obtenus</option>
         <option value="watched">Surveillés</option>
@@ -211,7 +238,7 @@ onUnmounted(() => {
       </select>
 
       <div class="sort-controls">
-        <select v-model="sortBy" class="toolbar-select sort-select">
+        <select v-model="sortBy" class="toolbar-select sort-select" :disabled="!!activeTierUuid">
           <option value="name">Nom</option>
           <option value="id">ID</option>
           <option value="addedAt">Date d'ajout</option>
@@ -222,6 +249,7 @@ onUnmounted(() => {
           class="toolbar-btn sort-order-btn"
           @click="toggleSortDir"
           :title="sortDir === 'asc' ? 'Croissant' : 'Décroissant'"
+          :disabled="!!activeTierUuid"
         >
           <i class="mdi" :class="sortDir === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'" />
         </button>
@@ -232,9 +260,18 @@ onUnmounted(() => {
         class="toolbar-btn reset-btn"
         title="Réinitialiser les filtres"
         @click="clearFilters"
+        :disabled="!isAnyFilterActive"
       >
         <i class="mdi mdi-filter-remove-outline" />
       </button>
+
+      <div v-if="activeTierUuid" class="collection-filter-tag">
+        <i class="mdi mdi-layers-triple" />
+        <span>Collection active</span>
+        <button class="clear-tag-btn" @click="clearCollectionFilter">
+          <i class="mdi mdi-close" />
+        </button>
+      </div>
 
       <span v-if="!loading && !error" class="catalog-count">
         <span class="count-sep" />
@@ -264,6 +301,7 @@ onUnmounted(() => {
         :key="skin.id"
         :skin="skin"
         @preview="(url, name) => openImagePreview(url, name)"
+        @filter-tier="setCollectionFilter"
       />
     </div>
 
@@ -351,17 +389,52 @@ onUnmounted(() => {
   flex-shrink: 0;
   transition: all 0.2s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: var(--pico-primary);
     color: var(--pico-primary);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    filter: grayscale(1);
   }
 
   i { font-size: 1rem; }
 }
 
-.reset-btn:hover {
+.reset-btn:hover:not(:disabled) {
   border-color: var(--pico-del-color);
   color: var(--pico-del-color);
+}
+
+.collection-filter-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
+  height: 2rem;
+  background: color-mix(in srgb, var(--pico-primary) 15%, transparent);
+  border: 1px solid var(--pico-primary);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pico-primary);
+
+  .clear-tag-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    width: auto;
+    height: auto;
+    color: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+
+    &:hover { color: var(--pico-color); }
+  }
 }
 
 .catalog-count {
