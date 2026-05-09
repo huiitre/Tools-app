@@ -1,0 +1,1 @@
+insert into tools_core.module(name, is_active, code, description) values ('Riot Games', true, 'riot', 'Module pour les données liées à Riot Games (LoL, TFT, etc.)');
