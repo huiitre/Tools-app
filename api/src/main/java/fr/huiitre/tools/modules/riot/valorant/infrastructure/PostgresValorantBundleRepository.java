@@ -7,8 +7,8 @@ import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
-import fr.huiitre.tools.modules.riot.valorant.application.ports.ValorantBundleRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantBundleView;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantBundleRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantBundleView;
 
 public class PostgresValorantBundleRepository implements ValorantBundleRepository {
 

@@ -1,7 +1,7 @@
 package fr.huiitre.tools.modules.riot.valorant.infrastructure;
 
-import fr.huiitre.tools.modules.riot.valorant.application.ports.RiotAuthPort;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantTokenView;
+import fr.huiitre.tools.modules.riot.valorant.application.core.ports.RiotAuthPort;
+import fr.huiitre.tools.modules.riot.valorant.application.core.view.ValorantTokenView;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;

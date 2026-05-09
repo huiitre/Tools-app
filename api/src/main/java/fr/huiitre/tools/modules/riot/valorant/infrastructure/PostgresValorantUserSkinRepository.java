@@ -1,7 +1,7 @@
 package fr.huiitre.tools.modules.riot.valorant.infrastructure;
 
-import fr.huiitre.tools.modules.riot.valorant.application.ports.ValorantUserSkinRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantUserSkinView;
+import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantUserSkinRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.user.view.ValorantUserSkinView;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 

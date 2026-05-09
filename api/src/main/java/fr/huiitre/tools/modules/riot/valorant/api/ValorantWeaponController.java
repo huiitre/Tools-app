@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fr.huiitre.tools.modules.core.common.api.RequiredRole;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.GetValorantWeaponSkinsUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.GetValorantWeaponUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.ListValorantWeaponsUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantSkinView;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantWeaponView;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.GetValorantWeaponSkinsUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.GetValorantWeaponUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.ListValorantWeaponsUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantSkinView;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantWeaponView;
 
 @RestController
 @RequestMapping("/riot/valorant")

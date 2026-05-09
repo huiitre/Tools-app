@@ -2,9 +2,9 @@ package fr.huiitre.tools.modules.riot.valorant.api;
 
 import fr.huiitre.tools.modules.core.common.api.RequiredRole;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
-import fr.huiitre.tools.modules.riot.valorant.application.command.RefreshTokenCommand;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.RefreshValorantTokenUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantTokenView;
+import fr.huiitre.tools.modules.riot.valorant.application.core.command.RefreshTokenCommand;
+import fr.huiitre.tools.modules.riot.valorant.application.core.usecase.RefreshValorantTokenUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.core.view.ValorantTokenView;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

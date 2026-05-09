@@ -6,7 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.huiitre.tools.modules.riot.sync.infrastructure.ValorantLocalAssetsReader;
-import fr.huiitre.tools.modules.riot.valorant.application.ports.ValorantVersionProvider;
+import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantVersionProvider;
 
 public class ValorantLocalVersionProvider implements ValorantVersionProvider {
 

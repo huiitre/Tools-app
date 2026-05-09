@@ -1,6 +1,6 @@
 package fr.huiitre.tools.modules.riot.sync.application;
 
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantWeaponView;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantWeaponView;
 
 import java.util.List;
 

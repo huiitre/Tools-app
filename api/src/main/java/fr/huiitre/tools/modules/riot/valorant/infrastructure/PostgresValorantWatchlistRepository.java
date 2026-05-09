@@ -1,7 +1,7 @@
 package fr.huiitre.tools.modules.riot.valorant.infrastructure;
 
-import fr.huiitre.tools.modules.riot.valorant.application.ports.ValorantWatchlistRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantWatchlistEntryView;
+import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantWatchlistRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.user.view.ValorantWatchlistEntryView;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 

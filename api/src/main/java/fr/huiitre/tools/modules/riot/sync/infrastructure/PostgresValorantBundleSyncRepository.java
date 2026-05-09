@@ -8,7 +8,7 @@ import org.springframework.jdbc.core.RowMapper;
 
 import fr.huiitre.tools.modules.riot.sync.application.ValorantBundleSyncData;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantBundleSyncRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantBundleView;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantBundleView;
 
 public class PostgresValorantBundleSyncRepository implements ValorantBundleSyncRepository {
 

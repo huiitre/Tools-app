@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fr.huiitre.tools.modules.core.common.api.RequiredRole;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.GetValorantBundleByAssetIdUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.GetValorantBundleUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.ListValorantBundlesUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantBundleView;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.GetValorantBundleByAssetIdUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.GetValorantBundleUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.ListValorantBundlesUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantBundleView;
 
 @RestController
 @RequestMapping("/riot/valorant")

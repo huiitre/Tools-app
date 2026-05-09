@@ -1,9 +1,11 @@
 # CLAUDE.md - Monorepo Guide
 
 ## Build & Run
-- **API** : `cd api && ./mvnw spring-boot:run`
+- **API (Standard)** : `cd api && ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev`
+- **API (Alias)** : `api:dev` (alias vers `SPRING_PROFILES_ACTIVE=dev mvn -f api/pom.xml spring-boot:run`)
 - **WEB** : `cd web && npm install && npm run dev`
 - **ELECTRON** : `cd web && npm run electron:watch`
+- **GLOBAL** : `./dev.sh` (API + Web) ou `./dev.sh --electron`
 
 ## Architecture Rules
 - **API (Java)** :

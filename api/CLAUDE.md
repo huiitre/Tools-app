@@ -67,8 +67,8 @@ Formats Dofusbook acceptés :
   - https://www.dofusbook.net/fr/equipement/private/{id}-{slug}/objets → "Dofus Book {slug}"
 
 Règles métier :
-  - Max 3 liens par atelier (vérifié dans AddWorkshopLinkUseCase).
-  - Label auto-résolu à la création, libre à l'édition (PUT envoie url + label).
+  - Max 3 liens par atelier (verified dans AddWorkshopLinkUseCase).
+  - Label auto-resolved à la création, libre à l'édition (PUT envoie url + label).
   - URL validée à la création ET à l'édition selon la source du lien.
   - Table : tools_dofus.workshop_link (à créer manuellement).
 
@@ -89,7 +89,7 @@ WorkshopDto et WorkshopDetailResponse exposent la liste links.
   - Retourne le nouveau accessToken + refreshToken (null si Riot n'en émet pas de nouveau).
   - Use case requiert ModuleCode.RIOT + RoleCode.READ_ONLY.
   Adapter : RiotAuthHttpAdapter — POST form-urlencoded, ParameterizedTypeReference<Map<String,Object>>.
-  Config : RiotConfig (aucune propriété externe, URL et client_id hardcodés).
+  Config : RiotConfig (aucune propriété externe, URL et client_id hardcodé).
 
 6b. Skins — COMPLÈTE (2026-05-09)
   Routes :
@@ -171,7 +171,7 @@ WorkshopDto et WorkshopDetailResponse exposent la liste links.
     infrastructure/
                  ValorantLocalAssetsReader     (@Component — lit depuis tools_riot/valorant/)
                  ValorantLocalWeaponDataProvider (lit weapons.json, itère data[], strip EEquippableCategory::)
-                 ValorantLocalSkinDataProvider (lit weapons.json, itère data[].skins[], passe weaponAssetId)
+                 ValorantLocalSkinDataProvider (lit weapons.json, itère data[].skins[] (passe weaponAssetId)
                  ValorantLocalBundleDataProvider (lit bundles.json)
                  ValorantApiSkinDataProvider   (fallback — appelle valorant-api.com)
                  PostgresValorantWeaponSyncRepository
@@ -226,6 +226,15 @@ WorkshopDto et WorkshopDetailResponse exposent la liste links.
   ValorantWeaponView : (id, assetId, name, category, defaultSkinAssetId, displayIconUrl)
   Ports : ValorantWeaponRepository (findAll, findById). Config : RiotConfig.
 
+6g. Store History — COMPLÈTE (2026-05-09)
+  Routes :
+    GET  /riot/valorant/store-history  → List<ValorantStoreHistoryView> (READ_ONLY)
+    POST /riot/valorant/store-history  → 201 ValorantStoreHistoryView — body : { "skinId": Long } (USER)
+
+  Logique : Empêche l'ajout du même skin pour un même utilisateur plus d'une fois par jour (CURRENT_DATE).
+  Table BDD : tools_riot.valorant_store_history.
+  Port : ValorantStoreHistoryRepository.
+
 7. Module Admin — Gestion utilisateurs & stats
 
 Nouvelles routes (toutes requièrent RoleCode.ADMIN minimum) :
@@ -248,9 +257,9 @@ SetUserGlobalRoleUseCase : valide que user ET role existent, puis replace le rô
   - Prend roleId (Long) en body, pattern identique à ChangeUserModuleRoleRequest.
 
 Notes sécurité :
-  - @RequiredRole sur les controllers est décoratif (aucun interceptor ne le lit).
-  - La sécurité réelle est assurée par UseCaseAuthorizationAspect (intercepte execute()).
-  - Spring Security bloque les anonymes avant même d'atteindre les use cases (.anyRequest().authenticated()).
+  - @RequiredRole on controllers is decorative (no interceptor reads it).
+  - True security is enforced by UseCaseAuthorizationAspect (intercepts execute()).
+  - Spring Security blocks anonymous before reaching use cases (.anyRequest().authenticated()).
 
 8. Sécurité — Hiérarchie des rôles (à jour)
 
@@ -261,11 +270,6 @@ Ordre actuel (du plus bas au plus haut) :
 ADMIN est au-dessus de TECH. OWNER n'est requis par aucun use case actuellement.
 @RequiredRole sur les controllers est décoratif — seul UseCaseAuthorizationAspect enforce réellement.
 Spring Security bloque les anonymes (.anyRequest().authenticated()) avant d'atteindre les use cases.
-
-Routes accessibles à partir de ADMIN (minimum) :
-  - Toute la gestion des modules (GET/POST/PUT/DELETE /modules, /modules/{id}/users, etc.)
-  - Toute la gestion des users admin (/users, /admin/stats)
-  - Synchro Dofus (TECH suffit, mais ADMIN passe aussi depuis l'inversion)
 
 9. Module Admin — Routes complètes (à jour 2026-05-08)
 
@@ -295,3 +299,9 @@ UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + r
 [Feature] Riot/Valorant version — GET /riot/valorant/version depuis version.json local (voir section 6d).
 [Feature] Riot/Valorant weapons — table + sync (weapons en premier, FK weapon_id sur skins) + routes GET (voir sections 6e, 6f).
 [Feature] Riot/Valorant skins — routes additionnelles : by-asset, by-theme, {id} (voir section 6b).
+[Feature] Riot/Valorant store history — CRUD complet & routes API (voir section 6g).
+[Refactor] Réorganisation du module Valorant application en sous-packages (core, catalog, user) (2026-05-10).
+- core/ : Auth et Version.
+- catalog/ : Armes, Skins et Bundles (données Riot).
+- user/ : Skins possédés, Watchlist et Historique boutique.
+- Suppression des dossiers à plat usecase/, command/, ports/, view/.

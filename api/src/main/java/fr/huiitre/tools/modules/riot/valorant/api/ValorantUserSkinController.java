@@ -2,11 +2,11 @@ package fr.huiitre.tools.modules.riot.valorant.api;
 
 import fr.huiitre.tools.modules.core.common.api.RequiredRole;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
-import fr.huiitre.tools.modules.riot.valorant.application.command.AddUserSkinCommand;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.AddMyValorantSkinUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.GetMyValorantUserSkinsUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.RemoveMyValorantSkinUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantUserSkinView;
+import fr.huiitre.tools.modules.riot.valorant.application.user.command.AddUserSkinCommand;
+import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.AddMyValorantSkinUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.GetMyValorantUserSkinsUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.RemoveMyValorantSkinUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.user.view.ValorantUserSkinView;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 

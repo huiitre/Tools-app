@@ -134,6 +134,17 @@ Hiérarchie des rôles (RoleHierarchy.java) :
 - UserModuleRoleRepository.findAllByModuleId() : inverse de findAllByUserId.
 - Config : AdminConfig wire PostgresAdminStatsRepository.
 
+[Feature] Riot/Valorant store history — COMPLÈTE (2026-05-09).
+- GET  /riot/valorant/store-history  → List<ValorantStoreHistoryView> (READ_ONLY).
+- POST /riot/valorant/store-history  → 201 — body : { "skinId": Long } (USER).
+- Table : tools_riot.valorant_store_history.
+- Empêche les doublons pour un même utilisateur/skin sur la même journée (CURRENT_DATE).
+- Repository : PostgresValorantStoreHistoryRepository.
+
+[Refactor] Réorganisation du module Valorant application en sous-packages (core, catalog, user) (2026-05-10).
+- Structure par domaine fonctionnel au lieu de type technique.
+- Mise à jour des packages et imports dans tout le module API.
+
 [Sécurité] Inversion hiérarchie ADMIN/TECH — ADMIN (5) > TECH (4).
 - Use cases modules (GET/POST/PUT/DELETE) abaissés de TECH à ADMIN.
 - GetAllRolesUseCase abaissé de TECH à ADMIN.

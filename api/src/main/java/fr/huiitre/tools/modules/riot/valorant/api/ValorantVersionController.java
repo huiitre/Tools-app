@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fr.huiitre.tools.modules.core.common.api.RequiredRole;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.GetValorantVersionUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.core.usecase.GetValorantVersionUseCase;
 
 @RestController
 @RequestMapping("/riot/valorant")

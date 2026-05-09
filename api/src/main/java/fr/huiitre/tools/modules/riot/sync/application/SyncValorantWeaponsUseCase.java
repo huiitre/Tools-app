@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.huiitre.tools.modules.core.module.domain.ModuleCode;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantWeaponView;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantWeaponView;
 
 @Service
 @Transactional

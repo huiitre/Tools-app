@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import fr.huiitre.tools.modules.core.common.api.RequiredRole;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.GetValorantSkinByAssetIdUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.GetValorantSkinByLevelUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.GetValorantSkinUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.ListValorantSkinsUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.usecase.ListValorantSkinsByThemeUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantSkinView;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.GetValorantSkinByAssetIdUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.GetValorantSkinByLevelUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.GetValorantSkinUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.ListValorantSkinsUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.ListValorantSkinsByThemeUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantSkinView;
 
 @RestController
 @RequestMapping("/riot/valorant")

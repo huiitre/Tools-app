@@ -2,7 +2,7 @@ package fr.huiitre.tools.modules.riot.sync.application;
 
 import java.util.List;
 
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantBundleView;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantBundleView;
 
 public interface ValorantBundleSyncRepository {
     List<ValorantBundleView> findAll();

@@ -6,18 +6,20 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.client.RestTemplate;
 
 import fr.huiitre.tools.modules.riot.sync.infrastructure.ValorantLocalAssetsReader;
-import fr.huiitre.tools.modules.riot.valorant.application.ports.RiotAuthPort;
-import fr.huiitre.tools.modules.riot.valorant.application.ports.ValorantBundleRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.ports.ValorantSkinRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.ports.ValorantUserSkinRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.ports.ValorantVersionProvider;
-import fr.huiitre.tools.modules.riot.valorant.application.ports.ValorantWatchlistRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.ports.ValorantWeaponRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.core.ports.RiotAuthPort;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantBundleRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantUserSkinRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantVersionProvider;
+import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantWatchlistRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantWeaponRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantStoreHistoryRepository;
 import fr.huiitre.tools.modules.riot.valorant.infrastructure.PostgresValorantBundleRepository;
 import fr.huiitre.tools.modules.riot.valorant.infrastructure.PostgresValorantSkinRepository;
 import fr.huiitre.tools.modules.riot.valorant.infrastructure.PostgresValorantUserSkinRepository;
 import fr.huiitre.tools.modules.riot.valorant.infrastructure.PostgresValorantWatchlistRepository;
 import fr.huiitre.tools.modules.riot.valorant.infrastructure.PostgresValorantWeaponRepository;
+import fr.huiitre.tools.modules.riot.valorant.infrastructure.PostgresValorantStoreHistoryRepository;
 import fr.huiitre.tools.modules.riot.valorant.infrastructure.RiotAuthHttpAdapter;
 import fr.huiitre.tools.modules.riot.valorant.infrastructure.ValorantLocalVersionProvider;
 
@@ -58,4 +60,10 @@ public class RiotConfig {
     public ValorantUserSkinRepository valorantUserSkinRepository(JdbcTemplate jdbcTemplate) {
         return new PostgresValorantUserSkinRepository(jdbcTemplate);
     }
+
+    @Bean
+    public ValorantStoreHistoryRepository valorantStoreHistoryRepository(JdbcTemplate jdbcTemplate) {
+        return new PostgresValorantStoreHistoryRepository(jdbcTemplate);
+    }
 }
+

@@ -8,9 +8,9 @@ import java.util.UUID;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import fr.huiitre.tools.modules.riot.valorant.application.ports.ValorantSkinRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantSkinLevelView;
-import fr.huiitre.tools.modules.riot.valorant.application.view.ValorantSkinView;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantSkinLevelView;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantSkinView;
 
 public class PostgresValorantSkinRepository implements ValorantSkinRepository {
 
