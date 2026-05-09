@@ -1,5 +1,6 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRiotStore, type RiotRegion } from '@/modules/Riot/riot.store'
+import type { ValorantSkin, ValorantShopOffer } from '../valorant.types'
 import {
   extractPuuid,
   fetchEntitlementToken,
@@ -15,13 +16,6 @@ import {
 export type View = 'form' | 'loading' | 'shop'
 export type AuthMode = 'access' | 'refresh'
 
-export interface BundleSkin {
-  id: string
-  name: string
-  icon: string
-  cost: number
-}
-
 export interface ShopBundle {
   uuid: string
   name: string
@@ -30,7 +24,7 @@ export interface ShopBundle {
   discountedCost: number
   discountPercent: number
   expiresAt: number
-  skins: BundleSkin[]
+  skins: ValorantShopOffer[]
 }
 
 export const REGIONS: { value: RiotRegion; label: string }[] = [
@@ -46,7 +40,7 @@ export function useValorantShop() {
   const riotStore = useRiotStore()
 
   const view = ref<View>('form')
-  const skins = ref<{ id: string; name: string; icon: string; cost: number }[]>([])
+  const skins = ref<ValorantShopOffer[]>([])
   const bundles = ref<ShopBundle[]>([])
   const currentSkinIds = ref<string[]>([])
   const isRenewing = ref(false)
@@ -72,8 +66,8 @@ export function useValorantShop() {
       const [meta, ...skins] = await Promise.all([
         fetchBundleMeta(b.dataAssetId),
         ...b.items.map(async (item) => {
-          const { name, icon } = await fetchSkinByLevelId(item.itemId)
-          return { id: item.itemId, name, icon, cost: item.cost }
+          const skinData = await fetchSkinByLevelId(item.itemId)
+          return { ...skinData, cost: item.cost }
         }),
       ])
       return {
@@ -171,9 +165,13 @@ export function useValorantShop() {
 
         if (newIds !== prevIds && renewalActive) {
           const [resolvedSkins, resolvedBundles] = await Promise.all([
-            Promise.all(offers.map(({ id, cost }) => fetchSkinByLevelId(id).then(({ name, icon }) => ({ id, name, icon, cost })))),
+            Promise.all(offers.map(({ id, cost }) => fetchSkinByLevelId(id).then((skin) => ({ ...skin, cost })))),
             buildBundles(rawBundles),
           ])
+          
+          riotStore.syncFromSkins(resolvedSkins)
+          resolvedBundles.forEach(b => riotStore.syncFromSkins(b.skins))
+
           skins.value = resolvedSkins
           currentSkinIds.value = offers.map(o => o.id)
           bundles.value = resolvedBundles
@@ -197,9 +195,12 @@ export function useValorantShop() {
       const { offers, remainingSeconds, bundles: rawBundles } = await fetchOffers(token, region)
 
       const [resolvedSkins, resolvedBundles] = await Promise.all([
-        Promise.all(offers.map(({ id, cost }) => fetchSkinByLevelId(id).then(({ name, icon }) => ({ id, name, icon, cost })))),
+        Promise.all(offers.map(({ id, cost }) => fetchSkinByLevelId(id).then((skin) => ({ ...skin, cost })))),
         buildBundles(rawBundles),
       ])
+
+      riotStore.syncFromSkins(resolvedSkins)
+      resolvedBundles.forEach(b => riotStore.syncFromSkins(b.skins))
 
       skins.value = resolvedSkins
       currentSkinIds.value = offers.map(o => o.id)

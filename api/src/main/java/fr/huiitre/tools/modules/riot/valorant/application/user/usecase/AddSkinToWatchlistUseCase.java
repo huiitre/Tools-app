@@ -7,12 +7,10 @@ import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase
 import fr.huiitre.tools.modules.riot.valorant.application.user.command.AddToWatchlistCommand;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantWatchlistRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantSkinView;
-import fr.huiitre.tools.modules.riot.valorant.application.user.view.ValorantWatchlistEntryView;
+import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -42,17 +40,16 @@ public class AddSkinToWatchlistUseCase implements SecuredUseCase {
         this.watchlistRepository = watchlistRepository;
     }
 
-    public ValorantWatchlistEntryView execute(AddToWatchlistCommand command) {
+    public ValorantSkinView execute(AddToWatchlistCommand command) {
         Long userId = authenticatedUserProvider.getUserId();
-
-        ValorantSkinView skin = skinRepository.findById(command.getSkinId())
-                .orElseThrow(() -> new IllegalArgumentException("SKIN_NOT_FOUND"));
 
         if (watchlistRepository.existsByUserIdAndSkinId(userId, command.getSkinId())) {
             throw new IllegalArgumentException("SKIN_ALREADY_IN_WATCHLIST");
         }
 
-        Long watchlistId = watchlistRepository.add(userId, command.getSkinId());
-        return new ValorantWatchlistEntryView(watchlistId, skin.id(), skin.name(), skin.iconUrl(), LocalDateTime.now());
+        watchlistRepository.add(userId, command.getSkinId());
+        
+        return skinRepository.findById(command.getSkinId(), userId)
+                .orElseThrow(() -> new IllegalArgumentException("SKIN_NOT_FOUND"));
     }
 }

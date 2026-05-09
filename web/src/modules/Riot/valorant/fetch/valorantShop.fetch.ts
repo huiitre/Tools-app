@@ -1,17 +1,11 @@
 import type { RiotRegion } from '@/modules/Riot/riot.store'
 import { clientV3 } from '@/services/axiosInstance'
+import type { ValorantSkin, ValorantWeapon } from '../valorant.types'
 
 const VP_CURRENCY_ID = '85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'
 const SKIN_TYPE_ID = 'e7c63390-eda7-46e0-bb7a-a6abdacd2433'
 const CLIENT_PLATFORM =
   'ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9'
-
-export interface ShopSkin {
-  id: string
-  name: string
-  icon: string
-  cost: number
-}
 
 export function extractPuuid(accessToken: string): string {
   try {
@@ -142,25 +136,9 @@ export async function refreshToAccessToken(
   }
 }
 
-export async function fetchSkinByLevelId(levelUuid: string): Promise<{ name: string; icon: string }> {
-  try {
-    const { data } = await clientV3.get(`/riot/valorant/skins/by-level/${levelUuid}`)
-    return {
-      name: data.name ?? 'Skin inconnu',
-      icon: data.iconUrl ?? '',
-    }
-  } catch {
-    return { name: 'Skin inconnu', icon: '' }
-  }
-}
-
-export interface ValorantWeapon {
-  id: number
-  assetId: string
-  name: string
-  category: string
-  defaultSkinAssetId: string
-  displayIconUrl: string | null
+export async function fetchSkinByLevelId(levelUuid: string): Promise<ValorantSkin> {
+  const { data } = await clientV3.get<ValorantSkin>(`/riot/valorant/skins/by-level/${levelUuid}`)
+  return data
 }
 
 export async function fetchWeapons(): Promise<ValorantWeapon[]> {

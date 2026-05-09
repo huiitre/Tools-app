@@ -1,11 +1,7 @@
 package fr.huiitre.tools.modules.riot.valorant.infrastructure;
 
 import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantUserSkinRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.user.view.ValorantUserSkinView;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-
-import java.util.List;
 
 public class PostgresValorantUserSkinRepository implements ValorantUserSkinRepository {
 
@@ -13,26 +9,6 @@ public class PostgresValorantUserSkinRepository implements ValorantUserSkinRepos
 
     public PostgresValorantUserSkinRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    private static final RowMapper<ValorantUserSkinView> USER_SKIN_ROW_MAPPER = (rs, rowNum) ->
-            new ValorantUserSkinView(
-                    rs.getLong("id"),
-                    rs.getLong("skin_id"),
-                    rs.getString("name"),
-                    rs.getString("icon_url"),
-                    rs.getTimestamp("created_at").toLocalDateTime());
-
-    @Override
-    public List<ValorantUserSkinView> findAllByUserId(Long userId) {
-        final String sql = """
-                    SELECT us.id, us.skin_id, s.name, s.icon_url, us.created_at
-                    FROM tools_riot.valorant_user_skins us
-                    INNER JOIN tools_riot.valorant_weapon_skins s ON s.id = us.skin_id
-                    WHERE us.user_id = ?
-                    ORDER BY s.name ASC
-                """;
-        return jdbcTemplate.query(sql, USER_SKIN_ROW_MAPPER, userId);
     }
 
     @Override

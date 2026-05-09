@@ -1,11 +1,7 @@
 package fr.huiitre.tools.modules.riot.valorant.infrastructure;
 
 import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantWatchlistRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.user.view.ValorantWatchlistEntryView;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-
-import java.util.List;
 
 public class PostgresValorantWatchlistRepository implements ValorantWatchlistRepository {
 
@@ -13,26 +9,6 @@ public class PostgresValorantWatchlistRepository implements ValorantWatchlistRep
 
     public PostgresValorantWatchlistRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
-    }
-
-    private static final RowMapper<ValorantWatchlistEntryView> WATCHLIST_ROW_MAPPER = (rs, rowNum) ->
-            new ValorantWatchlistEntryView(
-                    rs.getLong("id"),
-                    rs.getLong("skin_id"),
-                    rs.getString("name"),
-                    rs.getString("icon_url"),
-                    rs.getTimestamp("created_at").toLocalDateTime());
-
-    @Override
-    public List<ValorantWatchlistEntryView> findAllByUserId(Long userId) {
-        final String sql = """
-                    SELECT w.id, w.skin_id, s.name, s.icon_url, w.created_at
-                    FROM tools_riot.valorant_skin_watchlist w
-                    INNER JOIN tools_riot.valorant_weapon_skins s ON s.id = w.skin_id
-                    WHERE w.user_id = ?
-                    ORDER BY w.created_at DESC
-                """;
-        return jdbcTemplate.query(sql, WATCHLIST_ROW_MAPPER, userId);
     }
 
     @Override

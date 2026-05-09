@@ -2,9 +2,10 @@ package fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase;
 
 import fr.huiitre.tools.modules.core.module.domain.ModuleCode;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
+import fr.huiitre.tools.modules.core.security.application.ports.AuthenticatedUserProvider;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantSkinView;
+import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.Optional;
 @Service
 public class ListValorantSkinsUseCase implements SecuredUseCase {
 
+    private final AuthenticatedUserProvider authenticatedUserProvider;
     private final ValorantSkinRepository skinRepository;
 
     @Override
@@ -25,11 +27,15 @@ public class ListValorantSkinsUseCase implements SecuredUseCase {
         return RoleCode.READ_ONLY;
     }
 
-    public ListValorantSkinsUseCase(ValorantSkinRepository skinRepository) {
+    public ListValorantSkinsUseCase(
+            AuthenticatedUserProvider authenticatedUserProvider,
+            ValorantSkinRepository skinRepository) {
+        this.authenticatedUserProvider = authenticatedUserProvider;
         this.skinRepository = skinRepository;
     }
 
     public List<ValorantSkinView> execute() {
-        return skinRepository.findAll();
+        Long userId = authenticatedUserProvider.getUserId();
+        return skinRepository.findAll(userId);
     }
 }

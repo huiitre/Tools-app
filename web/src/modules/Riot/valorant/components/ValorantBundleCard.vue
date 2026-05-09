@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useImagePreview } from '@/composables/useImagePreview'
 import type { ShopBundle } from '../composables/useValorantShop'
+import ValorantSkinActions from './ValorantSkinActions.vue'
 
 const props = defineProps<{
   bundle: ShopBundle
@@ -50,9 +51,10 @@ const formattedTime = computed(() => {
       <div v-for="skin in props.bundle.skins" :key="skin.id" class="bundle-skin-item">
         <div
           class="bundle-skin-img"
-          @click="skin.icon && openImagePreview(skin.icon, skin.name)"
+          @click="skin.iconUrl && openImagePreview(skin.iconUrl, skin.name)"
         >
-          <img v-if="skin.icon" :src="skin.icon" :alt="skin.name" loading="lazy" />
+          <img v-if="skin.iconUrl" :src="skin.iconUrl" :alt="skin.name" loading="lazy" />
+          <ValorantSkinActions :skin-id="skin.id" class="skin-actions" />
         </div>
         <span class="bundle-skin-label">{{ skin.name }}</span>
         <div class="bundle-skin-price">
@@ -194,6 +196,7 @@ const formattedTime = computed(() => {
 }
 
 .bundle-skin-img {
+  position: relative;
   width: 100%;
   height: 72px;
   background: #0d0d1a;
@@ -213,6 +216,27 @@ const formattedTime = computed(() => {
   }
 
   &:hover img { transform: scale(1.1); }
+
+  &:hover {
+    :deep(.action-btn) { opacity: 1; }
+  }
+}
+
+.skin-actions {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+
+  :deep(.action-btn) {
+    opacity: 0;
+    width: 1.3rem;
+    height: 1.3rem;
+    background: rgba(0, 0, 0, 0.7);
+
+    i { font-size: 0.8rem; }
+
+    &.active { opacity: 1; }
+  }
 }
 
 .bundle-skin-label {

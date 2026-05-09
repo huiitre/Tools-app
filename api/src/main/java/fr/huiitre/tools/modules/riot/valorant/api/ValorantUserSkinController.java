@@ -6,7 +6,7 @@ import fr.huiitre.tools.modules.riot.valorant.application.user.command.AddUserSk
 import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.AddMyValorantSkinUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.GetMyValorantUserSkinsUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.RemoveMyValorantSkinUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.user.view.ValorantUserSkinView;
+import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,14 +31,14 @@ public class ValorantUserSkinController {
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping
-    public List<ValorantUserSkinView> getMyUserSkins() {
+    public List<ValorantSkinView> getMyUserSkins() {
         return getMyValorantUserSkinsUseCase.execute();
     }
 
     @RequiredRole(RoleCode.USER)
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ValorantUserSkinView addMySkin(@RequestBody AddUserSkinCommand command) {
+    public ValorantSkinView addMySkin(@RequestBody AddUserSkinCommand command) {
         return addMyValorantSkinUseCase.execute(command);
     }
 

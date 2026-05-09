@@ -125,6 +125,27 @@ export const useRiotStore = defineStore('riot', () => {
     watchedSkins.value = watchedSkins.value.filter(s => s.skinId !== id)
   }
 
+  /**
+   * New: Sync store state from a list of skins (API results)
+   */
+  function syncFromSkins(skins: { id: number, owned: boolean, watched: boolean, ownedAt?: string | null, watchedAt?: string | null }[]) {
+    skins.forEach(s => {
+      // Owned
+      if (s.owned && !isSkinOwned(s.id)) {
+        ownedSkins.value.push({ skinId: s.id, addedAt: s.ownedAt ?? new Date().toISOString() })
+      } else if (!s.owned && isSkinOwned(s.id)) {
+        ownedSkins.value = ownedSkins.value.filter(os => os.skinId !== s.id)
+      }
+
+      // Watched
+      if (s.watched && !isSkinWatched(s.id)) {
+        watchedSkins.value.push({ skinId: s.id, addedAt: s.watchedAt ?? new Date().toISOString() })
+      } else if (!s.watched && isSkinWatched(s.id)) {
+        watchedSkins.value = watchedSkins.value.filter(ws => ws.skinId !== s.id)
+      }
+    })
+  }
+
   return {
     accessToken,
     refreshToken,
@@ -145,5 +166,6 @@ export const useRiotStore = defineStore('riot', () => {
     getWatchedAddedAt,
     addToWatchlistLocally,
     removeFromWatchlistLocally,
+    syncFromSkins
   }
 })

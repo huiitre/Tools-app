@@ -11,7 +11,7 @@ import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.GetValorantWeaponSkinsUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.GetValorantWeaponUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.usecase.ListValorantWeaponsUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantSkinView;
+import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantWeaponView;
 
 @RestController

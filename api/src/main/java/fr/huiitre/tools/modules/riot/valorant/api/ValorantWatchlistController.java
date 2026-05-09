@@ -6,7 +6,7 @@ import fr.huiitre.tools.modules.riot.valorant.application.user.command.AddToWatc
 import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.AddSkinToWatchlistUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.GetMyValorantWatchlistUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.RemoveSkinFromWatchlistUseCase;
-import fr.huiitre.tools.modules.riot.valorant.application.user.view.ValorantWatchlistEntryView;
+import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,29 +16,29 @@ import java.util.List;
 @RequestMapping("/riot/valorant/watchlist")
 public class ValorantWatchlistController {
 
-    private final GetMyValorantWatchlistUseCase getMyValorantWatchlistUseCase;
+    private final GetMyValorantWatchlistUseCase getMyWatchlistUseCase;
     private final AddSkinToWatchlistUseCase addSkinToWatchlistUseCase;
     private final RemoveSkinFromWatchlistUseCase removeSkinFromWatchlistUseCase;
 
     public ValorantWatchlistController(
-            GetMyValorantWatchlistUseCase getMyValorantWatchlistUseCase,
+            GetMyValorantWatchlistUseCase getMyWatchlistUseCase,
             AddSkinToWatchlistUseCase addSkinToWatchlistUseCase,
             RemoveSkinFromWatchlistUseCase removeSkinFromWatchlistUseCase) {
-        this.getMyValorantWatchlistUseCase = getMyValorantWatchlistUseCase;
+        this.getMyWatchlistUseCase = getMyWatchlistUseCase;
         this.addSkinToWatchlistUseCase = addSkinToWatchlistUseCase;
         this.removeSkinFromWatchlistUseCase = removeSkinFromWatchlistUseCase;
     }
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping
-    public List<ValorantWatchlistEntryView> getMyWatchlist() {
-        return getMyValorantWatchlistUseCase.execute();
+    public List<ValorantSkinView> getMyWatchlist() {
+        return getMyWatchlistUseCase.execute();
     }
 
     @RequiredRole(RoleCode.USER)
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ValorantWatchlistEntryView addToWatchlist(@RequestBody AddToWatchlistCommand command) {
+    public ValorantSkinView addToWatchlist(@RequestBody AddToWatchlistCommand command) {
         return addSkinToWatchlistUseCase.execute(command);
     }
 

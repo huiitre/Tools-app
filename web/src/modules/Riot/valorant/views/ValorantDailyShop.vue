@@ -3,6 +3,7 @@ import { useValorantShop, REGIONS } from '../composables/useValorantShop'
 import { useImagePreview } from '@/composables/useImagePreview'
 import ValorantAuthCard from '../components/ValorantAuthCard.vue'
 import ValorantBundleCard from '../components/ValorantBundleCard.vue'
+import ValorantSkinActions from '../components/ValorantSkinActions.vue'
 
 const {
   view, skins, bundles, isRenewing, error, bundleNow,
@@ -72,8 +73,9 @@ const { open: openImagePreview } = useImagePreview()
           class="skin-card"
           :style="{ '--delay': `${i * 110}ms` }"
         >
-          <div class="skin-image-wrap" @click="skin.icon && openImagePreview(skin.icon, skin.name)">
-            <img :src="skin.icon" :alt="skin.name" class="skin-image" loading="lazy" />
+          <div class="skin-image-wrap" @click="skin.iconUrl && openImagePreview(skin.iconUrl, skin.name)">
+            <img :src="skin.iconUrl ?? undefined" :alt="skin.name" class="skin-image" loading="lazy" />
+            <ValorantSkinActions :skin-id="skin.id" class="card-actions" />
           </div>
           <div class="skin-info">
             <div class="skin-name">{{ skin.name }}</div>
@@ -237,6 +239,8 @@ const { open: openImagePreview } = useImagePreview()
       0 0 0 1px color-mix(in srgb, var(--pico-primary) 18%, transparent);
 
     .skin-image { transform: scale(1.07); }
+
+    :deep(.action-btn) { opacity: 1; }
   }
 }
 
@@ -246,6 +250,7 @@ const { open: openImagePreview } = useImagePreview()
 }
 
 .skin-image-wrap {
+  position: relative;
   background: #0d0d1a;
   height: 210px;
   display: flex;
@@ -280,6 +285,21 @@ const { open: openImagePreview } = useImagePreview()
 }
 
 .skin-price { margin-top: auto; }
+
+.card-actions {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+
+  :deep(.action-btn) {
+    opacity: 0;
+    transition: opacity 0.2s ease, color 0.15s ease, background 0.15s ease;
+
+    &.active {
+      opacity: 1;
+    }
+  }
+}
 
 .vp-badge {
   display: inline-flex;

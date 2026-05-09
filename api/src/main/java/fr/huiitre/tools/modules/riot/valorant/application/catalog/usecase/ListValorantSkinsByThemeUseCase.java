@@ -8,16 +8,21 @@ import org.springframework.stereotype.Service;
 
 import fr.huiitre.tools.modules.core.module.domain.ModuleCode;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
+import fr.huiitre.tools.modules.core.security.application.ports.AuthenticatedUserProvider;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantSkinView;
+import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 
 @Service
 public class ListValorantSkinsByThemeUseCase implements SecuredUseCase {
 
+    private final AuthenticatedUserProvider authenticatedUserProvider;
     private final ValorantSkinRepository skinRepository;
 
-    public ListValorantSkinsByThemeUseCase(ValorantSkinRepository skinRepository) {
+    public ListValorantSkinsByThemeUseCase(
+            AuthenticatedUserProvider authenticatedUserProvider,
+            ValorantSkinRepository skinRepository) {
+        this.authenticatedUserProvider = authenticatedUserProvider;
         this.skinRepository = skinRepository;
     }
 
@@ -32,6 +37,7 @@ public class ListValorantSkinsByThemeUseCase implements SecuredUseCase {
     }
 
     public List<ValorantSkinView> execute(UUID themeUuid) {
-        return skinRepository.findAllByTierUuid(themeUuid);
+        Long userId = authenticatedUserProvider.getUserId();
+        return skinRepository.findAllByTierUuid(themeUuid, userId);
     }
 }

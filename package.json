@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix web\" \"cd api && SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run\"",
-    "api:build": "cd api && mvn clean package && ../",
-    "web:build": "cd web && npm run build && ../",
-    "electron:build": "cd web && npm run electron:build && ../",
+    "api:build": "cd api && mvn clean package && cd ..",
+    "web:build": "cd web && npm run build && cd ..",
+    "electron:build": "cd web && npm run electron:build && cd ..",
     "electron:watch": "cd web && npm run electron:watch"
   },
   "devDependencies": {

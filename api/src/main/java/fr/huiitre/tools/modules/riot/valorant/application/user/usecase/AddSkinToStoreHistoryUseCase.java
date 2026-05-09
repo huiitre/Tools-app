@@ -7,7 +7,7 @@ import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase
 import fr.huiitre.tools.modules.riot.valorant.application.user.command.AddSkinToStoreHistoryCommand;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantStoreHistoryRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantSkinView;
+import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 import fr.huiitre.tools.modules.riot.valorant.application.user.view.ValorantStoreHistoryView;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +30,7 @@ public class AddSkinToStoreHistoryUseCase implements SecuredUseCase {
 
     @Override
     public RoleCode requiredRole() {
-        return RoleCode.READ_ONLY;
+        return RoleCode.USER;
     }
 
     public AddSkinToStoreHistoryUseCase(
@@ -45,11 +45,11 @@ public class AddSkinToStoreHistoryUseCase implements SecuredUseCase {
     public ValorantStoreHistoryView execute(AddSkinToStoreHistoryCommand command) {
         Long userId = authenticatedUserProvider.getUserId();
 
-        ValorantSkinView skin = skinRepository.findById(command.getSkinId())
+        ValorantSkinView skin = skinRepository.findById(command.getSkinId(), userId)
                 .orElseThrow(() -> new IllegalArgumentException("SKIN_NOT_FOUND"));
 
         if (storeHistoryRepository.existsByUserIdAndSkinIdAndDate(userId, command.getSkinId())) {
-            throw new IllegalArgumentException("SKIN_ALREADY_IN_STORE_HISTORY_FOR_TODAY");
+            throw new IllegalArgumentException("SKIN_ALREADY_IN_STORE_HISTORY_TODAY");
         }
 
         Long historyId = storeHistoryRepository.add(userId, command.getSkinId());

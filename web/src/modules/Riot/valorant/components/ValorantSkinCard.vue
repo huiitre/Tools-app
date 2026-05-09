@@ -1,69 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRiotStore } from '@/modules/Riot/riot.store'
-import { addToMySkins, removeFromMySkins, addToWatchlist, removeFromWatchlist } from '@/modules/Riot/valorant/fetch/valorantUserSkins.fetch'
-import toast from '@/services/toast'
-
-interface ValorantSkin {
-  id: number
-  assetId: string
-  name: string
-  iconUrl: string | null
-  levels: Array<{ assetId: string; levelIndex: number; displayIconUrl: string | null }>
-}
+import type { ValorantSkin } from '../valorant.types'
+import ValorantSkinActions from './ValorantSkinActions.vue'
 
 const props = defineProps<{ skin: ValorantSkin }>()
 
 const emit = defineEmits<{ preview: [url: string, name: string] }>()
 
-const riotStore = useRiotStore()
-
 const displayIcon = computed(
   () => props.skin.iconUrl ?? props.skin.levels?.[0]?.displayIconUrl ?? null
 )
 
-const isOwned = computed(() => riotStore.isSkinOwned(props.skin.id))
-const isWatched = computed(() => riotStore.isSkinWatched(props.skin.id))
-
 function onImageClick() {
   if (displayIcon.value) emit('preview', displayIcon.value, props.skin.name)
 }
-
-async function toggleOwned() {
-  const targetState = !isOwned.value
-  try {
-    if (targetState) {
-      // If we mark as owned, we must ensure it's removed from watchlist
-      if (isWatched.value) {
-        await removeFromWatchlist(props.skin.id)
-      }
-      await addToMySkins(props.skin.id)
-    } else {
-      await removeFromMySkins(props.skin.id)
-    }
-    riotStore.toggleOwnedLocally(props.skin.id, targetState)
-  } catch (e: any) {
-    toast.error(e.message || 'Erreur lors de la mise à jour de la collection')
-  }
-}
-
-async function toggleWatched() {
-  if (isOwned.value) return
-
-  const targetState = !isWatched.value
-  try {
-    if (targetState) {
-      await addToWatchlist(props.skin.id)
-      riotStore.addToWatchlistLocally(props.skin.id)
-    } else {
-      await removeFromWatchlist(props.skin.id)
-      riotStore.removeFromWatchlistLocally(props.skin.id)
-    }
-  } catch (e: any) {
-    toast.error(e.message || 'Erreur lors de la mise à jour de la watchlist')
-  }
-}
 </script>
+...
 
 <template>
   <article class="skin-card">
@@ -79,25 +31,7 @@ async function toggleWatched() {
         <i class="mdi mdi-image-off-outline" />
       </div>
 
-      <div class="card-actions">
-        <button
-          class="action-btn"
-          :class="{ active: isOwned }"
-          title="Je possède ce skin"
-          @click.stop="toggleOwned"
-        >
-          <i :class="isOwned ? 'mdi mdi-check-circle' : 'mdi mdi-check-circle-outline'" />
-        </button>
-        <button
-          v-if="!isOwned"
-          class="action-btn"
-          :class="{ active: isWatched }"
-          title="Surveiller ce skin"
-          @click.stop="toggleWatched"
-        >
-          <i :class="isWatched ? 'mdi mdi-bell' : 'mdi mdi-bell-outline'" />
-        </button>
-      </div>
+      <ValorantSkinActions :skin-id="skin.id" class="card-actions" />
     </div>
 
     <div class="skin-name">{{ skin.name }}</div>
@@ -125,7 +59,7 @@ async function toggleWatched() {
 
     .skin-image { transform: scale(1.06); }
 
-    .action-btn { opacity: 1; }
+    :deep(.action-btn) { opacity: 1; }
   }
 }
 
@@ -164,40 +98,15 @@ async function toggleWatched() {
   position: absolute;
   top: 0.4rem;
   right: 0.4rem;
-  display: flex;
-  gap: 0.3rem;
-}
 
-.action-btn {
-  width: 1.6rem;
-  height: 1.6rem;
-  border-radius: 50%;
-  border: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
-  color: rgba(255, 255, 255, 0.6);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s ease, color 0.15s ease, background 0.15s ease;
+  :deep(.action-btn) {
+    opacity: 0;
+    transition: opacity 0.2s ease, color 0.15s ease, background 0.15s ease;
 
-  i { font-size: 0.95rem; }
-
-  &:hover {
-    background: rgba(0, 0, 0, 0.75);
-    color: #fff;
+    &.active {
+      opacity: 1;
+    }
   }
-
-  &.active {
-    opacity: 1;
-  }
-
-  &.active i { color: #2ecc71; }
-
-  &:nth-child(2).active i { color: var(--pico-primary); }
 }
 
 /* ── Name ────────────────────────────────────────────────────────────────── */
@@ -213,3 +122,4 @@ async function toggleWatched() {
   text-overflow: ellipsis;
 }
 </style>
+

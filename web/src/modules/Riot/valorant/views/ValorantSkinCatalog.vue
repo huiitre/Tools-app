@@ -2,30 +2,13 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { clientV3 } from '@/services/axiosInstance'
 import { useImagePreview } from '@/composables/useImagePreview'
-import { fetchWeapons, type ValorantWeapon } from '@/modules/Riot/valorant/fetch/valorantShop.fetch'
+import { fetchWeapons } from '@/modules/Riot/valorant/fetch/valorantShop.fetch'
 import { fetchMySkins, fetchWatchlist } from '@/modules/Riot/valorant/fetch/valorantUserSkins.fetch'
 import { useRiotStore } from '@/modules/Riot/riot.store'
+import type { ValorantSkin, ValorantWeapon } from '../valorant.types'
 import ValorantSkinCard from '../components/ValorantSkinCard.vue'
 
 const STORAGE_KEY_FILTERS = 'riot.valorant.catalog.filters'
-
-interface ValorantSkinLevel {
-  assetId: string
-  levelIndex: number
-  displayIconUrl: string | null
-  streamedVideoUrl: string | null
-}
-
-interface ValorantSkin {
-  id: number
-  assetId: string
-  name: string
-  iconUrl: string | null
-  themeUuid: string | null
-  contentTierUuid: string | null
-  weaponId: number | null
-  levels: ValorantSkinLevel[]
-}
 
 type FilterState = 'all' | 'owned' | 'watched' | 'unowned'
 type SortBy = 'name' | 'id' | 'addedAt'
@@ -177,17 +160,14 @@ onMounted(async () => {
   hydrateFilters()
   window.addEventListener('scroll', handleScroll, { passive: true })
   try {
-    const [skinsRes, weaponsRes, mySkins, watchlist] = await Promise.all([
+    const [skinsRes, weaponsRes] = await Promise.all([
       clientV3.get<ValorantSkin[]>('/riot/valorant/skins'),
-      fetchWeapons(),
-      fetchMySkins(),
-      fetchWatchlist()
+      fetchWeapons()
     ])
     skins.value = skinsRes.data
     weapons.value = weaponsRes.sort((a, b) => a.name.localeCompare(b.name))
     
-    riotStore.setOwnedSkins(mySkins.map(s => ({ skinId: s.skinId, addedAt: s.createdAt })))
-    riotStore.setWatchedSkins(watchlist.map(s => ({ skinId: s.skinId, addedAt: s.createdAt })))
+    riotStore.syncFromSkins(skinsRes.data)
 
     await nextTick()
     initObserver()
