@@ -1,0 +1,12 @@
+{
+  "name": "tools-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix web\" \"cd api && SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run\"",
+    "electron:watch": "cd web && npm run electron:watch"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
