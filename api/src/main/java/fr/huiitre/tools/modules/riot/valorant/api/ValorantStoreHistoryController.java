@@ -30,7 +30,7 @@ public class ValorantStoreHistoryController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ValorantStoreHistoryView addToStoreHistory(@RequestBody AddSkinToStoreHistoryCommand command) {
-        return addSkinToStoreHistoryUseCase.execute(command);
+    public void addToStoreHistory(@RequestBody AddSkinToStoreHistoryCommand command) {
+        addSkinToStoreHistoryUseCase.execute(command);
     }
 }

@@ -32,10 +32,14 @@ export interface ValorantNightMarketOffer extends ValorantSkin {
   discountPercent: number
   isSeen: boolean
 }
-
 export interface ValorantNightMarket {
   offers: ValorantNightMarketOffer[]
   expiresAt: number
+}
+
+export interface ValorantStoreHistoryView {
+  date: string
+  skins: ValorantSkin[]
 }
 
 export interface ValorantWeapon {

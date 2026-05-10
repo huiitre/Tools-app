@@ -1,13 +1,32 @@
 package fr.huiitre.tools.modules.riot.valorant.application.user.command;
 
-public class AddSkinToStoreHistoryCommand {
-    private Long skinId;
+import java.time.LocalDate;
+import java.util.List;
 
-    public Long getSkinId() {
-        return skinId;
+public class AddSkinToStoreHistoryCommand {
+    private List<Long> skinIds;
+    private LocalDate seenAt;
+
+    public AddSkinToStoreHistoryCommand() {}
+
+    public AddSkinToStoreHistoryCommand(List<Long> skinIds, LocalDate seenAt) {
+        this.skinIds = skinIds;
+        this.seenAt = seenAt;
     }
 
-    public void setSkinId(Long skinId) {
-        this.skinId = skinId;
+    public List<Long> getSkinIds() {
+        return skinIds;
+    }
+
+    public void setSkinIds(List<Long> skinIds) {
+        this.skinIds = skinIds;
+    }
+
+    public LocalDate getSeenAt() {
+        return seenAt;
+    }
+
+    public void setSeenAt(LocalDate seenAt) {
+        this.seenAt = seenAt;
     }
 }

@@ -1,11 +1,10 @@
 package fr.huiitre.tools.modules.riot.valorant.infrastructure;
 
 import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantStoreHistoryRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.user.view.ValorantStoreHistoryView;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.util.*;
 
 public class PostgresValorantStoreHistoryRepository implements ValorantStoreHistoryRepository {
 
@@ -15,30 +14,34 @@ public class PostgresValorantStoreHistoryRepository implements ValorantStoreHist
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    private static final RowMapper<ValorantStoreHistoryView> STORE_HISTORY_ROW_MAPPER = (rs, rowNum) ->
-            new ValorantStoreHistoryView(
-                    rs.getLong("id"),
-                    rs.getLong("skin_id"),
-                    rs.getString("skin_name"),
-                    rs.getString("skin_icon_url"),
-                    rs.getDate("seen_at").toLocalDate()
-            );
-
     @Override
-    public List<ValorantStoreHistoryView> findAllByUserId(Long userId) {
-        String sql = "SELECT sh.id, sh.skin_id, s.name as skin_name, s.icon_url as skin_icon_url, sh.seen_at FROM tools_riot.valorant_store_history sh JOIN tools_riot.valorant_weapon_skins s ON sh.skin_id = s.id WHERE sh.user_id = ? ORDER BY sh.seen_at DESC, sh.id DESC";
-        return jdbcTemplate.query(sql, STORE_HISTORY_ROW_MAPPER, userId);
+    public Map<LocalDate, List<Long>> findAllRawByUserId(Long userId) {
+        final String sql = """
+                SELECT seen_at, skin_id
+                FROM tools_riot.valorant_store_history
+                WHERE user_id = ?
+                ORDER BY seen_at DESC
+                """;
+        
+        Map<LocalDate, List<Long>> history = new LinkedHashMap<>();
+        jdbcTemplate.query(sql, rs -> {
+            LocalDate date = rs.getDate("seen_at").toLocalDate();
+            Long skinId = rs.getLong("skin_id");
+            history.computeIfAbsent(date, k -> new ArrayList<>()).add(skinId);
+        }, userId);
+        
+        return history;
     }
 
     @Override
-    public Long add(Long userId, Long skinId) {
-        String sql = "INSERT INTO tools_riot.valorant_store_history (user_id, skin_id) VALUES (?, ?) RETURNING id";
-        return jdbcTemplate.queryForObject(sql, Long.class, userId, skinId);
+    public Long add(Long userId, Long skinId, LocalDate seenAt) {
+        final String sql = "INSERT INTO tools_riot.valorant_store_history (user_id, skin_id, seen_at) VALUES (?, ?, ?) RETURNING id";
+        return jdbcTemplate.queryForObject(sql, Long.class, userId, skinId, seenAt);
     }
 
     @Override
-    public boolean existsByUserIdAndSkinIdAndDate(Long userId, Long skinId) {
-        String sql = "SELECT EXISTS (SELECT 1 FROM tools_riot.valorant_store_history WHERE user_id = ? AND skin_id = ? AND seen_at = CURRENT_DATE)";
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, userId, skinId));
+    public boolean existsByUserIdAndSkinIdAndDate(Long userId, Long skinId, LocalDate seenAt) {
+        final String sql = "SELECT EXISTS (SELECT 1 FROM tools_riot.valorant_store_history WHERE user_id = ? AND skin_id = ? AND seen_at = ?)";
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, userId, skinId, seenAt));
     }
 }

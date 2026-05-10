@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { ValorantStoreHistoryView } from '@/modules/Riot/valorant/valorant.types'
 
 const STORAGE_KEY = 'riot.auth'
 
@@ -35,6 +36,7 @@ export const useRiotStore = defineStore('riot', () => {
   // User Skins & Watchlist state
   const ownedSkins = ref<UserSkinData[]>([])
   const watchedSkins = ref<UserSkinData[]>([])
+  const storeHistory = ref<ValorantStoreHistoryView[]>([])
 
   function setAuth(token: string, reg: RiotRegion) {
     accessToken.value = token
@@ -122,7 +124,15 @@ export const useRiotStore = defineStore('riot', () => {
   }
 
   function removeFromWatchlistLocally(id: number) {
-    watchedSkins.value = watchedSkins.value.filter(s => s.skinId !== id)
+    watchedSkins.value = watchedSkins.value.filter(ws => ws.skinId !== id)
+  }
+
+  /* =========================
+     STORE HISTORY
+  ========================= */
+
+  function setStoreHistory(history: ValorantStoreHistoryView[]) {
+    storeHistory.value = history
   }
 
   /**
@@ -152,6 +162,7 @@ export const useRiotStore = defineStore('riot', () => {
     region,
     ownedSkins,
     watchedSkins,
+    storeHistory,
     setAuth,
     setAccessToken,
     setRefreshToken,
@@ -166,6 +177,7 @@ export const useRiotStore = defineStore('riot', () => {
     getWatchedAddedAt,
     addToWatchlistLocally,
     removeFromWatchlistLocally,
+    setStoreHistory,
     syncFromSkins
   }
 })

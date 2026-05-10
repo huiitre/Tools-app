@@ -13,6 +13,7 @@ import {
   type RawBundle,
   type RawNightMarketOffer,
 } from '../fetch/valorantShop.fetch'
+import { fetchStoreHistory, addToStoreHistory } from '../fetch/valorantUserSkins.fetch'
 
 export type View = 'form' | 'loading' | 'shop'
 export type AuthMode = 'access' | 'refresh'
@@ -160,6 +161,23 @@ export function useValorantShop() {
     return fetchStorefront(puuid, region, token, entitlementsToken, clientVersion)
   }
 
+  async function syncShopHistory(resolvedSkins: ValorantShopOffer[], remainingSeconds: number) {
+    if (!resolvedSkins.length) return
+    try {
+      const expirationMs = Date.now() + (remainingSeconds * 1000)
+      const shopDate = new Date(expirationMs - 43200 * 1000).toISOString().split('T')[0]
+      
+      // 1. Attempt to add current skins to history
+      await addToStoreHistory(resolvedSkins.map(s => s.id), shopDate)
+      
+      // 2. Fetch full history to ensure UI is updated
+      const history = await fetchStoreHistory()
+      riotStore.setStoreHistory(history)
+    } catch {
+      // Silently fail
+    }
+  }
+
   async function startRenewal() {
     if (renewalActive) return
     renewalActive = true
@@ -187,7 +205,10 @@ export function useValorantShop() {
 
         if (newIds !== prevIds && renewalActive) {
           const [resolvedSkins, resolvedBundles, resolvedNM] = await Promise.all([
-            Promise.all(offers.map(({ id, cost }) => fetchSkinByLevelId(id).then((skin) => ({ ...skin, cost })))),
+            Promise.all(offers.map(async ({ id, cost }) => {
+              const skin = await fetchSkinByLevelId(id)
+              return { ...skin, cost }
+            })),
             buildBundles(rawBundles),
             rawNM ? buildNightMarket(rawNM) : Promise.resolve(null),
           ])
@@ -201,6 +222,7 @@ export function useValorantShop() {
           bundles.value = resolvedBundles
           nightMarket.value = resolvedNM
           startTimer(remainingSeconds)
+          syncShopHistory(resolvedSkins, remainingSeconds)
           stopRenewal()
           return
         }
@@ -220,7 +242,10 @@ export function useValorantShop() {
       const { offers, remainingSeconds, bundles: rawBundles, nightMarket: rawNM } = await fetchOffers(token, region)
 
       const [resolvedSkins, resolvedBundles, resolvedNM] = await Promise.all([
-        Promise.all(offers.map(({ id, cost }) => fetchSkinByLevelId(id).then((skin) => ({ ...skin, cost })))),
+        Promise.all(offers.map(async ({ id, cost }) => {
+          const skin = await fetchSkinByLevelId(id)
+          return { ...skin, cost }
+        })),
         buildBundles(rawBundles),
         rawNM ? buildNightMarket(rawNM) : Promise.resolve(null),
       ])
@@ -236,6 +261,7 @@ export function useValorantShop() {
 
       riotStore.setAuth(token, region)
       startTimer(remainingSeconds)
+      await syncShopHistory(resolvedSkins, remainingSeconds)
       view.value = 'shop'
     } catch (e: any) {
       error.value = e?.message ?? 'Erreur lors du chargement de la boutique'
