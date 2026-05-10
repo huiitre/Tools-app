@@ -54,8 +54,7 @@ export default defineConfig({
           '**/themes/**',
           '**/*worker*.js',
           '**/ts.worker*.js',
-          '**/editor.worker*.js',
-          '**/index.*.js'
+          '**/editor.worker*.js'
         ],
 
         // 6. Runtime : thèmes = NETWORK ONLY (OBLIGATOIRE)
