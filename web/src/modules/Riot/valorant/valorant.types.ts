@@ -25,6 +25,23 @@ export interface ValorantShopOffer extends ValorantSkin {
   cost: number
 }
 
+export interface ValorantNightMarketOffer extends ValorantSkin {
+  offerId: string
+  baseCost: number
+  discountedCost: number
+  discountPercent: number
+  isSeen: boolean
+}
+export interface ValorantNightMarket {
+  offers: ValorantNightMarketOffer[]
+  expiresAt: number
+}
+
+export interface ValorantStoreHistoryView {
+  date: string
+  skins: ValorantSkin[]
+}
+
 export interface ValorantWeapon {
   id: number
   assetId: string

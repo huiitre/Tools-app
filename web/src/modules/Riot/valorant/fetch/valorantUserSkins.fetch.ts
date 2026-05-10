@@ -1,5 +1,5 @@
 import { clientV3 } from '@/services/axiosInstance'
-import type { ValorantSkin } from '../valorant.types'
+import type { ValorantSkin, ValorantStoreHistoryView } from '../valorant.types'
 
 /* =========================
    MY SKINS (OWNED)
@@ -35,4 +35,17 @@ export async function addToWatchlist(skinId: number): Promise<ValorantSkin> {
 
 export async function removeFromWatchlist(skinId: number): Promise<void> {
   await clientV3.delete(`/riot/valorant/watchlist/${skinId}`)
+}
+
+/* =========================
+   STORE HISTORY
+========================= */
+
+export async function fetchStoreHistory(): Promise<ValorantStoreHistoryView[]> {
+  const { data } = await clientV3.get<ValorantStoreHistoryView[]>('/riot/valorant/store-history')
+  return data
+}
+
+export async function addToStoreHistory(skinIds: number[], seenAt: string): Promise<void> {
+  await clientV3.post('/riot/valorant/store-history', { skinIds, seenAt })
 }

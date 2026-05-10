@@ -5,10 +5,7 @@ import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.ports.AuthenticatedUserProvider;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.user.command.AddSkinToStoreHistoryCommand;
-import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantStoreHistoryRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
-import fr.huiitre.tools.modules.riot.valorant.application.user.view.ValorantStoreHistoryView;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +17,6 @@ import java.util.Optional;
 public class AddSkinToStoreHistoryUseCase implements SecuredUseCase {
 
     private final AuthenticatedUserProvider authenticatedUserProvider;
-    private final ValorantSkinRepository skinRepository;
     private final ValorantStoreHistoryRepository storeHistoryRepository;
 
     @Override
@@ -35,24 +31,21 @@ public class AddSkinToStoreHistoryUseCase implements SecuredUseCase {
 
     public AddSkinToStoreHistoryUseCase(
             AuthenticatedUserProvider authenticatedUserProvider,
-            ValorantSkinRepository skinRepository,
             ValorantStoreHistoryRepository storeHistoryRepository) {
         this.authenticatedUserProvider = authenticatedUserProvider;
-        this.skinRepository = skinRepository;
         this.storeHistoryRepository = storeHistoryRepository;
     }
 
-    public ValorantStoreHistoryView execute(AddSkinToStoreHistoryCommand command) {
+    public void execute(AddSkinToStoreHistoryCommand command) {
         Long userId = authenticatedUserProvider.getUserId();
+        LocalDate seenAt = command.getSeenAt() != null ? command.getSeenAt() : LocalDate.now();
 
-        ValorantSkinView skin = skinRepository.findById(command.getSkinId(), userId)
-                .orElseThrow(() -> new IllegalArgumentException("SKIN_NOT_FOUND"));
+        if (command.getSkinIds() == null) return;
 
-        if (storeHistoryRepository.existsByUserIdAndSkinIdAndDate(userId, command.getSkinId())) {
-            throw new IllegalArgumentException("SKIN_ALREADY_IN_STORE_HISTORY_TODAY");
+        for (Long skinId : command.getSkinIds()) {
+            if (!storeHistoryRepository.existsByUserIdAndSkinIdAndDate(userId, skinId, seenAt)) {
+                storeHistoryRepository.add(userId, skinId, seenAt);
+            }
         }
-
-        Long historyId = storeHistoryRepository.add(userId, command.getSkinId());
-        return new ValorantStoreHistoryView(historyId, skin.id(), skin.name(), skin.iconUrl(), LocalDate.now());
     }
 }
