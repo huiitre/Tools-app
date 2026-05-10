@@ -226,14 +226,20 @@ WorkshopDto et WorkshopDetailResponse exposent la liste links.
   ValorantWeaponView : (id, assetId, name, category, defaultSkinAssetId, displayIconUrl)
   Ports : ValorantWeaponRepository (findAll, findById). Config : RiotConfig.
 
-6g. Store History — COMPLÈTE (2026-05-09)
+6g. Store History — COMPLÈTE (2026-05-10)
   Routes :
     GET  /riot/valorant/store-history  → List<ValorantStoreHistoryView> (READ_ONLY)
-    POST /riot/valorant/store-history  → 201 ValorantStoreHistoryView — body : { "skinId": Long } (USER)
+    POST /riot/valorant/store-history  → 201 — body : { "skinIds": List<Long>, "seenAt": LocalDate } (USER)
 
-  Logique : Empêche l'ajout du même skin pour un même utilisateur plus d'une fois par jour (CURRENT_DATE).
-  Table BDD : tools_riot.valorant_store_history.
-  Port : ValorantStoreHistoryRepository.
+  Logique Archivage Batch :
+    - Reçoit une liste d'IDs de skins et une date cible.
+    - Empêche les doublons pour un même (user, skin, date) via `existsByUserIdAndSkinIdAndDate`.
+    - La date transmise par le front est stabilisée sur le midpoint de la rotation (Expiration - 12h) pour éviter le jitter à minuit UTC.
+    - Réponse groupée par date décroissante dans le UseCase via agrégation des skins complets.
+
+  Table BDD : tools_riot.valorant_store_history (id, user_id, skin_id, seen_at).
+  Port : ValorantStoreHistoryRepository (findAllRawByUserId, add, existsByUserIdAndSkinIdAndDate).
+  Note : Le UseCase agrège les objets `ValorantSkinView` complets à partir des IDs stockés.
 
 7. Module Admin — Gestion utilisateurs & stats
 

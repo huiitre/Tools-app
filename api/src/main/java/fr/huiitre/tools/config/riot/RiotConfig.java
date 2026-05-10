@@ -23,12 +23,21 @@ import fr.huiitre.tools.modules.riot.valorant.infrastructure.PostgresValorantSto
 import fr.huiitre.tools.modules.riot.valorant.infrastructure.RiotAuthHttpAdapter;
 import fr.huiitre.tools.modules.riot.valorant.infrastructure.ValorantLocalVersionProvider;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantAuthRepository;
+import fr.huiitre.tools.modules.riot.valorant.infrastructure.PostgresValorantAuthRepository;
+
 @Configuration
 public class RiotConfig {
 
     @Bean
-    public RiotAuthPort riotAuthPort() {
-        return new RiotAuthHttpAdapter(new RestTemplate());
+    public RiotAuthPort riotAuthPort(ObjectMapper objectMapper) {
+        return new RiotAuthHttpAdapter(new RestTemplate(), objectMapper);
+    }
+
+    @Bean
+    public ValorantAuthRepository valorantAuthRepository(JdbcTemplate jdbcTemplate) {
+        return new PostgresValorantAuthRepository(jdbcTemplate);
     }
 
     @Bean

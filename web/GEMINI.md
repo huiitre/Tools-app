@@ -64,13 +64,19 @@ Conformité : Utilisation impérative du guide de variables PicoCSS fourni dans 
 
 [Riot/Valorant/SupprimerValorantApi] **valorant-api.com entièrement supprimé du frontend.** Le storefront Riot retourne des **UUIDs de levels** (pas de skins racines) — `SKIN_TYPE_ID = e7c63390...` est l'ItemTypeID `EquippableSkinLevel`. Nouvelles fonctions dans `valorantShop.fetch.ts` : `fetchClientVersion()` → `GET /riot/valorant/version` (champ `riotClientVersion`) ; `fetchSkinByLevelId(uuid)` → `GET /riot/valorant/skins/by-level/{uuid}` (champs `name` + `iconUrl`) ; `fetchBundleMeta(uuid)` → `GET /riot/valorant/bundles/by-asset/{uuid}` (champs `name` + `bannerUrl`). `buildBundles()` résout tout en `Promise.all` sans `skinsMap`. `cachedSkinsMap` supprimé du composable. Table DB `valorant_skin_levels` : `id BIGSERIAL, skin_id BIGINT FK cascade, asset_id UUID UNIQUE, level_index INT, name, level_item, display_icon_url, streamed_video_url, created_at, updated_at` + index sur `skin_id`. `GET /riot/valorant/skins` retourne les levels embarqués (`levels[].assetId`, `levels[].levelIndex`, `levels[].displayIconUrl`, `levels[].streamedVideoUrl`).
 
+[Riot/Valorant/StoreHistory] Archivage en batch & Popup (2026-05-10) :
+- Flux de Sync : `useValorantShop.ts` attend `addToStoreHistory` (body `{ skinIds, seenAt }`) avant de refresh l'historique complet.
+- Calcul Date stable : midpoint rotation utilisé pour `seenAt` (`Expiration - 12h`).
+- Popup : Nouveau composant `ValorantShopHistoryPopup.vue` (@floating-ui/vue). Groupement par date, miniatures non-interactives, format date avec année.
+- Types : `ValorantStoreHistoryView` reflète le retour API groupé par date (`date`, `skins[]`).
+
 [useImagePreview] Paramètre optionnel `minSize` (px) sur `open(url, alt?, minSize?)`. `ImagePreviewModal` applique `min-width/min-height` en inline style. Utilisé par le tableau admin pour afficher les avatars en 200px minimum (URLs Google souvent petites : 96×96).
 
 [Settings] Nav simplifiée : sections `account-profile`, `account-security`, `module-dofus` uniquement. Suppression de "Préférences" et "Comptes liés". Fix PicoCSS : `justify-content: flex-start` sur `nav` (PicoCSS force `space-between` par défaut sur les éléments `nav`).
 
-[Updates] Double mécanisme géré par `useAppUpdate.ts` et `update.service.ts` :
-- **Web (PWA)** : Polling toutes les 10s via `ServiceWorkerRegistration.update()`. Si une mise à jour est trouvée, `WebUpdateService` envoie `SKIP_WAITING` au worker. Le rechargement est déclenché par l'événement `statechange` -> `activated`.
-- **Electron** : Utilise `electron-updater`. Le `main.cjs` verifie les updates au boot. Communication via IPC (`update-available` / `apply-update`). L'installation finale utilise `autoUpdater.quitAndInstall()`.
+[Updates] Double mécanisme géré par `useAppUpdate.ts` and `update.service.ts`:
+- **Web (PWA)**: Polling toutes les 10s via `ServiceWorkerRegistration.update()`. Si une mise à jour est trouvée, `WebUpdateService` envoie `SKIP_WAITING` au worker. Le rechargement est déclenché par l'événement `statechange` -> `activated`.
+- **Electron**: Utilise `electron-updater`. Le `main.cjs` verifie les updates au boot. Communication via IPC (`update-available` / `apply-update`). L'installation finale utilise `autoUpdater.quitAndInstall()`.
 
 [Riot/Navigation] Fix des pages vides lors de la navigation entre Shop et Skins. Causes identifiées : conflits de noms de transitions (renommée de `page` à `riot-page`), absence de nœud racine unique dans `ValorantDailyShop.vue` (bloquant le `mode="out-in"` de Vue), et destruction manuelle abusive via `renderKey` dans le layout.
 

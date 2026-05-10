@@ -134,12 +134,14 @@ Hiérarchie des rôles (RoleHierarchy.java) :
 - UserModuleRoleRepository.findAllByModuleId() : inverse de findAllByUserId.
 - Config : AdminConfig wire PostgresAdminStatsRepository.
 
-[Feature] Riot/Valorant store history — COMPLÈTE (2026-05-09).
+[Feature] Riot/Valorant store history — Archivage en batch (2026-05-10).
 - GET  /riot/valorant/store-history  → List<ValorantStoreHistoryView> (READ_ONLY).
-- POST /riot/valorant/store-history  → 201 — body : { "skinId": Long } (USER).
-- Table : tools_riot.valorant_store_history.
-- Empêche les doublons pour un même utilisateur/skin sur la même journée (CURRENT_DATE).
-- Repository : PostgresValorantStoreHistoryRepository.
+- POST /riot/valorant/store-history  → 201 — body : { "skinIds": List<Long>, "seenAt": LocalDate } (USER).
+- Logique Batch : Archivage atomique des 4 skins quotidiens.
+- Stabilisation Date : Calcul basé sur le midpoint de la rotation (Expiration - 12h) côté client.
+- Restructuration API : Le UseCase agrège désormais les objets `ValorantSkinView` complets et groupe le retour par date décroissante.
+- Table BDD : tools_riot.valorant_store_history (id, user_id, skin_id, seen_at).
+- Repository : findAllRawByUserId retourne une Map d'IDs par date pour agrégation optimisée.
 
 [Refactor] Réorganisation du module Valorant application en sous-packages (core, catalog, user) (2026-05-10).
 - Structure par domaine fonctionnel au lieu de type technique.
