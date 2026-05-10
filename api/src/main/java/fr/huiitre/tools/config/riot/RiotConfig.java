@@ -26,13 +26,21 @@ import fr.huiitre.tools.modules.riot.valorant.infrastructure.ValorantLocalVersio
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantAuthRepository;
 import fr.huiitre.tools.modules.riot.valorant.infrastructure.PostgresValorantAuthRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantStorePort;
+import fr.huiitre.tools.modules.riot.valorant.infrastructure.ValorantStoreHttpAdapter;
+import fr.huiitre.tools.modules.riot.valorant.infrastructure.ValorantTokenParser;
 
 @Configuration
 public class RiotConfig {
 
     @Bean
-    public RiotAuthPort riotAuthPort(ObjectMapper objectMapper) {
-        return new RiotAuthHttpAdapter(new RestTemplate(), objectMapper);
+    public RiotAuthPort riotAuthPort(ObjectMapper objectMapper, ValorantTokenParser tokenParser) {
+        return new RiotAuthHttpAdapter(new RestTemplate(), tokenParser);
+    }
+
+    @Bean
+    public ValorantStorePort valorantStorePort() {
+        return new ValorantStoreHttpAdapter(new RestTemplate());
     }
 
     @Bean

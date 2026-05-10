@@ -32,4 +32,10 @@ public class ValorantAuthController {
     public ValorantTokenView refresh() {
         return getValorantAccessTokenUseCase.execute();
     }
+
+    @RequiredRole(RoleCode.USER)
+    @DeleteMapping("/auth")
+    public void logout() {
+        getValorantAccessTokenUseCase.logout();
+    }
 }

@@ -12,7 +12,7 @@ const props = defineProps<{
 const { open: openImagePreview } = useImagePreview()
 
 const formattedTime = computed(() => {
-  const ms = Math.max(0, props.market.expiresAt - props.now)
+  const ms = Math.max(0, props.market.remainingSeconds * 1000)
   const d = Math.floor(ms / 86_400_000)
   const h = Math.floor((ms % 86_400_000) / 3_600_000)
   const m = Math.floor((ms % 3_600_000) / 60_000)
@@ -35,30 +35,30 @@ const formattedTime = computed(() => {
     <div class="market-grid">
       <article
         v-for="(offer, i) in market.offers"
-        :key="offer.id"
+        :key="offer.offerId"
         class="market-card"
         :style="{ '--delay': `${i * 100}ms` }"
       >
         <div
           class="skin-image-wrap"
-          @click="offer.iconUrl && openImagePreview(offer.iconUrl, offer.name)"
+          @click="offer.skin.iconUrl && openImagePreview(offer.skin.iconUrl, offer.skin.name)"
         >
           <img
-            v-if="offer.iconUrl"
-            :src="offer.iconUrl"
-            :alt="offer.name"
+            v-if="offer.skin.iconUrl"
+            :src="offer.skin.iconUrl"
+            :alt="offer.skin.name"
             class="skin-image"
             loading="lazy"
           />
-          <ValorantSkinActions :skin-id="offer.id" class="card-actions" />
+          <ValorantSkinActions :skin-id="offer.skin.id" class="card-actions" />
           <div class="discount-badge">-{{ offer.discountPercent }}%</div>
         </div>
 
         <div class="skin-info">
-          <div class="skin-name">{{ offer.name }}</div>
+          <div class="skin-name">{{ offer.skin.name }}</div>
           <div class="price-row">
             <span class="vp-badge">{{ offer.discountedCost.toLocaleString('fr-FR') }} VP</span>
-            <span class="original-price">{{ offer.baseCost.toLocaleString('fr-FR') }} VP</span>
+            <span class="original-price">{{ offer.originalCost.toLocaleString('fr-FR') }} VP</span>
           </div>
         </div>
       </article>

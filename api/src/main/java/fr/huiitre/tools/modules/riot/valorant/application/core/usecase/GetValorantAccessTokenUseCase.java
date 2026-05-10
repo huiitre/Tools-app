@@ -42,7 +42,7 @@ public class GetValorantAccessTokenUseCase implements SecuredUseCase {
 
     public ValorantTokenView execute() {
         long userId = Long.parseLong(currentUserProvider.getCurrentUserId());
-        
+
         // 1. Récupération des données chiffrées en base
         ValorantAuthRepository.ValorantAuthData authData = valorantAuthRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("RIOT_AUTH_NOT_FOUND"));
@@ -57,7 +57,7 @@ public class GetValorantAccessTokenUseCase implements SecuredUseCase {
             // 4. Mise à jour du nouveau Refresh Token (Rotation)
             String newIv = encryptionService.generateIv();
             String newEncryptedRefresh = encryptionService.encrypt(riotResponse.refreshToken(), newIv);
-            
+
             valorantAuthRepository.save(
                     userId,
                     riotResponse.puuid(),
@@ -68,7 +68,7 @@ public class GetValorantAccessTokenUseCase implements SecuredUseCase {
             );
 
             return new ValorantTokenView(riotResponse.accessToken());
-            
+
         } catch (IllegalArgumentException e) {
             // Si le refresh token est invalide (périmé chez Riot), on nettoie la base
             if ("RIOT_TOKEN_INVALID".equals(e.getMessage())) {
@@ -77,4 +77,10 @@ public class GetValorantAccessTokenUseCase implements SecuredUseCase {
             throw e;
         }
     }
+
+    public void logout() {
+        long userId = Long.parseLong(currentUserProvider.getCurrentUserId());
+        valorantAuthRepository.deleteByUserId(userId);
+    }
 }
+

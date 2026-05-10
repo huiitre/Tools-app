@@ -82,14 +82,30 @@ WorkshopDto et WorkshopDetailResponse exposent la liste links.
 
 6. Module Riot — Valorant
 
-6a. Auth
-  POST /riot/valorant/refresh-token → 200 { accessToken, refreshToken }
-  - Reçoit un refreshToken en body, appelle auth.riotgames.com/token.
-  - client_id hardcodé : prod-xsso-playvalorant (public client, pas de secret).
-  - Retourne le nouveau accessToken + refreshToken (null si Riot n'en émet pas de nouveau).
-  - Use case requiert ModuleCode.RIOT + RoleCode.READ_ONLY.
-  Adapter : RiotAuthHttpAdapter — POST form-urlencoded, ParameterizedTypeReference<Map<String,Object>>.
-  Config : RiotConfig (aucune propriété externe, URL et client_id hardcodé).
+6a. Auth (Refactorisé 2026-05-10)
+  Architecture : Stockage sécurisé (Encryption AES-256-GCM) du refresh token pour automatisation.
+  
+  Routes :
+    POST /riot/valorant/refresh-token → 200 { accessToken } (USER)
+      - Lie le compte Riot : reçoit refreshToken + region.
+      - Valide auprès de Riot, extrait le PUUID du JWT.
+      - Chiffre et persiste le refresh token en DB via EncryptionService.
+      - Retourne uniquement l'accessToken frais.
+    GET /riot/valorant/refresh → 200 { accessToken } (USER)
+      - Session persistante : décrypte le refresh token de l'utilisateur en DB.
+      - Demande un nouvel accessToken à Riot (gestion de la rotation automatique du refresh).
+      - Retourne l'accessToken pour usage Front (mémoire vive uniquement).
+
+  Sécurité :
+    - Zéro stockage Access Token ou Entitlements en DB (volatils).
+    - Refresh Token chiffré via MASTER_KEY (variable d'env TOOLS_ENCRYPTION_KEY).
+    - IV aléatoire stocké par ligne pour garantir l'unicité du chiffrement.
+    - Auto-nettoyage : si Riot rejette le refresh, l'entrée DB est supprimée.
+
+  Composants :
+    - EncryptionService : AES/GCM/NoPadding (standard sécurité).
+    - ValorantAuthRepository : Gestion de la table tools_riot.valorant_auth.
+    - RiotAuthHttpAdapter : Client Riot (extraction PUUID via JWT payload).
 
 6b. Skins — COMPLÈTE (2026-05-09)
   Routes :

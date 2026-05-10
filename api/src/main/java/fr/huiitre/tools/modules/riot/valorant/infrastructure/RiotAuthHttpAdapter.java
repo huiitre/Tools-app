@@ -9,10 +9,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
-import java.util.Base64;
 import java.util.Map;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
 
 public class RiotAuthHttpAdapter implements RiotAuthPort {
 
@@ -20,11 +17,11 @@ public class RiotAuthHttpAdapter implements RiotAuthPort {
     private static final String CLIENT_ID = "prod-xsso-playvalorant";
 
     private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
+    private final ValorantTokenParser tokenParser;
 
-    public RiotAuthHttpAdapter(RestTemplate restTemplate, ObjectMapper objectMapper) {
+    public RiotAuthHttpAdapter(RestTemplate restTemplate, ValorantTokenParser tokenParser) {
         this.restTemplate = restTemplate;
-        this.objectMapper = objectMapper;
+        this.tokenParser = tokenParser;
     }
 
     @Override
@@ -52,8 +49,8 @@ public class RiotAuthHttpAdapter implements RiotAuthPort {
             String accessToken = (String) responseBody.get("access_token");
             String newRefreshToken = (String) responseBody.get("refresh_token");
             
-            // Extraction du PUUID depuis le JWT Access Token
-            String puuid = extractPuuid(accessToken);
+            // Utilisation de l'extracteur partagé
+            String puuid = tokenParser.extractPuuid(accessToken);
             
             // Par défaut, le refresh token Riot dure 30 jours
             LocalDateTime expiresAt = LocalDateTime.now().plusDays(30);
@@ -64,19 +61,6 @@ public class RiotAuthHttpAdapter implements RiotAuthPort {
             throw new IllegalArgumentException("RIOT_TOKEN_INVALID");
         } catch (Exception e) {
             throw new RuntimeException("Erreur technique lors du refresh Riot", e);
-        }
-    }
-
-    private String extractPuuid(String accessToken) {
-        try {
-            String[] parts = accessToken.split("\\.");
-            if (parts.length < 2) throw new IllegalArgumentException("INVALID_JWT");
-            
-            byte[] payloadBytes = Base64.getUrlDecoder().decode(parts[1]);
-            Map<String, Object> payload = objectMapper.readValue(payloadBytes, new TypeReference<Map<String, Object>>() {});
-            return (String) payload.get("sub");
-        } catch (Exception e) {
-            throw new RuntimeException("Impossible d'extraire le PUUID du token", e);
         }
     }
 }
