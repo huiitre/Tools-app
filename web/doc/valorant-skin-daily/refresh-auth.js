@@ -166,6 +166,32 @@ async function getBundles(featuredBundle, skinMap) {
     const m = Math.floor((remaining % 3600) / 60);
     console.log(`\n⏱️  Expire dans ${h}h ${m}min`);
 
+    if (shop.BonusStore) {
+      console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🌙 MARCHÉ NOIR (NIGHT MARKET)');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+      const bonusOffers = shop.BonusStore.BonusStoreOffers;
+      const bonusSkinIds = bonusOffers.map(o => o.Offer.Rewards[0].ItemID);
+      const bonusSkinNames = resolveSkinNames(skinMap, bonusSkinIds);
+      const VP = '85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741';
+
+      bonusSkinNames.forEach((name, i) => {
+        const offer = bonusOffers[i];
+        const baseCost = offer.Offer.Cost[VP];
+        const discountedCost = offer.DiscountCosts[VP];
+        const percent = offer.DiscountPercent;
+        console.log(`${i + 1}. ${name} — ${discountedCost} VP (-${percent}%)`);
+        console.log(`   💰 Prix original : ${baseCost} VP`);
+        console.log(`   UUID Riot : ${bonusSkinIds[i]}`);
+      });
+
+      const bonusRemaining = shop.BonusStore.BonusStoreRemainingDurationInSeconds;
+      const bd = Math.floor(bonusRemaining / 86400);
+      const bh = Math.floor((bonusRemaining % 86400) / 3600);
+      console.log(`\n⏱️  Expire dans ${bd}j ${bh}h`);
+    }
+
     if (shop.FeaturedBundle) {
       const bundles = await getBundles(shop.FeaturedBundle, skinMap);
 

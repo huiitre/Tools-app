@@ -1,6 +1,6 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRiotStore, type RiotRegion } from '@/modules/Riot/riot.store'
-import type { ValorantSkin, ValorantShopOffer } from '../valorant.types'
+import type { ValorantSkin, ValorantShopOffer, ValorantNightMarket, ValorantNightMarketOffer } from '../valorant.types'
 import {
   extractPuuid,
   fetchEntitlementToken,
@@ -11,6 +11,7 @@ import {
   refreshToAccessToken,
   isAccessTokenExpired,
   type RawBundle,
+  type RawNightMarketOffer,
 } from '../fetch/valorantShop.fetch'
 
 export type View = 'form' | 'loading' | 'shop'
@@ -36,12 +37,15 @@ export const REGIONS: { value: RiotRegion; label: string }[] = [
   { value: 'latam', label: 'LATAM — Amérique latine' },
 ]
 
+const VP_CURRENCY_ID = '85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'
+
 export function useValorantShop() {
   const riotStore = useRiotStore()
 
   const view = ref<View>('form')
   const skins = ref<ValorantShopOffer[]>([])
   const bundles = ref<ShopBundle[]>([])
+  const nightMarket = ref<ValorantNightMarket | null>(null)
   const currentSkinIds = ref<string[]>([])
   const isRenewing = ref(false)
   const error = ref<string | null>(null)
@@ -81,6 +85,24 @@ export function useValorantShop() {
         skins,
       }
     }))
+  }
+
+  async function buildNightMarket(raw: { offers: RawNightMarketOffer[], remainingSeconds: number }): Promise<ValorantNightMarket> {
+    const offers = await Promise.all(raw.offers.map(async (o) => {
+      const skinData = await fetchSkinByLevelId(o.Offer.Rewards[0].ItemID)
+      return {
+        ...skinData,
+        offerId: o.BonusOfferID,
+        baseCost: o.Offer.Cost[VP_CURRENCY_ID] ?? 0,
+        discountedCost: o.DiscountCosts[VP_CURRENCY_ID] ?? 0,
+        discountPercent: o.DiscountPercent,
+        isSeen: o.IsSeen,
+      }
+    }))
+    return {
+      offers,
+      expiresAt: Date.now() + raw.remainingSeconds * 1_000,
+    }
   }
 
   function startTimer(seconds: number) {
@@ -160,21 +182,24 @@ export function useValorantShop() {
       }
 
       try {
-        const { offers, remainingSeconds, bundles: rawBundles } = await fetchOffers(token, riotStore.region)
+        const { offers, remainingSeconds, bundles: rawBundles, nightMarket: rawNM } = await fetchOffers(token, riotStore.region)
         const newIds = offers.map(o => o.id).join(',')
 
         if (newIds !== prevIds && renewalActive) {
-          const [resolvedSkins, resolvedBundles] = await Promise.all([
+          const [resolvedSkins, resolvedBundles, resolvedNM] = await Promise.all([
             Promise.all(offers.map(({ id, cost }) => fetchSkinByLevelId(id).then((skin) => ({ ...skin, cost })))),
             buildBundles(rawBundles),
+            rawNM ? buildNightMarket(rawNM) : Promise.resolve(null),
           ])
           
           riotStore.syncFromSkins(resolvedSkins)
           resolvedBundles.forEach(b => riotStore.syncFromSkins(b.skins))
+          if (resolvedNM) riotStore.syncFromSkins(resolvedNM.offers)
 
           skins.value = resolvedSkins
           currentSkinIds.value = offers.map(o => o.id)
           bundles.value = resolvedBundles
+          nightMarket.value = resolvedNM
           startTimer(remainingSeconds)
           stopRenewal()
           return
@@ -192,19 +217,22 @@ export function useValorantShop() {
     error.value = null
 
     try {
-      const { offers, remainingSeconds, bundles: rawBundles } = await fetchOffers(token, region)
+      const { offers, remainingSeconds, bundles: rawBundles, nightMarket: rawNM } = await fetchOffers(token, region)
 
-      const [resolvedSkins, resolvedBundles] = await Promise.all([
+      const [resolvedSkins, resolvedBundles, resolvedNM] = await Promise.all([
         Promise.all(offers.map(({ id, cost }) => fetchSkinByLevelId(id).then((skin) => ({ ...skin, cost })))),
         buildBundles(rawBundles),
+        rawNM ? buildNightMarket(rawNM) : Promise.resolve(null),
       ])
 
       riotStore.syncFromSkins(resolvedSkins)
       resolvedBundles.forEach(b => riotStore.syncFromSkins(b.skins))
+      if (resolvedNM) riotStore.syncFromSkins(resolvedNM.offers)
 
       skins.value = resolvedSkins
       currentSkinIds.value = offers.map(o => o.id)
       bundles.value = resolvedBundles
+      nightMarket.value = resolvedNM
 
       riotStore.setAuth(token, region)
       startTimer(remainingSeconds)
@@ -241,6 +269,7 @@ export function useValorantShop() {
     riotStore.clearAll()
     skins.value = []
     bundles.value = []
+    nightMarket.value = null
     currentSkinIds.value = []
     error.value = null
     view.value = 'form'
@@ -278,6 +307,7 @@ export function useValorantShop() {
     view,
     skins,
     bundles,
+    nightMarket,
     isRenewing,
     error,
     bundleNow,

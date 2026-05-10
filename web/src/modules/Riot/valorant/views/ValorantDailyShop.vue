@@ -4,9 +4,10 @@ import { useImagePreview } from '@/composables/useImagePreview'
 import ValorantAuthCard from '../components/ValorantAuthCard.vue'
 import ValorantBundleCard from '../components/ValorantBundleCard.vue'
 import ValorantSkinActions from '../components/ValorantSkinActions.vue'
+import ValorantNightMarket from '../components/ValorantNightMarket.vue'
 
 const {
-  view, skins, bundles, isRenewing, error, bundleNow,
+  view, skins, bundles, nightMarket, isRenewing, error, bundleNow,
   formattedTime, handleSubmit, reset, currentRegionLabel,
 } = useValorantShop()
 
@@ -98,6 +99,12 @@ const { open: openImagePreview } = useImagePreview()
           :now="bundleNow"
         />
       </template>
+
+      <ValorantNightMarket
+        v-if="nightMarket"
+        :market="nightMarket"
+        :now="bundleNow"
+      />
     </div>
   </div>
 </template>

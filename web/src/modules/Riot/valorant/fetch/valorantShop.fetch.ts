@@ -45,10 +45,26 @@ export interface RawBundle {
   remainingSeconds: number
 }
 
+export interface RawNightMarketOffer {
+  BonusOfferID: string
+  Offer: {
+    OfferID: string
+    Cost: Record<string, number>
+    Rewards: Array<{ ItemID: string }>
+  }
+  DiscountCosts: Record<string, number>
+  DiscountPercent: number
+  IsSeen: boolean
+}
+
 export interface StorefrontResult {
   offers: Array<{ id: string; cost: number }>
   remainingSeconds: number
   bundles: RawBundle[]
+  nightMarket: {
+    offers: RawNightMarketOffer[]
+    remainingSeconds: number
+  } | null
 }
 
 export async function fetchStorefront(
@@ -95,6 +111,14 @@ export async function fetchStorefront(
     }
   }
 
+  let nightMarket = null
+  if (data.BonusStore) {
+    nightMarket = {
+      offers: data.BonusStore.BonusStoreOffers,
+      remainingSeconds: data.BonusStore.BonusStoreRemainingDurationInSeconds,
+    }
+  }
+
   return {
     offers: data.SkinsPanelLayout.SingleItemStoreOffers.map((offer: any) => ({
       id: offer.Rewards[0].ItemID,
@@ -102,6 +126,7 @@ export async function fetchStorefront(
     })),
     remainingSeconds: data.SkinsPanelLayout.SingleItemOffersRemainingDurationInSeconds ?? 0,
     bundles,
+    nightMarket,
   }
 }
 
