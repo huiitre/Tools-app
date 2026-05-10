@@ -23,7 +23,6 @@ public class PostgresAdminStatsRepository implements AdminStatsRepository {
                         COUNT(*) AS total,
                         COUNT(*) FILTER (WHERE is_active = true) AS active
                     FROM tools_core.users
-                    WHERE user_type = 'HUMAN'
                 """;
 
         Map<String, Object> counts = jdbcTemplate.queryForMap(userCountSql);
@@ -32,8 +31,7 @@ public class PostgresAdminStatsRepository implements AdminStatsRepository {
 
         final String newUsersSql = """
                     SELECT COUNT(*) FROM tools_core.users
-                    WHERE user_type = 'HUMAN'
-                    AND created_at >= ?
+                    WHERE created_at >= ?
                 """;
 
         Long newCount = jdbcTemplate.queryForObject(newUsersSql, Long.class, LocalDateTime.now().minusWeeks(1));

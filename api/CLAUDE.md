@@ -327,3 +327,23 @@ UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + r
 - catalog/ : Armes, Skins et Bundles (données Riot).
 - user/ : Skins possédés, Watchlist et Historique boutique.
 - Suppression des dossiers à plat usecase/, command/, ports/, view/.
+
+11. Module Notifications — COMPLÈTE (2026-05-10)
+
+Architecture : Asynchrone via Spring Events et temps réel via SSE (Server-Sent Events).
+
+Déclenchement : `eventPublisher.publishEvent(new NotificationEvent(...))`.
+Bus asynchrone (@Async) géré par `NotificationEventListener`.
+
+Persistence : 1 ligne par destinataire dans `user_notifications`. Suppression physique (DELETE).
+
+Sécurité :
+- Role TECH exclu systématiquement de tous les envois.
+- JWT passé via query param `?token=` pour le flux SSE.
+
+Routes :
+- `POST  /notifications`       → Envoyer manuellement (TECH)
+- `GET   /notifications/stream` → Flux SSE (Accept: text/event-stream)
+- `GET   /notifications`        → Liste des notifs actives
+- `PATCH /notifications/read`   → Marquer comme lu (Batch ids[] ou all)
+- `DELETE /notifications`       → Supprimer (Batch ids[] ou all)

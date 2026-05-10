@@ -287,3 +287,12 @@ Les fonctions `useAddWorkshopLink`, `useUpdateWorkshopLink`, `useDeleteWorkshopL
 - **Web**: Docker image `huiitre/tools_web:latest` via `npm run deploy`
 - **Electron**: GitHub releases via `electron-updater` (`.github/workflows/deploy.yml` on master)
 - **QA**: separate workflow `deploy-qa.yml` on the `qa` branch
+
+## Module Notifications — COMPLÈTE (2026-05-10)
+
+- **Store** : `useNotificationStore` (Pinia) dans `src/modules/Core/Notification/store`.
+- **Transport** : `SseNotificationTransport` gère le flux temps réel.
+- **Auto-Sync** : Chargement historique au boot + connexion SSE auto selon l'auth.
+- **Types** : Utilise l'interface `AppNotification` pour éviter le conflit avec `window.Notification`.
+- **Batch** : `markAsRead([ids])` et `remove([ids])` gèrent le mode global si tableau vide.
+- **OS Push** : Déclenche une notif système si l'onglet n'a pas le focus.

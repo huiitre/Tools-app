@@ -81,3 +81,10 @@ Conformité : Utilisation impérative du guide de variables PicoCSS fourni dans 
 [Riot/Navigation] Fix des pages vides lors de la navigation entre Shop et Skins. Causes identifiées : conflits de noms de transitions (renommée de `page` à `riot-page`), absence de nœud racine unique dans `ValorantDailyShop.vue` (bloquant le `mode="out-in"` de Vue), et destruction manuelle abusive via `renderKey` dans le layout.
 
 [Architecture/Transitions] Standardisation des transitions par module : `riot-page`, `dofus-page` et `admin-page`. Suppression globale de la variable `renderKey` et de ses incrémenteurs dans les stores Pinia. Les transitions globales de `App.vue` et les transitions locales n'entrent plus en conflit. Chaque composant vue de module doit avoir un nœud racine unique pour garantir le fonctionnement du `mode="out-in"`.
+
+[Feature] Core/Notification (2026-05-10) :
+- Architecture : Store centralisé réactif aux événements SSE.
+- Sécurité : Passage du token JWT dans l'URL pour `EventSource`.
+- Stabilité : Heartbeat backend géré, UI affiche un point rouge si déco.
+- Conflit : Interface renommée en `AppNotification` pour Rollup/Vite.
+- Nginx : Fix erreur MIME type via `include mime.types` et `try_files =404` sur les assets.
