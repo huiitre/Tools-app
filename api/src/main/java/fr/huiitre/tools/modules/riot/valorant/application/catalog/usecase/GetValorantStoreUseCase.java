@@ -4,7 +4,6 @@ import fr.huiitre.tools.modules.core.module.domain.ModuleCode;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.ports.CurrentUserProvider;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
-import fr.huiitre.tools.modules.core.security.infrastructure.EncryptionService;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantBundleRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantStorePort;
@@ -12,6 +11,7 @@ import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.*;
 import fr.huiitre.tools.modules.riot.valorant.application.core.ports.RiotAuthPort;
 import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantAuthRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantVersionProvider;
+import fr.huiitre.tools.modules.riot.valorant.application.core.usecase.ValorantAuthService;
 import fr.huiitre.tools.modules.riot.valorant.infrastructure.ValorantTokenParser;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +23,8 @@ import java.util.UUID;
 @Service
 public class GetValorantStoreUseCase implements SecuredUseCase {
 
+    private final ValorantAuthService valorantAuthService;
     private final ValorantAuthRepository valorantAuthRepository;
-    private final EncryptionService encryptionService;
     private final RiotAuthPort riotAuthPort;
     private final ValorantStorePort valorantStorePort;
     private final ValorantVersionProvider versionProvider;
@@ -33,8 +33,8 @@ public class GetValorantStoreUseCase implements SecuredUseCase {
     private final CurrentUserProvider currentUserProvider;
     private final ValorantTokenParser tokenParser;
 
-    public GetValorantStoreUseCase(ValorantAuthRepository valorantAuthRepository,
-                                   EncryptionService encryptionService,
+    public GetValorantStoreUseCase(ValorantAuthService valorantAuthService,
+                                   ValorantAuthRepository valorantAuthRepository,
                                    RiotAuthPort riotAuthPort,
                                    ValorantStorePort valorantStorePort,
                                    ValorantVersionProvider versionProvider,
@@ -42,8 +42,8 @@ public class GetValorantStoreUseCase implements SecuredUseCase {
                                    ValorantBundleRepository bundleRepository,
                                    CurrentUserProvider currentUserProvider,
                                    ValorantTokenParser tokenParser) {
+        this.valorantAuthService = valorantAuthService;
         this.valorantAuthRepository = valorantAuthRepository;
-        this.encryptionService = encryptionService;
         this.riotAuthPort = riotAuthPort;
         this.valorantStorePort = valorantStorePort;
         this.versionProvider = versionProvider;
@@ -84,7 +84,7 @@ public class GetValorantStoreUseCase implements SecuredUseCase {
             ValorantAuthRepository.ValorantAuthData authData = authDataOpt
                     .orElseThrow(() -> new IllegalArgumentException("RIOT_AUTH_NOT_FOUND"));
             
-            accessToken = refreshAccessToken(userId, authData);
+            accessToken = valorantAuthService.getOrRefreshAccessToken(userId);
             puuid = authData.puuid();
             region = authData.region();
         }
@@ -95,23 +95,11 @@ public class GetValorantStoreUseCase implements SecuredUseCase {
             // Si l'access token est expiré (401), on tente un refresh automatique si on a les infos en base
             if (("RIOT_ACCESS_TOKEN_INVALID".equals(e.getMessage()) || "RIOT_STOREFRONT_FETCH_FAILED".equals(e.getMessage())) 
                 && authDataOpt.isPresent()) {
-                accessToken = refreshAccessToken(userId, authDataOpt.get());
+                accessToken = valorantAuthService.getOrRefreshAccessToken(userId);
                 return fetchAndMapStore(userId, puuid, region, accessToken);
             }
             throw e;
         }
-    }
-
-    private String refreshAccessToken(long userId, ValorantAuthRepository.ValorantAuthData authData) {
-        String refreshToken = encryptionService.decrypt(authData.encryptedRefreshToken(), authData.iv());
-        RiotAuthPort.ValorantAuthResponse riotResponse = riotAuthPort.refresh(refreshToken);
-
-        // Rotation du refresh token
-        String newIv = encryptionService.generateIv();
-        String newEncryptedRefresh = encryptionService.encrypt(riotResponse.refreshToken(), newIv);
-        valorantAuthRepository.save(userId, riotResponse.puuid(), authData.region(), newEncryptedRefresh, newIv, riotResponse.refreshTokenExpiresAt());
-
-        return riotResponse.accessToken();
     }
 
     private ValorantStoreView fetchAndMapStore(long userId, String puuid, String region, String accessToken) {

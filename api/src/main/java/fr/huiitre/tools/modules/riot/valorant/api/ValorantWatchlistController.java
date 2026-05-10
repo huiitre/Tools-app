@@ -6,6 +6,7 @@ import fr.huiitre.tools.modules.riot.valorant.application.user.command.AddToWatc
 import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.AddSkinToWatchlistUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.GetMyValorantWatchlistUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.RemoveSkinFromWatchlistUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.ValorantWatchlistNotifier;
 import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -19,14 +20,17 @@ public class ValorantWatchlistController {
     private final GetMyValorantWatchlistUseCase getMyWatchlistUseCase;
     private final AddSkinToWatchlistUseCase addSkinToWatchlistUseCase;
     private final RemoveSkinFromWatchlistUseCase removeSkinFromWatchlistUseCase;
+    private final ValorantWatchlistNotifier watchlistNotifier;
 
     public ValorantWatchlistController(
             GetMyValorantWatchlistUseCase getMyWatchlistUseCase,
             AddSkinToWatchlistUseCase addSkinToWatchlistUseCase,
-            RemoveSkinFromWatchlistUseCase removeSkinFromWatchlistUseCase) {
+            RemoveSkinFromWatchlistUseCase removeSkinFromWatchlistUseCase,
+            ValorantWatchlistNotifier watchlistNotifier) {
         this.getMyWatchlistUseCase = getMyWatchlistUseCase;
         this.addSkinToWatchlistUseCase = addSkinToWatchlistUseCase;
         this.removeSkinFromWatchlistUseCase = removeSkinFromWatchlistUseCase;
+        this.watchlistNotifier = watchlistNotifier;
     }
 
     @RequiredRole(RoleCode.READ_ONLY)
@@ -47,5 +51,12 @@ public class ValorantWatchlistController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeFromWatchlist(@PathVariable Long skinId) {
         removeSkinFromWatchlistUseCase.execute(skinId);
+    }
+
+    @RequiredRole(RoleCode.ADMIN)
+    @PostMapping("/admin/sync")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void triggerSync() {
+        watchlistNotifier.processAllUsers();
     }
 }

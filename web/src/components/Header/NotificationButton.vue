@@ -100,7 +100,7 @@ onBeforeUnmount(() => {
             </div>
             <div class="notif-item-content">
               <p class="notif-item-title">{{ notif.title }}</p>
-              <p class="notif-item-body">{{ notif.body }}</p>
+              <p class="notif-item-body" style="white-space: pre-wrap;">{{ notif.body }}</p>
               <div class="notif-item-footer">
                 <span class="notif-item-time">{{ formatRelative(notif.createdAt) }}</span>
                 <button
@@ -352,10 +352,8 @@ onBeforeUnmount(() => {
   color: var(--pico-muted-color);
   margin: 0 0 0.35rem;
   line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* Footer : date + poubelle sur la même ligne */
