@@ -50,4 +50,10 @@ public class PostgresValorantAuthRepository implements ValorantAuthRepository {
         final String sql = "DELETE FROM tools_riot.valorant_auth WHERE user_id = ?";
         jdbcTemplate.update(sql, userId);
     }
+
+    @Override
+    public java.util.List<Long> findAllUserIds() {
+        final String sql = "SELECT user_id FROM tools_riot.valorant_auth";
+        return jdbcTemplate.queryForList(sql, Long.class);
+    }
 }
