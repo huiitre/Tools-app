@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useImagePreview } from '@/composables/useImagePreview'
-import type { ShopBundle } from '../composables/useValorantShop'
+import type { ValorantStoreBundle } from '../valorant.types'
 import ValorantSkinActions from './ValorantSkinActions.vue'
 
 const props = defineProps<{
-  bundle: ShopBundle
+  bundle: ValorantStoreBundle
   now: number
 }>()
 
 const { open: openImagePreview } = useImagePreview()
 
 const formattedTime = computed(() => {
-  const ms = Math.max(0, props.bundle.expiresAt - props.now)
+  const ms = Math.max(0, props.bundle.remainingSeconds * 1000)
   const d = Math.floor(ms / 86_400_000)
   const h = Math.floor((ms % 86_400_000) / 3_600_000)
   const m = Math.floor((ms % 3_600_000) / 60_000)
@@ -24,9 +24,9 @@ const formattedTime = computed(() => {
   <article class="bundle-card">
     <div
       class="bundle-banner"
-      @click="props.bundle.displayIcon && openImagePreview(props.bundle.displayIcon, props.bundle.name)"
+      @click="props.bundle.bannerUrl && openImagePreview(props.bundle.bannerUrl, props.bundle.name)"
     >
-      <img v-if="props.bundle.displayIcon" :src="props.bundle.displayIcon" :alt="props.bundle.name" loading="lazy" />
+      <img v-if="props.bundle.bannerUrl" :src="props.bundle.bannerUrl" :alt="props.bundle.name" loading="lazy" />
       <div v-else class="bundle-banner-placeholder" />
     </div>
 
@@ -34,10 +34,10 @@ const formattedTime = computed(() => {
       <div class="bundle-info-left">
         <div class="bundle-name">{{ props.bundle.name }}</div>
         <div class="bundle-price-row">
-          <span class="vp-badge">{{ props.bundle.discountedCost.toLocaleString('fr-FR') }} VP</span>
+          <span class="vp-badge">{{ props.bundle.totalDiscountedCost.toLocaleString('fr-FR') }} VP</span>
           <template v-if="props.bundle.discountPercent > 0">
-            <span class="bundle-original">{{ props.bundle.baseCost.toLocaleString('fr-FR') }} VP</span>
-            <span class="bundle-discount-badge">-{{ Math.round(props.bundle.discountPercent * 100) }}%</span>
+            <span class="bundle-original">{{ props.bundle.totalBaseCost.toLocaleString('fr-FR') }} VP</span>
+            <span class="bundle-discount-badge">-{{ props.bundle.discountPercent }}%</span>
           </template>
         </div>
       </div>
@@ -47,18 +47,18 @@ const formattedTime = computed(() => {
       </div>
     </div>
 
-    <div v-if="props.bundle.skins.length" class="bundle-skins-grid">
-      <div v-for="skin in props.bundle.skins" :key="skin.id" class="bundle-skin-item">
+    <div v-if="props.bundle.items.length" class="bundle-skins-grid">
+      <div v-for="offer in props.bundle.items" :key="offer.skin.id" class="bundle-skin-item">
         <div
           class="bundle-skin-img"
-          @click="skin.iconUrl && openImagePreview(skin.iconUrl, skin.name)"
+          @click="offer.skin.iconUrl && openImagePreview(offer.skin.iconUrl, offer.skin.name)"
         >
-          <img v-if="skin.iconUrl" :src="skin.iconUrl" :alt="skin.name" loading="lazy" />
-          <ValorantSkinActions :skin-id="skin.id" class="skin-actions" />
+          <img v-if="offer.skin.iconUrl" :src="offer.skin.iconUrl" :alt="offer.skin.name" loading="lazy" />
+          <ValorantSkinActions :skin-id="offer.skin.id" class="skin-actions" />
         </div>
-        <span class="bundle-skin-label">{{ skin.name }}</span>
+        <span class="bundle-skin-label">{{ offer.skin.name }}</span>
         <div class="bundle-skin-price">
-          <span v-if="skin.cost > 0" class="vp-badge">{{ skin.cost.toLocaleString('fr-FR') }} VP</span>
+          <span v-if="offer.cost > 0" class="vp-badge">{{ offer.cost.toLocaleString('fr-FR') }} VP</span>
           <span v-else class="vp-badge vp-badge--free">OFFERT</span>
         </div>
       </div>

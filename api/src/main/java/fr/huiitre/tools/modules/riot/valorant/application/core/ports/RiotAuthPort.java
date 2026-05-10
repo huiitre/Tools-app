@@ -1,8 +1,9 @@
 package fr.huiitre.tools.modules.riot.valorant.application.core.ports;
 
-import fr.huiitre.tools.modules.riot.valorant.application.core.view.ValorantTokenView;
+import java.time.LocalDateTime;
 
 public interface RiotAuthPort {
+    ValorantAuthResponse refresh(String refreshToken);
 
-    ValorantTokenView refresh(String refreshToken);
+    record ValorantAuthResponse(String accessToken, String refreshToken, String puuid, LocalDateTime refreshTokenExpiresAt) {}
 }

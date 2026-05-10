@@ -73,19 +73,19 @@ const { open: openImagePreview } = useImagePreview()
 
       <div class="skin-grid">
         <article
-          v-for="(skin, i) in skins"
-          :key="skin.id"
+          v-for="(offer, i) in skins"
+          :key="offer.skin.id"
           class="skin-card"
           :style="{ '--delay': `${i * 110}ms` }"
         >
-          <div class="skin-image-wrap" @click="skin.iconUrl && openImagePreview(skin.iconUrl, skin.name)">
-            <img :src="skin.iconUrl ?? undefined" :alt="skin.name" class="skin-image" loading="lazy" />
-            <ValorantSkinActions :skin-id="skin.id" class="card-actions" />
+          <div class="skin-image-wrap" @click="offer.skin.iconUrl && openImagePreview(offer.skin.iconUrl, offer.skin.name)">
+            <img :src="offer.skin.iconUrl ?? undefined" :alt="offer.skin.name" class="skin-image" loading="lazy" />
+            <ValorantSkinActions :skin-id="offer.skin.id" class="card-actions" />
           </div>
           <div class="skin-info">
-            <div class="skin-name">{{ skin.name }}</div>
+            <div class="skin-name">{{ offer.skin.name }}</div>
             <div class="skin-price">
-              <span class="vp-badge">{{ skin.cost.toLocaleString('fr-FR') }} VP</span>
+              <span class="vp-badge">{{ offer.cost.toLocaleString('fr-FR') }} VP</span>
             </div>
           </div>
         </article>
@@ -98,7 +98,7 @@ const { open: openImagePreview } = useImagePreview()
         </div>
         <ValorantBundleCard
           v-for="b in bundles"
-          :key="b.uuid"
+          :key="b.assetId"
           :bundle="b"
           :now="bundleNow"
         />

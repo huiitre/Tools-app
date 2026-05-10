@@ -98,10 +98,10 @@ function switchMode(mode: AuthMode) {
     </label>
 
     <p v-if="authMode === 'refresh'" class="help-note">
-      Le refresh token dure plusieurs semaines — vous n'aurez plus besoin de le renouveler régulièrement.
+      Une fois lié, votre compte sera automatiquement maintenu à jour par le serveur.
     </p>
     <p v-else class="help-note">
-      L'access token expire après ~1h. Préférez le Refresh Token pour ne pas avoir à revenir ici régulièrement.
+      L'access token n'est pas persistant et expire après environ 1h.
     </p>
 
     <details>

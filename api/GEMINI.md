@@ -134,16 +134,27 @@ Hiérarchie des rôles (RoleHierarchy.java) :
 - UserModuleRoleRepository.findAllByModuleId() : inverse de findAllByUserId.
 - Config : AdminConfig wire PostgresAdminStatsRepository.
 
-[Feature] Riot/Valorant store history — COMPLÈTE (2026-05-09).
+[Feature] Riot/Valorant store history — Archivage en batch (2026-05-10).
 - GET  /riot/valorant/store-history  → List<ValorantStoreHistoryView> (READ_ONLY).
-- POST /riot/valorant/store-history  → 201 — body : { "skinId": Long } (USER).
-- Table : tools_riot.valorant_store_history.
-- Empêche les doublons pour un même utilisateur/skin sur la même journée (CURRENT_DATE).
-- Repository : PostgresValorantStoreHistoryRepository.
+- POST /riot/valorant/store-history  → 201 — body : { "skinIds": List<Long>, "seenAt": LocalDate } (USER).
+- Logique Batch : Archivage atomique des 4 skins quotidiens.
+- Stabilisation Date : Calcul basé sur le midpoint de la rotation (Expiration - 12h) côté client.
+- Restructuration API : Le UseCase agrège désormais les objets `ValorantSkinView` complets et groupe le retour par date décroissante.
+- Table BDD : tools_riot.valorant_store_history (id, user_id, skin_id, seen_at).
+- Repository : findAllRawByUserId retourne une Map d'IDs par date pour agrégation optimisée.
 
 [Refactor] Réorganisation du module Valorant application en sous-packages (core, catalog, user) (2026-05-10).
-- Structure par domaine fonctionnel au lieu de type technique.
-- Mise à jour des packages et imports dans tout le module API.
+- core/ : Auth et Version.
+- catalog/ : Armes, Skins et Bundles (données Riot).
+- user/ : Skins possédés, Watchlist et Historique boutique.
+- Suppression des dossiers à plat usecase/, command/, ports/, view/.
+
+[Feature] Riot/Valorant Auth sécurisée — COMPLÈTE (2026-05-10).
+- Stockage chiffré (AES-256-GCM) du refresh token en DB (tools_riot.valorant_auth).
+- EncryptionService : utilise TOOLS_ENCRYPTION_KEY pour sécuriser les secrets.
+- Zéro stockage access_token : régénération à la volée via GET /riot/valorant/refresh.
+- Extraction automatique du PUUID depuis le payload JWT de Riot.
+- Rotation automatique du refresh_token gérée de manière transparente en DB.
 
 [Sécurité] Inversion hiérarchie ADMIN/TECH — ADMIN (5) > TECH (4).
 - Use cases modules (GET/POST/PUT/DELETE) abaissés de TECH à ADMIN.

@@ -21,20 +21,41 @@ export interface ValorantSkin {
   watchedAt: string | null
 }
 
-export interface ValorantShopOffer extends ValorantSkin {
+export interface ValorantStoreOffer {
+  skin: ValorantSkin
   cost: number
 }
 
-export interface ValorantNightMarketOffer extends ValorantSkin {
+export interface ValorantStoreBundle {
+  assetId: string
+  name: string
+  bannerUrl: string
+  items: ValorantStoreOffer[]
+  totalBaseCost: number
+  totalDiscountedCost: number
+  discountPercent: number
+  remainingSeconds: number
+}
+
+export interface ValorantNightMarketOffer {
   offerId: string
-  baseCost: number
+  skin: ValorantSkin
+  originalCost: number
   discountedCost: number
   discountPercent: number
   isSeen: boolean
 }
+
 export interface ValorantNightMarket {
   offers: ValorantNightMarketOffer[]
-  expiresAt: number
+  remainingSeconds: number
+}
+
+export interface ValorantStoreView {
+  offers: ValorantStoreOffer[]
+  remainingSeconds: number
+  bundles: ValorantStoreBundle[]
+  nightMarket: ValorantNightMarket | null
 }
 
 export interface ValorantStoreHistoryView {

@@ -222,6 +222,18 @@ Types exportés depuis `useValorantShop.ts` : `View`, `AuthMode`, `BundleSkin`, 
 
 **Réponse `GET /riot/valorant/skins` :** inclut un tableau `levels[]` embarqué : `{ assetId, levelIndex, displayIconUrl, streamedVideoUrl }`.
 
+### Valorant — historique du shop (Store History)
+
+L'historique est géré en mode **bulk** pour archiver l'intégralité du shop quotidien en un seul appel.
+
+- **Flux de Sync** : Dans `useValorantShop.ts`, l'ajout se fait via `addToStoreHistory(skinIds, shopDate)`. L'appel est `awaité` avant de déclencher un `fetchStoreHistory()` pour rafraîchir l'UI.
+- **Calcul de Date stable** : Pour éviter les sauts de date à minuit UTC, la `shopDate` est calculée sur le milieu de la rotation : `expirationMs - 12h`. Cela garantit la même date pendant les 24h de validité du store.
+- **Popup d'historique** : Composant `ValorantShopHistoryPopup.vue` utilisant `@floating-ui/vue`.
+    - Affiche les skins groupés par date (format "J mois AAAA").
+    - Grille de miniatures sans interactivité (cursor default, pas de preview).
+    - Fermeture automatique au scroll ou clic extérieur.
+    - Placée à gauche du bouton "Changer de token" dans `ValorantDailyShop.vue`.
+
 ### Valorant — boutique : packs en vente (FeaturedBundle)
 
 `fetchStorefront` extrait le `FeaturedBundle` de la réponse Riot et retourne `bundles: RawBundle[]` dans `StorefrontResult`.

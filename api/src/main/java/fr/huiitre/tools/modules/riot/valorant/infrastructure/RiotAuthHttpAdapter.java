@@ -1,7 +1,6 @@
 package fr.huiitre.tools.modules.riot.valorant.infrastructure;
 
 import fr.huiitre.tools.modules.riot.valorant.application.core.ports.RiotAuthPort;
-import fr.huiitre.tools.modules.riot.valorant.application.core.view.ValorantTokenView;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
@@ -9,6 +8,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 public class RiotAuthHttpAdapter implements RiotAuthPort {
@@ -17,13 +17,15 @@ public class RiotAuthHttpAdapter implements RiotAuthPort {
     private static final String CLIENT_ID = "prod-xsso-playvalorant";
 
     private final RestTemplate restTemplate;
+    private final ValorantTokenParser tokenParser;
 
-    public RiotAuthHttpAdapter(RestTemplate restTemplate) {
+    public RiotAuthHttpAdapter(RestTemplate restTemplate, ValorantTokenParser tokenParser) {
         this.restTemplate = restTemplate;
+        this.tokenParser = tokenParser;
     }
 
     @Override
-    public ValorantTokenView refresh(String refreshToken) {
+    public ValorantAuthResponse refresh(String refreshToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -44,12 +46,21 @@ public class RiotAuthHttpAdapter implements RiotAuthPort {
                 throw new IllegalArgumentException("RIOT_AUTH_EMPTY_RESPONSE");
             }
 
-            return new ValorantTokenView(
-                    (String) responseBody.get("access_token"),
-                    (String) responseBody.get("refresh_token"));
+            String accessToken = (String) responseBody.get("access_token");
+            String newRefreshToken = (String) responseBody.get("refresh_token");
+            
+            // Utilisation de l'extracteur partagé
+            String puuid = tokenParser.extractPuuid(accessToken);
+            
+            // Par défaut, le refresh token Riot dure 30 jours
+            LocalDateTime expiresAt = LocalDateTime.now().plusDays(30);
+
+            return new ValorantAuthResponse(accessToken, newRefreshToken, puuid, expiresAt);
 
         } catch (HttpClientErrorException e) {
             throw new IllegalArgumentException("RIOT_TOKEN_INVALID");
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur technique lors du refresh Riot", e);
         }
     }
 }

@@ -1,33 +1,15 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRiotStore, type RiotRegion } from '@/modules/Riot/riot.store'
-import type { ValorantSkin, ValorantShopOffer, ValorantNightMarket, ValorantNightMarketOffer } from '../valorant.types'
+import type { ValorantStoreOffer, ValorantStoreBundle, ValorantNightMarket } from '../valorant.types'
 import {
-  extractPuuid,
-  fetchEntitlementToken,
-  fetchClientVersion,
-  fetchStorefront,
-  fetchSkinByLevelId,
-  fetchBundleMeta,
+  fetchStore,
   refreshToAccessToken,
   isAccessTokenExpired,
-  type RawBundle,
-  type RawNightMarketOffer,
 } from '../fetch/valorantShop.fetch'
 import { fetchStoreHistory, addToStoreHistory } from '../fetch/valorantUserSkins.fetch'
 
 export type View = 'form' | 'loading' | 'shop'
 export type AuthMode = 'access' | 'refresh'
-
-export interface ShopBundle {
-  uuid: string
-  name: string
-  displayIcon: string
-  baseCost: number
-  discountedCost: number
-  discountPercent: number
-  expiresAt: number
-  skins: ValorantShopOffer[]
-}
 
 export const REGIONS: { value: RiotRegion; label: string }[] = [
   { value: 'eu', label: 'EU — Europe' },
@@ -38,16 +20,13 @@ export const REGIONS: { value: RiotRegion; label: string }[] = [
   { value: 'latam', label: 'LATAM — Amérique latine' },
 ]
 
-const VP_CURRENCY_ID = '85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741'
-
 export function useValorantShop() {
   const riotStore = useRiotStore()
 
   const view = ref<View>('form')
-  const skins = ref<ValorantShopOffer[]>([])
-  const bundles = ref<ShopBundle[]>([])
+  const skins = ref<ValorantStoreOffer[]>([])
+  const bundles = ref<ValorantStoreBundle[]>([])
   const nightMarket = ref<ValorantNightMarket | null>(null)
-  const currentSkinIds = ref<string[]>([])
   const isRenewing = ref(false)
   const error = ref<string | null>(null)
   const remainingMs = ref(0)
@@ -65,46 +44,6 @@ export function useValorantShop() {
   })
 
   const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms))
-
-  async function buildBundles(rawBundles: RawBundle[]): Promise<ShopBundle[]> {
-    return Promise.all(rawBundles.map(async (b) => {
-      const [meta, ...skins] = await Promise.all([
-        fetchBundleMeta(b.dataAssetId),
-        ...b.items.map(async (item) => {
-          const skinData = await fetchSkinByLevelId(item.itemId)
-          return { ...skinData, cost: item.cost }
-        }),
-      ])
-      return {
-        uuid: b.dataAssetId,
-        name: meta.name,
-        displayIcon: meta.displayIcon,
-        baseCost: b.totalBaseCost,
-        discountedCost: b.totalDiscountedCost,
-        discountPercent: b.discountPercent,
-        expiresAt: Date.now() + b.remainingSeconds * 1_000,
-        skins,
-      }
-    }))
-  }
-
-  async function buildNightMarket(raw: { offers: RawNightMarketOffer[], remainingSeconds: number }): Promise<ValorantNightMarket> {
-    const offers = await Promise.all(raw.offers.map(async (o) => {
-      const skinData = await fetchSkinByLevelId(o.Offer.Rewards[0].ItemID)
-      return {
-        ...skinData,
-        offerId: o.BonusOfferID,
-        baseCost: o.Offer.Cost[VP_CURRENCY_ID] ?? 0,
-        discountedCost: o.DiscountCosts[VP_CURRENCY_ID] ?? 0,
-        discountPercent: o.DiscountPercent,
-        isSeen: o.IsSeen,
-      }
-    }))
-    return {
-      offers,
-      expiresAt: Date.now() + raw.remainingSeconds * 1_000,
-    }
-  }
 
   function startTimer(seconds: number) {
     stopTimer()
@@ -137,40 +76,25 @@ export function useValorantShop() {
     const current = riotStore.accessToken
     if (current && !isAccessTokenExpired(current)) return current
 
-    if (riotStore.refreshToken) {
-      try {
-        const { accessToken, refreshToken: newRefresh } = await refreshToAccessToken(riotStore.refreshToken)
-        riotStore.setAccessToken(accessToken)
-        riotStore.setRefreshToken(newRefresh)
-        return accessToken
-      } catch {
-        riotStore.clearAll()
-        return null
-      }
+    try {
+      const { accessToken } = await refreshToAccessToken()
+      riotStore.setAccessToken(accessToken)
+      return accessToken
+    } catch {
+      // Si le refresh échoue (périmé en base), on déconnecte
+      riotStore.clearAll()
+      return null
     }
-
-    return null
   }
 
-  async function fetchOffers(token: string, region: RiotRegion) {
-    const puuid = extractPuuid(token)
-    const [entitlementsToken, clientVersion] = await Promise.all([
-      fetchEntitlementToken(token),
-      fetchClientVersion(),
-    ])
-    return fetchStorefront(puuid, region, token, entitlementsToken, clientVersion)
-  }
-
-  async function syncShopHistory(resolvedSkins: ValorantShopOffer[], remainingSeconds: number) {
+  async function syncShopHistory(resolvedSkins: ValorantStoreOffer[], remainingSeconds: number) {
     if (!resolvedSkins.length) return
     try {
       const expirationMs = Date.now() + (remainingSeconds * 1000)
       const shopDate = new Date(expirationMs - 43200 * 1000).toISOString().split('T')[0]
       
-      // 1. Attempt to add current skins to history
-      await addToStoreHistory(resolvedSkins.map(s => s.id), shopDate)
+      await addToStoreHistory(resolvedSkins.map(o => o.skin.id), shopDate)
       
-      // 2. Fetch full history to ensure UI is updated
       const history = await fetchStoreHistory()
       riotStore.setStoreHistory(history)
     } catch {
@@ -183,109 +107,81 @@ export function useValorantShop() {
     renewalActive = true
     isRenewing.value = true
 
-    const prevIds = currentSkinIds.value.join(',')
     let attempts = 0
-
     while (renewalActive && attempts < 30) {
       await sleep(10_000)
       if (!renewalActive) break
       attempts++
 
-      const token = await ensureAccessToken()
-      if (!token) {
-        stopRenewal()
-        error.value = 'Session expirée, veuillez vous reconnecter'
-        view.value = 'form'
-        return
-      }
-
       try {
-        const { offers, remainingSeconds, bundles: rawBundles, nightMarket: rawNM } = await fetchOffers(token, riotStore.region)
-        const newIds = offers.map(o => o.id).join(',')
-
-        if (newIds !== prevIds && renewalActive) {
-          const [resolvedSkins, resolvedBundles, resolvedNM] = await Promise.all([
-            Promise.all(offers.map(async ({ id, cost }) => {
-              const skin = await fetchSkinByLevelId(id)
-              return { ...skin, cost }
-            })),
-            buildBundles(rawBundles),
-            rawNM ? buildNightMarket(rawNM) : Promise.resolve(null),
-          ])
-          
-          riotStore.syncFromSkins(resolvedSkins)
-          resolvedBundles.forEach(b => riotStore.syncFromSkins(b.skins))
-          if (resolvedNM) riotStore.syncFromSkins(resolvedNM.offers)
-
-          skins.value = resolvedSkins
-          currentSkinIds.value = offers.map(o => o.id)
-          bundles.value = resolvedBundles
-          nightMarket.value = resolvedNM
-          startTimer(remainingSeconds)
-          syncShopHistory(resolvedSkins, remainingSeconds)
-          stopRenewal()
-          return
-        }
+        const token = await ensureAccessToken()
+        const store = await fetchStore(token ?? undefined, riotStore.region)
+        
+        // On considère que c'est un nouveau shop si les IDs ont changé
+        // Mais avec l'API, on peut juste comparer directement les données
+        skins.value = store.offers
+        bundles.value = store.bundles
+        nightMarket.value = store.nightMarket
+        
+        startTimer(store.remainingSeconds)
+        syncShopHistory(store.offers, store.remainingSeconds)
+        stopRenewal()
+        return
       } catch {
-        // retry next iteration
+        // retry
       }
     }
-
     if (renewalActive) stopRenewal()
   }
 
-  async function loadShop(token: string, region: RiotRegion) {
+  async function loadShop() {
     view.value = 'loading'
     error.value = null
 
     try {
-      const { offers, remainingSeconds, bundles: rawBundles, nightMarket: rawNM } = await fetchOffers(token, region)
+      const token = await ensureAccessToken()
+      const store = await fetchStore(token ?? undefined, riotStore.region)
 
-      const [resolvedSkins, resolvedBundles, resolvedNM] = await Promise.all([
-        Promise.all(offers.map(async ({ id, cost }) => {
-          const skin = await fetchSkinByLevelId(id)
-          return { ...skin, cost }
-        })),
-        buildBundles(rawBundles),
-        rawNM ? buildNightMarket(rawNM) : Promise.resolve(null),
-      ])
+      skins.value = store.offers
+      bundles.value = store.bundles
+      nightMarket.value = store.nightMarket
 
-      riotStore.syncFromSkins(resolvedSkins)
-      resolvedBundles.forEach(b => riotStore.syncFromSkins(b.skins))
-      if (resolvedNM) riotStore.syncFromSkins(resolvedNM.offers)
+      // Sync des skins pour l'ownership/watchlist dans le store Pinia
+      const allSkins = [
+        ...store.offers.map(o => o.skin),
+        ...store.bundles.flatMap(b => b.items.map(i => i.skin)),
+        ...(store.nightMarket?.offers.map(o => o.skin) ?? []),
+      ]
+      riotStore.syncFromSkins(allSkins)
 
-      skins.value = resolvedSkins
-      currentSkinIds.value = offers.map(o => o.id)
-      bundles.value = resolvedBundles
-      nightMarket.value = resolvedNM
-
-      riotStore.setAuth(token, region)
-      startTimer(remainingSeconds)
-      await syncShopHistory(resolvedSkins, remainingSeconds)
+      startTimer(store.remainingSeconds)
+      await syncShopHistory(store.offers, store.remainingSeconds)
       view.value = 'shop'
     } catch (e: any) {
       error.value = e?.message ?? 'Erreur lors du chargement de la boutique'
-      riotStore.clearAll()
       view.value = 'form'
     }
   }
 
   async function handleSubmit(token: string, region: RiotRegion, mode: AuthMode) {
-    if (mode === 'access') {
-      await loadShop(token, region)
-    } else {
-      view.value = 'loading'
-      error.value = null
-      try {
-        const { accessToken, refreshToken: newRefresh } = await refreshToAccessToken(token)
-        riotStore.setRefreshToken(newRefresh)
-        riotStore.setRegion(region)
-        await loadShop(accessToken, region)
-      } catch (e: any) {
-        error.value = e?.message ?? 'Refresh token invalide ou expiré'
-        riotStore.clearAll()
-        view.value = 'form'
+    view.value = 'loading'
+    error.value = null
+    try {
+      if (mode === 'refresh') {
+        // Liaison initiale via Refresh Token
+        const { accessToken } = await refreshToAccessToken(token)
+        riotStore.setAccessToken(accessToken)
+      } else {
+        // Usage direct d'un Access Token (durée 1h, non persistant serveur)
+        riotStore.setAccessToken(token)
       }
+      
+      riotStore.setRegion(region)
+      await loadShop()
+    } catch (e: any) {
+      error.value = e?.message ?? 'Token invalide ou expiré'
+      riotStore.clearAll()
+      view.value = 'form'
     }
   }
 
@@ -296,7 +192,6 @@ export function useValorantShop() {
     skins.value = []
     bundles.value = []
     nightMarket.value = null
-    currentSkinIds.value = []
     error.value = null
     view.value = 'form'
   }
@@ -306,22 +201,8 @@ export function useValorantShop() {
   }
 
   onMounted(async () => {
-    if (riotStore.refreshToken) {
-      view.value = 'loading'
-      if (riotStore.accessToken && !isAccessTokenExpired(riotStore.accessToken)) {
-        await loadShop(riotStore.accessToken, riotStore.region)
-      } else {
-        const token = await ensureAccessToken()
-        if (token) {
-          await loadShop(token, riotStore.region)
-        } else {
-          error.value = 'Session expirée, veuillez vous reconnecter'
-          view.value = 'form'
-        }
-      }
-    } else if (riotStore.accessToken && !isAccessTokenExpired(riotStore.accessToken)) {
-      await loadShop(riotStore.accessToken, riotStore.region)
-    }
+    // Tentative de chargement automatique (hydratation silencieuse via session serveur)
+    await loadShop()
   })
 
   onBeforeUnmount(() => {
