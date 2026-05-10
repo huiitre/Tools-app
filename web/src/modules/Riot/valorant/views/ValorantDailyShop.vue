@@ -5,6 +5,7 @@ import ValorantAuthCard from '../components/ValorantAuthCard.vue'
 import ValorantBundleCard from '../components/ValorantBundleCard.vue'
 import ValorantSkinActions from '../components/ValorantSkinActions.vue'
 import ValorantNightMarket from '../components/ValorantNightMarket.vue'
+import ValorantShopHistoryPopup from '../components/ValorantShopHistoryPopup.vue'
 
 const {
   view, skins, bundles, nightMarket, isRenewing, error, bundleNow,
@@ -51,10 +52,13 @@ const { open: openImagePreview } = useImagePreview()
           <i class="mdi mdi-map-marker-outline" />
           {{ currentRegionLabel() }}
         </span>
-        <button class="reset-btn" @click="reset">
-          <i class="mdi mdi-refresh" />
-          Changer de token
-        </button>
+        <div class="shop-actions">
+          <ValorantShopHistoryPopup />
+          <button class="reset-btn" @click="reset">
+            <i class="mdi mdi-refresh" />
+            Changer de token
+          </button>
+        </div>
       </div>
 
       <div class="shop-timer" :class="{ 'shop-timer--renewing': isRenewing }">
@@ -145,6 +149,12 @@ const { open: openImagePreview } = useImagePreview()
   gap: 0.35rem;
   font-size: 0.85rem;
   color: var(--pico-muted-color);
+}
+
+.shop-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .reset-btn {
