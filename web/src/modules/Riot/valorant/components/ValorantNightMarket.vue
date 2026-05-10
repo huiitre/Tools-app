@@ -170,13 +170,13 @@ const formattedTime = computed(() => {
   position: absolute;
   bottom: 0.6rem;
   left: 0.6rem;
-  background: #22c55e;
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 800;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #22c55e;
+  background: color-mix(in srgb, #22c55e 12%, transparent);
+  border: 1px solid color-mix(in srgb, #22c55e 28%, transparent);
   padding: 0.15rem 0.45rem;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  border-radius: 999px;
 }
 
 .card-actions {
