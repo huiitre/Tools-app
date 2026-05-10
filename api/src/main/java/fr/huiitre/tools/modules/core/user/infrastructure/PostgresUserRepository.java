@@ -121,7 +121,6 @@ public class PostgresUserRepository implements UserRepository {
                     LEFT JOIN tools_core.user_role ur ON u.id = ur.user_id
                     LEFT JOIN tools_core.role r ON ur.role_id = r.id
                     LEFT JOIN tools_core.user_auth_provider uap ON u.id = uap.user_id AND uap.provider = 'GOOGLE'
-                    WHERE u.user_type = 'HUMAN'
                     ORDER BY u.created_at DESC
                 """;
 
@@ -175,5 +174,31 @@ public class PostgresUserRepository implements UserRepository {
                 """;
 
         jdbcTemplate.update(sql);
+    }
+
+    @Override
+    public List<Long> findAllIds() {
+        final String sql = "SELECT id FROM tools_core.users WHERE is_active = TRUE";
+        return jdbcTemplate.queryForList(sql, Long.class);
+    }
+
+    @Override
+    public List<Long> findAllIdsByRoleId(Long roleId) {
+        final String sql = """
+                    SELECT u.id FROM tools_core.users u
+                    JOIN tools_core.user_role ur ON u.id = ur.user_id
+                    WHERE ur.role_id = ? AND u.is_active = TRUE
+                """;
+        return jdbcTemplate.queryForList(sql, Long.class, roleId);
+    }
+
+    @Override
+    public List<Long> findAllIdsByModuleId(Long moduleId) {
+        final String sql = """
+                    SELECT u.id FROM tools_core.users u
+                    JOIN tools_core.user_module_role umr ON u.id = umr.user_id
+                    WHERE umr.module_id = ? AND u.is_active = TRUE
+                """;
+        return jdbcTemplate.queryForList(sql, Long.class, moduleId);
     }
 }

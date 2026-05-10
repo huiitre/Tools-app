@@ -79,12 +79,7 @@ public class SecurityConfig {
          * ===============================
          */
         http.authorizeHttpRequests(auth -> auth
-                /*
-                 * .requestMatchers(
-                 * "/ping",
-                 * "/dev/jwt"
-                 * ).permitAll()
-                 */
+                .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ASYNC).permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(
                         "/auth/login",

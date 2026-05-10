@@ -20,4 +20,10 @@ public interface UserRepository {
     void deleteUnvalidatedUsersWithExpiredEmailVerification(LocalDateTime now);
 
     void deleteUnvalidatedUsersWithoutEmailVerification();
+
+    List<Long> findAllIds();
+
+    List<Long> findAllIdsByRoleId(Long roleId);
+
+    List<Long> findAllIdsByModuleId(Long moduleId);
 }

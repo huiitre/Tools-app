@@ -9,6 +9,7 @@ import { useRouter } from 'vue-router'
 import { getTheme } from '@/ui/theme'
 import { useUIStore } from '@/stores/ui.store'
 import UpdateButton from '@/components/Header/UpdateButton.vue'
+import NotificationButton from '@/components/Header/NotificationButton.vue'
 import { useDevice } from '@/composables/useDevice'
 import { useScreen } from '@/composables/useScreen'
 import { useEnv } from '@/composables/useEnv'
@@ -88,6 +89,9 @@ const handleLogout = async () => {
     <div class="header-right">
       <!-- Update button -->
       <UpdateButton />
+
+      <!-- Notifications -->
+      <NotificationButton v-if="auth.isAuthenticated" />
 
       <!-- Admin -->
       <RouterLink v-if="auth.isAdmin" to="/admin" class="admin-btn">Admin</RouterLink>

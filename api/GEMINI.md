@@ -159,3 +159,10 @@ Hiérarchie des rôles (RoleHierarchy.java) :
 [Sécurité] Inversion hiérarchie ADMIN/TECH — ADMIN (5) > TECH (4).
 - Use cases modules (GET/POST/PUT/DELETE) abaissés de TECH à ADMIN.
 - GetAllRolesUseCase abaissé de TECH à ADMIN.
+
+[Feature] Core/Notification (2026-05-10) :
+- Transport : SSE (Server-Sent Events) avec Heartbeat (20s) pour stabilité.
+- Persistence : Physique, une ligne par utilisateur. Suppression = DELETE.
+- Exclusion : Le rôle TECH ne reçoit jamais de notifications (bypass total).
+- Async : Activé via `@EnableAsync` sur la classe Application.
+- API Batch : `/read` et `DELETE` unifiés pour actions individuelles et globales.
