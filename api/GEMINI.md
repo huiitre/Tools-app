@@ -164,5 +164,19 @@ Hiérarchie des rôles (RoleHierarchy.java) :
 - Transport : SSE (Server-Sent Events) avec Heartbeat (20s) pour stabilité.
 - Persistence : Physique, une ligne par utilisateur. Suppression = DELETE.
 - Exclusion : Le rôle TECH ne reçoit jamais de notifications (bypass total).
-- Async : Activé via `@EnableAsync` sur la classe Application.
-- API Batch : `/read` et `DELETE` unifiés pour actions individuelles et globales.
+- Async : Activé via @EnableAsync sur la classe Application.
+- API Batch : /read et DELETE unifiés pour actions individuelles et globales.
+
+[Refactor] Centralisation de l'authentification Valorant via ValorantAuthService (2026-05-10).
+- Découplage du rafraîchissement des tokens du contexte de sécurité Spring.
+- Gestion centralisée de la rotation et du chiffrement (AES-256-GCM) des refresh tokens.
+- Utilisable par les UseCases (contexte utilisateur) et les Schedulers (contexte système).
+
+[Feature] Scheduler de notification Watchlist & Archivage auto Valorant (2026-05-10).
+- Scheduler : Exécution quotidienne à 6h00 (ValorantWatchlistScheduler).
+- ValorantWatchlistNotifier : Orchestre refresh token + fetch shop + archivage history + notification matches.
+- Archivage auto : Enregistrement des 4 skins quotidiens dans l'historique sans action utilisateur.
+- Notifications : Envoi asynchrone (SSE) listant les skins de la watchlist présents dans le shop.
+- Test : Endpoint admin POST /riot/valorant/watchlist/admin/sync pour déclenchement manuel.
+
+--- End Project Context ---
