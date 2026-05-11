@@ -249,13 +249,18 @@ WorkshopDto et WorkshopDetailResponse exposent la liste links.
 
   Logique Archivage Batch :
     - Reçoit une liste d'IDs de skins et une date cible.
-    - Empêche les doublons pour un même (user, skin, date) via `existsByUserIdAndSkinIdAndDate`.
+    - Empêche les doublons pour un même (user, skin, date) via existsByUserIdAndSkinIdAndDate.
     - La date transmise par le front est stabilisée sur le midpoint de la rotation (Expiration - 12h) pour éviter le jitter à minuit UTC.
     - Réponse groupée par date décroissante dans le UseCase via agrégation des skins complets.
 
   Table BDD : tools_riot.valorant_store_history (id, user_id, skin_id, seen_at).
   Port : ValorantStoreHistoryRepository (findAllRawByUserId, add, existsByUserIdAndSkinIdAndDate).
-  Note : Le UseCase agrège les objets `ValorantSkinView` complets à partir des IDs stockés.
+  Note : Le UseCase agrège les objets ValorantSkinView complets à partir des IDs stockés.
+
+6h. Scheduler Watchlist & Archivage auto Valorant — COMPLÈTE (2026-05-10)
+  - ValorantWatchlistScheduler : @Scheduled cron "0 0 6 * * *".
+  - ValorantWatchlistNotifier : Orchestre refresh token + fetch shop + archivage history + notification matches.
+  - POST /riot/valorant/watchlist/admin/sync : Trigger manuel (ADMIN).
 
 7. Module Admin — Gestion utilisateurs & stats
 
@@ -332,18 +337,23 @@ UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + r
 
 Architecture : Asynchrone via Spring Events et temps réel via SSE (Server-Sent Events).
 
-Déclenchement : `eventPublisher.publishEvent(new NotificationEvent(...))`.
-Bus asynchrone (@Async) géré par `NotificationEventListener`.
+Déclenchement : eventPublisher.publishEvent(new NotificationEvent(...)).
+Bus asynchrone (@Async) géré par NotificationEventListener.
 
-Persistence : 1 ligne par destinataire dans `user_notifications`. Suppression physique (DELETE).
+Persistence : 1 ligne par destinataire dans user_notifications. Suppression physique (DELETE).
 
 Sécurité :
 - Role TECH exclu systématiquement de tous les envois.
-- JWT passé via query param `?token=` pour le flux SSE.
+- JWT passé via query param ?token= pour le flux SSE.
 
 Routes :
-- `POST  /notifications`       → Envoyer manuellement (TECH)
-- `GET   /notifications/stream` → Flux SSE (Accept: text/event-stream)
-- `GET   /notifications`        → Liste des notifs actives
-- `PATCH /notifications/read`   → Marquer comme lu (Batch ids[] ou all)
-- `DELETE /notifications`       → Supprimer (Batch ids[] ou all)
+- POST  /notifications       → Envoyer manuellement (TECH)
+- GET   /notifications/stream → Flux SSE (Accept: text/event-stream)
+- GET   /notifications        → Liste des notifs actives
+- PATCH /notifications/read   → Marquer comme lu (Batch ids[] ou all)
+- DELETE /notifications       → Supprimer (Batch ids[] ou all)
+
+## Module Riot/Valorant (Updates 2026-05-10)
+- Authentification : Chiffrement AES-256 du refresh token en base. Rotation auto via ValorantAuthService (utilisable hors contexte de sécurité).
+- Scheduler : Synchronisation auto de la watchlist et de l'historique shop à 6h00 (ValorantWatchlistScheduler).
+- Trigger Manuel : POST /api/v3/riot/valorant/watchlist/admin/sync (Rôle ADMIN requis).
