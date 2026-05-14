@@ -1,10 +1,22 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/auth.store'
+import FeedbackModal from '@/modules/Core/Feedback/FeedbackModal.vue'
 
 const authStore = useAuthStore()
 const year = new Date().getFullYear()
 const version = __APP_VERSION__
+
+const isFeedbackModalOpen = ref(false)
+
+const openFeedbackModal = () => {
+  isFeedbackModalOpen.value = true
+}
+
+const closeFeedbackModal = () => {
+  isFeedbackModalOpen.value = false
+}
 
 </script>
 
@@ -34,11 +46,18 @@ const version = __APP_VERSION__
           <span class="app-version">{{ version }}</span>
         </RouterLink>
 
-        <button v-if="authStore.isAuthenticated" class="icon-button" aria-label="Feedback">
+        <button
+          v-if="authStore.isAuthenticated"
+          class="icon-button"
+          aria-label="Feedback"
+          @click="openFeedbackModal"
+        >
           <i class="fa-solid fa-bug" aria-hidden="true"></i>
         </button>
       </div>
     </nav>
+
+    <FeedbackModal v-if="isFeedbackModalOpen" @close="closeFeedbackModal" />
   </footer>
 </template>
 

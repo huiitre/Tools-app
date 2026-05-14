@@ -24,6 +24,12 @@ export const routes = [
         component: () => import('@/modules/Admin/modules/views/AdminModules.vue'),
         meta: { label: 'Modules' },
       },
+      {
+        name: 'admin-feedbacks',
+        path: 'feedbacks',
+        component: () => import('@/modules/Admin/feedbacks/views/AdminFeedbacks.vue'),
+        meta: { label: 'Feedbacks' },
+      },
     ],
   },
 ]
