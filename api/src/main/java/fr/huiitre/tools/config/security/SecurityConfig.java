@@ -90,6 +90,7 @@ public class SecurityConfig {
                         "/auth/password/reset-request",
                         "/auth/password/reset",
                         "/error",
+                        "/ws/**",
                         "/api-docs/**",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",

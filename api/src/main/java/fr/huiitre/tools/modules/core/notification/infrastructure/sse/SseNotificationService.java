@@ -14,10 +14,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import fr.huiitre.tools.modules.core.notification.application.port.NotificationSenderPort;
 import fr.huiitre.tools.modules.core.notification.domain.entity.Notification;
 
 @Service
-public class SseNotificationService {
+public class SseNotificationService implements NotificationSenderPort {
 
     private static final Logger log = LoggerFactory.getLogger(SseNotificationService.class);
     // Gestion de plusieurs émetteurs par utilisateur (multi-onglets)
@@ -87,6 +88,11 @@ public class SseNotificationService {
 
     public Set<Long> getConnectedUserIds() {
         return new HashSet<>(emitters.keySet());
+    }
+
+    @Override
+    public void sendNotification(Notification notification, List<Long> targetUserIds) {
+        broadcastNotification(notification, targetUserIds);
     }
 
     public void broadcastNotification(Notification notification, List<Long> potentialTargetIds) {

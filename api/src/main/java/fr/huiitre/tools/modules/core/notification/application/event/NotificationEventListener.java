@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.huiitre.tools.modules.core.notification.application.port.NotificationRepository;
+import fr.huiitre.tools.modules.core.notification.application.port.NotificationSenderPort;
 import fr.huiitre.tools.modules.core.notification.domain.entity.Notification;
-import fr.huiitre.tools.modules.core.notification.infrastructure.sse.SseNotificationService;
 import fr.huiitre.tools.modules.core.role.application.ports.RoleRepository;
 import fr.huiitre.tools.modules.core.role.domain.Role;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
@@ -23,17 +23,17 @@ import fr.huiitre.tools.modules.core.user.application.ports.UserRepository;
 public class NotificationEventListener {
 
     private final NotificationRepository notificationRepository;
-    private final SseNotificationService sseNotificationService;
+    private final List<NotificationSenderPort> notificationSenders;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
 
     public NotificationEventListener(
             NotificationRepository notificationRepository,
-            SseNotificationService sseNotificationService,
+            List<NotificationSenderPort> notificationSenders,
             UserRepository userRepository,
             RoleRepository roleRepository) {
         this.notificationRepository = notificationRepository;
-        this.sseNotificationService = sseNotificationService;
+        this.notificationSenders = notificationSenders;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
     }
@@ -81,7 +81,9 @@ public class NotificationEventListener {
         // 4. Création des entrées individuelles et envoi
         if (!finalTargetIds.isEmpty()) {
             notificationRepository.createUserEntries(savedNotification.id(), finalTargetIds);
-            sseNotificationService.broadcastNotification(savedNotification, finalTargetIds);
+            
+            // Envoi via tous les transports disponibles (SSE, WebSocket, etc.)
+            notificationSenders.forEach(sender -> sender.sendNotification(savedNotification, finalTargetIds));
         }
     }
 }

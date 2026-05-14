@@ -1,4 +1,5 @@
 import { AppNotification } from '../domain/notification.types';
+import { socketService } from '../../Socket/infrastructure/socket.service';
 
 export interface NotificationTransport {
   connect(
@@ -53,5 +54,44 @@ export class SseNotificationTransport implements NotificationTransport {
       this.eventSource.close();
       this.eventSource = null;
     }
+  }
+}
+
+export class WebSocketNotificationTransport implements NotificationTransport {
+  connect(
+    url: string, 
+    token: string, 
+    onConnect: () => void,
+    onMessage: (notif: AppNotification) => void,
+    onError: () => void
+  ): void {
+    // On transforme l'URL API en URL WebSocket
+    // url ressemble à "http://localhost:8083/api/v3/ws"
+    const wsUrl = url.replace('http', 'ws'); 
+
+    socketService.connect(
+      wsUrl,
+      token,
+      () => {
+        onConnect();
+        // Abonnement spécifique aux notifications
+        socketService.subscribe('/user/queue/core/notifications', (message) => {
+          try {
+            const notif = JSON.parse(message.body);
+            onMessage(notif);
+          } catch (e) {
+            console.error('[WS] Notification parsing error', e);
+          }
+        });
+      },
+      (frame) => {
+        onError();
+      }
+    );
+  }
+
+  disconnect(): void {
+    // On déconnecte tout le socket lors d'un logout pour nettoyer la session backend
+    socketService.disconnect();
   }
 }
