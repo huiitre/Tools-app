@@ -39,4 +39,4 @@ Pour éviter que le proxy n'intercepte sa propre connexion sortante vers Ankama 
 ## 4. Limitations actuelles
 
 - **IPv6** : L'interception est limitée à l'IPv4. Si le client privilégie l'IPv6, les règles `iptables` sont ignorées.
-- **Plateforme** : Support complet uniquement sur Linux (Fedora testé). Windows utilise `netsh` avec des capacités limitées (pas d'interception transparente).
+- **Plateforme** : Support complet uniquement sur Linux (Kubuntu testé). Windows utilise `netsh` avec des capacités limitées (pas d'interception transparente).

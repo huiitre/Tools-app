@@ -41,7 +41,9 @@ export class SseNotificationTransport implements NotificationTransport {
     });
 
     this.eventSource.onerror = () => {
-      // On NE ferme PAS le flux ici pour laisser EventSource tenter la reconnexion automatique
+      // On ferme le flux car s'il y a une erreur (ex: 401), 
+      // EventSource va tenter de boucler indéfiniment avec l'ancien token.
+      this.disconnect();
       onError();
     };
   }

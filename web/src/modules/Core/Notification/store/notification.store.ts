@@ -5,6 +5,8 @@ import { SseNotificationTransport } from '../infrastructure/notification.transpo
 import { clientV3 } from '@/services/axiosInstance';
 import { useAuthStore } from '@/modules/Auth/auth.store';
 
+const log = (...args: unknown[]) => console.log('[SSE]', ...args);
+
 export const useNotificationStore = defineStore('notifications', () => {
   const notifications = ref<AppNotification[]>([]);
   const isConnected = ref(false);
@@ -34,11 +36,13 @@ export const useNotificationStore = defineStore('notifications', () => {
       if (token) {
         connectedWithToken = token;
         const streamUrl = `${baseUrl}/api/v3/notifications/stream`;
+        log('Connexion au stream...');
         transport.connect(
           streamUrl,
           token,
           () => {
             isConnected.value = true;
+            log('Stream connecté');
             if (pendingReconnect) {
               pendingReconnect = false;
               fetchHistory().catch(() => {});
@@ -47,19 +51,41 @@ export const useNotificationStore = defineStore('notifications', () => {
           (newNotif) => handleIncoming(newNotif),
           () => {
             isConnected.value = false;
+            log('Stream erreur / déconnecté');
             if (!authStore.isAuthenticated) {
+              log('Non authentifié → abandon');
               transport.disconnect();
               connectedWithToken = null;
               return;
             }
             const currentToken = authStore.accessToken;
             if (currentToken && currentToken !== connectedWithToken) {
+              log('Nouveau token détecté → reconnexion directe');
               transport.disconnect();
               connectedWithToken = null;
               pendingReconnect = false;
               init();
             } else {
-              pendingReconnect = true;
+              log('Tentative de rafraîchissement / reconnexion...');
+              transport.disconnect();
+              connectedWithToken = null;
+              
+              // On attend 3s avant de retenter (pour laisser le serveur rebooter si besoin)
+              setTimeout(() => {
+                fetchHistory()
+                  .then(() => {
+                    log('Serveur OK → reconnexion au stream');
+                    init();
+                  })
+                  .catch((err) => {
+                    // Si c'est une 401, le rafraîchissement a probablement déjà échoué via l'intercepteur Axios
+                    // Sinon (ex: CONNECTION_REFUSED), on retente plus tard
+                    if (err?.response?.status !== 401) {
+                      log('Serveur injoignable, nouvelle tentative dans 10s...');
+                      setTimeout(() => init(), 10000);
+                    }
+                  });
+              }, 3000);
             }
           }
         );
@@ -69,13 +95,10 @@ export const useNotificationStore = defineStore('notifications', () => {
     }
   }
 
-  /**
-   * Gestion d'une nouvelle notification reçue via le flux
-   */
   function handleIncoming(notif: AppNotification) {
     if (!notifications.value.some(n => n.id === notif.id)) {
       notifications.value.unshift(notif);
-      
+
       if (document.hidden && window.Notification && window.Notification.permission === 'granted') {
         new window.Notification(notif.title, { body: notif.body });
       }
@@ -86,7 +109,7 @@ export const useNotificationStore = defineStore('notifications', () => {
     try {
       const params = ids ? { ids: ids.join(',') } : {};
       await clientV3.patch('/notifications/read', null, { params });
-      
+
       if (!ids) {
         notifications.value.forEach(n => n.read = true);
       } else {
@@ -103,7 +126,7 @@ export const useNotificationStore = defineStore('notifications', () => {
     try {
       const params = ids ? { ids: ids.join(',') } : {};
       await clientV3.delete('/notifications', { params });
-      
+
       if (!ids) {
         notifications.value = [];
       } else {
@@ -115,6 +138,7 @@ export const useNotificationStore = defineStore('notifications', () => {
   }
 
   function disconnect() {
+    log('Déconnexion volontaire');
     transport.disconnect();
     isConnected.value = false;
     notifications.value = [];
@@ -122,18 +146,17 @@ export const useNotificationStore = defineStore('notifications', () => {
     pendingReconnect = false;
   }
 
-  // Auto-connect/disconnect basé sur l'auth
   watch(() => authStore.isAuthenticated, (val) => {
     if (val) init();
     else disconnect();
   }, { immediate: true });
 
-  return { 
-    notifications, 
-    unreadCount, 
-    hasUnread, 
+  return {
+    notifications,
+    unreadCount,
+    hasUnread,
     isConnected,
-    markAsRead, 
+    markAsRead,
     remove,
     init,
     disconnect
