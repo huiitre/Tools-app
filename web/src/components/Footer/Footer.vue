@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { useAuthStore } from '@/modules/Auth/auth.store'
 
+const authStore = useAuthStore()
 const year = new Date().getFullYear()
-
 const version = __APP_VERSION__
 
 </script>
@@ -29,9 +30,11 @@ const version = __APP_VERSION__
 
       <!-- DROITE -->
       <div class="footer-right">
-        <span class="app-version">{{ version }}</span>
+        <RouterLink to="/downloads" class="app-version-link">
+          <span class="app-version">{{ version }}</span>
+        </RouterLink>
 
-        <button class="icon-button" aria-label="Feedback">
+        <button v-if="authStore.isAuthenticated" class="icon-button" aria-label="Feedback">
           <i class="fa-solid fa-bug" aria-hidden="true"></i>
         </button>
       </div>
@@ -77,6 +80,14 @@ const version = __APP_VERSION__
 .app-version {
   font-size: 0.75rem;
   color: var(--pico-muted-color);
+}
+
+.app-version-link {
+  text-decoration: none;
+}
+
+.app-version-link:hover .app-version {
+  color: var(--pico-primary);
 }
 
 .icon-button {
