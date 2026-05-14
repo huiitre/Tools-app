@@ -29,6 +29,7 @@ public class SendNotificationUseCase implements SecuredUseCase {
             command.targetUserId(),
             command.targetRoleId(),
             command.targetModuleId(),
+            command.targetMinRoleCode(),
             command.metadata()
         );
         eventPublisher.publishEvent(event);

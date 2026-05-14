@@ -1,6 +1,7 @@
 package fr.huiitre.tools.modules.core.security.infrastructure;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
@@ -13,8 +14,8 @@ public final class RoleHierarchy {
         LEVELS.put(RoleCode.READ_ONLY, 1);
         LEVELS.put(RoleCode.USER, 2);
         LEVELS.put(RoleCode.MODERATOR, 3);
-        LEVELS.put(RoleCode.ADMIN, 5);
         LEVELS.put(RoleCode.TECH, 4);
+        LEVELS.put(RoleCode.ADMIN, 5);
         LEVELS.put(RoleCode.OWNER, 6);
     }
 
@@ -23,5 +24,13 @@ public final class RoleHierarchy {
 
     public static boolean hasAtLeast(RoleCode actual, RoleCode required) {
         return LEVELS.get(actual) >= LEVELS.get(required);
+    }
+
+    public static List<RoleCode> getCodesAtOrAbove(RoleCode min) {
+        int minLevel = LEVELS.get(min);
+        return LEVELS.entrySet().stream()
+                .filter(e -> e.getValue() >= minLevel)
+                .map(Map.Entry::getKey)
+                .toList();
     }
 }
