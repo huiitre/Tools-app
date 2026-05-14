@@ -81,6 +81,7 @@
     "@vitejs/plugin-vue": "^3.2.0",
     "@vue/eslint-config-prettier": "^7.0.0",
     "@vue/eslint-config-typescript": "^11.0.2",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
     "electron": "41.2.0",
     "electron-builder": "^26.8.1",
     "eslint": "^8.27.0",
