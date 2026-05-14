@@ -1,16 +1,16 @@
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 import { AppNotification } from '../domain/notification.types';
-import { SseNotificationTransport } from '../infrastructure/notification.transport';
+import { WebSocketNotificationTransport } from '../infrastructure/notification.transport';
 import { clientV3 } from '@/services/axiosInstance';
 import { useAuthStore } from '@/modules/Auth/auth.store';
 
-const log = (...args: unknown[]) => console.log('[SSE]', ...args);
+const log = (...args: unknown[]) => console.log('[WS]', ...args);
 
 export const useNotificationStore = defineStore('notifications', () => {
   const notifications = ref<AppNotification[]>([]);
   const isConnected = ref(false);
-  const transport = new SseNotificationTransport();
+  const transport = new WebSocketNotificationTransport();
   const authStore = useAuthStore();
 
   let connectedWithToken: string | null = null;
@@ -35,14 +35,15 @@ export const useNotificationStore = defineStore('notifications', () => {
 
       if (token) {
         connectedWithToken = token;
-        const streamUrl = `${baseUrl}/api/v3/notifications/stream`;
-        log('Connexion au stream...');
+        // WebSocket endpoint configuré côté backend (incluant le context-path)
+        const wsUrl = `${baseUrl}/api/v3/ws`;
+        log('Connexion au WebSocket...');
         transport.connect(
-          streamUrl,
+          wsUrl,
           token,
           () => {
             isConnected.value = true;
-            log('Stream connecté');
+            log('WebSocket connecté');
             if (pendingReconnect) {
               pendingReconnect = false;
               fetchHistory().catch(() => {});
@@ -51,42 +52,17 @@ export const useNotificationStore = defineStore('notifications', () => {
           (newNotif) => handleIncoming(newNotif),
           () => {
             isConnected.value = false;
-            log('Stream erreur / déconnecté');
+            log('WebSocket erreur / déconnecté');
             if (!authStore.isAuthenticated) {
               log('Non authentifié → abandon');
               transport.disconnect();
               connectedWithToken = null;
               return;
             }
-            const currentToken = authStore.accessToken;
-            if (currentToken && currentToken !== connectedWithToken) {
-              log('Nouveau token détecté → reconnexion directe');
-              transport.disconnect();
-              connectedWithToken = null;
-              pendingReconnect = false;
-              init();
-            } else {
-              log('Tentative de rafraîchissement / reconnexion...');
-              transport.disconnect();
-              connectedWithToken = null;
-              
-              // On attend 3s avant de retenter (pour laisser le serveur rebooter si besoin)
-              setTimeout(() => {
-                fetchHistory()
-                  .then(() => {
-                    log('Serveur OK → reconnexion au stream');
-                    init();
-                  })
-                  .catch((err) => {
-                    // Si c'est une 401, le rafraîchissement a probablement déjà échoué via l'intercepteur Axios
-                    // Sinon (ex: CONNECTION_REFUSED), on retente plus tard
-                    if (err?.response?.status !== 401) {
-                      log('Serveur injoignable, nouvelle tentative dans 10s...');
-                      setTimeout(() => init(), 10000);
-                    }
-                  });
-              }, 3000);
-            }
+            
+            // Le STOMP Client va tenter de se reconnecter tout seul toutes les 5s.
+            // On se contente de marquer qu'on a besoin d'un refresh d'historique au retour.
+            pendingReconnect = true;
           }
         );
       }
