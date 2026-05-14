@@ -25,5 +25,7 @@ public interface UserRepository {
 
     List<Long> findAllIdsByRoleId(Long roleId);
 
+    List<Long> findAllIdsByRoleCodes(List<String> roleCodes);
+
     List<Long> findAllIdsByModuleId(Long moduleId);
 }

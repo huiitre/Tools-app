@@ -17,6 +17,7 @@ import fr.huiitre.tools.modules.core.notification.domain.entity.Notification;
 import fr.huiitre.tools.modules.core.role.application.ports.RoleRepository;
 import fr.huiitre.tools.modules.core.role.domain.Role;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
+import fr.huiitre.tools.modules.core.security.infrastructure.RoleHierarchy;
 import fr.huiitre.tools.modules.core.user.application.ports.UserRepository;
 
 @Component
@@ -59,6 +60,11 @@ public class NotificationEventListener {
         
         if (event.targetUserId() != null) {
             potentialTargetIds = List.of(event.targetUserId());
+        } else if (event.targetMinRoleCode() != null) {
+            List<String> codes = RoleHierarchy.getCodesAtOrAbove(event.targetMinRoleCode()).stream()
+                    .map(RoleCode::name)
+                    .toList();
+            potentialTargetIds = userRepository.findAllIdsByRoleCodes(codes);
         } else if (event.targetRoleId() != null) {
             potentialTargetIds = userRepository.findAllIdsByRoleId(event.targetRoleId());
         } else if (event.targetModuleId() != null) {

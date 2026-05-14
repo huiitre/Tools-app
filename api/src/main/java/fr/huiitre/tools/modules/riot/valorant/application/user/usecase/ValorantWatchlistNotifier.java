@@ -136,6 +136,7 @@ public class ValorantWatchlistNotifier {
                 userId,
                 null,
                 null,
+                null,
                 "{\"route\": \"valorant-shop\"}"
         ));
     }

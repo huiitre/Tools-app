@@ -193,6 +193,19 @@ public class PostgresUserRepository implements UserRepository {
     }
 
     @Override
+    public List<Long> findAllIdsByRoleCodes(List<String> roleCodes) {
+        if (roleCodes == null || roleCodes.isEmpty()) return List.of();
+        String placeholders = roleCodes.stream().map(c -> "?").collect(java.util.stream.Collectors.joining(", "));
+        String sql = """
+                    SELECT DISTINCT u.id FROM tools_core.users u
+                    JOIN tools_core.user_role ur ON u.id = ur.user_id
+                    JOIN tools_core.role r ON ur.role_id = r.id
+                    WHERE r.code IN (%s) AND u.is_active = TRUE
+                """.formatted(placeholders);
+        return jdbcTemplate.queryForList(sql, Long.class, roleCodes.toArray());
+    }
+
+    @Override
     public List<Long> findAllIdsByModuleId(Long moduleId) {
         final String sql = """
                     SELECT u.id FROM tools_core.users u
