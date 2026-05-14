@@ -3,6 +3,8 @@ package fr.huiitre.tools.modules.riot.valorant.infrastructure.scheduler;
 import fr.huiitre.tools.modules.riot.valorant.application.user.usecase.ValorantWatchlistNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +16,12 @@ public class ValorantWatchlistScheduler {
 
     public ValorantWatchlistScheduler(ValorantWatchlistNotifier watchlistNotifier) {
         this.watchlistNotifier = watchlistNotifier;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void onStart() {
+        log.info("Server started, checking if Valorant sync is needed...");
+        runDailyValorantSync();
     }
 
     // Exécution quotidienne à 6h00 du matin

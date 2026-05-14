@@ -32,14 +32,20 @@ const handleClickOutside = (e: MouseEvent) => {
   }
 }
 
+const onScroll = (e: Event) => {
+  if (isOpen.value && !floating.value?.contains(e.target as Node)) {
+    closePopup()
+  }
+}
+
 onMounted(() => {
   window.addEventListener('mousedown', handleClickOutside)
-  window.addEventListener('scroll', closePopup, { capture: true })
+  window.addEventListener('scroll', onScroll, { capture: true })
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('mousedown', handleClickOutside)
-  window.removeEventListener('scroll', closePopup)
+  window.removeEventListener('scroll', onScroll, { capture: true })
 })
 
 function formatDate(dateStr: string) {
