@@ -24,8 +24,8 @@ const onClickOutside = (e: MouseEvent) => {
   }
 };
 
-const onScroll = () => {
-  if (isOpen.value) {
+const onScroll = (e: Event) => {
+  if (isOpen.value && !floating.value?.contains(e.target as Node)) {
     isOpen.value = false;
   }
 };
