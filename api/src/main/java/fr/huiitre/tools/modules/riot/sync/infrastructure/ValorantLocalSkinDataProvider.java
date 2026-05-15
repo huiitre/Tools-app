@@ -77,10 +77,13 @@ public class ValorantLocalSkinDataProvider implements ValorantSkinDataProvider {
         }
 
         JsonNode levels = skin.path("levels");
-        if (levels.isArray() && levels.size() > 0) {
-            String levelIcon = levels.get(0).path("displayIcon").asText(null);
-            if (levelIcon != null && !levelIcon.isBlank()) {
-                return assetsBaseUrl + "/tools_riot/valorant/img/weaponskins/" + assetId + "/displayicon.png";
+        if (levels.isArray()) {
+            for (JsonNode level : levels) {
+                String levelIcon = level.path("displayIcon").asText(null);
+                if (levelIcon != null && !levelIcon.isBlank()) {
+                    UUID levelAssetId = UUID.fromString(level.get("uuid").asText());
+                    return assetsBaseUrl + "/tools_riot/valorant/img/weaponskinlevels/" + levelAssetId + "/displayicon.png";
+                }
             }
         }
 
