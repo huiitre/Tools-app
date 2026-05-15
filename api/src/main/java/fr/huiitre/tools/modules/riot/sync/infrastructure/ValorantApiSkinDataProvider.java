@@ -41,7 +41,7 @@ public class ValorantApiSkinDataProvider implements ValorantSkinDataProvider {
             UUID tierUuid = parseUuid((String) skin.get("themeUuid"));
             UUID contentTierUuid = parseUuid((String) skin.get("contentTierUuid"));
 
-            result.add(new ValorantSkinSyncData(assetId, name, iconUrl, tierUuid, contentTierUuid, null, List.of()));
+            result.add(new ValorantSkinSyncData(assetId, name, iconUrl, tierUuid, contentTierUuid, null, List.of(), List.of()));
         }
 
         return result;

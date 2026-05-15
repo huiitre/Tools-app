@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { useValorantShop, REGIONS } from '../composables/useValorantShop'
-import { useImagePreview } from '@/composables/useImagePreview'
+import { useValorantSkinDetail } from '../composables/useValorantSkinDetail'
 import ValorantAuthCard from '../components/ValorantAuthCard.vue'
 import ValorantBundleCard from '../components/ValorantBundleCard.vue'
 import ValorantSkinActions from '../components/ValorantSkinActions.vue'
 import ValorantNightMarket from '../components/ValorantNightMarket.vue'
 import ValorantShopHistoryPopup from '../components/ValorantShopHistoryPopup.vue'
+import ValorantSkinIdBadge from '../components/ValorantSkinIdBadge.vue'
 
 const {
   view, skins, bundles, nightMarket, isRenewing, error, bundleNow,
   formattedTime, handleSubmit, reset, currentRegionLabel,
 } = useValorantShop()
 
-const { open: openImagePreview } = useImagePreview()
+const { open: openSkinDetail } = useValorantSkinDetail()
 </script>
 
 <template>
@@ -78,7 +79,8 @@ const { open: openImagePreview } = useImagePreview()
           class="skin-card"
           :style="{ '--delay': `${i * 110}ms` }"
         >
-          <div class="skin-image-wrap" @click="offer.skin.iconUrl && openImagePreview(offer.skin.iconUrl, offer.skin.name)">
+          <div class="skin-image-wrap" @click="openSkinDetail(offer.skin)">
+            <ValorantSkinIdBadge :id="offer.skin.id" />
             <img :src="offer.skin.iconUrl ?? undefined" :alt="offer.skin.name" class="skin-image" loading="lazy" />
             <ValorantSkinActions :skin-id="offer.skin.id" class="card-actions" />
           </div>
@@ -257,7 +259,7 @@ const { open: openImagePreview } = useImagePreview()
 
     .skin-image { transform: scale(1.07); }
 
-    :deep(.action-btn) { opacity: 1; }
+    :deep(.action-btn), :deep(.skin-id-badge) { opacity: 1; }
   }
 }
 

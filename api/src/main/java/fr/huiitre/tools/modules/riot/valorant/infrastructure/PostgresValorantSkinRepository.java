@@ -3,6 +3,7 @@ package fr.huiitre.tools.modules.riot.valorant.infrastructure;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.sql.Timestamp;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinChromaView;
 import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinLevelView;
 import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 
@@ -24,13 +26,21 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
 
     private static final String SELECT_WITH_LEVELS = """
             SELECT s.id, s.asset_id, s.name, s.icon_url, s.tier_uuid, s.content_tier_uuid, s.weapon_id,
-                   l.asset_id AS level_asset_id, l.level_index, l.display_icon_url, l.streamed_video_url,
+                   l.asset_id AS level_asset_id, l.level_index, l.name AS level_name, l.level_item,
+                   l.display_icon_url, l.streamed_video_url,
                    (us.id IS NOT NULL) as owned, us.created_at as owned_at,
                    (w.id IS NOT NULL) as watched, w.created_at as watched_at
             FROM tools_riot.valorant_weapon_skins s
             LEFT JOIN tools_riot.valorant_skin_levels l ON l.skin_id = s.id
             LEFT JOIN tools_riot.valorant_user_skins us ON us.skin_id = s.id AND us.user_id = ?
             LEFT JOIN tools_riot.valorant_skin_watchlist w ON w.skin_id = s.id AND w.user_id = ?
+            """;
+
+    private static final String SELECT_CHROMAS_BY_SKIN_IDS = """
+            SELECT skin_id, asset_id, chroma_index, name, display_icon_url, full_render_url, swatch_url, streamed_video_url
+            FROM tools_riot.valorant_skin_chromas
+            WHERE skin_id IN (%s)
+            ORDER BY skin_id, chroma_index
             """;
 
     @Override
@@ -85,7 +95,7 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
     }
 
     private List<ValorantSkinView> buildMany(String sql, Object... params) {
-        return jdbcTemplate.query(sql, rs -> {
+        List<ValorantSkinView> skins = jdbcTemplate.query(sql, rs -> {
             LinkedHashMap<Long, ValorantSkinView> map = new LinkedHashMap<>();
             List<ValorantSkinLevelView> levels = new ArrayList<>();
             long lastSkinId = -1;
@@ -107,6 +117,7 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
                             rs.getObject("content_tier_uuid", UUID.class),
                             rs.getObject("weapon_id", Long.class),
                             new ArrayList<>(),
+                            List.of(),
                             rs.getBoolean("owned"),
                             rs.getBoolean("watched"),
                             toLocalDateTime(rs.getTimestamp("owned_at")),
@@ -119,6 +130,8 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
                     levels.add(new ValorantSkinLevelView(
                             UUID.fromString(levelAssetIdStr),
                             rs.getInt("level_index"),
+                            rs.getString("level_name"),
+                            rs.getString("level_item"),
                             rs.getString("display_icon_url"),
                             rs.getString("streamed_video_url")));
                 }
@@ -130,16 +143,19 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
 
             return new ArrayList<>(map.values());
         }, params);
+
+        if (skins == null || skins.isEmpty()) return List.of();
+        return mergeWithChromas(skins);
     }
 
     private Optional<ValorantSkinView> buildSingle(String sql, Object... params) {
-        return jdbcTemplate.query(sql, rs -> {
-            ValorantSkinView skin = null;
+        ValorantSkinView skin = jdbcTemplate.query(sql, rs -> {
+            ValorantSkinView result = null;
             List<ValorantSkinLevelView> levels = new ArrayList<>();
 
             while (rs.next()) {
-                if (skin == null) {
-                    skin = new ValorantSkinView(
+                if (result == null) {
+                    result = new ValorantSkinView(
                             rs.getLong("id"),
                             rs.getObject("asset_id", UUID.class),
                             rs.getString("name"),
@@ -148,6 +164,7 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
                             rs.getObject("content_tier_uuid", UUID.class),
                             rs.getObject("weapon_id", Long.class),
                             levels,
+                            List.of(),
                             rs.getBoolean("owned"),
                             rs.getBoolean("watched"),
                             toLocalDateTime(rs.getTimestamp("owned_at")),
@@ -159,13 +176,48 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
                     levels.add(new ValorantSkinLevelView(
                             UUID.fromString(levelAssetIdStr),
                             rs.getInt("level_index"),
+                            rs.getString("level_name"),
+                            rs.getString("level_item"),
                             rs.getString("display_icon_url"),
                             rs.getString("streamed_video_url")));
                 }
             }
 
-            return Optional.ofNullable(skin);
+            return result;
         }, params);
+
+        if (skin == null) return Optional.empty();
+        List<ValorantSkinView> merged = mergeWithChromas(List.of(skin));
+        return Optional.of(merged.get(0));
+    }
+
+    private List<ValorantSkinView> mergeWithChromas(List<ValorantSkinView> skins) {
+        String inClause = skins.stream().map(s -> "?").collect(java.util.stream.Collectors.joining(","));
+        String chromaSql = String.format(SELECT_CHROMAS_BY_SKIN_IDS, inClause);
+        Object[] skinIds = skins.stream().map(ValorantSkinView::id).toArray();
+
+        Map<Long, List<ValorantSkinChromaView>> chromasBySkinId = jdbcTemplate.query(chromaSql, rs -> {
+            Map<Long, List<ValorantSkinChromaView>> map = new LinkedHashMap<>();
+            while (rs.next()) {
+                long skinId = rs.getLong("skin_id");
+                map.computeIfAbsent(skinId, k -> new ArrayList<>()).add(new ValorantSkinChromaView(
+                        rs.getObject("asset_id", UUID.class),
+                        rs.getInt("chroma_index"),
+                        rs.getString("name"),
+                        rs.getString("display_icon_url"),
+                        rs.getString("full_render_url"),
+                        rs.getString("swatch_url"),
+                        rs.getString("streamed_video_url")));
+            }
+            return map;
+        }, skinIds);
+
+        return skins.stream().map(s -> new ValorantSkinView(
+                s.id(), s.assetId(), s.name(), s.iconUrl(),
+                s.tierUuid(), s.contentTierUuid(), s.weaponId(),
+                s.levels(),
+                chromasBySkinId != null ? chromasBySkinId.getOrDefault(s.id(), List.of()) : List.of(),
+                s.owned(), s.watched(), s.ownedAt(), s.watchedAt())).toList();
     }
 
     private void rebuildLast(LinkedHashMap<Long, ValorantSkinView> map, long skinId, List<ValorantSkinLevelView> levels) {
@@ -173,7 +225,7 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
         map.put(skinId, new ValorantSkinView(
                 prev.id(), prev.assetId(), prev.name(), prev.iconUrl(),
                 prev.tierUuid(), prev.contentTierUuid(), prev.weaponId(), List.copyOf(levels),
-                prev.owned(), prev.watched(), prev.ownedAt(), prev.watchedAt()));
+                prev.chromas(), prev.owned(), prev.watched(), prev.ownedAt(), prev.watchedAt()));
     }
 
     private LocalDateTime toLocalDateTime(Timestamp ts) {

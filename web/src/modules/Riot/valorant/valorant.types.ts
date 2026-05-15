@@ -2,7 +2,18 @@ export interface ValorantSkinLevel {
   assetId: string
   levelIndex: number
   name: string | null
+  levelItem: string | null
   displayIconUrl: string | null
+  streamedVideoUrl: string | null
+}
+
+export interface ValorantSkinChroma {
+  assetId: string
+  chromaIndex: number
+  name: string | null
+  displayIconUrl: string | null
+  fullRenderUrl: string | null
+  swatchUrl: string | null
   streamedVideoUrl: string | null
 }
 
@@ -15,6 +26,7 @@ export interface ValorantSkin {
   contentTierUuid: string | null
   weaponId: number | null
   levels: ValorantSkinLevel[]
+  chromas: ValorantSkinChroma[]
   owned: boolean
   watched: boolean
   ownedAt: string | null

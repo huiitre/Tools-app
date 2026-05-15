@@ -13,6 +13,7 @@ public record ValorantSkinView(
     UUID contentTierUuid,
     Long weaponId,
     List<ValorantSkinLevelView> levels,
+    List<ValorantSkinChromaView> chromas,
     boolean owned,
     boolean watched,
     LocalDateTime ownedAt,

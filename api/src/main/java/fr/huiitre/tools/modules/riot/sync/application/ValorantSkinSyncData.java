@@ -12,8 +12,9 @@ public class ValorantSkinSyncData {
     private final UUID contentTierUuid;
     private final UUID weaponAssetId;
     private final List<ValorantSkinLevelSyncData> levels;
+    private final List<ValorantSkinChromaSyncData> chromas;
 
-    public ValorantSkinSyncData(UUID assetId, String name, String iconUrl, UUID tierUuid, UUID contentTierUuid, UUID weaponAssetId, List<ValorantSkinLevelSyncData> levels) {
+    public ValorantSkinSyncData(UUID assetId, String name, String iconUrl, UUID tierUuid, UUID contentTierUuid, UUID weaponAssetId, List<ValorantSkinLevelSyncData> levels, List<ValorantSkinChromaSyncData> chromas) {
         this.assetId = assetId;
         this.name = name;
         this.iconUrl = iconUrl;
@@ -21,6 +22,7 @@ public class ValorantSkinSyncData {
         this.contentTierUuid = contentTierUuid;
         this.weaponAssetId = weaponAssetId;
         this.levels = levels;
+        this.chromas = chromas;
     }
 
     public UUID getAssetId() { return assetId; }
@@ -30,4 +32,5 @@ public class ValorantSkinSyncData {
     public UUID getContentTierUuid() { return contentTierUuid; }
     public UUID getWeaponAssetId() { return weaponAssetId; }
     public List<ValorantSkinLevelSyncData> getLevels() { return levels; }
+    public List<ValorantSkinChromaSyncData> getChromas() { return chromas; }
 }

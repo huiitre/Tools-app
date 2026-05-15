@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useImagePreview } from '@/composables/useImagePreview'
+import { useValorantSkinDetail } from '../composables/useValorantSkinDetail'
 import type { ValorantNightMarket } from '../valorant.types'
 import ValorantSkinActions from './ValorantSkinActions.vue'
+import ValorantSkinIdBadge from './ValorantSkinIdBadge.vue'
 
 const props = defineProps<{
   market: ValorantNightMarket
   now: number
 }>()
 
-const { open: openImagePreview } = useImagePreview()
+const { open: openSkinDetail } = useValorantSkinDetail()
 
 const formattedTime = computed(() => {
   const ms = Math.max(0, props.market.remainingSeconds * 1000)
@@ -41,8 +42,9 @@ const formattedTime = computed(() => {
       >
         <div
           class="skin-image-wrap"
-          @click="offer.skin.iconUrl && openImagePreview(offer.skin.iconUrl, offer.skin.name)"
+          @click="openSkinDetail(offer.skin)"
         >
+          <ValorantSkinIdBadge :id="offer.skin.id" />
           <img
             v-if="offer.skin.iconUrl"
             :src="offer.skin.iconUrl"
@@ -138,7 +140,7 @@ const formattedTime = computed(() => {
       0 0 0 1px color-mix(in srgb, var(--pico-primary) 18%, transparent);
 
     .skin-image { transform: scale(1.08); }
-    :deep(.action-btn) { opacity: 1; }
+    :deep(.action-btn), :deep(.skin-id-badge) { opacity: 1; }
   }
 }
 

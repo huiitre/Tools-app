@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useImagePreview } from '@/composables/useImagePreview'
+import { useValorantSkinDetail } from '../composables/useValorantSkinDetail'
 import type { ValorantStoreBundle } from '../valorant.types'
 import ValorantSkinActions from './ValorantSkinActions.vue'
+import ValorantSkinIdBadge from './ValorantSkinIdBadge.vue'
 
 const props = defineProps<{
   bundle: ValorantStoreBundle
@@ -10,6 +12,7 @@ const props = defineProps<{
 }>()
 
 const { open: openImagePreview } = useImagePreview()
+const { open: openSkinDetail } = useValorantSkinDetail()
 
 const formattedTime = computed(() => {
   const ms = Math.max(0, props.bundle.remainingSeconds * 1000)
@@ -51,8 +54,9 @@ const formattedTime = computed(() => {
       <div v-for="offer in props.bundle.items" :key="offer.skin.id" class="bundle-skin-item">
         <div
           class="bundle-skin-img"
-          @click="offer.skin.iconUrl && openImagePreview(offer.skin.iconUrl, offer.skin.name)"
+          @click="openSkinDetail(offer.skin)"
         >
+          <ValorantSkinIdBadge :id="offer.skin.id" />
           <img v-if="offer.skin.iconUrl" :src="offer.skin.iconUrl" :alt="offer.skin.name" loading="lazy" />
           <ValorantSkinActions :skin-id="offer.skin.id" class="skin-actions" />
         </div>
@@ -218,7 +222,7 @@ const formattedTime = computed(() => {
   &:hover img { transform: scale(1.1); }
 
   &:hover {
-    :deep(.action-btn) { opacity: 1; }
+    :deep(.action-btn), :deep(.skin-id-badge) { opacity: 1; }
   }
 }
 

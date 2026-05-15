@@ -9,8 +9,5 @@
     "web:dev": "npm run dev --prefix web",
     "api:dev": "cd api && SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run",
     "electron:watch": "cd web && npm run electron:watch"
-  },
-  "devDependencies": {
-    "concurrently": "^9.1.2"
   }
 }
