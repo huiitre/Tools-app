@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { clientV3 } from '@/services/axiosInstance'
-import { useImagePreview } from '@/composables/useImagePreview'
 import { fetchWeapons } from '@/modules/Riot/valorant/fetch/valorantShop.fetch'
 import { fetchMySkins, fetchWatchlist } from '@/modules/Riot/valorant/fetch/valorantUserSkins.fetch'
 import { useRiotStore } from '@/modules/Riot/riot.store'
+import { useValorantSkinDetail } from '../composables/useValorantSkinDetail'
 import type { ValorantSkin, ValorantWeapon } from '../valorant.types'
 import ValorantSkinCard from '../components/ValorantSkinCard.vue'
 
@@ -15,6 +15,7 @@ type SortBy = 'name' | 'id' | 'addedAt'
 type SortDir = 'asc' | 'desc'
 
 const riotStore = useRiotStore()
+const { open: openSkinDetail } = useValorantSkinDetail()
 const skins = ref<ValorantSkin[]>([])
 const weapons = ref<ValorantWeapon[]>([])
 const loading = ref(true)
@@ -45,8 +46,6 @@ let observer: IntersectionObserver | null = null
 
 // Back to Top
 const showBackToTop = ref(false)
-
-const { open: openImagePreview } = useImagePreview()
 
 const filteredSkins = computed(() => {
   let result = [...skins.value]
@@ -300,7 +299,7 @@ onUnmounted(() => {
         v-for="skin in displayedSkins"
         :key="skin.id"
         :skin="skin"
-        @preview="(url, name) => openImagePreview(url, name)"
+        @detail="openSkinDetail"
         @filter-tier="setCollectionFilter"
       />
     </div>

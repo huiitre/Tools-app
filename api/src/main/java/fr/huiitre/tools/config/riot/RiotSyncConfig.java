@@ -7,12 +7,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import fr.huiitre.tools.modules.riot.sync.application.ValorantBundleDataProvider;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantBundleSyncRepository;
+import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinChromaSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinDataProvider;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinLevelSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantWeaponDataProvider;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantWeaponSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.PostgresValorantBundleSyncRepository;
+import fr.huiitre.tools.modules.riot.sync.infrastructure.PostgresValorantSkinChromaSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.PostgresValorantSkinLevelSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.PostgresValorantSkinSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.PostgresValorantWeaponSyncRepository;
@@ -58,6 +60,11 @@ public class RiotSyncConfig {
     @Bean
     public ValorantSkinLevelSyncRepository valorantSkinLevelSyncRepository(JdbcTemplate jdbcTemplate) {
         return new PostgresValorantSkinLevelSyncRepository(jdbcTemplate);
+    }
+
+    @Bean
+    public ValorantSkinChromaSyncRepository valorantSkinChromaSyncRepository(JdbcTemplate jdbcTemplate) {
+        return new PostgresValorantSkinChromaSyncRepository(jdbcTemplate);
     }
 
     @Bean

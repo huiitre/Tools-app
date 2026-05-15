@@ -2,11 +2,12 @@
 import { computed } from 'vue'
 import type { ValorantSkin } from '../valorant.types'
 import ValorantSkinActions from './ValorantSkinActions.vue'
+import ValorantSkinIdBadge from './ValorantSkinIdBadge.vue'
 
 const props = defineProps<{ skin: ValorantSkin }>()
 
 const emit = defineEmits<{
-  preview: [url: string, name: string]
+  detail: [skin: ValorantSkin]
   filterTier: [tierUuid: string]
 }>()
 
@@ -15,13 +16,14 @@ const displayIcon = computed(
 )
 
 function onImageClick() {
-  if (displayIcon.value) emit('preview', displayIcon.value, props.skin.name)
+  emit('detail', props.skin)
 }
 </script>
 
 <template>
   <article class="skin-card">
     <div class="skin-image-wrap" @click="onImageClick">
+      <ValorantSkinIdBadge :id="skin.id" />
       <img
         v-if="displayIcon"
         :src="displayIcon"
@@ -70,7 +72,7 @@ function onImageClick() {
 
     .skin-image { transform: scale(1.06); }
 
-    :deep(.action-btn), .tier-filter-btn { opacity: 1; }
+    :deep(.action-btn), .tier-filter-btn, :deep(.skin-id-badge) { opacity: 1; }
   }
 }
 

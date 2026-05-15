@@ -7,6 +7,7 @@ import { clientInit } from './services/axiosInstance'
 import FullPageLoader from './components/ui/FullPageLoader.vue'
 import { useUIStore } from '@/stores/ui.store'
 import ImagePreviewModal from '@/components/ui/ImagePreviewModal.vue'
+import ValorantSkinDetailModal from '@/modules/Riot/valorant/components/ValorantSkinDetailModal.vue'
 
 const uiStore = useUIStore()
 
@@ -51,6 +52,7 @@ onBeforeUnmount(() => {
 
   <FullPageLoader :visible="uiStore.isLoading" />
   <ImagePreviewModal />
+  <ValorantSkinDetailModal />
 </template>
 
 <style lang="scss" scoped>

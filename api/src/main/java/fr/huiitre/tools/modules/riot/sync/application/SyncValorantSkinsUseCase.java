@@ -24,14 +24,17 @@ public class SyncValorantSkinsUseCase implements SecuredUseCase {
     private final ValorantSkinDataProvider skinDataProvider;
     private final ValorantSkinSyncRepository skinSyncRepository;
     private final ValorantSkinLevelSyncRepository levelSyncRepository;
+    private final ValorantSkinChromaSyncRepository chromaSyncRepository;
 
     public SyncValorantSkinsUseCase(
             ValorantSkinDataProvider skinDataProvider,
             ValorantSkinSyncRepository skinSyncRepository,
-            ValorantSkinLevelSyncRepository levelSyncRepository) {
+            ValorantSkinLevelSyncRepository levelSyncRepository,
+            ValorantSkinChromaSyncRepository chromaSyncRepository) {
         this.skinDataProvider = skinDataProvider;
         this.skinSyncRepository = skinSyncRepository;
         this.levelSyncRepository = levelSyncRepository;
+        this.chromaSyncRepository = chromaSyncRepository;
     }
 
     @Override
@@ -92,6 +95,7 @@ public class SyncValorantSkinsUseCase implements SecuredUseCase {
         }
 
         syncLevels(external, skinAssetIdToDbId);
+        syncChromas(external, skinAssetIdToDbId);
 
         return new ValorantSyncReport(created, updated, deleted);
     }
@@ -105,6 +109,19 @@ public class SyncValorantSkinsUseCase implements SecuredUseCase {
 
             for (ValorantSkinLevelSyncData level : skin.getLevels()) {
                 levelSyncRepository.save(skinId, level);
+            }
+        }
+    }
+
+    private void syncChromas(List<ValorantSkinSyncData> external, Map<UUID, Long> skinAssetIdToDbId) {
+        chromaSyncRepository.deleteAll();
+
+        for (ValorantSkinSyncData skin : external) {
+            Long skinId = skinAssetIdToDbId.get(skin.getAssetId());
+            if (skinId == null) continue;
+
+            for (ValorantSkinChromaSyncData chroma : skin.getChromas()) {
+                chromaSyncRepository.save(skinId, chroma);
             }
         }
     }

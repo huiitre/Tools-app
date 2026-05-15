@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinChromaSyncData;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinDataProvider;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinLevelSyncData;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinSyncData;
@@ -40,8 +41,9 @@ public class ValorantLocalSkinDataProvider implements ValorantSkinDataProvider {
                     UUID tierUuid = parseUuid(skin.path("themeUuid").asText(null));
                     UUID contentTierUuid = parseUuid(skin.path("contentTierUuid").asText(null));
                     List<ValorantSkinLevelSyncData> levels = parseLevels(skin.path("levels"));
+                    List<ValorantSkinChromaSyncData> chromas = parseChromas(skin.path("chromas"));
 
-                    result.add(new ValorantSkinSyncData(assetId, name, iconUrl, tierUuid, contentTierUuid, weaponAssetId, levels));
+                    result.add(new ValorantSkinSyncData(assetId, name, iconUrl, tierUuid, contentTierUuid, weaponAssetId, levels, chromas));
                 }
             }
 
@@ -70,6 +72,32 @@ public class ValorantLocalSkinDataProvider implements ValorantSkinDataProvider {
         return levels;
     }
 
+    private List<ValorantSkinChromaSyncData> parseChromas(JsonNode chromasNode) {
+        List<ValorantSkinChromaSyncData> chromas = new ArrayList<>();
+        if (!chromasNode.isArray()) return chromas;
+
+        for (int i = 0; i < chromasNode.size(); i++) {
+            JsonNode chroma = chromasNode.get(i);
+            UUID chromaAssetId = UUID.fromString(chroma.get("uuid").asText());
+            String name = chroma.path("displayName").asText(null);
+            String displayIconUrl = resolveCdnUrl(chroma.path("displayIcon").asText(null),
+                    "/tools_riot/valorant/img/weaponskinchromas/" + chromaAssetId + "/displayicon.png");
+            String fullRenderUrl = resolveCdnUrl(chroma.path("fullRender").asText(null),
+                    "/tools_riot/valorant/img/weaponskinchromas/" + chromaAssetId + "/fullrender.png");
+            String swatchUrl = resolveCdnUrl(chroma.path("swatch").asText(null),
+                    "/tools_riot/valorant/img/weaponskinchromas/" + chromaAssetId + "/swatch.png");
+            String streamedVideoUrl = chroma.path("streamedVideo").asText(null);
+
+            chromas.add(new ValorantSkinChromaSyncData(chromaAssetId, i, name, displayIconUrl, fullRenderUrl, swatchUrl, streamedVideoUrl));
+        }
+
+        return chromas;
+    }
+
+    private String resolveCdnUrl(String cdnValue, String localPath) {
+        return (cdnValue != null && !cdnValue.isBlank()) ? assetsBaseUrl + localPath : null;
+    }
+
     private String resolveSkinIconUrl(UUID assetId, JsonNode skin) {
         String displayIcon = skin.path("displayIcon").asText(null);
         if (displayIcon != null && !displayIcon.isBlank()) {
@@ -91,11 +119,8 @@ public class ValorantLocalSkinDataProvider implements ValorantSkinDataProvider {
     }
 
     private String resolveLevelIconUrl(UUID levelAssetId, JsonNode level) {
-        String displayIcon = level.path("displayIcon").asText(null);
-        if (displayIcon != null && !displayIcon.isBlank()) {
-            return assetsBaseUrl + "/tools_riot/valorant/img/weaponskinlevels/" + levelAssetId + "/displayicon.png";
-        }
-        return null;
+        return resolveCdnUrl(level.path("displayIcon").asText(null),
+                "/tools_riot/valorant/img/weaponskinlevels/" + levelAssetId + "/displayicon.png");
     }
 
     private UUID parseUuid(String value) {
