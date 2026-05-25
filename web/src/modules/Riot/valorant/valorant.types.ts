@@ -17,13 +17,25 @@ export interface ValorantSkinChroma {
   streamedVideoUrl: string | null
 }
 
+export interface ValorantContentTier {
+  id: number
+  assetId: string
+  name: string
+  devName: string
+  rank: number
+  juiceValue: number
+  juiceCost: number
+  highlightColor: string | null
+  displayIconUrl: string | null
+}
+
 export interface ValorantSkin {
   id: number
   assetId: string
   name: string
   iconUrl: string | null
   tierUuid: string | null
-  contentTierUuid: string | null
+  contentTier: ValorantContentTier | null
   weaponId: number | null
   levels: ValorantSkinLevel[]
   chromas: ValorantSkinChroma[]

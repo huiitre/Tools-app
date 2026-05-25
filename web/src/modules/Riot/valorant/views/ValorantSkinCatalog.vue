@@ -11,7 +11,7 @@ import ValorantSkinCard from '../components/ValorantSkinCard.vue'
 const STORAGE_KEY_FILTERS = 'riot.valorant.catalog.filters'
 
 type FilterState = 'all' | 'owned' | 'watched' | 'unowned'
-type SortBy = 'name' | 'id' | 'addedAt'
+type SortBy = 'name' | 'id'
 type SortDir = 'asc' | 'desc'
 
 const riotStore = useRiotStore()
@@ -87,11 +87,6 @@ const filteredSkins = computed(() => {
     } else if (sortBy.value === 'id') {
       valA = a.id
       valB = b.id
-    } else if (sortBy.value === 'addedAt') {
-      const dateA = riotStore.getOwnedAddedAt(a.id) ?? riotStore.getWatchedAddedAt(a.id) ?? '0'
-      const dateB = riotStore.getOwnedAddedAt(b.id) ?? riotStore.getWatchedAddedAt(b.id) ?? '0'
-      valA = dateA
-      valB = dateB
     }
 
     if (valA < valB) return sortDir.value === 'asc' ? -1 : 1
@@ -240,7 +235,6 @@ onUnmounted(() => {
         <select v-model="sortBy" class="toolbar-select sort-select" :disabled="!!activeTierUuid">
           <option value="name">Nom</option>
           <option value="id">ID</option>
-          <option value="addedAt">Date d'ajout</option>
         </select>
 
         <button
