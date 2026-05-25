@@ -78,19 +78,13 @@ const filteredSkins = computed(() => {
 
   // Sort
   result.sort((a, b) => {
-    let valA: string | number = ''
-    let valB: string | number = ''
-
     if (sortBy.value === 'name') {
-      valA = a.name.toLowerCase()
-      valB = b.name.toLowerCase()
+      const cmp = a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' })
+      return sortDir.value === 'asc' ? cmp : -cmp
     } else if (sortBy.value === 'id') {
-      valA = a.id
-      valB = b.id
+      const diff = a.id - b.id
+      return sortDir.value === 'asc' ? diff : -diff
     }
-
-    if (valA < valB) return sortDir.value === 'asc' ? -1 : 1
-    if (valA > valB) return sortDir.value === 'asc' ? 1 : -1
     return 0
   })
 
