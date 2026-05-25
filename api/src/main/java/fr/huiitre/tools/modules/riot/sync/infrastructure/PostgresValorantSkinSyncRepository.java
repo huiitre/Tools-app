@@ -25,7 +25,7 @@ public class PostgresValorantSkinSyncRepository implements ValorantSkinSyncRepos
             rs.getString("name"),
             rs.getString("icon_url"),
             rs.getObject("tier_uuid", UUID.class),
-            rs.getObject("content_tier_uuid", UUID.class),
+            null,
             rs.getObject("weapon_id", Long.class),
             List.of(),
             List.of(),

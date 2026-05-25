@@ -86,7 +86,6 @@ public class SyncValorantSkinsUseCase implements SecuredUseCase {
             boolean changed = !Objects.equals(existing.name(), ext.getName())
                     || !Objects.equals(existing.iconUrl(), ext.getIconUrl())
                     || !Objects.equals(existing.tierUuid(), ext.getTierUuid())
-                    || !Objects.equals(existing.contentTierUuid(), ext.getContentTierUuid())
                     || !Objects.equals(existing.weaponId(), weaponId);
 
             if (changed) {
