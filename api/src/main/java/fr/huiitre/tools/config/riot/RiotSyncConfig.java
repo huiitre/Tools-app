@@ -7,6 +7,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantBundleDataProvider;
 import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantBundleSyncRepository;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantContentTierDataProvider;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantContentTierSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinChromaSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinDataProvider;
 import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinLevelSyncRepository;
@@ -14,17 +16,31 @@ import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinSyncRepo
 import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantWeaponDataProvider;
 import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantWeaponSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.PostgresValorantBundleSyncRepository;
+import fr.huiitre.tools.modules.riot.sync.infrastructure.PostgresValorantContentTierSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.PostgresValorantSkinChromaSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.PostgresValorantSkinLevelSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.PostgresValorantSkinSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.PostgresValorantWeaponSyncRepository;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.ValorantLocalAssetsReader;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.ValorantLocalBundleDataProvider;
+import fr.huiitre.tools.modules.riot.sync.infrastructure.ValorantLocalContentTierDataProvider;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.ValorantLocalSkinDataProvider;
 import fr.huiitre.tools.modules.riot.sync.infrastructure.ValorantLocalWeaponDataProvider;
 
 @Configuration
 public class RiotSyncConfig {
+
+    @Bean
+    public ValorantContentTierDataProvider valorantContentTierDataProvider(
+            ValorantLocalAssetsReader assetsReader,
+            @Value("${app.assets.base-url}") String assetsBaseUrl) {
+        return new ValorantLocalContentTierDataProvider(assetsReader, assetsBaseUrl);
+    }
+
+    @Bean
+    public ValorantContentTierSyncRepository valorantContentTierSyncRepository(JdbcTemplate jdbcTemplate) {
+        return new PostgresValorantContentTierSyncRepository(jdbcTemplate);
+    }
 
     @Bean
     public ValorantWeaponDataProvider valorantWeaponDataProvider(
