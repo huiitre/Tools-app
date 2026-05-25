@@ -8,9 +8,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinChromaSyncData;
-import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinDataProvider;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinLevelSyncData;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinSyncData;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinDataProvider;
 
 public class ValorantLocalSkinDataProvider implements ValorantSkinDataProvider {
 

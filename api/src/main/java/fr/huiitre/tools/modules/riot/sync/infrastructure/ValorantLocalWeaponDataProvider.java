@@ -7,8 +7,8 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import fr.huiitre.tools.modules.riot.sync.application.ValorantWeaponDataProvider;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantWeaponSyncData;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantWeaponDataProvider;
 
 public class ValorantLocalWeaponDataProvider implements ValorantWeaponDataProvider {
 

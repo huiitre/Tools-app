@@ -1,4 +1,4 @@
-package fr.huiitre.tools.modules.riot.sync.application;
+package fr.huiitre.tools.modules.riot.sync.application.usecase;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +15,14 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.huiitre.tools.modules.core.module.domain.ModuleCode;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
+import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinChromaSyncData;
+import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinLevelSyncData;
+import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinSyncData;
+import fr.huiitre.tools.modules.riot.sync.application.ValorantSyncReport;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinChromaSyncRepository;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinDataProvider;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinLevelSyncRepository;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinSyncRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 
 @Service
@@ -78,7 +86,6 @@ public class SyncValorantSkinsUseCase implements SecuredUseCase {
             boolean changed = !Objects.equals(existing.name(), ext.getName())
                     || !Objects.equals(existing.iconUrl(), ext.getIconUrl())
                     || !Objects.equals(existing.tierUuid(), ext.getTierUuid())
-                    || !Objects.equals(existing.contentTierUuid(), ext.getContentTierUuid())
                     || !Objects.equals(existing.weaponId(), weaponId);
 
             if (changed) {

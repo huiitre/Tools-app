@@ -1,4 +1,4 @@
-package fr.huiitre.tools.modules.riot.sync.application;
+package fr.huiitre.tools.modules.riot.sync.application.usecase;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.huiitre.tools.modules.core.module.domain.ModuleCode;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
+import fr.huiitre.tools.modules.riot.sync.application.ValorantSyncReport;
+import fr.huiitre.tools.modules.riot.sync.application.ValorantWeaponSyncData;
+import fr.huiitre.tools.modules.riot.sync.application.ValorantWeaponSyncResult;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantWeaponDataProvider;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantWeaponSyncRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantWeaponView;
 
 @Service

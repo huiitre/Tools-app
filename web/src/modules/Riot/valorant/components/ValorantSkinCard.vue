@@ -47,7 +47,15 @@ function onImageClick() {
       </button>
     </div>
 
-    <div class="skin-name">{{ skin.name }}</div>
+    <div class="skin-name">
+      <img
+        v-if="skin.contentTier?.displayIconUrl"
+        :src="skin.contentTier.displayIconUrl"
+        :alt="skin.contentTier.devName"
+        class="content-tier-icon"
+      />
+      <span>{{ skin.name }}</span>
+    </div>
   </article>
 </template>
 
@@ -156,9 +164,23 @@ function onImageClick() {
   font-weight: 600;
   color: var(--pico-color);
   line-height: 1.3;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+}
+
+.content-tier-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 </style>

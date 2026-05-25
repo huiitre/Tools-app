@@ -4,8 +4,8 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 
-import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinDataProvider;
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinSyncData;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinDataProvider;
 
 import java.util.ArrayList;
 import java.util.List;

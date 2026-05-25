@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantContentTierView;
 import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinChromaView;
 import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinLevelView;
 import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
@@ -25,15 +26,19 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
     }
 
     private static final String SELECT_WITH_LEVELS = """
-            SELECT s.id, s.asset_id, s.name, s.icon_url, s.tier_uuid, s.content_tier_uuid, s.weapon_id,
+            SELECT s.id, s.asset_id, s.name, s.icon_url, s.tier_uuid, s.weapon_id,
                    l.asset_id AS level_asset_id, l.level_index, l.name AS level_name, l.level_item,
                    l.display_icon_url, l.streamed_video_url,
                    (us.id IS NOT NULL) as owned, us.created_at as owned_at,
-                   (w.id IS NOT NULL) as watched, w.created_at as watched_at
+                   (w.id IS NOT NULL) as watched, w.created_at as watched_at,
+                   ct.id AS ct_id, ct.asset_id AS ct_asset_id, ct.name AS ct_name, ct.dev_name AS ct_dev_name,
+                   ct.rank AS ct_rank, ct.juice_value AS ct_juice_value, ct.juice_cost AS ct_juice_cost,
+                   ct.highlight_color AS ct_highlight_color, ct.display_icon_url AS ct_display_icon_url
             FROM tools_riot.valorant_weapon_skins s
             LEFT JOIN tools_riot.valorant_skin_levels l ON l.skin_id = s.id
             LEFT JOIN tools_riot.valorant_user_skins us ON us.skin_id = s.id AND us.user_id = ?
             LEFT JOIN tools_riot.valorant_skin_watchlist w ON w.skin_id = s.id AND w.user_id = ?
+            LEFT JOIN tools_riot.valorant_content_tiers ct ON ct.asset_id = s.content_tier_uuid
             """;
 
     private static final String SELECT_CHROMAS_BY_SKIN_IDS = """
@@ -114,7 +119,7 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
                             rs.getString("name"),
                             rs.getString("icon_url"),
                             rs.getObject("tier_uuid", UUID.class),
-                            rs.getObject("content_tier_uuid", UUID.class),
+                            extractContentTier(rs),
                             rs.getObject("weapon_id", Long.class),
                             new ArrayList<>(),
                             List.of(),
@@ -161,7 +166,7 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
                             rs.getString("name"),
                             rs.getString("icon_url"),
                             rs.getObject("tier_uuid", UUID.class),
-                            rs.getObject("content_tier_uuid", UUID.class),
+                            extractContentTier(rs),
                             rs.getObject("weapon_id", Long.class),
                             levels,
                             List.of(),
@@ -214,7 +219,7 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
 
         return skins.stream().map(s -> new ValorantSkinView(
                 s.id(), s.assetId(), s.name(), s.iconUrl(),
-                s.tierUuid(), s.contentTierUuid(), s.weaponId(),
+                s.tierUuid(), s.contentTier(), s.weaponId(),
                 s.levels(),
                 chromasBySkinId != null ? chromasBySkinId.getOrDefault(s.id(), List.of()) : List.of(),
                 s.owned(), s.watched(), s.ownedAt(), s.watchedAt())).toList();
@@ -224,8 +229,23 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
         ValorantSkinView prev = map.get(skinId);
         map.put(skinId, new ValorantSkinView(
                 prev.id(), prev.assetId(), prev.name(), prev.iconUrl(),
-                prev.tierUuid(), prev.contentTierUuid(), prev.weaponId(), List.copyOf(levels),
+                prev.tierUuid(), prev.contentTier(), prev.weaponId(), List.copyOf(levels),
                 prev.chromas(), prev.owned(), prev.watched(), prev.ownedAt(), prev.watchedAt()));
+    }
+
+    private static ValorantContentTierView extractContentTier(java.sql.ResultSet rs) throws java.sql.SQLException {
+        String ctName = rs.getString("ct_name");
+        if (ctName == null) return null;
+        return new ValorantContentTierView(
+                rs.getLong("ct_id"),
+                rs.getObject("ct_asset_id", UUID.class),
+                ctName,
+                rs.getString("ct_dev_name"),
+                rs.getInt("ct_rank"),
+                rs.getInt("ct_juice_value"),
+                rs.getInt("ct_juice_cost"),
+                rs.getString("ct_highlight_color"),
+                rs.getString("ct_display_icon_url"));
     }
 
     private LocalDateTime toLocalDateTime(Timestamp ts) {

@@ -1,7 +1,7 @@
 package fr.huiitre.tools.modules.riot.sync.infrastructure;
 
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinSyncData;
-import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinSyncRepository;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinSyncRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -25,7 +25,7 @@ public class PostgresValorantSkinSyncRepository implements ValorantSkinSyncRepos
             rs.getString("name"),
             rs.getString("icon_url"),
             rs.getObject("tier_uuid", UUID.class),
-            rs.getObject("content_tier_uuid", UUID.class),
+            null,
             rs.getObject("weapon_id", Long.class),
             List.of(),
             List.of(),

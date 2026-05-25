@@ -7,7 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
 import fr.huiitre.tools.modules.riot.sync.application.ValorantWeaponSyncData;
-import fr.huiitre.tools.modules.riot.sync.application.ValorantWeaponSyncRepository;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantWeaponSyncRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantWeaponView;
 
 public class PostgresValorantWeaponSyncRepository implements ValorantWeaponSyncRepository {

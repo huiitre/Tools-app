@@ -3,7 +3,7 @@ package fr.huiitre.tools.modules.riot.sync.infrastructure;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinLevelSyncData;
-import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinLevelSyncRepository;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinLevelSyncRepository;
 
 public class PostgresValorantSkinLevelSyncRepository implements ValorantSkinLevelSyncRepository {
 

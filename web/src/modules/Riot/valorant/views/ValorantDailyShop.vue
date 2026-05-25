@@ -85,7 +85,15 @@ const { open: openSkinDetail } = useValorantSkinDetail()
             <ValorantSkinActions :skin-id="offer.skin.id" class="card-actions" />
           </div>
           <div class="skin-info">
-            <div class="skin-name">{{ offer.skin.name }}</div>
+            <div class="skin-name">
+              <img
+                v-if="offer.skin.contentTier?.displayIconUrl"
+                :src="offer.skin.contentTier.displayIconUrl"
+                :alt="offer.skin.contentTier.devName"
+                class="content-tier-icon"
+              />
+              <span>{{ offer.skin.name }}</span>
+            </div>
             <div class="skin-price">
               <span class="vp-badge">{{ offer.cost.toLocaleString('fr-FR') }} VP</span>
             </div>
@@ -301,6 +309,23 @@ const { open: openSkinDetail } = useValorantSkinDetail()
   font-size: 0.95rem;
   color: var(--pico-color);
   line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+}
+
+.content-tier-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .skin-price { margin-top: auto; }
