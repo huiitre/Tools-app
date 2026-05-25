@@ -1,4 +1,4 @@
-package fr.huiitre.tools.modules.riot.sync.application;
+package fr.huiitre.tools.modules.riot.sync.application.usecase;
 
 import java.util.Optional;
 
@@ -8,6 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.huiitre.tools.modules.core.module.domain.ModuleCode;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
+import fr.huiitre.tools.modules.riot.sync.application.ValorantGlobalSyncReport;
+import fr.huiitre.tools.modules.riot.sync.application.ValorantSyncReport;
+import fr.huiitre.tools.modules.riot.sync.application.ValorantWeaponSyncResult;
 
 @Service
 @Transactional

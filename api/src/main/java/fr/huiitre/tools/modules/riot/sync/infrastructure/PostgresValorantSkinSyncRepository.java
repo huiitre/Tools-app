@@ -1,7 +1,7 @@
 package fr.huiitre.tools.modules.riot.sync.infrastructure;
 
 import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinSyncData;
-import fr.huiitre.tools.modules.riot.sync.application.ValorantSkinSyncRepository;
+import fr.huiitre.tools.modules.riot.sync.application.ports.ValorantSkinSyncRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 
 import org.springframework.jdbc.core.JdbcTemplate;

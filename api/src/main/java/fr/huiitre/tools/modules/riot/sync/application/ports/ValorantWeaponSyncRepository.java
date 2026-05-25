@@ -1,5 +1,6 @@
-package fr.huiitre.tools.modules.riot.sync.application;
+package fr.huiitre.tools.modules.riot.sync.application.ports;
 
+import fr.huiitre.tools.modules.riot.sync.application.ValorantWeaponSyncData;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantWeaponView;
 
 import java.util.List;
