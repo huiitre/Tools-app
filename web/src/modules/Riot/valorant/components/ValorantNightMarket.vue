@@ -57,7 +57,15 @@ const formattedTime = computed(() => {
         </div>
 
         <div class="skin-info">
-          <div class="skin-name">{{ offer.skin.name }}</div>
+          <div class="skin-name">
+              <img
+                v-if="offer.skin.contentTier?.displayIconUrl"
+                :src="offer.skin.contentTier.displayIconUrl"
+                :alt="offer.skin.contentTier.devName"
+                class="content-tier-icon"
+              />
+              <span>{{ offer.skin.name }}</span>
+            </div>
           <div class="price-row">
             <span class="vp-badge">{{ offer.discountedCost.toLocaleString('fr-FR') }} VP</span>
             <span class="original-price">{{ offer.originalCost.toLocaleString('fr-FR') }} VP</span>
@@ -206,6 +214,23 @@ const formattedTime = computed(() => {
   font-size: 0.85rem;
   color: var(--pico-color);
   line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+}
+
+.content-tier-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .price-row {

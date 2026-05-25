@@ -120,7 +120,18 @@ onUnmounted(() => {
 
           <!-- Header -->
           <div class="modal-header">
-            <h2 class="skin-title">{{ skin.name }}</h2>
+            <div class="skin-title-group">
+              <h2 class="skin-title">{{ skin.name }}</h2>
+              <div v-if="skin.contentTier" class="content-tier-badge">
+                <img
+                  v-if="skin.contentTier.displayIconUrl"
+                  :src="skin.contentTier.displayIconUrl"
+                  :alt="skin.contentTier.devName"
+                  class="ct-icon"
+                />
+                <span>{{ skin.contentTier.name }}</span>
+              </div>
+            </div>
             <button class="close-btn" @click="close" title="Fermer">
               <i class="mdi mdi-close" />
             </button>
@@ -300,6 +311,13 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
+.skin-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
 .skin-title {
   font-size: 1.1rem;
   font-weight: 700;
@@ -308,6 +326,24 @@ onUnmounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.content-tier-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+
+  span { white-space: nowrap; }
+}
+
+.ct-icon {
+  width: 1rem;
+  height: 1rem;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .close-btn {

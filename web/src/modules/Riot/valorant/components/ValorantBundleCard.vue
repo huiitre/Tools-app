@@ -60,7 +60,15 @@ const formattedTime = computed(() => {
           <img v-if="offer.skin.iconUrl" :src="offer.skin.iconUrl" :alt="offer.skin.name" loading="lazy" />
           <ValorantSkinActions :skin-id="offer.skin.id" class="skin-actions" />
         </div>
-        <span class="bundle-skin-label">{{ offer.skin.name }}</span>
+        <div class="bundle-skin-label">
+          <img
+            v-if="offer.skin.contentTier?.displayIconUrl"
+            :src="offer.skin.contentTier.displayIconUrl"
+            :alt="offer.skin.contentTier.devName"
+            class="content-tier-icon"
+          />
+          <span>{{ offer.skin.name }}</span>
+        </div>
         <div class="bundle-skin-price">
           <span v-if="offer.cost > 0" class="vp-badge">{{ offer.cost.toLocaleString('fr-FR') }} VP</span>
           <span v-else class="vp-badge vp-badge--free">OFFERT</span>
@@ -246,8 +254,25 @@ const formattedTime = computed(() => {
 .bundle-skin-label {
   font-size: 0.75rem;
   color: var(--pico-muted-color);
-  text-align: center;
   line-height: 1.3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+}
+
+.content-tier-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .bundle-skin-price {

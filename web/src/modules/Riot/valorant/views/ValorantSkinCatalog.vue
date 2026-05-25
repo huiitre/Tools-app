@@ -11,7 +11,7 @@ import ValorantSkinCard from '../components/ValorantSkinCard.vue'
 const STORAGE_KEY_FILTERS = 'riot.valorant.catalog.filters'
 
 type FilterState = 'all' | 'owned' | 'watched' | 'unowned'
-type SortBy = 'name' | 'id'
+type SortBy = 'name' | 'id' | 'rank'
 type SortDir = 'asc' | 'desc'
 
 const riotStore = useRiotStore()
@@ -28,6 +28,7 @@ const stateFilter = ref<FilterState>('all')
 const sortBy = ref<SortBy>('name')
 const sortDir = ref<SortDir>('asc')
 const activeTierUuid = ref<string | null>(null)
+const contentTierFilter = ref<string | null>(null)
 
 const isAnyFilterActive = computed(() => {
   return q.value.trim() !== '' ||
@@ -35,7 +36,22 @@ const isAnyFilterActive = computed(() => {
     stateFilter.value !== 'all' ||
     sortBy.value !== 'name' ||
     sortDir.value !== 'asc' ||
-    activeTierUuid.value !== null
+    activeTierUuid.value !== null ||
+    contentTierFilter.value !== null
+})
+
+const availableContentTiers = computed(() => {
+  const seen = new Map<string, { assetId: string; name: string; rank: number }>()
+  for (const skin of skins.value) {
+    if (skin.contentTier && !seen.has(skin.contentTier.assetId)) {
+      seen.set(skin.contentTier.assetId, {
+        assetId: skin.contentTier.assetId,
+        name: skin.contentTier.name,
+        rank: skin.contentTier.rank,
+      })
+    }
+  }
+  return [...seen.values()].sort((a, b) => b.rank - a.rank)
 })
 
 // Progressive Rendering
@@ -76,6 +92,11 @@ const filteredSkins = computed(() => {
     result = result.filter(s => !riotStore.isSkinOwned(s.id))
   }
 
+  // Content Tier Filter
+  if (contentTierFilter.value !== null) {
+    result = result.filter(s => s.contentTier?.assetId === contentTierFilter.value)
+  }
+
   // Sort
   result.sort((a, b) => {
     if (sortBy.value === 'name') {
@@ -84,6 +105,11 @@ const filteredSkins = computed(() => {
     } else if (sortBy.value === 'id') {
       const diff = a.id - b.id
       return sortDir.value === 'asc' ? diff : -diff
+    } else if (sortBy.value === 'rank') {
+      const noRank = sortDir.value === 'asc' ? Infinity : -Infinity
+      const rankA = a.contentTier?.rank ?? noRank
+      const rankB = b.contentTier?.rank ?? noRank
+      return sortDir.value === 'asc' ? rankA - rankB : rankB - rankA
     }
     return 0
   })
@@ -113,6 +139,7 @@ function clearFilters() {
   sortBy.value = 'name'
   sortDir.value = 'asc'
   activeTierUuid.value = null
+  contentTierFilter.value = null
   localStorage.removeItem(STORAGE_KEY_FILTERS)
 }
 
@@ -127,18 +154,19 @@ function setCollectionFilter(uuid: string) {
 }
 
 // Reset limit on filter/sort change
-watch([q, weaponId, stateFilter, sortBy, sortDir, activeTierUuid], () => {
+watch([q, weaponId, stateFilter, sortBy, sortDir, activeTierUuid, contentTierFilter], () => {
   limit.value = PAGE_SIZE
   scrollToTop()
 })
 
 // Persist filters to localStorage
-watch([weaponId, stateFilter, sortBy, sortDir], () => {
+watch([weaponId, stateFilter, sortBy, sortDir, contentTierFilter], () => {
   const data = {
     weaponId: weaponId.value,
     stateFilter: stateFilter.value,
     sortBy: sortBy.value,
-    sortDir: sortDir.value
+    sortDir: sortDir.value,
+    contentTierFilter: contentTierFilter.value,
   }
   localStorage.setItem(STORAGE_KEY_FILTERS, JSON.stringify(data))
 })
@@ -153,6 +181,7 @@ function hydrateFilters() {
     if (data.stateFilter) stateFilter.value = data.stateFilter
     if (data.sortBy) sortBy.value = data.sortBy
     if (data.sortDir) sortDir.value = data.sortDir
+    if (data.contentTierFilter !== undefined) contentTierFilter.value = data.contentTierFilter
   } catch (e) {
     console.warn('Failed to hydrate Valorant filters', e)
   }
@@ -225,10 +254,18 @@ onUnmounted(() => {
         <option value="unowned">Non possédés</option>
       </select>
 
+      <select v-model="contentTierFilter" class="toolbar-select" :disabled="!!activeTierUuid">
+        <option :value="null">Toutes les raretés</option>
+        <option v-for="tier in availableContentTiers" :key="tier.assetId" :value="tier.assetId">
+          {{ tier.name }}
+        </option>
+      </select>
+
       <div class="sort-controls">
         <select v-model="sortBy" class="toolbar-select sort-select" :disabled="!!activeTierUuid">
           <option value="name">Nom</option>
           <option value="id">ID</option>
+          <option value="rank">Rareté</option>
         </select>
 
         <button
