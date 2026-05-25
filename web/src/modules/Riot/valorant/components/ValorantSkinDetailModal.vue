@@ -152,6 +152,7 @@ onUnmounted(() => {
                     autoplay
                     loop
                     controls
+                    @loadedmetadata="(e) => ((e.target as HTMLVideoElement).volume = 0.1)"
                   />
                   <img
                     v-else-if="mainMedia?.type === 'image'"
