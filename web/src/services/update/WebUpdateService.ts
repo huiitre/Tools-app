@@ -6,6 +6,10 @@ export class WebUpdateService implements IUpdateService {
     pwa.onNeedRefresh = callback
   }
 
+  startDownload(): void {}
+  onDownloadProgress(_callback: (percent: number) => void): void {}
+  onUpdateReady(_callback: () => void): void {}
+
   applyUpdate(): void {
     // 1. Écouteur global pour le changement de contrôleur (plus fiable que statechange)
     navigator.serviceWorker.addEventListener('controllerchange', () => {

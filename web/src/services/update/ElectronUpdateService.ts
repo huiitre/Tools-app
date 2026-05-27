@@ -5,6 +5,18 @@ export class ElectronUpdateService implements IUpdateService {
     window.electron?.onUpdateAvailable(callback)
   }
 
+  startDownload(): void {
+    window.electron?.startDownload()
+  }
+
+  onDownloadProgress(callback: (percent: number) => void): void {
+    window.electron?.onDownloadProgress(callback)
+  }
+
+  onUpdateReady(callback: () => void): void {
+    window.electron?.onUpdateDownloaded(callback)
+  }
+
   applyUpdate(): void {
     window.electron?.applyUpdate()
   }
