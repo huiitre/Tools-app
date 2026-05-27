@@ -50,3 +50,7 @@ export const useFetchVerifyEmail = async (token: string) => {
 export const useFetchSetPassword = async (password: string) => {
   return await clientV3.patch('/user/password', { password });
 };
+
+export const useFetchElectronSession = async () => {
+  return await clientV3.post('/auth/electron/session');
+};

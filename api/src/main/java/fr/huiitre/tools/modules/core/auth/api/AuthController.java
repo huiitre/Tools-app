@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -472,4 +473,17 @@ public class AuthController {
 	 * }
 	 * }
 	 */
+
+	/*
+	 * ===============================
+	 * ELECTRON SESSION
+	 * ===============================
+	 */
+	@PostMapping("/electron/session")
+	public ResponseEntity<Void> createElectronSession(HttpServletResponse response) {
+		String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+		String refreshToken = jwtProvider.generateRefreshToken(userId);
+		refreshTokenCookieManager.set(response, refreshToken, 7 * 24 * 3600);
+		return ResponseEntity.ok().build();
+	}
 }
