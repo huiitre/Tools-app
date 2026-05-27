@@ -1,35 +1,40 @@
 package fr.huiitre.tools.modules.core.auth.infrastructure.google;
 
-import java.net.URI;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import fr.huiitre.tools.modules.core.auth.application.exception.InvalidCredentialsException;
 
 @Service
 public class GoogleTokenVerifier {
 
-    private static final String GOOGLE_TOKEN_INFO = "https://oauth2.googleapis.com/tokeninfo?id_token=%s";
+    private static final String GOOGLE_JWK_URI = "https://www.googleapis.com/oauth2/v3/certs";
+    private static final String GOOGLE_ISSUER = "https://accounts.google.com";
 
-    private static final Logger logger = LoggerFactory.getLogger(GoogleTokenVerifier.class);
+    @Value("${google.oauth.client-id}")
+    private String clientId;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final JwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(GOOGLE_JWK_URI).build();
 
-    @SuppressWarnings("unchecked")
     public GoogleUserPayload verify(String idToken) {
         try {
-            Map<String, Object> payload = restTemplate.getForObject(
-                    URI.create(String.format(GOOGLE_TOKEN_INFO, idToken)),
-                    Map.class);
+            Jwt jwt = decoder.decode(idToken);
 
-            String sub = (String) payload.get("sub");
-            String email = (String) payload.get("email");
-            String name = (String) payload.get("name");
-            String picture = (String) payload.get("picture");
+            if (!jwt.getAudience().contains(clientId)) {
+                throw new InvalidCredentialsException();
+            }
+
+            if (jwt.getIssuer() == null || !GOOGLE_ISSUER.equals(jwt.getIssuer().toString())) {
+                throw new InvalidCredentialsException();
+            }
+
+            String sub = jwt.getSubject();
+            String email = jwt.getClaimAsString("email");
+            String name = jwt.getClaimAsString("name");
+            String picture = jwt.getClaimAsString("picture");
 
             if (sub == null || email == null) {
                 throw new InvalidCredentialsException();
@@ -37,6 +42,8 @@ public class GoogleTokenVerifier {
 
             return new GoogleUserPayload(sub, email, name, picture);
 
+        } catch (InvalidCredentialsException e) {
+            throw e;
         } catch (Exception e) {
             throw new InvalidCredentialsException();
         }

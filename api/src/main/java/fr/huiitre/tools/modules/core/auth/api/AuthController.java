@@ -15,6 +15,8 @@ import fr.huiitre.tools.modules.core.auth.application.usecase.RequestPasswordRes
 import fr.huiitre.tools.modules.core.auth.application.usecase.ValidateEmailVerificationUseCase;
 import fr.huiitre.tools.modules.core.auth.application.usecase.ValidatePasswordResetUseCase;
 import fr.huiitre.tools.modules.core.auth.domain.AuthProvider;
+import fr.huiitre.tools.modules.core.auth.infrastructure.google.GoogleOAuthClient;
+import fr.huiitre.tools.modules.core.auth.infrastructure.google.GoogleOAuthStateService;
 import fr.huiitre.tools.modules.core.auth.infrastructure.google.GoogleTokenVerifier;
 import fr.huiitre.tools.modules.core.auth.infrastructure.google.GoogleUserPayload;
 import fr.huiitre.tools.modules.core.security.infrastructure.JwtProvider;
@@ -29,12 +31,14 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,6 +57,8 @@ public class AuthController {
 	private final UserRepository userRepository;
 	private final AuthenticateUserWithProviderUseCase authenticateUserWithProviderUseCase;
 	private final GoogleTokenVerifier googleTokenVerifier;
+	private final GoogleOAuthClient googleOAuthClient;
+	private final GoogleOAuthStateService googleOAuthStateService;
 	private final ValidateEmailVerificationUseCase validateEmailVerificationUseCase;
 	private final RegisterUserAndSendVerificationUseCase registerUserAndSendVerificationUseCase;
 	private final RequestPasswordResetUseCase requestPasswordResetUseCase;
@@ -69,6 +75,8 @@ public class AuthController {
 			UserRepository userRepository,
 			AuthenticateUserWithProviderUseCase authenticateUserWithProviderUseCase,
 			GoogleTokenVerifier googleTokenVerifier,
+			GoogleOAuthClient googleOAuthClient,
+			GoogleOAuthStateService googleOAuthStateService,
 			ValidateEmailVerificationUseCase validateEmailVerificationUseCase,
 			RequestPasswordResetUseCase requestPasswordResetUseCase,
 			ValidatePasswordResetUseCase validatePasswordResetUseCase,
@@ -79,6 +87,8 @@ public class AuthController {
 		this.userRepository = userRepository;
 		this.authenticateUserWithProviderUseCase = authenticateUserWithProviderUseCase;
 		this.googleTokenVerifier = googleTokenVerifier;
+		this.googleOAuthClient = googleOAuthClient;
+		this.googleOAuthStateService = googleOAuthStateService;
 		this.validateEmailVerificationUseCase = validateEmailVerificationUseCase;
 		this.requestPasswordResetUseCase = requestPasswordResetUseCase;
 		this.validatePasswordResetUseCase = validatePasswordResetUseCase;
@@ -158,6 +168,62 @@ public class AuthController {
 
 		// 6. Retour access token
 		return ResponseEntity.ok(new LoginResponse(accessToken));
+	}
+
+	/*
+	 * ===============================
+	 * GOOGLE OAUTH — URL
+	 * ===============================
+	 */
+	@GetMapping("/google/url")
+	public ResponseEntity<Map<String, String>> getGoogleAuthUrl(
+			@RequestParam(defaultValue = "web") String source) {
+		String state = googleOAuthStateService.generate(source);
+		String url = googleOAuthClient.buildAuthorizationUrl(state);
+		return ResponseEntity.ok(Map.of("url", url));
+	}
+
+	/*
+	 * ===============================
+	 * GOOGLE OAUTH — CALLBACK
+	 * ===============================
+	 */
+	@GetMapping("/callback/google")
+	public void googleCallback(
+			@RequestParam String code,
+			@RequestParam String state,
+			HttpServletResponse response) throws IOException {
+
+		String source = googleOAuthStateService.validateAndGetSource(state);
+
+		String idToken = googleOAuthClient.exchangeCodeForIdToken(code);
+		GoogleUserPayload payload = googleTokenVerifier.verify(idToken);
+
+		RegisterUserCommand command = RegisterUserCommand.oauth(
+				AuthProvider.GOOGLE,
+				payload.getProviderUserId(),
+				payload.getPicture(),
+				payload.getEmail(),
+				payload.getName());
+
+		User user = authenticateUserWithProviderUseCase.execute(command);
+
+		String accessToken = jwtProvider.generateAccessToken(
+				user.getId().toString(),
+				buildAccessClaims(user));
+
+		String refreshToken = jwtProvider.generateRefreshToken(user.getId().toString());
+
+		refreshTokenCookieManager.set(response, refreshToken, 7 * 24 * 3600);
+
+		String redirectUrl;
+		if ("electron".equals(source)) {
+			redirectUrl = "tools://auth?token=" + accessToken;
+		} else {
+			redirectUrl = frontendBaseUrl + "/auth/callback?token=" + accessToken;
+		}
+
+		response.sendRedirect(redirectUrl);
 	}
 
 	/*
