@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useAppUpdate } from '@/composables/useAppUpdate'
 import { useEnv } from '@/composables/useEnv'
 
-const { updateState, downloadProgress, startDownload, applyUpdate } = useAppUpdate()
+const { updateReady, applyUpdate } = useAppUpdate()
 const { isElectron } = useEnv()
 
 const showModal = ref(false)
@@ -11,9 +11,8 @@ const showModal = ref(false)
 
 <template>
   <button
-    v-if="updateState !== 'idle'"
+    v-if="updateReady"
     class="update-button"
-    :class="{ 'is-downloading': updateState === 'downloading' }"
     title="Mise à jour disponible"
     aria-label="Mise à jour disponible"
     @click="showModal = true"
@@ -23,45 +22,21 @@ const showModal = ref(false)
   </button>
 
   <Teleport to="body">
-    <div v-if="showModal" class="modal-backdrop" @click.self="updateState !== 'downloading' && (showModal = false)">
+    <div v-if="showModal" class="modal-backdrop" @click.self="showModal = false">
       <div class="modal" role="dialog" aria-modal="true">
         <div class="modal-header">
           <i class="mdi mdi-update"></i>
-          <h2>Nouvelle version disponible</h2>
+          <h2>Mise à jour prête</h2>
         </div>
-
-        <!-- État : disponible (Electron uniquement) -->
-        <template v-if="updateState === 'available'">
-          <div class="modal-body">
-            <p>Une nouvelle version est disponible et prête à être téléchargée.</p>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-secondary" @click="showModal = false">Plus tard</button>
-            <button class="btn-primary" @click="startDownload">Télécharger</button>
-          </div>
-        </template>
-
-        <!-- État : téléchargement en cours -->
-        <template v-else-if="updateState === 'downloading'">
-          <div class="modal-body">
-            <p>Téléchargement en cours...</p>
-            <progress :value="downloadProgress" max="100"></progress>
-            <span class="progress-label">{{ downloadProgress }}%</span>
-          </div>
-        </template>
-
-        <!-- État : prêt à installer -->
-        <template v-else-if="updateState === 'ready'">
-          <div class="modal-body">
-            <p>{{ isElectron ? 'La mise à jour est prête. L\'application va redémarrer.' : 'Une nouvelle version est disponible.' }}</p>
-          </div>
-          <div class="modal-footer">
-            <button class="btn-secondary" @click="showModal = false">Plus tard</button>
-            <button class="btn-primary" @click="applyUpdate">
-              {{ isElectron ? 'Installer et redémarrer' : 'Recharger la page' }}
-            </button>
-          </div>
-        </template>
+        <div class="modal-body">
+          <p>{{ isElectron ? "La mise à jour a été téléchargée. L'application va redémarrer pour l'installer." : 'Une nouvelle version est disponible.' }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="showModal = false">Plus tard</button>
+          <button class="btn-primary" @click="applyUpdate">
+            {{ isElectron ? 'Installer et redémarrer' : 'Recharger la page' }}
+          </button>
+        </div>
       </div>
     </div>
   </Teleport>
@@ -86,16 +61,6 @@ const showModal = ref(false)
 .update-button i {
   font-size: 1.25rem;
   color: #0ce114;
-}
-
-.update-button.is-downloading i {
-  color: var(--pico-muted-color);
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 .update-button:hover {
@@ -184,18 +149,5 @@ const showModal = ref(false)
 
 .btn-secondary:hover {
   background: var(--pico-muted-background-color);
-}
-
-progress {
-  width: 100%;
-  margin-top: 0.5rem;
-}
-
-.progress-label {
-  display: block;
-  text-align: right;
-  font-size: 0.8rem;
-  opacity: 0.7;
-  margin-top: 0.25rem;
 }
 </style>
