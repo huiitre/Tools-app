@@ -84,9 +84,14 @@ function createWindow() {
     logger.info('Main', 'Mode DEV — chargement http://localhost:5173')
   } else {
     mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
-    mainWindow.webContents.on('devtools-opened', () => {
-      mainWindow.webContents.closeDevTools()
-    })
+    const devToolsFlag = process.argv.includes('--devtools')
+    if (devToolsFlag) {
+      mainWindow.webContents.openDevTools()
+    } else {
+      mainWindow.webContents.on('devtools-opened', () => {
+        mainWindow.webContents.closeDevTools()
+      })
+    }
 
     autoUpdater.on('checking-for-update', () => {
       logger.info('Updater', 'Vérification des mises à jour...')
