@@ -17,6 +17,10 @@ export const useFetchLoginWithGoogle = async (
   return await clientV3.post('/auth/google', { ...credentials });
 };
 
+export const useFetchGoogleAuthUrl = async (source: 'web' | 'electron') => {
+  return await clientV3.get<{ url: string }>(`/auth/google/url?source=${source}`);
+};
+
 export const useFetchLogout = async () => {
   return await clientV3.post('/auth/logout');
 };

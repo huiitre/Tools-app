@@ -27,5 +27,11 @@ export const routes = [
     props: (route: RouteLocationNormalizedLoaded) => ({
       token: route.query.token,
     }),
+  },
+  {
+    name: 'auth-callback',
+    path: '/auth/callback',
+    component: () => import('@/modules/Auth/views/AuthCallback.vue'),
+    meta: { requireAuth: false },
   }
 ]

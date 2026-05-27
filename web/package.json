@@ -25,6 +25,10 @@
     "asarUnpack": [
       "node_modules/uiohook-napi/**"
     ],
+    "protocols": {
+      "name": "tools",
+      "schemes": ["tools"]
+    },
     "linux": {
       "target": "AppImage",
       "category": "Utility",
@@ -49,7 +53,8 @@
     "dev:local": "vite --host --mode development",
     "electron:watch": "ELECTRON_DEV=true electron electron/main.cjs",
     "electron:dev": "ELECTRON=true npm run build && electron electron/main.cjs",
-    "electron:build": "ELECTRON=true npm run build && electron-builder"
+    "electron:build": "ELECTRON=true npm run build && electron-builder",
+    "electron:build:qa": "ELECTRON=true vue-tsc && ELECTRON=true vite build --mode qa && electron-builder"
   },
   "dependencies": {
     "@floating-ui/vue": "^1.1.9",

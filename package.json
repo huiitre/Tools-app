@@ -8,6 +8,7 @@
     "electron:build": "cd web && npm run electron:build && cd ..",
     "web:dev": "npm run dev --prefix web",
     "api:dev": "cd api && SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run",
-    "electron:watch": "cd web && npm run electron:watch"
+    "electron:watch": "cd web && npm run electron:watch",
+    "electron:build:qa": "cd web && npm run electron:build:qa"
   }
 }

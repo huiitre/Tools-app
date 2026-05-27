@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, nativeImage, session } = require('electron')
+const { app, BrowserWindow, ipcMain, nativeImage, session, shell } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const path = require('path')
 const { createSwitcherWindow } = require('./windows/dofusSwitcher.cjs')
@@ -9,10 +9,49 @@ const { registerAutofocusIpc } = require('./ipc/autofocus.ipc.cjs')
 const { registerLogsIpc } = require('./ipc/logs.ipc.cjs')
 const logger = require('./logger/LoggerService.cjs')
 
+let mainWindow = null
+
+function handleDeepLink(url) {
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname === 'auth') {
+      const token = parsed.searchParams.get('token')
+      if (token && mainWindow) {
+        mainWindow.webContents.send('google-auth-token', token)
+        if (mainWindow.isMinimized()) mainWindow.restore()
+        mainWindow.focus()
+      }
+    }
+  } catch (e) {
+    logger.error('Main', `Deep link error: ${e.message}`)
+  }
+}
+
+// macOS : deep link sur instance existante
+app.on('open-url', (event, url) => {
+  event.preventDefault()
+  handleDeepLink(url)
+})
+
+// Windows / Linux : instance unique + deep link via second-instance
+const gotTheLock = app.requestSingleInstanceLock()
+if (!gotTheLock) {
+  app.quit()
+} else {
+  app.on('second-instance', (event, commandLine) => {
+    const url = commandLine.find(arg => arg.startsWith('tools://'))
+    if (url) handleDeepLink(url)
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.focus()
+    }
+  })
+}
+
 function createWindow() {
   const appIcon = nativeImage.createFromPath(path.join(__dirname, 'icon.png'))
 
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1600,
     height: 960,
     icon: appIcon,
@@ -24,29 +63,29 @@ function createWindow() {
     }
   })
 
-  win.setIcon(appIcon)
+  mainWindow.setIcon(appIcon)
 
-  logger.setMainWindow(win)
+  logger.setMainWindow(mainWindow)
   logger.info('Main', 'Fenêtre principale créée')
 
   // Initialisation du mainWindow sur les services qui en ont besoin
   const autofocusService = require('./sniffer/AutofocusService.cjs')
   const snifferService = require('./sniffer/SnifferService.cjs')
   const proxyService = require('./proxy/ProxyService.cjs')
-  autofocusService.setMainWindow(win)
-  snifferService.setMainWindow(win)
-  proxyService.setMainWindow(win)
+  autofocusService.setMainWindow(mainWindow)
+  snifferService.setMainWindow(mainWindow)
+  proxyService.setMainWindow(mainWindow)
 
   const isDev = process.env.ELECTRON_DEV === 'true'
 
   if (isDev) {
-    win.loadURL('http://localhost:5173')
-    win.webContents.openDevTools()
+    mainWindow.loadURL('http://localhost:5173')
+    mainWindow.webContents.openDevTools()
     logger.info('Main', 'Mode DEV — chargement http://localhost:5173')
   } else {
-    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
-    win.webContents.on('devtools-opened', () => {
-      win.webContents.closeDevTools()
+    mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
+    mainWindow.webContents.on('devtools-opened', () => {
+      mainWindow.webContents.closeDevTools()
     })
 
     autoUpdater.on('checking-for-update', () => {
@@ -55,7 +94,7 @@ function createWindow() {
 
     autoUpdater.on('update-available', (info) => {
       logger.info('Updater', `Mise à jour disponible : ${info.version}`)
-      win.webContents.send('update-available')
+      mainWindow.webContents.send('update-available')
     })
 
     autoUpdater.on('update-not-available', (info) => {
@@ -106,6 +145,10 @@ app.whenReady().then(() => {
       })
     }
   )
+  app.setAsDefaultProtocolClient('tools')
+
+  ipcMain.handle('shell:open-external', (_, url) => shell.openExternal(url))
+
   const { registerSwitcherIpc, switcherService } = require('./ipc/switcher.ipc.cjs')
   registerLogsIpc()
   registerSwitcherIpc()
