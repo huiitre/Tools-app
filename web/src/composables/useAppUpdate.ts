@@ -2,10 +2,19 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { updateService } from '@/services/update/update.service'
 import { useEnv } from './useEnv'
 
-const updateReady = ref(false)
+const updateState = ref<'idle' | 'available' | 'downloading' | 'ready'>('idle')
+const downloadProgress = ref(0)
+
+updateService.onUpdateAvailable(() => {
+  updateState.value = 'available'
+})
+
+updateService.onDownloadProgress((percent) => {
+  downloadProgress.value = percent
+})
 
 updateService.onUpdateReady(() => {
-  updateReady.value = true
+  updateState.value = 'ready'
 })
 
 export function useAppUpdate() {
@@ -19,8 +28,16 @@ export function useAppUpdate() {
     onUnmounted(() => clearInterval(interval))
   })
 
+  function startDownload() {
+    updateState.value = 'downloading'
+    downloadProgress.value = 0
+    updateService.startDownload()
+  }
+
   return {
-    updateReady,
+    updateState,
+    downloadProgress,
+    startDownload,
     applyUpdate: () => updateService.applyUpdate(),
   }
 }

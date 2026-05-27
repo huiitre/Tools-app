@@ -11,7 +11,10 @@ declare global {
   interface Window {
     google?: any
     electron?: {
+      onUpdateAvailable: (callback: () => void) => void
+      onDownloadProgress: (callback: (percent: number) => void) => void
       onUpdateReady: (callback: () => void) => void
+      startDownload: () => void
       applyUpdate: () => void
       openSwitcher: () => void
       onSwitcherClosed: (callback: () => void) => void

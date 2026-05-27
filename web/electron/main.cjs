@@ -93,6 +93,7 @@ function createWindow() {
       })
     }
 
+    autoUpdater.autoDownload = false
     autoUpdater.autoInstallOnAppQuit = false
 
     autoUpdater.on('checking-for-update', () => {
@@ -100,7 +101,8 @@ function createWindow() {
     })
 
     autoUpdater.on('update-available', (info) => {
-      logger.info('Updater', `Mise à jour disponible : ${info.version} — téléchargement en cours...`)
+      logger.info('Updater', `Mise à jour disponible : ${info.version}`)
+      mainWindow.webContents.send('update-available')
     })
 
     autoUpdater.on('update-not-available', (info) => {
@@ -112,12 +114,19 @@ function createWindow() {
     })
 
     autoUpdater.on('download-progress', (progress) => {
-      logger.info('Updater', `Téléchargement : ${Math.round(progress.percent)}%`)
+      const percent = Math.round(progress.percent)
+      logger.info('Updater', `Téléchargement : ${percent}%`)
+      mainWindow.webContents.send('download-progress', percent)
     })
 
     autoUpdater.on('update-downloaded', (info) => {
       logger.info('Updater', `Mise à jour téléchargée : ${info.version}`)
       mainWindow.webContents.send('update-downloaded')
+    })
+
+    ipcMain.on('start-download', () => {
+      logger.info('Updater', 'Démarrage du téléchargement...')
+      autoUpdater.downloadUpdate()
     })
 
     ipcMain.on('apply-update', () => {
