@@ -12,6 +12,9 @@ declare global {
     google?: any
     electron?: {
       onUpdateAvailable: (callback: () => void) => void
+      startDownload: () => void
+      onDownloadProgress: (callback: (percent: number) => void) => void
+      onUpdateDownloaded: (callback: () => void) => void
       applyUpdate: () => void
       openSwitcher: () => void
       onSwitcherClosed: (callback: () => void) => void
