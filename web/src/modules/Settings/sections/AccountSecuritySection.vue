@@ -133,6 +133,11 @@ const onUpdatePassword = async () => {
 .field {
   max-width: 360px;
 }
+.field label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
 
 .field + .field {
   margin-top: 0.75rem;
