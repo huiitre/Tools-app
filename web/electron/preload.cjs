@@ -53,4 +53,8 @@ contextBridge.exposeInMainWorld('electron', {
   clearElectronLogs: () => ipcRenderer.invoke('electron:clear-logs'),
   onElectronLog: (callback) => ipcRenderer.on('electron:log', (_, entry) => callback(entry)),
   offElectronLog: () => ipcRenderer.removeAllListeners('electron:log'),
+
+  // Google OAuth
+  openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
+  onGoogleAuthToken: (callback) => ipcRenderer.on('google-auth-token', (_, token) => callback(token)),
 })

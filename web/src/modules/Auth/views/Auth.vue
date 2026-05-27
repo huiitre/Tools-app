@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/modules/Auth/auth.store'
@@ -14,6 +14,24 @@ import {
   useFetchGoogleAuthUrl,
   useFetchRegister
 } from '../fetch/auth.fetch'
+
+onMounted(() => {
+  if (isElectron) {
+    window.electron!.onGoogleAuthToken(async (token: string) => {
+      try {
+        auth.setToken(token)
+        const me = await useFetchMe()
+        auth.setUser(me.data)
+        toast.success('Connexion Google réussie')
+        router.push('/')
+      } catch {
+        toast.error('Erreur lors de la connexion Google')
+      } finally {
+        isGoogleLoading.value = false
+      }
+    })
+  }
+})
 
 import { validatePassword, PasswordValidationError } from '@/modules/Auth/views/passwordValidation'
 import { useEnv } from '@/composables/useEnv'
@@ -43,8 +61,13 @@ const isGoogleLoading = ref(false)
 const loginWithGoogle = async () => {
   try {
     isGoogleLoading.value = true
-    const { data } = await useFetchGoogleAuthUrl('web')
-    window.location.href = data.url
+    if (isElectron) {
+      const { data } = await useFetchGoogleAuthUrl('electron')
+      await window.electron!.openExternal(data.url)
+    } else {
+      const { data } = await useFetchGoogleAuthUrl('web')
+      window.location.href = data.url
+    }
   } catch {
     toast.error('Erreur lors de la connexion Google')
     isGoogleLoading.value = false
@@ -187,7 +210,7 @@ const clearRegisterFields = () => {
     </form>
 
     <!-- OAuth -->
-    <template v-if="!isRegister && !isElectron">
+    <template v-if="!isRegister">
       <small class="separator">ou</small>
 
       <div class="oauth-wrapper">
