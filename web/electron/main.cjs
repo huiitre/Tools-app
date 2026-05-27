@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, nativeImage, session, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, nativeImage, session, shell, protocol, net } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const path = require('path')
 const { createSwitcherWindow } = require('./windows/dofusSwitcher.cjs')
@@ -83,7 +83,7 @@ function createWindow() {
     mainWindow.webContents.openDevTools()
     logger.info('Main', 'Mode DEV — chargement http://localhost:5173')
   } else {
-    mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
+    mainWindow.loadURL('app://./index.html')
     const devToolsFlag = process.argv.includes('--devtools')
     if (devToolsFlag) {
       mainWindow.webContents.openDevTools()
@@ -132,6 +132,11 @@ function createWindow() {
   })
 }
 
+protocol.registerSchemesAsPrivileged([{
+  scheme: 'app',
+  privileges: { secure: true, standard: true, corsEnabled: true, supportFetchAPI: true }
+}])
+
 app.commandLine.appendSwitch('disable-features', 'ServiceWorker')
 
 app.whenReady().then(() => {
@@ -153,6 +158,15 @@ app.whenReady().then(() => {
   app.setAsDefaultProtocolClient('tools')
 
   ipcMain.handle('shell:open-external', (_, url) => shell.openExternal(url))
+
+  const { pathToFileURL } = require('url')
+  protocol.handle('app', (request) => {
+    const url = new URL(request.url)
+    const filePath = decodeURIComponent(url.pathname)
+    const relativePath = filePath === '/' ? 'index.html' : filePath.slice(1)
+    const fullPath = path.normalize(path.join(__dirname, '..', 'dist', relativePath))
+    return net.fetch(pathToFileURL(fullPath).toString())
+  })
 
   const { registerSwitcherIpc, switcherService } = require('./ipc/switcher.ipc.cjs')
   registerLogsIpc()

@@ -12,7 +12,8 @@ import {
   useFetchLogin,
   useFetchMe,
   useFetchGoogleAuthUrl,
-  useFetchRegister
+  useFetchRegister,
+  useFetchElectronSession
 } from '../fetch/auth.fetch'
 
 onMounted(() => {
@@ -22,6 +23,7 @@ onMounted(() => {
         auth.setToken(token)
         const me = await useFetchMe()
         auth.setUser(me.data)
+        await useFetchElectronSession()
         toast.success('Connexion Google réussie')
         router.push('/')
       } catch {
