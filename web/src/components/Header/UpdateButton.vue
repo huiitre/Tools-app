@@ -44,7 +44,7 @@ const showModal = ref(false)
         <!-- État : téléchargement en cours -->
         <template v-else-if="updateState === 'downloading'">
           <div class="modal-body">
-            <p>Téléchargement en cours...</p>
+            <p>Téléchargement en cours... {{ downloadProgress }}%</p>
             <progress :value="downloadProgress" max="100"></progress>
             <span class="progress-label">{{ downloadProgress }}%</span>
           </div>
