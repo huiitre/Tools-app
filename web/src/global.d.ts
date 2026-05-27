@@ -54,6 +54,10 @@ declare global {
       clearElectronLogs: () => Promise<{ success: boolean }>;
       onElectronLog: (callback: (entry: ElectronLogEntry) => void) => void;
       offElectronLog: () => void;
+
+      // Google OAuth
+      openExternal: (url: string) => Promise<void>;
+      onGoogleAuthToken: (callback: (token: string) => void) => void;
     }
     switcher?: {
       scan: () => Promise<DofusWindow[]>

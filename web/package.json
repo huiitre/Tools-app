@@ -25,6 +25,10 @@
     "asarUnpack": [
       "node_modules/uiohook-napi/**"
     ],
+    "protocols": {
+      "name": "tools",
+      "schemes": ["tools"]
+    },
     "linux": {
       "target": "AppImage",
       "category": "Utility",
