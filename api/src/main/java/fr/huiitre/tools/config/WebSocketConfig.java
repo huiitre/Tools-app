@@ -39,12 +39,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins(
-                        "http://localhost:5173",
-                        "http://localhost:8083",
-                        "https://tools.huiitre.fr",
-                        "https://qa.tools.huiitre.fr",
-                        "app://."
-                );
+                .setAllowedOriginPatterns("*");
     }
 }
