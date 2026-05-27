@@ -1,7 +1,10 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('electron', {
-  onUpdateReady: (callback) => ipcRenderer.on('update-downloaded', callback),
+  onUpdateAvailable: (callback) => ipcRenderer.on('update-available', () => callback()),
+  onDownloadProgress: (callback) => ipcRenderer.on('download-progress', (_, percent) => callback(percent)),
+  onUpdateReady: (callback) => ipcRenderer.on('update-downloaded', () => callback()),
+  startDownload: () => ipcRenderer.send('start-download'),
   applyUpdate: () => ipcRenderer.send('apply-update'),
   openSwitcher: () => {
     ipcRenderer.invoke('switcher:open')
