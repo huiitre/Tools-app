@@ -16,7 +16,29 @@ const props = defineProps<{
 const tooltipEnabled = false
 
 const onAddToCalendar = () => {
-  console.log('add to calendar:', props.day.iso)
+  const almanax = props.day.almanax
+  if (!almanax) return
+
+  const dateCompact = props.day.iso.replace(/-/g, '')
+  const nextDay = new Date(props.day.date)
+  nextDay.setDate(nextDay.getDate() + 1)
+  const nextDayCompact =
+    nextDay.getFullYear() +
+    String(nextDay.getMonth() + 1).padStart(2, '0') +
+    String(nextDay.getDate()).padStart(2, '0')
+
+  const title = `Almanax - ${almanax.name}`
+  const details = almanax.item
+    ? `${almanax.description}\n\nOffrande : ${almanax.quantity}× ${almanax.item.name}`
+    : almanax.description
+
+  const url = new URL('https://calendar.google.com/calendar/render')
+  url.searchParams.set('action', 'TEMPLATE')
+  url.searchParams.set('text', title)
+  url.searchParams.set('dates', `${dateCompact}/${nextDayCompact}`)
+  url.searchParams.set('details', details)
+
+  window.open(url.toString(), '_blank')
 }
 </script>
 
