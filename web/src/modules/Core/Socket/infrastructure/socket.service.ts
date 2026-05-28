@@ -49,7 +49,7 @@ export class SocketService {
       debug: (str) => {
         if (import.meta.env.DEV) console.log('[STOMP]', str);
       },
-      reconnectDelay: 5000, // Reconnexion auto toutes les 5s
+      reconnectDelay: 1000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
     });
