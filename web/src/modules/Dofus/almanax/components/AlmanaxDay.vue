@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Almanax } from '@/modules/Dofus/almanax/types/almanax.types'
 import AlmanaxDescription from './AlmanaxDescription.vue'
 import AlmanaxItem from './AlmanaxItem.vue'
+import { useAlmanaxStore } from '@/modules/Dofus/almanax/almanax.store'
+
+const almanaxStore = useAlmanaxStore()
 
 const props = defineProps<{
   day: {
@@ -14,6 +18,15 @@ const props = defineProps<{
 }>()
 
 const tooltipEnabled = false
+
+const isSubscribed = computed(() =>
+  props.day.almanax ? almanaxStore.subscribedAlmanaxIds.has(props.day.almanax.id) : false
+)
+
+const onToggleSubscription = () => {
+  if (!props.day.almanax) return
+  almanaxStore.toggleSubscription(props.day.almanax.id, props.day.iso)
+}
 
 const onAddToCalendar = () => {
   const almanax = props.day.almanax
@@ -53,12 +66,19 @@ const onAddToCalendar = () => {
         {{ day.date.getDate() }}
       </span>
 
-      <i
-        v-if="day.almanax"
-        class="mdi mdi-calendar-plus calendar-icon"
-        title="Ajouter au calendrier"
-        @click.stop="onAddToCalendar"
-      />
+      <div v-if="day.almanax" class="day-actions">
+        <i
+          class="mdi day-action-icon"
+          :class="isSubscribed ? 'mdi-bell-ring subscribed' : 'mdi-bell'"
+          :title="isSubscribed ? 'Retirer la notification' : 'Me notifier ce jour'"
+          @click.stop="onToggleSubscription"
+        />
+        <i
+          class="mdi mdi-calendar-plus day-action-icon"
+          title="Ajouter au calendrier"
+          @click.stop="onAddToCalendar"
+        />
+      </div>
     </div>
 
     <!-- Contenu Almanax -->
@@ -123,7 +143,13 @@ const onAddToCalendar = () => {
   color: var(--pico-muted-color);
 }
 
-.calendar-icon {
+.day-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.day-action-icon {
   font-size: 0.85rem;
   color: var(--pico-muted-color);
   cursor: pointer;
@@ -133,6 +159,10 @@ const onAddToCalendar = () => {
   &:hover {
     color: var(--pico-primary);
     background: var(--pico-card-background-color);
+  }
+
+  &.subscribed {
+    color: var(--pico-primary);
   }
 }
 

@@ -100,7 +100,7 @@ onBeforeUnmount(() => {
             </div>
             <div class="notif-item-content">
               <p class="notif-item-title">{{ notif.title }}</p>
-              <p class="notif-item-body" style="white-space: pre-wrap;">{{ notif.body }}</p>
+              <p class="notif-item-body" v-html="notif.body"></p>
               <div class="notif-item-footer">
                 <span class="notif-item-time">{{ formatRelative(notif.createdAt) }}</span>
                 <button
