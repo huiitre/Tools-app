@@ -6,7 +6,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import fr.huiitre.tools.modules.dofus.almanax.application.ports.AlmanaxRepository;
+import fr.huiitre.tools.modules.dofus.almanax.application.ports.AlmanaxSubscriptionRepository;
 import fr.huiitre.tools.modules.dofus.almanax.infrastructure.PostgresAlmanaxRepository;
+import fr.huiitre.tools.modules.dofus.almanax.infrastructure.PostgresAlmanaxSubscriptionRepository;
 import fr.huiitre.tools.modules.dofus.area.application.ports.AreaRepository;
 import fr.huiitre.tools.modules.dofus.area.infrastructure.PostgresAreaRepository;
 import fr.huiitre.tools.modules.dofus.catalogue.application.ports.CatalogueItemRepository;
@@ -69,6 +71,13 @@ public class DofusConfig {
         public AlmanaxRepository almanaxRepository(
                         JdbcTemplate jdbcTemplate) {
                 return new PostgresAlmanaxRepository(
+                                jdbcTemplate);
+        }
+
+        @Bean
+        public AlmanaxSubscriptionRepository almanaxSubscriptionRepository(
+                        JdbcTemplate jdbcTemplate) {
+                return new PostgresAlmanaxSubscriptionRepository(
                                 jdbcTemplate);
         }
 

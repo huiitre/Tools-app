@@ -20,7 +20,10 @@ const displayedMonth = ref(today.getMonth())
 
 onMounted(async () => {
   try {
-    await almanaxStore.fetch()
+    await Promise.all([
+      almanaxStore.fetch(),
+      almanaxStore.fetchSubscriptions(),
+    ])
   } catch (error: any) {
     toast.error(error?.message || 'Erreur lors du chargement des données Almanax')
   }
