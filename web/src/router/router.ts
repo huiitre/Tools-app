@@ -17,6 +17,7 @@ import { routes as authRoutes } from '@/modules/Auth/auth.routes';
 import { routes as dofusRoutes } from '@/modules/Dofus/dofus.routes';
 import { routes as riotRoutes } from '@/modules/Riot/riot.routes';
 import { routes as adminRoutes } from '@/modules/Admin/admin.routes';
+import { routes as eliteDangerousRoutes } from '@/modules/EliteDangerous/elitedangerous.routes';
 
 const isElectron = navigator.userAgent.includes('Electron')
 
@@ -26,6 +27,7 @@ export const routes = [
   ...dofusRoutes,
   ...riotRoutes,
   ...adminRoutes,
+  ...eliteDangerousRoutes,
   {
     name: 'home',
     path: '/',
