@@ -6,5 +6,6 @@ public enum ModuleCode {
     HEALTH,
     TODOLIST,
     DOFUS,
-    RIOT
+    RIOT,
+    ELITE_DANGEROUS
 }
