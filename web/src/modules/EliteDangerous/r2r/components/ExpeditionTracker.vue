@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useR2rStore } from '../store/r2r.store'
 import SystemCard from './SystemCard.vue'
 import type { R2rSystem } from '../types/r2r.types'
@@ -20,7 +20,8 @@ const curBodies    = computed(() => expedition.value?.currentBodiesDone ?? [])
 
 /* ── FILTER ─────────────────────────────────────────────── */
 const searchQuery = ref('')
-const hideDone    = ref(false)
+const hideDone    = ref(localStorage.getItem('r2r_hide_done') === 'true')
+watch(hideDone, val => localStorage.setItem('r2r_hide_done', String(val)))
 
 const filteredSystems = computed(() => {
   const q    = searchQuery.value.toLowerCase().trim()
@@ -57,11 +58,22 @@ function setupObserver() {
 onMounted(setupObserver)
 onBeforeUnmount(() => observer?.disconnect())
 
+/* ── MODE DÉTECTION ─────────────────────────────────────── */
+const isExobio = computed(() =>
+  allSystems.value.some(s => s.bodies.some(b => b.landmarks && b.landmarks.length > 0))
+)
+
 /* ── STATS ──────────────────────────────────────────────── */
 const allBodies = computed(() => allSystems.value.flatMap(s => s.bodies))
 
+function bodyBioValue(b: import('../types/r2r.types').R2rBody): number {
+  return b.landmarks?.reduce((a, l) => a + l.value, 0) ?? 0
+}
+
 const totalMap = computed(() =>
-  allBodies.value.reduce((a, b) => a + (b.estimated_mapping_value || 0), 0)
+  isExobio.value
+    ? allBodies.value.reduce((a, b) => a + bodyBioValue(b), 0)
+    : allBodies.value.reduce((a, b) => a + (b.estimated_mapping_value || 0), 0)
 )
 const remainingMap = computed(() => {
   let rem = 0
@@ -69,7 +81,7 @@ const remainingMap = computed(() => {
     if (idx < curIdx.value) return
     sys.bodies.forEach(b => {
       if (idx === curIdx.value && curBodies.value.includes(b.id64)) return
-      rem += b.estimated_mapping_value || 0
+      rem += isExobio.value ? bodyBioValue(b) : (b.estimated_mapping_value || 0)
     })
   })
   return rem
@@ -82,10 +94,26 @@ const hmcCount    = computed(() => allBodies.value.filter(b => b.subtype?.toLowe
 const terraCount  = computed(() => allBodies.value.filter(b => b.is_terraformable).length)
 const progress    = computed(() => allSystems.value.length ? Math.round(curIdx.value / allSystems.value.length * 100) : 0)
 
+const totalBioSites = computed(() =>
+  allBodies.value.reduce((a, b) =>
+    a + (b.landmarks?.reduce((s, l) => s + l.count, 0) || 0), 0)
+)
+const bioTypeCounts = computed(() => {
+  const counts: Record<string, number> = {}
+  allBodies.value.forEach(b =>
+    b.landmarks?.forEach(l => { counts[l.type] = (counts[l.type] || 0) + l.count })
+  )
+  return counts
+})
+
 /* ── FORMAT ─────────────────────────────────────────────── */
 function formatCr(v: number) {
   if (!v) return '—'
-  if (v >= 1_000_000) return (v / 1_000_000).toFixed(2) + ' MCr'
+  if (v >= 1_000_000) {
+    const [int, dec] = (v / 1_000_000).toFixed(2).split('.')
+    const intFmt = int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+    return `${intFmt}.${dec} MCr`
+  }
   if (v >= 1_000) return Math.round(v / 1_000) + ' kCr'
   return v + ' Cr'
 }
@@ -213,35 +241,65 @@ async function doRename() {
         </div>
       </div>
 
-      <div class="stats-group">
-        <div class="stat-card">
-          <span class="stat-lbl">Water Worlds</span>
-          <span class="stat-val c-blue">{{ wwCount }}</span>
+      <template v-if="!isExobio">
+        <div class="stats-group">
+          <div class="stat-card">
+            <span class="stat-lbl">Water Worlds</span>
+            <span class="stat-val c-blue">{{ wwCount }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">HMC</span>
+            <span class="stat-val c-orange">{{ hmcCount }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">Terraformables</span>
+            <span class="stat-val c-green">{{ terraCount }}</span>
+          </div>
         </div>
-        <div class="stat-card">
-          <span class="stat-lbl">HMC</span>
-          <span class="stat-val c-orange">{{ hmcCount }}</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-lbl">Terraformables</span>
-          <span class="stat-val c-green">{{ terraCount }}</span>
-        </div>
-      </div>
 
-      <div class="stats-group">
-        <div class="stat-card">
-          <span class="stat-lbl">Val. scan totale</span>
-          <span class="stat-val">{{ formatCr(allBodies.reduce((a, b) => a + (b.estimated_scan_value || 0), 0)) }}</span>
+        <div class="stats-group">
+          <div class="stat-card">
+            <span class="stat-lbl">Val. scan totale</span>
+            <span class="stat-val">{{ formatCr(allBodies.reduce((a, b) => a + (b.estimated_scan_value || 0), 0)) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">Val. map totale</span>
+            <span class="stat-val c-green">{{ formatCr(totalMap) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">Val. restante</span>
+            <span class="stat-val c-primary">{{ formatCr(remainingMap) }}</span>
+          </div>
         </div>
-        <div class="stat-card">
-          <span class="stat-lbl">Val. map totale</span>
-          <span class="stat-val c-green">{{ formatCr(totalMap) }}</span>
+      </template>
+
+      <template v-else>
+        <div class="stats-group">
+          <div class="stat-card">
+            <span class="stat-lbl">Sites bio</span>
+            <span class="stat-val c-green">{{ totalBioSites }}</span>
+          </div>
+          <div
+            v-for="(count, type) in bioTypeCounts"
+            :key="type"
+            class="stat-card"
+          >
+            <span class="stat-lbl">{{ type }}</span>
+            <span class="stat-val c-green">{{ count }}</span>
+          </div>
         </div>
-        <div class="stat-card">
-          <span class="stat-lbl">Val. restante</span>
-          <span class="stat-val c-primary">{{ formatCr(remainingMap) }}</span>
+
+        <div class="stats-group">
+          <div class="stat-card">
+            <span class="stat-lbl">Val. bio totale</span>
+            <span class="stat-val c-green">{{ formatCr(totalMap) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">Val. restante</span>
+            <span class="stat-val c-primary">{{ formatCr(remainingMap) }}</span>
+          </div>
         </div>
-      </div>
+      </template>
 
       <div v-if="params.range || params.min_value || params.radius" class="stats-group">
         <div v-if="params.range" class="stat-card">
@@ -282,6 +340,7 @@ async function doRename() {
         :system-index="allSystems.indexOf(sys)"
         :current-system-index="curIdx"
         :current-bodies-done="curBodies"
+        :is-exobio="isExobio"
         @body-toggle="(bodyId, checked) => onBodyToggle(allSystems.indexOf(sys), bodyId, checked)"
         @system-done="onSystemDone(allSystems.indexOf(sys))"
         @revert-to="onRevertTo(allSystems.indexOf(sys))"
@@ -293,7 +352,8 @@ async function doRename() {
     <div class="tracker-footer">
       <span>{{ curIdx }} / {{ allSystems.length }} systèmes</span>
       <span>{{ allBodies.length }} corps</span>
-      <span>Val. map : <strong>{{ formatCr(totalMap) }}</strong></span>
+      <span v-if="!isExobio">Val. map : <strong>{{ formatCr(totalMap) }}</strong></span>
+      <span v-else>Val. bio : <strong>{{ formatCr(totalMap) }}</strong></span>
       <span>Restante : <strong class="c-primary">{{ formatCr(remainingMap) }}</strong></span>
     </div>
 
