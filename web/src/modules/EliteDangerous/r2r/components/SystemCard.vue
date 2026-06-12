@@ -8,6 +8,7 @@ const props = defineProps<{
   systemIndex: number
   currentSystemIndex: number
   currentBodiesDone: number[]
+  isExobio: boolean
 }>()
 
 const emit = defineEmits<{
@@ -28,8 +29,14 @@ function isBodyDone(bodyId: number) {
   return false
 }
 
+function bodyBioValue(body: import('../types/r2r.types').R2rBody): number {
+  return body.landmarks?.reduce((a, l) => a + l.value, 0) ?? 0
+}
+
 const totalMap = computed(() =>
-  props.system.bodies.reduce((a, b) => a + (b.estimated_mapping_value || 0), 0)
+  props.isExobio
+    ? props.system.bodies.reduce((a, b) => a + bodyBioValue(b), 0)
+    : props.system.bodies.reduce((a, b) => a + (b.estimated_mapping_value || 0), 0)
 )
 
 function subtypeClass(subtype: string) {
@@ -41,7 +48,11 @@ function subtypeClass(subtype: string) {
 
 function formatCr(v: number) {
   if (!v) return '—'
-  if (v >= 1_000_000) return (v / 1_000_000).toFixed(2) + ' MCr'
+  if (v >= 1_000_000) {
+    const [int, dec] = (v / 1_000_000).toFixed(2).split('.')
+    const intFmt = int.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+    return `${intFmt}.${dec} MCr`
+  }
   if (v >= 1_000) return Math.round(v / 1_000) + ' kCr'
   return v + ' Cr'
 }
@@ -107,10 +118,12 @@ async function copy(text: string, e: Event) {
           <tr>
             <th class="col-check" />
             <th>Planète</th>
-            <th>Type</th>
+            <th v-if="!isExobio">Type</th>
             <th>Distance</th>
-            <th>Val. Scan</th>
-            <th>Val. Map</th>
+            <th v-if="!isExobio">Val. Scan</th>
+            <th v-if="!isExobio">Val. Map</th>
+            <th v-if="isExobio">Val. Bio</th>
+            <th v-if="isExobio">Biologiques</th>
           </tr>
         </thead>
         <tbody>
@@ -136,13 +149,21 @@ async function copy(text: string, e: Event) {
                 @click="copy(body.name, $event)"
               >{{ body.name }}</span>
             </td>
-            <td>
+            <td v-if="!isExobio">
               <span class="subtype-pill" :class="subtypeClass(body.subtype)">{{ body.subtype || '—' }}</span>
               <span v-if="body.is_terraformable" class="terra-badge" title="Terraformable">T</span>
             </td>
             <td class="c-muted">{{ formatDist(body.distance_to_arrival) }}</td>
-            <td class="c-scan">{{ formatCr(body.estimated_scan_value) }}</td>
-            <td class="c-map">{{ formatCr(body.estimated_mapping_value) }}</td>
+            <td v-if="!isExobio" class="c-scan">{{ formatCr(body.estimated_scan_value) }}</td>
+            <td v-if="!isExobio" class="c-map">{{ formatCr(body.estimated_mapping_value) }}</td>
+            <td v-if="isExobio" class="c-bio">{{ formatCr(bodyBioValue(body)) }}</td>
+            <td v-if="isExobio" class="c-landmarks">
+              <span
+                v-for="lm in body.landmarks"
+                :key="lm.subtype"
+                class="landmark-pill"
+              >{{ lm.subtype }} ×{{ lm.count }}</span>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -355,4 +376,20 @@ async function copy(text: string, e: Event) {
 .c-muted { color: var(--pico-muted-color); }
 .c-scan  { color: var(--pico-muted-color); }
 .c-map   { color: var(--pico-primary); font-weight: 600; }
+.c-bio   { color: #3ecf8e; font-weight: 600; }
+
+.c-landmarks { min-width: 160px; }
+
+.landmark-pill {
+  display: inline-block;
+  font-size: 0.68rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0.1rem 0.2rem 0.1rem 0;
+  background: rgba(62, 207, 142, 0.1);
+  color: #3ecf8e;
+  border: 1px solid rgba(62, 207, 142, 0.2);
+}
 </style>
