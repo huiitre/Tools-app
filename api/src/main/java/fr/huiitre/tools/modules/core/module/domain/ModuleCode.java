@@ -7,5 +7,6 @@ public enum ModuleCode {
     TODOLIST,
     DOFUS,
     RIOT,
-    ELITE_DANGEROUS
+    ELITE_DANGEROUS,
+    PALWORLD
 }
