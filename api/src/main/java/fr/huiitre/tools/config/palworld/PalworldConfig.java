@@ -2,6 +2,7 @@ package fr.huiitre.tools.config.palworld;
 
 import fr.huiitre.tools.modules.palworld.application.ports.PalworldServerPort;
 import fr.huiitre.tools.modules.palworld.infrastructure.PalworldRestAdapter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
@@ -10,7 +11,7 @@ import org.springframework.web.client.RestTemplate;
 public class PalworldConfig {
 
     @Bean
-    public PalworldServerPort palworldServerPort() {
-        return new PalworldRestAdapter(new RestTemplate());
+    public PalworldServerPort palworldServerPort(@Value("${palworld.api.base-url}") String baseUrl) {
+        return new PalworldRestAdapter(new RestTemplate(), baseUrl);
     }
 }

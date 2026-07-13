@@ -15,14 +15,15 @@ import java.util.Map;
 
 public class PalworldRestAdapter implements PalworldServerPort {
 
-    private static final String BASE_URL = "http://127.0.0.1:8212";
     private static final String ADMIN_USER = "admin";
     private static final String ADMIN_PASSWORD = "Immortal69";
 
     private final RestTemplate restTemplate;
+    private final String baseUrl;
 
-    public PalworldRestAdapter(RestTemplate restTemplate) {
+    public PalworldRestAdapter(RestTemplate restTemplate, String baseUrl) {
         this.restTemplate = restTemplate;
+        this.baseUrl = baseUrl;
     }
 
     @Override
@@ -116,7 +117,7 @@ public class PalworldRestAdapter implements PalworldServerPort {
         HttpEntity<Void> request = new HttpEntity<>(authHeaders());
         try {
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    BASE_URL + path, HttpMethod.GET, request,
+                    baseUrl + path, HttpMethod.GET, request,
                     new ParameterizedTypeReference<>() {});
 
             Map<String, Object> body = response.getBody();
@@ -132,7 +133,7 @@ public class PalworldRestAdapter implements PalworldServerPort {
     private void post(String path, Map<String, ?> body, String errorCode) {
         HttpEntity<Map<String, ?>> request = new HttpEntity<>(body, authHeaders());
         try {
-            restTemplate.exchange(BASE_URL + path, HttpMethod.POST, request, Void.class);
+            restTemplate.exchange(baseUrl + path, HttpMethod.POST, request, Void.class);
         } catch (HttpClientErrorException e) {
             throw new IllegalArgumentException(errorCode);
         }
