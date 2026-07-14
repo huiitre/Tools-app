@@ -1,5 +1,6 @@
 package fr.huiitre.tools.config.palworld;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.huiitre.tools.modules.palworld.application.ports.PalworldServerPort;
 import fr.huiitre.tools.modules.palworld.infrastructure.PalworldRestAdapter;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,11 +15,11 @@ import java.net.http.HttpClient;
 public class PalworldConfig {
 
     @Bean
-    public PalworldServerPort palworldServerPort(@Value("${palworld.api.base-url}") String baseUrl) {
+    public PalworldServerPort palworldServerPort(ObjectMapper objectMapper, @Value("${palworld.api.base-url}") String baseUrl) {
         HttpClient httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .build();
         RestTemplate restTemplate = new RestTemplate(new JdkClientHttpRequestFactory(httpClient));
-        return new PalworldRestAdapter(restTemplate, baseUrl);
+        return new PalworldRestAdapter(restTemplate, objectMapper, baseUrl);
     }
 }

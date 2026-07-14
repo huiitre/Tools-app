@@ -1,5 +1,6 @@
 package fr.huiitre.tools.modules.palworld.infrastructure;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.huiitre.tools.modules.palworld.application.ports.PalworldServerPort;
 import fr.huiitre.tools.modules.palworld.application.view.PalworldInfoView;
 import fr.huiitre.tools.modules.palworld.application.view.PalworldMetricsView;
@@ -22,10 +23,12 @@ public class PalworldRestAdapter implements PalworldServerPort {
     private static final String ADMIN_PASSWORD = "Immortal69";
 
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
     private final String baseUrl;
 
-    public PalworldRestAdapter(RestTemplate restTemplate, String baseUrl) {
+    public PalworldRestAdapter(RestTemplate restTemplate, ObjectMapper objectMapper, String baseUrl) {
         this.restTemplate = restTemplate;
+        this.objectMapper = objectMapper;
         this.baseUrl = baseUrl;
     }
 
@@ -137,7 +140,17 @@ public class PalworldRestAdapter implements PalworldServerPort {
     }
 
     private void post(String path, Map<String, ?> body, String errorCode) {
-        HttpEntity<Map<String, ?>> request = new HttpEntity<>(body, authHeaders());
+        byte[] payload;
+        try {
+            payload = objectMapper.writeValueAsBytes(body);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(errorCode);
+        }
+
+        HttpHeaders headers = authHeaders();
+        headers.setContentLength(payload.length);
+        HttpEntity<byte[]> request = new HttpEntity<>(payload, headers);
+
         try {
             restTemplate.exchange(baseUrl + path, HttpMethod.POST, request, Void.class);
         } catch (Exception e) {
