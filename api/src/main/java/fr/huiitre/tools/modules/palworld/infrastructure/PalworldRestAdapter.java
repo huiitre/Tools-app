@@ -150,10 +150,6 @@ public class PalworldRestAdapter implements PalworldServerPort {
         HttpHeaders headers = new HttpHeaders();
         headers.setBasicAuth(ADMIN_USER, ADMIN_PASSWORD);
         headers.setContentType(MediaType.APPLICATION_JSON);
-        // Le serveur HTTP embarqué de Palworld (Unreal Engine) répond mal aux connexions
-        // HTTP keep-alive réutilisées entre plusieurs appels — on force une connexion fraîche
-        // à chaque requête pour éviter des status code invalides (-1) côté HttpURLConnection.
-        headers.set(HttpHeaders.CONNECTION, "close");
         return headers;
     }
 
