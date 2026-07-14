@@ -28,3 +28,5 @@ export interface PalworldServerMetrics {
   baseCampNum: number
   uptime: number
 }
+
+export type PalworldServerSettings = Record<string, unknown>

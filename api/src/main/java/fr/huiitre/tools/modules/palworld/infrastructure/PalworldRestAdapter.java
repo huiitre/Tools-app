@@ -134,7 +134,7 @@ public class PalworldRestAdapter implements PalworldServerPort {
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("Appel Palworld GET {} en échec : {} - {}", path, e.getClass().getSimpleName(), e.getMessage());
+            log.warn("Appel Palworld GET {} en échec", path, e);
             throw new IllegalArgumentException(errorCode);
         }
     }
