@@ -1,4 +1,5 @@
 import { serverRoutes } from '@/modules/Palworld/server/palworld.server.routes'
+import { tierlistRoutes } from '@/modules/Palworld/tierlist/tierlist.routes'
 
 export const routes = [
   {
@@ -9,6 +10,7 @@ export const routes = [
     redirect: { name: 'palworld-server' },
     children: [
       ...serverRoutes,
+      ...tierlistRoutes,
     ],
   },
 ]
