@@ -8,6 +8,7 @@ import {
   fetchServerInfo,
   fetchServerMetrics,
   fetchServerPlayers,
+  fetchServerSettings,
   announceServerMessage,
   kickServerPlayer,
   saveServerWorld,
@@ -16,7 +17,12 @@ import {
   shutdownServer,
   stopServer,
 } from '../fetch/palworldServer.fetch'
-import type { PalworldServerInfo, PalworldServerMetrics, PalworldServerPlayer } from '../types/palworldServer.types'
+import type {
+  PalworldServerInfo,
+  PalworldServerMetrics,
+  PalworldServerPlayer,
+  PalworldServerSettings,
+} from '../types/palworldServer.types'
 
 const authStore = useAuthStore()
 const canModerate = computed(() => authStore.hasModuleAccess('PALWORLD', RoleCode.MODERATOR))
@@ -27,6 +33,7 @@ const configStore = usePalworldConfigStore()
 const info = ref<PalworldServerInfo | null>(null)
 const metrics = ref<PalworldServerMetrics | null>(null)
 const players = ref<PalworldServerPlayer[]>([])
+const settings = ref<PalworldServerSettings | null>(null)
 const error = ref<string | null>(null)
 const loading = ref(true)
 const refreshing = ref(false)
@@ -38,6 +45,22 @@ const formatUptime = (seconds: number) => {
   const hours = Math.floor(seconds / 3600)
   const minutes = Math.floor((seconds % 3600) / 60)
   return `${hours}h ${minutes}min`
+}
+
+const settingEntries = computed(() => Object.entries(settings.value ?? {}))
+
+function formatSettingLabel(key: string): string {
+  return key
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/^b(?=[A-Z ])/, '')
+    .trim()
+}
+
+function formatSettingValue(value: unknown): string {
+  if (typeof value === 'boolean') return value ? 'Oui' : 'Non'
+  if (Array.isArray(value)) return value.length ? value.join(', ') : '—'
+  if (value === null || value === undefined || value === '') return '—'
+  return String(value)
 }
 
 async function refreshAll() {
@@ -83,14 +106,16 @@ onMounted(async () => {
   configStore.hydrate()
 
   try {
-    const [infoResult, metricsResult, playersResult] = await Promise.all([
+    const [infoResult, metricsResult, playersResult, settingsResult] = await Promise.all([
       fetchServerInfo(),
       fetchServerMetrics(),
       fetchServerPlayers(),
+      fetchServerSettings(),
     ])
     info.value = infoResult
     metrics.value = metricsResult
     players.value = playersResult
+    settings.value = settingsResult
   } catch {
     error.value = 'Impossible de charger les données du serveur.'
   } finally {
@@ -365,6 +390,29 @@ async function handleStop() {
       </div>
 
       <p v-else-if="!loading" class="empty">Aucun joueur connecté.</p>
+    </div>
+
+    <!-- Paramètres -->
+    <div class="section">
+      <div class="section-header">
+        <h3 class="section-title">Paramètres serveur</h3>
+      </div>
+
+      <div v-if="loading" class="settings-grid">
+        <div v-for="i in 8" :key="i" class="setting-item">
+          <span class="skeleton-line" style="width: 100px" />
+          <span class="skeleton-line" style="width: 60px; margin-top: 0.4rem" />
+        </div>
+      </div>
+
+      <div v-else-if="settingEntries.length" class="settings-grid">
+        <div v-for="[key, value] in settingEntries" :key="key" class="setting-item">
+          <div class="setting-label">{{ formatSettingLabel(key) }}</div>
+          <div class="setting-value">{{ formatSettingValue(value) }}</div>
+        </div>
+      </div>
+
+      <p v-else class="empty">Paramètres indisponibles.</p>
     </div>
 
     <!-- Actions -->
@@ -680,6 +728,33 @@ async function handleStop() {
   border-bottom: 1px solid var(--pico-card-border-color);
 
   &:last-child { border-bottom: none; }
+}
+
+/* ── Settings ────────────────────────────────────────────────────── */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0;
+}
+
+.setting-item {
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--pico-card-border-color);
+  border-right: 1px solid var(--pico-card-border-color);
+  min-width: 0;
+}
+
+.setting-label {
+  font-size: 0.72rem;
+  color: var(--pico-muted-color);
+  font-weight: 500;
+  margin-bottom: 0.2rem;
+}
+
+.setting-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  overflow-wrap: break-word;
 }
 
 /* ── Actions ─────────────────────────────────────────────────────── */

@@ -1,8 +1,18 @@
 import { clientV3 } from '@/services/axiosInstance'
-import type { PalworldServerInfo, PalworldServerMetrics, PalworldServerPlayer } from '../types/palworldServer.types'
+import type {
+  PalworldServerInfo,
+  PalworldServerMetrics,
+  PalworldServerPlayer,
+  PalworldServerSettings,
+} from '../types/palworldServer.types'
 
 export async function fetchServerInfo(): Promise<PalworldServerInfo> {
   const { data } = await clientV3.get<PalworldServerInfo>('/palworld/server/info')
+  return data
+}
+
+export async function fetchServerSettings(): Promise<PalworldServerSettings> {
+  const { data } = await clientV3.get<PalworldServerSettings>('/palworld/server/settings')
   return data
 }
 
