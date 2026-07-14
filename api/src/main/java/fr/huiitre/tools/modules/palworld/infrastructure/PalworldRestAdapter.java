@@ -6,7 +6,6 @@ import fr.huiitre.tools.modules.palworld.application.view.PalworldMetricsView;
 import fr.huiitre.tools.modules.palworld.application.view.PalworldPlayerView;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -125,7 +124,9 @@ public class PalworldRestAdapter implements PalworldServerPort {
                 throw new IllegalArgumentException(errorCode);
             }
             return body;
-        } catch (HttpClientErrorException e) {
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
             throw new IllegalArgumentException(errorCode);
         }
     }
@@ -134,7 +135,7 @@ public class PalworldRestAdapter implements PalworldServerPort {
         HttpEntity<Map<String, ?>> request = new HttpEntity<>(body, authHeaders());
         try {
             restTemplate.exchange(baseUrl + path, HttpMethod.POST, request, Void.class);
-        } catch (HttpClientErrorException e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException(errorCode);
         }
     }
@@ -143,6 +144,10 @@ public class PalworldRestAdapter implements PalworldServerPort {
         HttpHeaders headers = new HttpHeaders();
         headers.setBasicAuth(ADMIN_USER, ADMIN_PASSWORD);
         headers.setContentType(MediaType.APPLICATION_JSON);
+        // Le serveur HTTP embarqué de Palworld (Unreal Engine) répond mal aux connexions
+        // HTTP keep-alive réutilisées entre plusieurs appels — on force une connexion fraîche
+        // à chaque requête pour éviter des status code invalides (-1) côté HttpURLConnection.
+        headers.set(HttpHeaders.CONNECTION, "close");
         return headers;
     }
 
