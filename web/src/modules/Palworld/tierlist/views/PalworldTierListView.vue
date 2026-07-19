@@ -116,10 +116,17 @@ onMounted(() => {
               target="_blank"
               rel="noopener noreferrer"
               class="pal-card"
-              :class="{ dimmed: !matches(pal) }"
+              :class="{ dimmed: !matches(pal), wide: !!pal.workSkills?.length }"
             >
               <img :src="pal.image" :alt="pal.name" width="72" height="72" loading="lazy">
               <span class="pal-name">{{ pal.name }}</span>
+              <span v-if="pal.speed" class="pal-speed">{{ pal.speed.min }} - {{ pal.speed.max }}</span>
+              <span v-if="pal.workSkills?.length" class="pal-workskills">
+                <span v-for="skill in pal.workSkills" :key="skill.name" class="workskill" :title="skill.name">
+                  <img :src="skill.icon" :alt="skill.name" width="16" height="16" loading="lazy">
+                  <span class="workskill-level">{{ skill.level }}</span>
+                </span>
+              </span>
             </a>
           </div>
         </div>
@@ -363,6 +370,10 @@ onMounted(() => {
     border-radius: 6px;
     display: block;
   }
+
+  &.wide {
+    width: 96px;
+  }
 }
 
 .pal-name {
@@ -371,6 +382,40 @@ onMounted(() => {
   text-align: center;
   line-height: 1.3;
   word-break: break-word;
+}
+
+.pal-speed {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--pico-primary);
+}
+
+.pal-workskills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+}
+
+.workskill {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 3px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--pico-color) 8%, transparent);
+
+  img {
+    width: 14px;
+    height: 14px;
+    border-radius: 0;
+  }
+}
+
+.workskill-level {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--pico-color);
 }
 
 /* ── Search results ──────────────────────────────────────────────── */
