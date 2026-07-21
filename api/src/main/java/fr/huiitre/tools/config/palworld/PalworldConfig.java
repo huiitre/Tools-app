@@ -2,6 +2,7 @@ package fr.huiitre.tools.config.palworld;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.huiitre.tools.modules.palworld.application.ports.PalworldServerPort;
+import fr.huiitre.tools.modules.palworld.infrastructure.PalworldMockAdapter;
 import fr.huiitre.tools.modules.palworld.infrastructure.PalworldRestAdapter;
 import fr.huiitre.tools.modules.palworld.tierlist.application.ports.PalworldTierListProvider;
 import fr.huiitre.tools.modules.palworld.tierlist.infrastructure.PalworldGgTierListScraper;
@@ -20,7 +21,14 @@ import java.util.List;
 public class PalworldConfig {
 
     @Bean
-    public PalworldServerPort palworldServerPort(ObjectMapper objectMapper, @Value("${palworld.api.base-url}") String baseUrl) {
+    public PalworldServerPort palworldServerPort(
+            ObjectMapper objectMapper,
+            @Value("${palworld.api.base-url}") String baseUrl,
+            @Value("${palworld.api.mock:false}") boolean mock) {
+        if (mock) {
+            return new PalworldMockAdapter();
+        }
+
         HttpClient httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .build();

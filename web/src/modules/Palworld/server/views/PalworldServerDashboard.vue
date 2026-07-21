@@ -9,6 +9,7 @@ import {
   fetchServerMetrics,
   fetchServerPlayers,
   fetchServerSettings,
+  fetchServerGameData,
   announceServerMessage,
   kickServerPlayer,
   saveServerWorld,
@@ -18,11 +19,15 @@ import {
   stopServer,
 } from '../fetch/palworldServer.fetch'
 import type {
+  PalworldBase,
+  PalworldBasePal,
+  PalworldGamePlayer,
   PalworldServerInfo,
   PalworldServerMetrics,
   PalworldServerPlayer,
   PalworldServerSettings,
 } from '../types/palworldServer.types'
+import PalworldPlayerDetailsModal from '../components/PalworldPlayerDetailsModal.vue'
 
 const authStore = useAuthStore()
 const canModerate = computed(() => authStore.hasModuleAccess('PALWORLD', RoleCode.MODERATOR))
@@ -40,6 +45,43 @@ const refreshing = ref(false)
 
 const MIN_SPINNER_DURATION_MS = 500
 let refreshIntervalId: number | undefined
+
+// ── Détails joueur (popup) ──────────────────────────────────────
+const showPlayerDetails = ref(false)
+const loadingPlayerDetails = ref(false)
+const playerDetailsError = ref<string | null>(null)
+const selectedGamePlayer = ref<PalworldGamePlayer | null>(null)
+const selectedPlayerBases = ref<PalworldBase[]>([])
+const selectedPlayerBasePals = ref<PalworldBasePal[]>([])
+
+async function openPlayerDetails(player: PalworldServerPlayer) {
+  showPlayerDetails.value = true
+  loadingPlayerDetails.value = true
+  playerDetailsError.value = null
+  selectedGamePlayer.value = null
+  selectedPlayerBases.value = []
+  selectedPlayerBasePals.value = []
+
+  try {
+    const gameData = await fetchServerGameData()
+    const gamePlayer = gameData.players.find(p => p.userId === player.userId)
+    if (!gamePlayer) {
+      playerDetailsError.value = 'Détails indisponibles pour ce joueur.'
+      return
+    }
+    selectedGamePlayer.value = gamePlayer
+    selectedPlayerBases.value = gameData.bases.filter(b => b.guildId === gamePlayer.guildId)
+    selectedPlayerBasePals.value = gameData.basePals.filter(p => p.guildId === gamePlayer.guildId)
+  } catch {
+    playerDetailsError.value = 'Impossible de récupérer les détails du joueur.'
+  } finally {
+    loadingPlayerDetails.value = false
+  }
+}
+
+function closePlayerDetails() {
+  showPlayerDetails.value = false
+}
 
 const formatUptime = (seconds: number) => {
   const hours = Math.floor(seconds / 3600)
@@ -364,7 +406,7 @@ async function handleStop() {
           <span class="skeleton-line" style="width: 120px" />
           <span class="skeleton-line" style="width: 40px" />
           <span class="skeleton-line" style="width: 40px" />
-          <span class="skeleton-line" style="width: 40px" />
+          <span class="skeleton-line" style="width: 60px" />
         </div>
       </div>
 
@@ -375,15 +417,15 @@ async function handleStop() {
               <th>Nom</th>
               <th>Niveau</th>
               <th>Ping</th>
-              <th>Bâtiments</th>
+              <th>Position</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="player in players" :key="player.playerId">
-              <td><span class="player-name">{{ player.name }}</span></td>
+              <td><span class="player-name" @click="openPlayerDetails(player)">{{ player.name }}</span></td>
               <td>{{ player.level }}</td>
               <td>{{ Math.round(player.ping) }} ms</td>
-              <td>{{ player.buildingCount }}</td>
+              <td>{{ player.mapX }}, {{ player.mapY }}</td>
             </tr>
           </tbody>
         </table>
@@ -508,6 +550,16 @@ async function handleStop() {
         </template>
       </div>
     </div>
+
+    <PalworldPlayerDetailsModal
+      v-if="showPlayerDetails"
+      :loading="loadingPlayerDetails"
+      :error="playerDetailsError"
+      :player="selectedGamePlayer"
+      :bases="selectedPlayerBases"
+      :base-pals="selectedPlayerBasePals"
+      @close="closePlayerDetails"
+    />
   </div>
 </template>
 

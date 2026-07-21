@@ -9,6 +9,7 @@ public record PalworldPlayerView(
     double ping,
     double locationX,
     double locationY,
-    int level,
-    int buildingCount
+    long mapX,
+    long mapY,
+    int level
 ) {}

@@ -1,5 +1,6 @@
 import { clientV3 } from '@/services/axiosInstance'
 import type {
+  PalworldGameData,
   PalworldServerInfo,
   PalworldServerMetrics,
   PalworldServerPlayer,
@@ -23,6 +24,11 @@ export async function fetchServerPlayers(): Promise<PalworldServerPlayer[]> {
 
 export async function fetchServerMetrics(): Promise<PalworldServerMetrics> {
   const { data } = await clientV3.get<PalworldServerMetrics>('/palworld/server/metrics')
+  return data
+}
+
+export async function fetchServerGameData(): Promise<PalworldGameData> {
+  const { data } = await clientV3.get<PalworldGameData>('/palworld/server/game-data')
   return data
 }
 
