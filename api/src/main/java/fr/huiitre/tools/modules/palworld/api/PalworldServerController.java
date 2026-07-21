@@ -9,6 +9,7 @@ import fr.huiitre.tools.modules.palworld.application.command.PalworldShutdownCom
 import fr.huiitre.tools.modules.palworld.application.command.PalworldUnbanCommand;
 import fr.huiitre.tools.modules.palworld.application.usecase.AnnouncePalworldMessageUseCase;
 import fr.huiitre.tools.modules.palworld.application.usecase.BanPalworldPlayerUseCase;
+import fr.huiitre.tools.modules.palworld.application.usecase.GetPalworldGameDataUseCase;
 import fr.huiitre.tools.modules.palworld.application.usecase.GetPalworldInfoUseCase;
 import fr.huiitre.tools.modules.palworld.application.usecase.GetPalworldMetricsUseCase;
 import fr.huiitre.tools.modules.palworld.application.usecase.GetPalworldPlayersUseCase;
@@ -18,6 +19,7 @@ import fr.huiitre.tools.modules.palworld.application.usecase.SavePalworldWorldUs
 import fr.huiitre.tools.modules.palworld.application.usecase.ShutdownPalworldServerUseCase;
 import fr.huiitre.tools.modules.palworld.application.usecase.StopPalworldServerUseCase;
 import fr.huiitre.tools.modules.palworld.application.usecase.UnbanPalworldPlayerUseCase;
+import fr.huiitre.tools.modules.palworld.application.view.PalworldGameDataView;
 import fr.huiitre.tools.modules.palworld.application.view.PalworldInfoView;
 import fr.huiitre.tools.modules.palworld.application.view.PalworldMetricsView;
 import fr.huiitre.tools.modules.palworld.application.view.PalworldPlayerView;
@@ -33,6 +35,7 @@ public class PalworldServerController {
 
     private final GetPalworldInfoUseCase getPalworldInfoUseCase;
     private final GetPalworldPlayersUseCase getPalworldPlayersUseCase;
+    private final GetPalworldGameDataUseCase getPalworldGameDataUseCase;
     private final GetPalworldMetricsUseCase getPalworldMetricsUseCase;
     private final GetPalworldSettingsUseCase getPalworldSettingsUseCase;
     private final AnnouncePalworldMessageUseCase announcePalworldMessageUseCase;
@@ -46,6 +49,7 @@ public class PalworldServerController {
     public PalworldServerController(
             GetPalworldInfoUseCase getPalworldInfoUseCase,
             GetPalworldPlayersUseCase getPalworldPlayersUseCase,
+            GetPalworldGameDataUseCase getPalworldGameDataUseCase,
             GetPalworldMetricsUseCase getPalworldMetricsUseCase,
             GetPalworldSettingsUseCase getPalworldSettingsUseCase,
             AnnouncePalworldMessageUseCase announcePalworldMessageUseCase,
@@ -57,6 +61,7 @@ public class PalworldServerController {
             StopPalworldServerUseCase stopPalworldServerUseCase) {
         this.getPalworldInfoUseCase = getPalworldInfoUseCase;
         this.getPalworldPlayersUseCase = getPalworldPlayersUseCase;
+        this.getPalworldGameDataUseCase = getPalworldGameDataUseCase;
         this.getPalworldMetricsUseCase = getPalworldMetricsUseCase;
         this.getPalworldSettingsUseCase = getPalworldSettingsUseCase;
         this.announcePalworldMessageUseCase = announcePalworldMessageUseCase;
@@ -78,6 +83,12 @@ public class PalworldServerController {
     @GetMapping("/players")
     public List<PalworldPlayerView> getPlayers() {
         return getPalworldPlayersUseCase.execute();
+    }
+
+    @RequiredRole(RoleCode.READ_ONLY)
+    @GetMapping("/game-data")
+    public PalworldGameDataView getGameData() {
+        return getPalworldGameDataUseCase.execute();
     }
 
     @RequiredRole(RoleCode.READ_ONLY)

@@ -1,5 +1,6 @@
 package fr.huiitre.tools.modules.palworld.application.ports;
 
+import fr.huiitre.tools.modules.palworld.application.view.PalworldGameDataView;
 import fr.huiitre.tools.modules.palworld.application.view.PalworldInfoView;
 import fr.huiitre.tools.modules.palworld.application.view.PalworldMetricsView;
 import fr.huiitre.tools.modules.palworld.application.view.PalworldPlayerView;
@@ -12,6 +13,8 @@ public interface PalworldServerPort {
     PalworldInfoView getInfo();
 
     List<PalworldPlayerView> getPlayers();
+
+    PalworldGameDataView getGameData();
 
     PalworldMetricsView getMetrics();
 

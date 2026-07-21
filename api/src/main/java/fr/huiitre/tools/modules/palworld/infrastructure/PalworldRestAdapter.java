@@ -2,9 +2,15 @@ package fr.huiitre.tools.modules.palworld.infrastructure;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.huiitre.tools.modules.palworld.application.ports.PalworldServerPort;
+import fr.huiitre.tools.modules.palworld.application.view.PalworldActivePalView;
+import fr.huiitre.tools.modules.palworld.application.view.PalworldBasePalView;
+import fr.huiitre.tools.modules.palworld.application.view.PalworldBaseView;
+import fr.huiitre.tools.modules.palworld.application.view.PalworldGameDataView;
+import fr.huiitre.tools.modules.palworld.application.view.PalworldGamePlayerView;
 import fr.huiitre.tools.modules.palworld.application.view.PalworldInfoView;
 import fr.huiitre.tools.modules.palworld.application.view.PalworldMetricsView;
 import fr.huiitre.tools.modules.palworld.application.view.PalworldPlayerView;
+import fr.huiitre.tools.modules.palworld.domain.PalworldCoord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -12,8 +18,10 @@ import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class PalworldRestAdapter implements PalworldServerPort {
 
@@ -50,19 +58,153 @@ public class PalworldRestAdapter implements PalworldServerPort {
 
         List<PalworldPlayerView> result = new ArrayList<>();
         for (Map<String, Object> player : players) {
+            double locationX = asDouble(player.get("location_x"));
+            double locationY = asDouble(player.get("location_y"));
+            PalworldCoord.MapPoint mapPoint = PalworldCoord.savToMap(locationX, locationY);
+
             result.add(new PalworldPlayerView(
                     (String) player.get("name"),
                     (String) player.get("accountName"),
                     (String) player.get("playerId"),
                     (String) player.get("userId"),
-                    (String) player.get("ip"),
+                    (String) player.get("iP"),
                     asDouble(player.get("ping")),
-                    asDouble(player.get("location_x")),
-                    asDouble(player.get("location_y")),
-                    asInt(player.get("level")),
-                    asInt(player.get("building_count"))));
+                    locationX,
+                    locationY,
+                    mapPoint.x(),
+                    mapPoint.y(),
+                    asInt(player.get("level"))));
         }
         return result;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public PalworldGameDataView getGameData() {
+        Map<String, Object> body = get("/v1/api/game-data", "PALWORLD_GAME_DATA_FETCH_FAILED");
+        List<Map<String, Object>> actors = (List<Map<String, Object>>) body.getOrDefault("ActorData", List.of());
+
+        List<Map<String, Object>> playerActors = new ArrayList<>();
+        List<Map<String, Object>> otomoPalActors = new ArrayList<>();
+        List<Map<String, Object>> baseCampPalActors = new ArrayList<>();
+        List<Map<String, Object>> palBoxActors = new ArrayList<>();
+
+        for (Map<String, Object> actor : actors) {
+            String type = (String) actor.get("Type");
+            String unitType = (String) actor.get("UnitType");
+            if ("PalBox".equals(type)) {
+                palBoxActors.add(actor);
+            } else if ("Character".equals(type) && "Player".equals(unitType)) {
+                playerActors.add(actor);
+            } else if ("Character".equals(type) && "OtomoPal".equals(unitType)) {
+                otomoPalActors.add(actor);
+            } else if ("Character".equals(type) && "BaseCampPal".equals(unitType)) {
+                baseCampPalActors.add(actor);
+            }
+        }
+
+        Set<String> onlineGuildIds = new HashSet<>();
+        List<PalworldGamePlayerView> players = new ArrayList<>();
+        for (Map<String, Object> actor : playerActors) {
+            onlineGuildIds.add((String) actor.get("GuildID"));
+            players.add(toGamePlayerView(actor, otomoPalActors));
+        }
+
+        List<PalworldBaseView> bases = new ArrayList<>();
+        for (Map<String, Object> actor : palBoxActors) {
+            if (onlineGuildIds.contains(actor.get("GuildID"))) {
+                bases.add(toBaseView(actor));
+            }
+        }
+
+        List<PalworldBasePalView> basePals = new ArrayList<>();
+        for (Map<String, Object> actor : baseCampPalActors) {
+            if (onlineGuildIds.contains(actor.get("GuildID"))) {
+                basePals.add(toBasePalView(actor));
+            }
+        }
+
+        return new PalworldGameDataView(
+                (String) body.get("Time"),
+                asDouble(body.get("FPS")),
+                asDouble(body.get("AverageFPS")),
+                (String) body.get("InGameTime"),
+                asInt(body.get("InGameDays")),
+                players,
+                bases,
+                basePals);
+    }
+
+    private PalworldGamePlayerView toGamePlayerView(Map<String, Object> actor, List<Map<String, Object>> otomoPalActors) {
+        double locationX = asDouble(actor.get("LocationX"));
+        double locationY = asDouble(actor.get("LocationY"));
+        PalworldCoord.MapPoint mapPoint = PalworldCoord.savToMap(locationX, locationY);
+        String instanceId = (String) actor.get("InstanceID");
+
+        PalworldActivePalView activePal = otomoPalActors.stream()
+                .filter(pal -> instanceId.equals(pal.get("TrainerInstanceID")))
+                .findFirst()
+                .map(this::toActivePalView)
+                .orElse(null);
+
+        return new PalworldGamePlayerView(
+                (String) actor.get("NickName"),
+                (String) actor.get("userid"),
+                (String) actor.get("ip"),
+                asInt(actor.get("level")),
+                asInt(actor.get("HP")),
+                asInt(actor.get("MaxHP")),
+                (String) actor.get("GuildID"),
+                (String) actor.get("GuildName"),
+                locationX,
+                locationY,
+                asDouble(actor.get("LocationZ")),
+                mapPoint.x(),
+                mapPoint.y(),
+                asDouble(actor.get("RotationZ")),
+                activePal);
+    }
+
+    private PalworldActivePalView toActivePalView(Map<String, Object> actor) {
+        return new PalworldActivePalView(
+                (String) actor.get("NickName"),
+                (String) actor.get("Class"),
+                asInt(actor.get("level")),
+                asInt(actor.get("HP")),
+                asInt(actor.get("MaxHP")));
+    }
+
+    private PalworldBaseView toBaseView(Map<String, Object> actor) {
+        double locationX = asDouble(actor.get("LocationX"));
+        double locationY = asDouble(actor.get("LocationY"));
+        PalworldCoord.MapPoint mapPoint = PalworldCoord.savToMap(locationX, locationY);
+        return new PalworldBaseView(
+                (String) actor.get("Name"),
+                (String) actor.get("GuildID"),
+                (String) actor.get("GuildName"),
+                locationX,
+                locationY,
+                asDouble(actor.get("LocationZ")),
+                mapPoint.x(),
+                mapPoint.y());
+    }
+
+    private PalworldBasePalView toBasePalView(Map<String, Object> actor) {
+        double locationX = asDouble(actor.get("LocationX"));
+        double locationY = asDouble(actor.get("LocationY"));
+        PalworldCoord.MapPoint mapPoint = PalworldCoord.savToMap(locationX, locationY);
+        return new PalworldBasePalView(
+                (String) actor.get("NickName"),
+                (String) actor.get("Class"),
+                asInt(actor.get("level")),
+                asInt(actor.get("HP")),
+                asInt(actor.get("MaxHP")),
+                (String) actor.get("GuildID"),
+                locationX,
+                locationY,
+                asDouble(actor.get("LocationZ")),
+                mapPoint.x(),
+                mapPoint.y());
     }
 
     @Override
