@@ -34,10 +34,12 @@ public class PalworldConfig {
                 .build();
         RestTemplate restTemplate = new RestTemplate(new JdkClientHttpRequestFactory(httpClient));
 
-        // Le serveur Palworld répond en text/plain sur certains endpoints (ex: /v1/api/settings) malgré un corps JSON
+        // Le serveur Palworld répond en text/plain sur certains endpoints (ex: /v1/api/settings) malgré un corps JSON.
+        // Ajouté en fin de liste (pas en position 0) pour ne pas passer devant ByteArrayHttpMessageConverter :
+        // sinon Jackson sérialise nos body[] de POST en base64 au lieu des octets bruts (Content-Length devient faux).
         MappingJackson2HttpMessageConverter jsonConverter = new MappingJackson2HttpMessageConverter(objectMapper);
         jsonConverter.setSupportedMediaTypes(List.of(MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN));
-        restTemplate.getMessageConverters().add(0, jsonConverter);
+        restTemplate.getMessageConverters().add(jsonConverter);
 
         return new PalworldRestAdapter(restTemplate, objectMapper, baseUrl);
     }

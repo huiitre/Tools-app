@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { PalworldBase, PalworldBasePal, PalworldGamePlayer } from '../types/palworldServer.types'
 import PalworldMiniMap from './PalworldMiniMap.vue'
 
-defineProps<{
+const props = defineProps<{
   loading: boolean
   error: string | null
   player: PalworldGamePlayer | null
@@ -15,6 +16,27 @@ const emit = defineEmits<{ close: [] }>()
 function hpPercent(hp: number, maxHp: number): number {
   return maxHp > 0 ? Math.round((hp / maxHp) * 100) : 0
 }
+
+// L'API Palworld ne fournit pas d'identifiant reliant un pal à sa base précise
+// (uniquement le GuildID, partagé par toutes les bases de la guilde) : on
+// rapproche donc chaque pal de la base la plus proche géographiquement.
+const basesWithPals = computed(() => {
+  return props.bases.map(base => {
+    const pals = props.basePals.filter(pal => {
+      let closest = base
+      let closestDist = Infinity
+      for (const candidate of props.bases) {
+        const dist = (pal.locationX - candidate.locationX) ** 2 + (pal.locationY - candidate.locationY) ** 2
+        if (dist < closestDist) {
+          closestDist = dist
+          closest = candidate
+        }
+      }
+      return closest === base
+    })
+    return { base, pals }
+  })
+})
 </script>
 
 <template>
@@ -65,36 +87,31 @@ function hpPercent(hp: number, maxHp: number): number {
             <div v-if="player.activePal" class="pal-row">
               <span class="pal-name">{{ player.activePal.name }}</span>
               <span class="pal-level">Nv. {{ player.activePal.level }}</span>
-              <div class="hp-bar hp-bar--small">
-                <div class="hp-bar-fill" :style="{ width: hpPercent(player.activePal.hp, player.activePal.maxHp) + '%' }" />
-              </div>
             </div>
             <p v-else class="empty">Aucun pal actif.</p>
           </div>
 
           <div class="details-section">
             <h4 class="section-title">Bases ({{ bases.length }})</h4>
-            <ul v-if="bases.length" class="base-list">
-              <li v-for="(base, i) in bases" :key="i" class="base-item">
-                <span class="base-name">{{ base.name }}</span>
-                <span class="base-position">{{ base.mapX }}, {{ base.mapY }}</span>
-              </li>
-            </ul>
-            <p v-else class="empty">Aucune base détectée.</p>
-          </div>
-
-          <div class="details-section">
-            <h4 class="section-title">Pals de la guilde ({{ basePals.length }})</h4>
-            <ul v-if="basePals.length" class="pal-list">
-              <li v-for="(pal, i) in basePals" :key="i" class="pal-row">
-                <span class="pal-name">{{ pal.name }}</span>
-                <span class="pal-level">Nv. {{ pal.level }}</span>
-                <div class="hp-bar hp-bar--small">
-                  <div class="hp-bar-fill" :style="{ width: hpPercent(pal.hp, pal.maxHp) + '%' }" />
+            <div v-if="basesWithPals.length" class="base-group-list">
+              <div v-for="({ base, pals }, i) in basesWithPals" :key="i" class="base-group">
+                <div class="base-item">
+                  <span class="base-name">{{ base.name }}</span>
+                  <span class="base-item-right">
+                    <span class="base-pal-count">{{ pals.length }} pal{{ pals.length > 1 ? 's' : '' }}</span>
+                    <span class="base-position">{{ base.mapX }}, {{ base.mapY }}</span>
+                  </span>
                 </div>
-              </li>
-            </ul>
-            <p v-else class="empty">Aucun pal détecté.</p>
+                <ul v-if="pals.length" class="pal-list">
+                  <li v-for="(pal, j) in pals" :key="j" class="pal-row">
+                    <span class="pal-name">{{ pal.name }}</span>
+                    <span class="pal-level">Nv. {{ pal.level }}</span>
+                  </li>
+                </ul>
+                <p v-else class="empty">Aucun pal détecté.</p>
+              </div>
+            </div>
+            <p v-else class="empty">Aucune base détectée.</p>
           </div>
         </template>
       </div>
@@ -120,7 +137,7 @@ function hpPercent(hp: number, maxHp: number): number {
   border-radius: var(--pico-border-radius);
   box-shadow: var(--pico-card-box-shadow);
   width: 100%;
-  max-width: 480px;
+  max-width: 720px;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
@@ -243,25 +260,68 @@ function hpPercent(hp: number, maxHp: number): number {
   overflow-wrap: break-word;
 }
 
-.base-list, .pal-list {
+.pal-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0.6rem 0 0 0.9rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  border-left: 2px solid var(--pico-muted-border-color);
+}
+
+.base-group-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.base-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.75rem 0;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--pico-muted-border-color);
+  }
+
+  &:first-child {
+    padding-top: 0;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+  }
 }
 
 .base-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  font-size: 0.85rem;
+  align-items: baseline;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.base-item-right {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.base-pal-count {
+  font-weight: 500;
+  font-size: 0.75rem;
+  color: var(--pico-primary);
+  background: color-mix(in srgb, var(--pico-primary) 12%, transparent);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
 }
 
 .base-position {
   color: var(--pico-muted-color);
   font-size: 0.78rem;
+  font-weight: 400;
 }
 
 .pal-row {

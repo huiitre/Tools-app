@@ -16,12 +16,13 @@ export interface MapPixelPosition {
  * un point proche du bord/dans l'eau n'est donc pas une anomalie de calibration.
  */
 export function toMapPixel(locationX: number, locationY: number): MapPixelPosition | null {
-  const xRatio = (locationX - LANDSCAPE_MIN_X) / (LANDSCAPE_MAX_X - LANDSCAPE_MIN_X)
-  const yRatio = (locationY - LANDSCAPE_MIN_Y) / (LANDSCAPE_MAX_Y - LANDSCAPE_MIN_Y)
+  const nx = (locationX - LANDSCAPE_MIN_X) / (LANDSCAPE_MAX_X - LANDSCAPE_MIN_X)
+  const ny = (locationY - LANDSCAPE_MIN_Y) / (LANDSCAPE_MAX_Y - LANDSCAPE_MIN_Y)
 
-  if (xRatio < 0 || xRatio > 1 || yRatio < 0 || yRatio > 1) {
+  if (nx < 0 || nx > 1 || ny < 0 || ny > 1) {
     return null
   }
 
-  return { xPercent: xRatio * 100, yPercent: yRatio * 100 }
+  // L'axe écran X suit locationY, l'axe écran Y suit locationX inversé.
+  return { xPercent: ny * 100, yPercent: (1 - nx) * 100 }
 }

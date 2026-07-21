@@ -50,21 +50,16 @@ let refreshIntervalId: number | undefined
 const showPlayerDetails = ref(false)
 const loadingPlayerDetails = ref(false)
 const playerDetailsError = ref<string | null>(null)
+const selectedPlayerUserId = ref<string | null>(null)
 const selectedGamePlayer = ref<PalworldGamePlayer | null>(null)
 const selectedPlayerBases = ref<PalworldBase[]>([])
 const selectedPlayerBasePals = ref<PalworldBasePal[]>([])
 
-async function openPlayerDetails(player: PalworldServerPlayer) {
-  showPlayerDetails.value = true
-  loadingPlayerDetails.value = true
-  playerDetailsError.value = null
-  selectedGamePlayer.value = null
-  selectedPlayerBases.value = []
-  selectedPlayerBasePals.value = []
-
+async function loadPlayerDetails() {
+  if (!selectedPlayerUserId.value) return
   try {
     const gameData = await fetchServerGameData()
-    const gamePlayer = gameData.players.find(p => p.userId === player.userId)
+    const gamePlayer = gameData.players.find(p => p.userId === selectedPlayerUserId.value)
     if (!gamePlayer) {
       playerDetailsError.value = 'Détails indisponibles pour ce joueur.'
       return
@@ -72,15 +67,28 @@ async function openPlayerDetails(player: PalworldServerPlayer) {
     selectedGamePlayer.value = gamePlayer
     selectedPlayerBases.value = gameData.bases.filter(b => b.guildId === gamePlayer.guildId)
     selectedPlayerBasePals.value = gameData.basePals.filter(p => p.guildId === gamePlayer.guildId)
+    playerDetailsError.value = null
   } catch {
     playerDetailsError.value = 'Impossible de récupérer les détails du joueur.'
-  } finally {
-    loadingPlayerDetails.value = false
   }
+}
+
+async function openPlayerDetails(player: PalworldServerPlayer) {
+  selectedPlayerUserId.value = player.userId
+  showPlayerDetails.value = true
+  loadingPlayerDetails.value = true
+  playerDetailsError.value = null
+  selectedGamePlayer.value = null
+  selectedPlayerBases.value = []
+  selectedPlayerBasePals.value = []
+
+  await loadPlayerDetails()
+  loadingPlayerDetails.value = false
 }
 
 function closePlayerDetails() {
   showPlayerDetails.value = false
+  selectedPlayerUserId.value = null
 }
 
 const formatUptime = (seconds: number) => {
@@ -118,6 +126,10 @@ async function refreshAll() {
     metrics.value = metricsResult
     players.value = playersResult
     error.value = null
+
+    if (showPlayerDetails.value) {
+      await loadPlayerDetails()
+    }
   } catch {
     error.value = 'Serveur injoignable — dernières données connues affichées.'
   } finally {
