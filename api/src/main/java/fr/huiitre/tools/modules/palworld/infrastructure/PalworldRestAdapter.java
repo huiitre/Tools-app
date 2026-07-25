@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PalworldRestAdapter implements PalworldServerPort {
 
@@ -83,6 +84,7 @@ public class PalworldRestAdapter implements PalworldServerPort {
     public PalworldGameDataView getGameData() {
         Map<String, Object> body = get("/v1/api/game-data", "PALWORLD_GAME_DATA_FETCH_FAILED");
         List<Map<String, Object>> actors = (List<Map<String, Object>>) body.getOrDefault("ActorData", List.of());
+        Set<String> activeUserIds = fetchActiveUserIds();
 
         List<Map<String, Object>> playerActors = new ArrayList<>();
         List<Map<String, Object>> otomoPalActors = new ArrayList<>();
@@ -95,7 +97,9 @@ public class PalworldRestAdapter implements PalworldServerPort {
             if ("PalBox".equals(type)) {
                 palBoxActors.add(actor);
             } else if ("Character".equals(type) && "Player".equals(unitType)) {
-                playerActors.add(actor);
+                if (activeUserIds == null || activeUserIds.contains(actor.get("userid"))) {
+                    playerActors.add(actor);
+                }
             } else if ("Character".equals(type) && "OtomoPal".equals(unitType)) {
                 otomoPalActors.add(actor);
             } else if ("Character".equals(type) && "BaseCampPal".equals(unitType)) {
@@ -133,6 +137,21 @@ public class PalworldRestAdapter implements PalworldServerPort {
                 players,
                 bases,
                 basePals);
+    }
+
+    /**
+     * Après un crash serveur / une déco sale, /game-data peut garder une entrée de joueur
+     * figée (IsActive=true, userid vide) alors que la session n'existe plus. /players ne
+     * liste que les sessions réellement connectées : on croise les deux pour écarter ces
+     * fantômes. En cas d'échec de cet appel on ne filtre pas (fail-open) plutôt que de
+     * risquer de vider la liste des joueurs réellement connectés.
+     */
+    private Set<String> fetchActiveUserIds() {
+        try {
+            return getPlayers().stream().map(PalworldPlayerView::userId).collect(Collectors.toSet());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private PalworldGamePlayerView toGamePlayerView(Map<String, Object> actor, List<Map<String, Object>> otomoPalActors) {

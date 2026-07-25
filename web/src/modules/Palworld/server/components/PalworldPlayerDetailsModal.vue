@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { PalworldBase, PalworldBasePal, PalworldGamePlayer } from '../types/palworldServer.types'
-import PalworldMiniMap from './PalworldMiniMap.vue'
 
 const props = defineProps<{
   loading: boolean
@@ -75,11 +74,6 @@ const basesWithPals = computed(() => {
                 <div class="info-value">{{ player.mapX }}, {{ player.mapY }}</div>
               </div>
             </div>
-          </div>
-
-          <div class="details-section">
-            <h4 class="section-title">Carte</h4>
-            <PalworldMiniMap :player="player" :bases="bases" />
           </div>
 
           <div class="details-section">
