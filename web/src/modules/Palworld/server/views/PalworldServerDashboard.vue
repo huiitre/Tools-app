@@ -21,6 +21,7 @@ import {
 import type {
   PalworldBase,
   PalworldBasePal,
+  PalworldGameData,
   PalworldGamePlayer,
   PalworldServerInfo,
   PalworldServerMetrics,
@@ -28,6 +29,7 @@ import type {
   PalworldServerSettings,
 } from '../types/palworldServer.types'
 import PalworldPlayerDetailsModal from '../components/PalworldPlayerDetailsModal.vue'
+import PalworldOverviewMap from '../components/PalworldOverviewMap.vue'
 
 const authStore = useAuthStore()
 const canModerate = computed(() => authStore.hasModuleAccess('PALWORLD', RoleCode.MODERATOR))
@@ -37,11 +39,44 @@ const configStore = usePalworldConfigStore()
 
 const info = ref<PalworldServerInfo | null>(null)
 const metrics = ref<PalworldServerMetrics | null>(null)
-const players = ref<PalworldServerPlayer[]>([])
+// Le endpoint léger /players fournit le ping (absent de /game-data) : on fusionne les deux par userId.
+const lightPlayers = ref<PalworldServerPlayer[]>([])
+const gameData = ref<PalworldGameData | null>(null)
 const settings = ref<PalworldServerSettings | null>(null)
 const error = ref<string | null>(null)
 const loading = ref(true)
 const refreshing = ref(false)
+
+interface PlayerRow extends PalworldGamePlayer {
+  ping: number | null
+}
+
+const playerRows = computed<PlayerRow[]>(() =>
+  (gameData.value?.players ?? []).map(player => ({
+    ...player,
+    ping: lightPlayers.value.find(lp => lp.userId === player.userId)?.ping ?? null,
+  })),
+)
+
+const bases = computed(() => gameData.value?.bases ?? [])
+
+const GUILD_COLOR_PALETTE = [
+  '#3b82f6', '#f97316', '#22c55e', '#a855f7', '#ef4444',
+  '#06b6d4', '#eab308', '#ec4899', '#84cc16', '#6366f1',
+]
+
+const guildColors = computed<Record<string, string>>(() => {
+  const ids = Array.from(new Set([...playerRows.value.map(p => p.guildId), ...bases.value.map(b => b.guildId)])).sort()
+  const map: Record<string, string> = {}
+  ids.forEach((id, index) => {
+    map[id] = GUILD_COLOR_PALETTE[index % GUILD_COLOR_PALETTE.length]
+  })
+  return map
+})
+
+function hpPercent(hp: number, maxHp: number): number {
+  return maxHp > 0 ? Math.round((hp / maxHp) * 100) : 0
+}
 
 const MIN_SPINNER_DURATION_MS = 500
 let refreshIntervalId: number | undefined
@@ -73,7 +108,7 @@ async function loadPlayerDetails() {
   }
 }
 
-async function openPlayerDetails(player: PalworldServerPlayer) {
+async function openPlayerDetails(player: PlayerRow) {
   selectedPlayerUserId.value = player.userId
   showPlayerDetails.value = true
   loadingPlayerDetails.value = true
@@ -117,14 +152,16 @@ async function refreshAll() {
   refreshing.value = true
   const startedAt = Date.now()
   try {
-    const [infoResult, metricsResult, playersResult] = await Promise.all([
+    const [infoResult, metricsResult, lightPlayersResult, gameDataResult] = await Promise.all([
       fetchServerInfo(),
       fetchServerMetrics(),
       fetchServerPlayers(),
+      fetchServerGameData(),
     ])
     info.value = infoResult
     metrics.value = metricsResult
-    players.value = playersResult
+    lightPlayers.value = lightPlayersResult
+    gameData.value = gameDataResult
     error.value = null
 
     if (showPlayerDetails.value) {
@@ -150,7 +187,9 @@ watch(() => configStore.refreshIntervalSeconds, restartRefreshInterval)
 
 async function refreshPlayers() {
   try {
-    players.value = await fetchServerPlayers()
+    const [lightPlayersResult, gameDataResult] = await Promise.all([fetchServerPlayers(), fetchServerGameData()])
+    lightPlayers.value = lightPlayersResult
+    gameData.value = gameDataResult
   } catch {
     // silencieux — la liste reste affichée telle quelle
   }
@@ -160,15 +199,17 @@ onMounted(async () => {
   configStore.hydrate()
 
   try {
-    const [infoResult, metricsResult, playersResult, settingsResult] = await Promise.all([
+    const [infoResult, metricsResult, lightPlayersResult, gameDataResult, settingsResult] = await Promise.all([
       fetchServerInfo(),
       fetchServerMetrics(),
       fetchServerPlayers(),
+      fetchServerGameData(),
       fetchServerSettings(),
     ])
     info.value = infoResult
     metrics.value = metricsResult
-    players.value = playersResult
+    lightPlayers.value = lightPlayersResult
+    gameData.value = gameDataResult
     settings.value = settingsResult
   } catch {
     error.value = 'Impossible de charger les données du serveur.'
@@ -407,6 +448,18 @@ async function handleStop() {
       </div>
     </div>
 
+    <!-- Cartes -->
+    <div class="section">
+      <div class="section-header">
+        <h3 class="section-title">Cartes</h3>
+      </div>
+
+      <div v-if="!loading" class="maps-grid">
+        <PalworldOverviewMap map-id="palpagos" :players="playerRows" :bases="bases" :guild-colors="guildColors" />
+        <PalworldOverviewMap map-id="worldTree" :players="playerRows" :bases="bases" :guild-colors="guildColors" />
+      </div>
+    </div>
+
     <!-- Joueurs -->
     <div class="section">
       <div class="section-header">
@@ -422,21 +475,33 @@ async function handleStop() {
         </div>
       </div>
 
-      <div v-else-if="players.length" class="players-table-wrap">
+      <div v-else-if="playerRows.length" class="players-table-wrap">
         <table class="players-table">
           <thead>
             <tr>
               <th>Nom</th>
               <th>Niveau</th>
+              <th>Pal actif</th>
+              <th>Vie</th>
               <th>Ping</th>
               <th>Position</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="player in players" :key="player.playerId">
+            <tr v-for="player in playerRows" :key="player.userId">
               <td><span class="player-name" @click="openPlayerDetails(player)">{{ player.name }}</span></td>
               <td>{{ player.level }}</td>
-              <td>{{ Math.round(player.ping) }} ms</td>
+              <td>
+                <span v-if="player.activePal">{{ player.activePal.name }} (Nv. {{ player.activePal.level }})</span>
+                <span v-else class="muted">—</span>
+              </td>
+              <td>
+                <div class="hp-cell">
+                  <div class="hp-cell-fill" :style="{ width: hpPercent(player.hp, player.maxHp) + '%' }" />
+                  <span class="hp-cell-text">{{ player.hp }} / {{ player.maxHp }}</span>
+                </div>
+              </td>
+              <td>{{ player.ping !== null ? `${Math.round(player.ping)} ms` : '—' }}</td>
               <td>{{ player.mapX }}, {{ player.mapY }}</td>
             </tr>
           </tbody>
@@ -503,9 +568,9 @@ async function handleStop() {
             <i class="mdi mdi-account-remove-outline" />
             Expulsion
           </div>
-          <select v-model="kickUserId" :disabled="kicking || !players.length">
-            <option value="" disabled>{{ players.length ? 'Choisir un joueur' : 'Aucun joueur connecté' }}</option>
-            <option v-for="p in players" :key="p.userId" :value="p.userId">{{ p.name }}</option>
+          <select v-model="kickUserId" :disabled="kicking || !playerRows.length">
+            <option value="" disabled>{{ playerRows.length ? 'Choisir un joueur' : 'Aucun joueur connecté' }}</option>
+            <option v-for="p in playerRows" :key="p.userId" :value="p.userId">{{ p.name }}</option>
           </select>
           <input v-model="kickMessage" type="text" placeholder="Raison (optionnel)" :disabled="kicking">
           <button type="submit" :disabled="kicking || !kickUserId" :aria-busy="kicking">
@@ -742,6 +807,20 @@ async function handleStop() {
   margin: 0;
 }
 
+/* ── Maps ────────────────────────────────────────────────────────── */
+.maps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  padding: 1.25rem;
+}
+
+@media (max-width: 720px) {
+  .maps-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Players table ───────────────────────────────────────────────── */
 .players-table-wrap {
   overflow-x: auto;
@@ -777,6 +856,39 @@ async function handleStop() {
   &:hover {
     color: var(--pico-primary);
   }
+}
+
+.muted {
+  color: var(--pico-muted-color);
+}
+
+.hp-cell {
+  position: relative;
+  width: 110px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--pico-muted-border-color);
+  overflow: hidden;
+}
+
+.hp-cell-fill {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  background: #22c55e;
+}
+
+.hp-cell-text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8), 0 0 2px rgba(0, 0, 0, 0.8);
 }
 
 /* ── Players list (skeleton) ────────────────────────────────────── */
