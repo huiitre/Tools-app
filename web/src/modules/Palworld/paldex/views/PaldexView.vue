@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { usePaldexStore } from '../paldex.store'
+import { paldexLabel } from '../utils/paldexLabel'
+import PalContextTrigger from '../components/PalContextTrigger.vue'
 import type {
   PalworldElementSummary,
   PalworldWorkSuitabilitySummary,
@@ -106,11 +108,6 @@ const visiblePals = computed(() => {
   return sorted
 })
 
-function paldexLabel(pal: PalworldPalListItem): string {
-  if (pal.paldexIndex === null) return '—'
-  return `#${String(pal.paldexIndex).padStart(3, '0')}${pal.paldexSuffix ?? ''}`
-}
-
 onMounted(() => {
   store.ensureLoaded()
 })
@@ -202,26 +199,28 @@ onMounted(() => {
 
     <template v-else>
       <div class="pal-grid">
-        <div v-for="pal in visiblePals" :key="pal.id" class="pal-card">
-          <span class="pal-index">{{ paldexLabel(pal) }}</span>
-          <img v-if="pal.imageUrl" :src="pal.imageUrl" :alt="pal.name" width="72" height="72" loading="lazy">
-          <span class="pal-name">{{ pal.name }}</span>
-          <span class="pal-elements">
-            <span
-              v-for="element in pal.elements"
-              :key="element.id"
-              class="element-icon-crop"
-              :title="element.name"
-              :style="element.iconUrl ? { backgroundImage: `url(${element.iconUrl})` } : {}"
-            />
-          </span>
-          <span v-if="pal.workSuitabilities.length" class="pal-worksuitabilities">
-            <span v-for="ws in pal.workSuitabilities" :key="ws.id" class="worksuitability" :title="ws.name">
-              <img v-if="ws.iconUrl" :src="ws.iconUrl" :alt="ws.name" width="14" height="14" loading="lazy">
-              <span class="worksuitability-level">{{ ws.level }}</span>
+        <PalContextTrigger v-for="pal in visiblePals" :key="pal.id" :pal="pal">
+          <div class="pal-card">
+            <span class="pal-index">{{ paldexLabel(pal) }}</span>
+            <img v-if="pal.imageUrl" :src="pal.imageUrl" :alt="pal.name" width="72" height="72" loading="lazy">
+            <span class="pal-name">{{ pal.name }}</span>
+            <span class="pal-elements">
+              <span
+                v-for="element in pal.elements"
+                :key="element.id"
+                class="element-icon-crop"
+                :title="element.name"
+                :style="element.iconUrl ? { backgroundImage: `url(${element.iconUrl})` } : {}"
+              />
             </span>
-          </span>
-        </div>
+            <span v-if="pal.workSuitabilities.length" class="pal-worksuitabilities">
+              <span v-for="ws in pal.workSuitabilities" :key="ws.id" class="worksuitability" :title="ws.name">
+                <img v-if="ws.iconUrl" :src="ws.iconUrl" :alt="ws.name" width="14" height="14" loading="lazy">
+                <span class="worksuitability-level">{{ ws.level }}</span>
+              </span>
+            </span>
+          </div>
+        </PalContextTrigger>
       </div>
 
       <p v-if="visiblePals.length === 0" class="empty">Aucun Pal ne correspond à la recherche.</p>
