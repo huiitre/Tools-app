@@ -15,6 +15,7 @@ const STATS: { key: keyof PalworldPalListItem; label: string }[] = [
   { key: 'baseDefense', label: 'Défense' },
   { key: 'baseWorkSpeed', label: 'Vitesse de travail' },
   { key: 'baseSupport', label: 'Support' },
+  { key: 'foodAmount', label: 'Capacité de faim' },
   { key: 'rarity', label: 'Rareté' },
 ]
 

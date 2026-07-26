@@ -17,6 +17,7 @@ public record PalRefView(
         Integer baseDefense,
         Integer baseWorkSpeed,
         Integer baseSupport,
+        Integer foodAmount,
         BigDecimal captureRateCorrect,
         BigDecimal maleProbability,
         Integer combiRank,

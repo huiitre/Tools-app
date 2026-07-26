@@ -33,6 +33,10 @@ request:
       value: ""
     - name: gameVersionId
       value: ""
+    - name: baseId
+      value: ""
+    - name: instanceId
+      value: ""
     - name: itemId
       value: ""
     - name: workshopTagId
