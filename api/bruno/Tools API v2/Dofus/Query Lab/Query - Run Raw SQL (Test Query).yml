@@ -1,0 +1,26 @@
+info:
+  name: Query - Run Raw SQL (Test Query)
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}dofus/query-lab/query/run-raw"
+  headers:
+    - name: Content-Type
+      value: application/json
+    - name: Authorization
+      value: Bearer {{token}}
+  body:
+    type: json
+    data: |-
+      {
+        "sql": "SELECT \n    parent.iditem AS id_viande,\n    parent.name AS nom_viande,\n    parent.level as level_viande,\n    ROUND(SUM(child.average_price * r.quantity)) AS total_craft_price,\n    COUNT(*) FILTER (WHERE child.average_price IS NULL OR child.average_price = 0) AS missing_price_count\nFROM item AS parent\ninner join item_type it on parent.iditem_type = it.iditem_type\ninner join category c_parent on c_parent.idcategory = it.idcategory\nJOIN recipe AS r \n    ON r.idparent = parent.iditem\nJOIN item AS child \n    ON child.iditem = r.idenfant\nWHERE 1 = 1\nand it.idcategory = 2\nand parent.iditem_type in (2, 3, 4)\nGROUP BY parent.iditem, parent.name\nHAVING COUNT(*) FILTER (WHERE child.average_price IS NULL OR child.average_price = 0) BETWEEN 0 AND 2\nORDER BY level_viande DESC"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

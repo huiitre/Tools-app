@@ -1,0 +1,15 @@
+info:
+  name: Revoke user access from module
+  type: http
+  seq: 6
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/modules/{{moduleId}}/users/{{userId}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

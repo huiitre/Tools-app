@@ -1,0 +1,7 @@
+info:
+  name: Event galets
+  type: folder
+  seq: 3
+
+request:
+  auth: inherit

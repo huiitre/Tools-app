@@ -1,0 +1,15 @@
+info:
+  name: Supprimer un ingrédient craftable
+  type: http
+  seq: 6
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/dofus/workshops/{{workshopId}}/ingredients/{{workshopItemIngredientId}}/crafted"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

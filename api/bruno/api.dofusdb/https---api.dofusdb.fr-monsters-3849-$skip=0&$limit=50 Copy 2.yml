@@ -1,0 +1,26 @@
+info:
+  name: https://api.dofusdb.fr/monsters/3849?$skip=0&$limit=50 Copy 2
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: https://api.dofusdb.fr/monsters/972?$skip=0&$limit=50
+  params:
+    - name: $skip
+      value: "0"
+      type: query
+    - name: lang
+      value: fr
+      type: query
+      disabled: true
+    - name: $limit
+      value: "50"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

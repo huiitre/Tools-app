@@ -1,0 +1,22 @@
+info:
+  name: Scraping - Dofusbook
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:3002/api/scraping/dofusbook
+  body:
+    type: json
+    data: "{\r
+
+      \  \"url\": \"https://d-bk.net/fr/dw/158i\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

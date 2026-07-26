@@ -1,0 +1,28 @@
+info:
+  name: Modification d'une entrée
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{apiUrl}}health/weight-log/23"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"weightKg\": 79,\r
+
+      \  \"loggedAt\": \"2025-09-27T08:00:00+02:00\",\r
+
+      \  \"notes\": \"correction du poids du matin\"\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

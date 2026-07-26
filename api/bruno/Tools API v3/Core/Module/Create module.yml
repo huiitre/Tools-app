@@ -1,0 +1,26 @@
+info:
+  name: Create module
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}/modules"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Test module depuis postman 222\",\r
+
+      \    \"code\": \"TEST_POSTMAN_2\",\r
+
+      \    \"description\": \"Test de création d'un module depuis postman\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

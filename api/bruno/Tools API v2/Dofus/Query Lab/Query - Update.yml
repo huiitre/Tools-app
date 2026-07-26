@@ -1,0 +1,28 @@
+info:
+  name: Query - Update
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: "{{apiUrl}}dofus/query-lab/query/:id"
+  params:
+    - name: id
+      value: ""
+      type: path
+  body:
+    type: text
+    data: |-
+      {
+          "title": "Titre modifié",
+          "description": "Modifiée",
+          "sqlRaw": "SELECT NOW()",
+          "isPublic": false
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

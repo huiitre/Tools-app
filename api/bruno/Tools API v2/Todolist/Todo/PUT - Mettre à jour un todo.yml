@@ -1,0 +1,29 @@
+info:
+  name: PUT - Mettre à jour un todo
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{apiUrl}}todolist/todo/{{idtodo}}/update"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "columns": [
+          { "name": "sqdqsdqsdqdqsd" },
+          { "description": "Ne pas oublier les croissants" },
+          { "priority": 2 },
+          { "is_completed": true }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

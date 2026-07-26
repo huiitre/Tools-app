@@ -1,0 +1,25 @@
+info:
+  name: searchItemByName
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{apiUrl}}dofus/item/1457"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"pagination\": true,\r
+
+      \    \"perPage\": 9254,\r
+
+      \    \"page\": 1\r
+
+      }"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,26 @@
+info:
+  name: Ajout d'une todo
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/todolists/{{todolistId}}/todos"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Test odo\",\r
+
+      \    \"favorite\": true,\r
+
+      \    \"priority\": \"HAUT\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

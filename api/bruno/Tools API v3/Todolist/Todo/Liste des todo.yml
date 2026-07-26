@@ -1,0 +1,24 @@
+info:
+  name: Liste des todo
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiUrl}}/todolists/{{todolistId}}/todos"
+  body:
+    type: text
+    data: "{\r
+
+      \    \"name\": \"Test todolist 200\",\r
+
+      \    \"favorite\": true\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

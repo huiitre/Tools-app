@@ -1,0 +1,24 @@
+info:
+  name: Announce Message
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{apiUrl}}/palworld/server/announce"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "message": "Server restart in 10 minutes"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,18 @@
+name: Tools V3 DEV
+color: "#2E8A54"
+variables:
+  - name: apiUrl
+    value: http://localhost:8083/api/v3
+    description: ""
+  - name: GAME_VERSION_ID
+    value: ""
+    description: ""
+  - name: GAME_SERVER_ID
+    value: ""
+    description: ""
+  - secret: true
+    name: admin
+    description: ""
+  - name: token
+    value: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0b29scy1hcGkiLCJzdWIiOiIxIiwiaXNBY3RpdmUiOnRydWUsInVzZXJUeXBlIjoiSFVNQU4iLCJ0b2tlblR5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3ODUwNjgwNTEsImV4cCI6MTc4NTA2ODY1MX0.A5qMf4MRm97jRlW8Wz_oA62-6Wx8VIKqDAhJtGfYAh0
+    description: ""

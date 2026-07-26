@@ -1,0 +1,40 @@
+info:
+  name: Add user activity
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}dtl/user-activity/add?iduser=18&token=qsd5qs4d5q5s64dqs56d4qsd4q5d&login=TOTO"
+  params:
+    - name: iduser
+      value: "18"
+      type: query
+    - name: token
+      value: qsd5qs4d5q5s64dqs56d4qsd4q5d
+      type: query
+    - name: login
+      value: TOTO
+      type: query
+  body:
+    type: json
+    data: "{\r
+
+      \  \"codeHistoric\": \"SEARCH_TYPELIST\",\r
+
+      \  \"iduserList\": [\r
+
+      \    1238,\r
+
+      \    1\r
+
+      \  ]\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

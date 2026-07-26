@@ -1,0 +1,22 @@
+info:
+  name: Add Store History (Bulk)
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/riot/valorant/store-history"
+  body:
+    type: json
+    data: |-
+      {
+          "skinIds": [1, 2, 3, 4],
+          "seenAt": "2026-05-10"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

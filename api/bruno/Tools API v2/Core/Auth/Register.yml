@@ -1,0 +1,27 @@
+info:
+  name: Register
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}core/auth/register"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Sniffer abrak\",\r
+
+      \    \"email\": \"admin222@huiitre.fr\",\r
+
+      \    \"password\": \"Tesdfgdft123456.\",\r
+
+      \    \"confirmPassword\": \"Tesdfgdft123456.\"\r
+
+      }"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

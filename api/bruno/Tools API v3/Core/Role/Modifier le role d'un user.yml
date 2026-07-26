@@ -1,0 +1,18 @@
+info:
+  name: Modifier le role d'un user
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{apiUrl}}/users/{{userId}}/role"
+  body:
+    type: json
+    data: '{ "roleId": 3 }'
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

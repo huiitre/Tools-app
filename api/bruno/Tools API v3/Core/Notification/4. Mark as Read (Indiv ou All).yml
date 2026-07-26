@@ -1,0 +1,22 @@
+info:
+  name: 4. Mark as Read (Indiv ou All)
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{apiUrl}}/api/v3/notifications/read?ids=1,2"
+  params:
+    - name: ids
+      value: 1,2
+      type: query
+      description: "IDs séparés par virgule. Si vide : marque TOUT comme lu."
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Marque les notifications comme lues. Sans paramètre 'ids', marque toute la liste.

@@ -1,0 +1,24 @@
+info:
+  name: 3. Google OAuth Callback
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{apiUrl}}/auth/callback/google?code=CODE_ICI&state=STATE_ICI"
+  params:
+    - name: code
+      value: CODE_ICI
+      type: query
+    - name: state
+      value: STATE_ICI
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: "Appelé automatiquement par Google après auth. Pour tester manuellement : récupérer le state depuis la route 1, ouvrir l'URL Google dans un navigateur, copier le code reçu en callback."

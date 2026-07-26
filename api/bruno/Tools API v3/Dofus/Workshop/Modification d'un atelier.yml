@@ -1,0 +1,24 @@
+info:
+  name: Modification d'un atelier
+  type: http
+  seq: 5
+
+http:
+  method: PATCH
+  url: "{{apiUrl}}/dofus/workshops/{{workshopId}}"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"test update bg premier\",\r
+
+      \    \"pinned\": false\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

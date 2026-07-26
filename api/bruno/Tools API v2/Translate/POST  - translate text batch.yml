@@ -1,0 +1,68 @@
+info:
+  name: POST  - translate text batch
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}translate/batch"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"sourceLang\": \"en\",\r
+
+      \  \"targetLang\": \"fr\",\r
+
+      \  \"items\": [\r
+
+      \    \"Hello, how are you doing today?\",\r
+
+      \    \"Go fuck yourself.\",\r
+
+      \    \"This feature has been broken for weeks and nobody seems to care.\",\r
+
+      \    \"Could you please review my pull request when you have some time?\",\r
+
+      \    \"If he keeps acting like that, he's going to get himself in serious trouble.\",\r
+
+      \    \"I don't give a damn about your excuses anymore.\",\r
+
+      \    \"The deployment failed again because of a stupid configuration issue.\",\r
+
+      \    \"Stop talking shit and focus on the actual problem.\",\r
+
+      \    \"Thank you very much for your quick response.\",\r
+
+      \    \"This codebase is a complete fucking nightmare to maintain.\",\r
+
+      \    \"Why is this task still not finished after three weeks?\",\r
+
+      \    \"Please make sure to backup the database before running the migration.\",\r
+
+      \    \"He lied to everyone and now he's paying the price.\",\r
+
+      \    \"I'm tired of fixing the same bugs over and over again.\",\r
+
+      \    \"If you break the production server one more time, you're done.\",\r
+
+      \    \"This meeting could have been an email.\",\r
+
+      \    \"I honestly have no idea what this function is supposed to do.\",\r
+
+      \    \"Stop wasting my time with this bullshit.\",\r
+
+      \    \"The application crashes randomly under heavy load.\",\r
+
+      \    \"I appreciate your effort, even if the result isn't perfect.\"\r
+
+      \    ]\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

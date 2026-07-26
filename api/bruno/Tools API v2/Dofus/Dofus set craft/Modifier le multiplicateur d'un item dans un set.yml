@@ -1,0 +1,42 @@
+info:
+  name: Modifier le multiplicateur d'un item dans un set
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{apiUrl}}dofus/set/61/7229/multiplier/12"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"columns\": {\r
+
+      \        \"name\": {\r
+
+      \            \"value\": \"mange ta grande tante la chauve\",\r
+
+      \            \"type\": \"string\"\r
+
+      \        },\r
+
+      \        \"is_active\": {\r
+
+      \            \"value\": false,\r
+
+      \            \"type\": \"boolean\"\r
+
+      \        }\r
+
+      \    }\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

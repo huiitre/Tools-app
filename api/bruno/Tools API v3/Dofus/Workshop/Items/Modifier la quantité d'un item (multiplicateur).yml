@@ -1,0 +1,18 @@
+info:
+  name: Modifier la quantité d'un item (multiplicateur)
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{apiUrl}}/dofus/workshops/{{workshopId}}/items/{{workshopItemId}}/quantity/{{quantity}}"
+  body:
+    type: json
+    data: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

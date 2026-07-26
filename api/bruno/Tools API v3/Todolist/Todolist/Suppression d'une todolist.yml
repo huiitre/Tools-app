@@ -1,0 +1,22 @@
+info:
+  name: Suppression d'une todolist
+  type: http
+  seq: 3
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/todolists/{{todolistId}}"
+  body:
+    type: text
+    data: "{\r
+
+      \    \"name\": \"Test todolist 200\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

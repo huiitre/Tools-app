@@ -1,0 +1,15 @@
+info:
+  name: Grant user access to module
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{apiUrl}}/modules/{{moduleId}}/users/{{userId}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

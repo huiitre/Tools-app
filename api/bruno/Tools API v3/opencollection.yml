@@ -1,0 +1,77 @@
+opencollection: 1.0.0
+
+info:
+  name: Tools API v3
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  auth:
+    type: bearer
+    token: "{{token}}"
+  variables:
+    - name: apiUrl
+      value: http://localhost:8083/api/v3/
+    - name: moduleId
+      value: ""
+    - name: userId
+      value: ""
+    - name: weightlogId
+      value: ""
+    - name: todolistId
+      value: ""
+    - name: todoId
+      value: ""
+    - name: gameVersionId
+      value: ""
+    - name: itemId
+      value: ""
+    - name: workshopTagId
+      value: ""
+    - name: workshopId
+      value: ""
+    - name: workshopItemId
+      value: ""
+    - name: workshopItemIngredientId
+      value: ""
+    - name: quantity
+      value: ""
+    - name: quantityObtained
+      value: ""
+    - name: TECH_PASSWORD
+      value: ""
+    - name: TECH_EMAIL
+      value: ""
+    - name: ADMIN_EMAIL
+      value: ""
+    - name: ADMIN_PASSWORD
+      value: ""
+    - name: TESTEUR_EMAIL
+      value: ""
+    - name: TESTEUR_PASSWORD
+      value: ""
+    - name: TEST_EMAIL
+      value: ""
+    - name: TEST_PASSWORD
+      value: ""
+    - name: linkId
+      value: ""
+    - name: GOOGLE_EMAIL
+      value: ""
+    - name: GOOGLE_PASSWORD
+      value: ""
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

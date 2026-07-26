@@ -1,0 +1,24 @@
+info:
+  name: Modification d'un tag
+  type: http
+  seq: 2
+
+http:
+  method: PATCH
+  url: "{{apiUrl}}/dofus/workshop/tags/{{workshopTagId}}"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"qsdqsdqsdq\",\r
+
+      \    \"color\": \"#000\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

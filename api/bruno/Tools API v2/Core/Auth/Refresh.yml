@@ -1,0 +1,29 @@
+info:
+  name: Refresh
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{apiUrl}}core/auth/refresh"
+  body:
+    type: json
+    data: ""
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.statusText) {
+            const json = res.getBody()
+            bru.setEnvVar('token', json.data.token)
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

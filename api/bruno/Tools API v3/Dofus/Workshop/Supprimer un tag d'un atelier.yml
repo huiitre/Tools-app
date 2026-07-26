@@ -1,0 +1,15 @@
+info:
+  name: Supprimer un tag d'un atelier
+  type: http
+  seq: 10
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/dofus/workshops/{{workshopId}}/tags/{{workshopTagId}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

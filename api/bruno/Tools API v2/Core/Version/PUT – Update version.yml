@@ -1,0 +1,30 @@
+info:
+  name: PUT – Update version
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{apiUrl}}core/version/:id"
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: id
+      value: ""
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+        "version": "1.2.1",
+        "module": "core",
+        "description": "Fix typo changelog",
+        "createdAt": "2025-01-01T12:00:00"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

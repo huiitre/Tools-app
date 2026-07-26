@@ -1,0 +1,22 @@
+info:
+  name: recherche item par code
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: "{{apiUrl}}dofus/item/search-by-code"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"code\": \"maison-du-papa-nowel\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

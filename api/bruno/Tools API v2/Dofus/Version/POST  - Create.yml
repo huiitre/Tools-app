@@ -1,0 +1,26 @@
+info:
+  name: POST  - Create
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}dofus/version"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"appCode\": \"dofus3\",\r
+
+      \  \"currentVersion\": \"5.2.6.0\",\r
+
+      \  \"previousVersion\": \"5.2.5.2\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

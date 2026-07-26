@@ -1,0 +1,15 @@
+info:
+  name: Suppression d'une entrée
+  type: http
+  seq: 5
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}health/weight-log/23"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,24 @@
+info:
+  name: Modification d'un lien
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{apiUrl}}/dofus/workshops/{{workshopId}}/links/{{linkId}}"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"url\": \"https://sdqsd.net/fr/d/1VO4I\",\r
+
+      \    \"label\": \"sqdqsdqsdsqdqsd\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

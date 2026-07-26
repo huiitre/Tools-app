@@ -1,0 +1,18 @@
+info:
+  name: GET My Subscriptions
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{apiUrl}}/dofus/almanax/subscriptions"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

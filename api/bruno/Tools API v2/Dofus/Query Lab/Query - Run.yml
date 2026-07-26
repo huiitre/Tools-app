@@ -1,0 +1,18 @@
+info:
+  name: Query - Run
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}dofus/query-lab/query/8/run"
+  body:
+    type: json
+    data: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

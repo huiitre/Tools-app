@@ -1,0 +1,36 @@
+info:
+  name: itemList pour le web
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}dofus/item/list-web"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"page\": 10,\r
+
+      \    \"itemsPerPage\": 10,\r
+
+      \    \"sortBy\": [\r
+
+      \        { \"key\": \"item_level\", \"order\": \"DESC\" }\r
+
+      \    ],\r
+
+      \    \"search\": \"\",\r
+
+      \    \"onlyCraftable\": true\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

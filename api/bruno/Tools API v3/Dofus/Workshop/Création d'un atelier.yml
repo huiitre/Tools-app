@@ -1,0 +1,22 @@
+info:
+  name: Création d'un atelier
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{apiUrl}}/dofus/workshops"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"test creation postman\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

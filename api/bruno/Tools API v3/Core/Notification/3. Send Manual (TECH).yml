@@ -1,0 +1,48 @@
+info:
+  name: 3. Send Manual (TECH)
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{apiUrl}}/notifications"
+  body:
+    type: json
+    data: |-
+      /* {
+        "title": "Test",
+        "body": "Contenu de la notification",
+        "type": "INFO", // SUCCESS, WARNING, ERROR, INFO
+        "targetUserId": null,   // Cible un utilisateur précis
+        "targetRoleId": null,   // Cible tous les membres d'un rôle (ID)
+        "targetModuleId": null, // Cible tous les membres d'un module (ID)
+        "metadata": "{\"route\": \"valorant-shop\"}" // JSON optionnel pour le front
+      } */
+      /* {
+        "title": "PROD_WS_CONNECTIVITY",
+        "body": "Test de diffusion globale : Canal WebSocket opérationnel en production.",
+        "type": "SUCCESS",
+        "targetUserId": null,
+        "targetRoleId": null,
+        "targetMinRoleCode": "OWNER",
+        "targetModuleId": null,
+        "metadata": "{\"route\": \"home\", \"env\": \"prod\", \"triggeredBy\": \"huiitre\"}"
+      } */
+      {
+        "title": "TEST NOTIFICATION RIOT",
+        "body": "Ceci est un test manuel pour vérifier le module ID 6. Si tu vois ça, le WebSocket fonctionne !",
+        "type": "SUCCESS",
+        "targetUserId": null,
+        "targetRoleId": null,
+        "targetModuleId": 5,
+        "metadata": "{\"env\": \"prod\", \"manual_test\": true}"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Envoie une notification manuelle (nécessite le rôle TECH).

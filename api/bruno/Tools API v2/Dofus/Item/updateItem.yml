@@ -1,0 +1,28 @@
+info:
+  name: updateItem
+  type: http
+  seq: 7
+
+http:
+  method: PATCH
+  url: "{{apiUrl}}dofus/item/19296/update"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"columns\": [\r
+
+      \    { \"name\": \"average_price\", \"value\": 5151, \"type\": \"integer\" }\r
+
+      \  ]\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
