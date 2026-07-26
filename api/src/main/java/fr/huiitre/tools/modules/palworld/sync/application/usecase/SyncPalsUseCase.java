@@ -105,6 +105,7 @@ public class SyncPalsUseCase implements SecuredUseCase {
                 || !Objects.equals(existing.baseDefense(), ext.getBaseDefense())
                 || !Objects.equals(existing.baseWorkSpeed(), ext.getBaseWorkSpeed())
                 || !Objects.equals(existing.baseSupport(), ext.getBaseSupport())
+                || !Objects.equals(existing.foodAmount(), ext.getFoodAmount())
                 || !Objects.equals(existing.captureRateCorrect(), ext.getCaptureRateCorrect())
                 || !Objects.equals(existing.maleProbability(), ext.getMaleProbability())
                 || !Objects.equals(existing.combiRank(), ext.getCombiRank())

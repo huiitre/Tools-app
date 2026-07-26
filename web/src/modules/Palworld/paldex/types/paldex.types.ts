@@ -26,6 +26,7 @@ export interface PalworldPalListItem {
   baseDefense: number | null
   baseWorkSpeed: number | null
   baseSupport: number | null
+  foodAmount: number | null
   bestWorkSuitabilityLabel: string | null
   elements: PalworldElementSummary[]
   workSuitabilities: PalworldWorkSuitabilitySummary[]

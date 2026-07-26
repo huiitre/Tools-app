@@ -16,6 +16,7 @@ public record PalListItemView(
         Integer baseDefense,
         Integer baseWorkSpeed,
         Integer baseSupport,
+        Integer foodAmount,
         String bestWorkSuitabilityLabel,
         List<ElementSummaryView> elements,
         List<WorkSuitabilitySummaryView> workSuitabilities) {}
