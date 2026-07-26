@@ -18,6 +18,7 @@ import {
   shutdownServer,
   stopServer,
 } from '../fetch/palworldServer.fetch'
+import { fetchGuilds } from '../fetch/palworldServerData.fetch'
 import type {
   PalworldBase,
   PalworldBasePal,
@@ -28,6 +29,7 @@ import type {
   PalworldServerPlayer,
   PalworldServerSettings,
 } from '../types/palworldServer.types'
+import type { PalworldGuildSummary } from '../types/palworldServerData.types'
 import PalworldPlayerDetailsModal from '../components/PalworldPlayerDetailsModal.vue'
 import PalworldOverviewMap from '../components/PalworldOverviewMap.vue'
 
@@ -46,6 +48,10 @@ const settings = ref<PalworldServerSettings | null>(null)
 const error = ref<string | null>(null)
 const loading = ref(true)
 const refreshing = ref(false)
+
+const guilds = ref<PalworldGuildSummary[]>([])
+const guildsLoading = ref(true)
+const guildsError = ref<string | null>(null)
 
 interface PlayerRow extends PalworldGamePlayer {
   ping: number | null
@@ -185,6 +191,18 @@ function restartRefreshInterval() {
 
 watch(() => configStore.refreshIntervalSeconds, restartRefreshInterval)
 
+async function loadGuilds() {
+  guildsLoading.value = true
+  try {
+    guilds.value = await fetchGuilds()
+    guildsError.value = null
+  } catch {
+    guildsError.value = 'Impossible de charger les guildes.'
+  } finally {
+    guildsLoading.value = false
+  }
+}
+
 async function refreshPlayers() {
   try {
     const [lightPlayersResult, gameDataResult] = await Promise.all([fetchServerPlayers(), fetchServerGameData()])
@@ -217,6 +235,7 @@ onMounted(async () => {
     loading.value = false
   }
 
+  loadGuilds()
   restartRefreshInterval()
 })
 
@@ -511,6 +530,51 @@ async function handleStop() {
       <p v-else-if="!loading" class="empty">Aucun joueur connecté.</p>
     </div>
 
+    <!-- Guildes -->
+    <div class="section">
+      <div class="section-header">
+        <h3 class="section-title">Guildes</h3>
+      </div>
+
+      <p v-if="guildsError" class="empty">{{ guildsError }}</p>
+
+      <div v-else-if="guildsLoading" class="players-list">
+        <div v-for="i in 3" :key="i" class="player-row skeleton-row">
+          <span class="skeleton-line" style="width: 140px" />
+          <span class="skeleton-line" style="width: 100px" />
+          <span class="skeleton-line" style="width: 100px" />
+        </div>
+      </div>
+
+      <p v-else-if="!guilds.length" class="empty">Aucune guilde.</p>
+
+      <div v-else class="guilds-list">
+        <div v-for="guild in guilds" :key="guild.guildId" class="guild-card">
+          <div class="guild-card-name">{{ guild.name }}</div>
+
+          <div class="guild-card-columns">
+            <div class="guild-card-column">
+              <div class="guild-card-column-title">Membres</div>
+              <ul v-if="guild.players.length" class="guild-sublist">
+                <li v-for="p in guild.players" :key="p.playerUid">{{ p.name }}</li>
+              </ul>
+              <p v-else class="muted guild-sublist-empty">Aucun membre</p>
+            </div>
+
+            <div class="guild-card-column">
+              <div class="guild-card-column-title">Bases</div>
+              <ul v-if="guild.bases.length" class="guild-sublist">
+                <li v-for="base in guild.bases" :key="base.baseId">
+                  Base {{ base.baseId.slice(0, 8) }} — {{ base.palCount }} Pal{{ base.palCount > 1 ? 's' : '' }}
+                </li>
+              </ul>
+              <p v-else class="muted guild-sublist-empty">Aucune base</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Paramètres -->
     <div class="section">
       <div class="section-header">
@@ -643,7 +707,7 @@ async function handleStop() {
 <style lang="scss" scoped>
 .dashboard {
   padding: 2rem;
-  max-width: 1100px;
+  max-width: 1300px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
@@ -819,6 +883,64 @@ async function handleStop() {
   .maps-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── Guildes ─────────────────────────────────────────────────────── */
+.guilds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.guild-card {
+  border: 1px solid var(--pico-card-border-color);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.guild-card-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.guild-card-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 560px) {
+  .guild-card-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.guild-card-column-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--pico-muted-color);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.4rem;
+}
+
+.guild-sublist {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0 0 0 0.75rem;
+  border-left: 2px solid var(--pico-card-border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--pico-muted-color);
+}
+
+.guild-sublist-empty {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
 }
 
 /* ── Players table ───────────────────────────────────────────────── */

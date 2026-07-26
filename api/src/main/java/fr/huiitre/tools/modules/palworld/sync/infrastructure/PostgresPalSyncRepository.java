@@ -144,10 +144,16 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 VALUES (?, ?, ?)
                 ON CONFLICT (pal_id, element_id) DO NOTHING
                 """;
+        final String backfillIconSql = """
+                UPDATE tools_palworld.element SET icon_url = ? WHERE id = ? AND icon_url IS NULL
+                """;
         for (PalElementSyncData element : data.getElements()) {
             Long elementId = elementIdByExternalCode.get(element.getExternalCode());
             if (elementId == null) continue;
             jdbcTemplate.update(sql, palId, elementId, element.getSortOrder());
+            if (element.getIconUrl() != null) {
+                jdbcTemplate.update(backfillIconSql, element.getIconUrl(), elementId);
+            }
         }
     }
 
@@ -158,10 +164,16 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 VALUES (?, ?, ?)
                 ON CONFLICT (pal_id, work_suitability_id) DO NOTHING
                 """;
+        final String backfillIconSql = """
+                UPDATE tools_palworld.work_suitability SET icon_url = ? WHERE id = ? AND icon_url IS NULL
+                """;
         for (PalWorkSuitabilitySyncData ws : data.getWorkSuitabilities()) {
             Long workSuitabilityId = workSuitabilityIdBySlug.get(ws.getSlug());
             if (workSuitabilityId == null) continue;
             jdbcTemplate.update(sql, palId, workSuitabilityId, ws.getLevel());
+            if (ws.getIconUrl() != null) {
+                jdbcTemplate.update(backfillIconSql, ws.getIconUrl(), workSuitabilityId);
+            }
         }
     }
 

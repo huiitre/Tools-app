@@ -1,0 +1,7 @@
+info:
+  name: Server Data
+  type: folder
+  seq: 4
+
+request:
+  auth: inherit

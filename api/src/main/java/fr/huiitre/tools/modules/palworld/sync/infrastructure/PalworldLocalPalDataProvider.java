@@ -96,7 +96,7 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
         List<PalElementSyncData> result = new ArrayList<>();
         int order = 0;
         for (JsonNode element : node) {
-            result.add(new PalElementSyncData(element.path("id").asText(null), order++));
+            result.add(new PalElementSyncData(element.path("id").asText(null), element.path("icon").asText(null), order++));
         }
         return result;
     }
@@ -105,7 +105,7 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
         List<PalWorkSuitabilitySyncData> result = new ArrayList<>();
         for (JsonNode ws : node) {
             Integer level = parseInt(ws.path("level").asText(null));
-            result.add(new PalWorkSuitabilitySyncData(ws.path("slug").asText(null), level != null ? level : 0));
+            result.add(new PalWorkSuitabilitySyncData(ws.path("slug").asText(null), ws.path("icon").asText(null), level != null ? level : 0));
         }
         return result;
     }
