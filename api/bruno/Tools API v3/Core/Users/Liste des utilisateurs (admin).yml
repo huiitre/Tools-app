@@ -1,0 +1,18 @@
+info:
+  name: Liste des utilisateurs (admin)
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiUrl}}/users"
+  body:
+    type: text
+    data: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

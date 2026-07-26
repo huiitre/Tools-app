@@ -1,0 +1,18 @@
+info:
+  name: Synchronisation
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}/dofus/{{gameVersionId}}/sync"
+  body:
+    type: text
+    data: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

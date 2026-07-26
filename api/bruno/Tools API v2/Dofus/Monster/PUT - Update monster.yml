@@ -1,0 +1,28 @@
+info:
+  name: PUT - Update monster
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{apiUrl}}dofus/monster/1"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Larve Bleue (MAJ)",
+        "isBoss": false,
+        "isMiniboss": true,
+        "isQuestMonster": false,
+        "img": "https://api.dofusdb.fr/img/monsters/1.png"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

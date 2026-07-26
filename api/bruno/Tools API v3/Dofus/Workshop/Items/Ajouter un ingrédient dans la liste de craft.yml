@@ -1,0 +1,15 @@
+info:
+  name: Ajouter un ingrédient dans la liste de craft
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{apiUrl}}/dofus/workshops/{{workshopId}}/items/{{workshopItemId}}/ingredients/{{workshopItemIngredientId}}/craft"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

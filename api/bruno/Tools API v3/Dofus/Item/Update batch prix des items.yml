@@ -1,0 +1,28 @@
+info:
+  name: Update batch prix des items
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{apiUrl}}/dofus/item/prices/batch"
+  body:
+    type: json
+    data: "[\r
+
+      \    {\r
+
+      \        \"itemId\": 198310,\r
+
+      \        \"price\": 299999\r
+
+      \    }\r
+
+      ]"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

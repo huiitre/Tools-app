@@ -1,0 +1,25 @@
+info:
+  name: Kick Player
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{apiUrl}}/palworld/server/kick"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "userId": "steam_76561197988886089",
+        "message": "Kicked by moderator"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

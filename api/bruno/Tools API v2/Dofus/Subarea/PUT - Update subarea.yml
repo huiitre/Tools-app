@@ -1,0 +1,26 @@
+info:
+  name: PUT - Update subarea
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{apiUrl}}dofus/subarea/1"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Montagne des Craqueleurs (MAJ)",
+        "level": 42,
+        "capturable": true
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

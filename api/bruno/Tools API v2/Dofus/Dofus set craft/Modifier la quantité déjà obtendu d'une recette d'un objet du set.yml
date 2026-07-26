@@ -1,0 +1,20 @@
+info:
+  name: Modifier la quantité déjà obtendu d'une recette d'un objet du set
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: "{{apiUrl}}dofus/set/81/recipe/905/2"
+  body:
+    type: json
+    data: ""
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

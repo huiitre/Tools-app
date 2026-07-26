@@ -1,5 +1,6 @@
 import { serverRoutes } from '@/modules/Palworld/server/palworld.server.routes'
 import { tierlistRoutes } from '@/modules/Palworld/tierlist/tierlist.routes'
+import { paldexRoutes } from '@/modules/Palworld/paldex/paldex.routes'
 
 export const routes = [
   {
@@ -11,6 +12,7 @@ export const routes = [
     children: [
       ...serverRoutes,
       ...tierlistRoutes,
+      ...paldexRoutes,
     ],
   },
 ]

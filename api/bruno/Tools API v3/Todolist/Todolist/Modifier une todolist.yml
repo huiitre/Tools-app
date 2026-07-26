@@ -1,0 +1,22 @@
+info:
+  name: Modifier une todolist
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{apiUrl}}/todolists/{{todolistId}}"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"mange ta soeur\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

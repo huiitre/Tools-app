@@ -1,0 +1,29 @@
+info:
+  name: Login
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+          "email": "admin@huiitre.fr",
+          "password": "{{admin}}"
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const json = res.getBody();
+        console.log(json);
+        bru.setEnvVar('token', json.accessToken);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

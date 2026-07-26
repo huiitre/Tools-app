@@ -1,0 +1,32 @@
+info:
+  name: Login
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}core/auth/login"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"email\": \"test@huiitre.fr\",\r
+
+      \    \"password\": \"test123456\"\r
+
+      }"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.statusText) {
+            const json = res.getBody()
+            bru.setEnvVar('token', json.data.remember_token)
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

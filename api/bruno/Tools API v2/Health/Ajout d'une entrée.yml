@@ -1,0 +1,26 @@
+info:
+  name: Ajout d'une entrée
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{apiUrl}}health/weight-log"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"weightKg\": 79.9,\r
+
+      \  \"loggedAt\": \"2025-09-28T20:30:00+02:00\",\r
+
+      \  \"notes\": \"soir\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

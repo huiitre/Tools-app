@@ -1,0 +1,15 @@
+info:
+  name: Modifier la quantité obtenue d'un ingrédient
+  type: http
+  seq: 7
+
+http:
+  method: PATCH
+  url: "{{apiUrl}}/dofus/workshops/{{workshopId}}/ingredients/{{workshopItemIngredientId}}/obtained/{{quantityObtained}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

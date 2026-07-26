@@ -1,0 +1,18 @@
+info:
+  name: Update module
+  type: http
+  seq: 2
+
+http:
+  method: PUT
+  url: "{{apiUrl}}/modules/{{moduleId}}"
+  body:
+    type: json
+    data: "{\r\n    \"active\": true\r\n}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

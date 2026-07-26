@@ -1,0 +1,18 @@
+info:
+  name: Ajouter des items à l'atelier
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/dofus/workshops/{{workshopId}}/items"
+  body:
+    type: json
+    data: "[\r\n    201412,\r\n    201413\r\n]"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

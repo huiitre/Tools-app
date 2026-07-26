@@ -1,0 +1,46 @@
+info:
+  name: Modifier un set
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{apiUrl}}dofus/set/61/update"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"columns\": [\r
+
+      \    {\r
+
+      \      \"column\": \"name\",\r
+
+      \      \"value\": \"mange ta grande tante la chauve\",\r
+
+      \      \"type\": \"string\"\r
+
+      \    },\r
+
+      \    {\r
+
+      \      \"column\": \"is_active\",\r
+
+      \      \"value\": false,\r
+
+      \      \"type\": \"boolean\"\r
+
+      \    }\r
+
+      \  ]\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

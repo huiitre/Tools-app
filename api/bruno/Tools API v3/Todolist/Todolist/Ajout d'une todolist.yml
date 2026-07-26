@@ -1,0 +1,22 @@
+info:
+  name: Ajout d'une todolist
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/todolists"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"name\": \"Test todolist 200sqsdqsdghgfdgdgf\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

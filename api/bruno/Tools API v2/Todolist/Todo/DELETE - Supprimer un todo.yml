@@ -1,0 +1,15 @@
+info:
+  name: DELETE - Supprimer un todo
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}todolist/todo/{{idtodo}}/delete"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

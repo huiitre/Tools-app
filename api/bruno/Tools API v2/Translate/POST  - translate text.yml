@@ -1,0 +1,26 @@
+info:
+  name: POST  - translate text
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}translate"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"sourceLang\": \"fr\",\r
+
+      \  \"targetLang\": \"en\",\r
+
+      \  \"text\": \"je t'aime ma petite pute\"\r
+
+      }\r\n"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

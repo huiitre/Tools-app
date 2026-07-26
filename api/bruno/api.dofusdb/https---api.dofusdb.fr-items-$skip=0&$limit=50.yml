@@ -1,0 +1,26 @@
+info:
+  name: https://api.dofusdb.fr/items?$skip=0&$limit=50
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: https://api.dofusdb.fr/items?$skip=0&$limit=50
+  params:
+    - name: $skip
+      value: "0"
+      type: query
+    - name: lang
+      value: fr
+      type: query
+      disabled: true
+    - name: $limit
+      value: "50"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

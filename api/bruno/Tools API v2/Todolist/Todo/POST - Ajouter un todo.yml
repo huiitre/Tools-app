@@ -1,0 +1,27 @@
+info:
+  name: POST - Ajouter un todo
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}todolist/todo/add"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "idtodolist": 50,
+        "name": "Acheter du pain",
+        "description": "Aller à la boulangerie avant 18h",
+        "priority": 1
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

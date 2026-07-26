@@ -1,0 +1,18 @@
+info:
+  name: Prix des objets
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}/dofus/item/prices"
+  body:
+    type: json
+    data: "{\r\n    \"itemIds\": [211521]\r\n}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

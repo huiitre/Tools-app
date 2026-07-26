@@ -1,0 +1,15 @@
+info:
+  name: List all skins
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiUrl}}/riot/valorant/skins"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

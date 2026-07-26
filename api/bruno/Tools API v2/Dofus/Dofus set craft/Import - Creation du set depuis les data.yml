@@ -1,0 +1,652 @@
+info:
+  name: Import - Creation du set depuis les data
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{apiUrl}}dofus/set/import/create"
+  body:
+    type: json
+    data: "{\r
+
+      \  \"title\": \"test maj recettes\",\r
+
+      \  \"items\": [\r
+
+      \    {\r
+
+      \      \"iditem\": 14716,\r
+
+      \      \"name\": \"Abreuvoir du Minotot\",\r
+
+      \      \"multiplier\": 3,\r
+
+      \      \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/93017.png\",\r
+
+      \      \"ingredients\": [\r
+
+      \        {\r
+
+      \          \"iditem\": 14690,\r
+
+      \          \"name\": \"Essence du Minotot\",\r
+
+      \          \"quantityTotal\": 3,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/167001.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 13502,\r
+
+      \          \"name\": \"Fluide Glacial\",\r
+
+      \          \"quantityTotal\": 3,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/15100.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 13719,\r
+
+      \          \"name\": \"Plumeau de Tofuzmo\",\r
+
+      \          \"quantityTotal\": 3,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/53653.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 13744,\r
+
+      \          \"name\": \"Bandeau troué d'Air\",\r
+
+      \          \"quantityTotal\": 3,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/164007.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 13699,\r
+
+      \          \"name\": \"Foulard de Koalak Farouche\",\r
+
+      \          \"quantityTotal\": 3,\r
+
+      \          \"quantityHave\": 4,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/15802.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 1773,\r
+
+      \          \"name\": \"Bout de Blop Reinette\",\r
+
+      \          \"quantityTotal\": 3,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/15284.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 8360,\r
+
+      \          \"name\": \"Peau de Draguaindrop\",\r
+
+      \          \"quantityTotal\": 3,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/59610.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 14278,\r
+
+      \          \"name\": \"Chaînes Brisées\",\r
+
+      \          \"quantityTotal\": 6,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/15245.png\"\r
+
+      \        }\r
+
+      \      ]\r
+
+      \    },\r
+
+      \    {\r
+
+      \      \"iditem\": 8412,\r
+
+      \      \"name\": \"Alliance du Mominotor\",\r
+
+      \      \"multiplier\": 4,\r
+
+      \      \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/9119.png\",\r
+
+      \      \"ingredients\": [\r
+
+      \        {\r
+
+      \          \"iditem\": 16212,\r
+
+      \          \"name\": \"Substrat de Fourré\",\r
+
+      \          \"quantityTotal\": 4,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/12748.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 2527,\r
+
+      \          \"name\": \"Clakoss\",\r
+
+      \          \"quantityTotal\": 4,\r
+
+      \          \"quantityHave\": 4,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/15558.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 840,\r
+
+      \          \"name\": \"Poils du Minotoror\",\r
+
+      \          \"quantityTotal\": 12,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/54201.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 8326,\r
+
+      \          \"name\": \"Bandelette du Mominotor\",\r
+
+      \          \"quantityTotal\": 12,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/15734.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 15271,\r
+
+      \          \"name\": \"Tourmaline\",\r
+
+      \          \"quantityTotal\": 12,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/50719.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 2999,\r
+
+      \          \"name\": \"Peau de Minos\",\r
+
+      \          \"quantityTotal\": 24,\r
+
+      \          \"quantityHave\": 24,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/56655.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 8311,\r
+
+      \          \"name\": \"Poil de Gamino\",\r
+
+      \          \"quantityTotal\": 76,\r
+
+      \          \"quantityHave\": 54,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/54009.png\"\r
+
+      \        }\r
+
+      \      ]\r
+
+      \    },\r
+
+      \    {\r
+
+      \      \"iditem\": 8272,\r
+
+      \      \"name\": \"Collier du Minotot\",\r
+
+      \      \"multiplier\": 1,\r
+
+      \      \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/1111.png\",\r
+
+      \      \"ingredients\": [\r
+
+      \        {\r
+
+      \          \"iditem\": 8408,\r
+
+      \          \"name\": \"Sabot du Minotot\",\r
+
+      \          \"quantityTotal\": 1,\r
+
+      \          \"quantityHave\": 1,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/47754.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 7036,\r
+
+      \          \"name\": \"Rutile\",\r
+
+      \          \"quantityTotal\": 1,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/40707.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 15039,\r
+
+      \          \"name\": \"Poils de Kanigroula\",\r
+
+      \          \"quantityTotal\": 1,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/54698.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 13367,\r
+
+      \          \"name\": \"Galet Solaire\",\r
+
+      \          \"quantityTotal\": 1,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/152004.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 8328,\r
+
+      \          \"name\": \"Corne de Mominotor\",\r
+
+      \          \"quantityTotal\": 2,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/47642.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 840,\r
+
+      \          \"name\": \"Poils du Minotoror\",\r
+
+      \          \"quantityTotal\": 2,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/54201.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 8323,\r
+
+      \          \"name\": \"Cuir de Déminoboule\",\r
+
+      \          \"quantityTotal\": 6,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/56657.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 2999,\r
+
+      \          \"name\": \"Peau de Minos\",\r
+
+      \          \"quantityTotal\": 8,\r
+
+      \          \"quantityHave\": 8,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/56655.png\"\r
+
+      \        }\r
+
+      \      ]\r
+
+      \    },\r
+
+      \    {\r
+
+      \      \"iditem\": 13643,\r
+
+      \      \"name\": \"Getas de Padgref\",\r
+
+      \      \"multiplier\": 1,\r
+
+      \      \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/11229.png\",\r
+
+      \      \"ingredients\": [\r
+
+      \        {\r
+
+      \          \"iditem\": 11517,\r
+
+      \          \"name\": \"Eclat temporel\",\r
+
+      \          \"quantityTotal\": 1,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/50708.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 16460,\r
+
+      \          \"name\": \"Substrat de Sylve\",\r
+
+      \          \"quantityTotal\": 1,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/177003.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 8812,\r
+
+      \          \"name\": \"Encre du Kralamoure géant\",\r
+
+      \          \"quantityTotal\": 1,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/15762.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 15721,\r
+
+      \          \"name\": \"Corne de XLII\",\r
+
+      \          \"quantityTotal\": 3,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/15901.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 8808,\r
+
+      \          \"name\": \"Étoffe du Roissingue\",\r
+
+      \          \"quantityTotal\": 25,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/55019.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 11527,\r
+
+      \          \"name\": \"Peau d'Ouilleur\",\r
+
+      \          \"quantityTotal\": 47,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/59630.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 15724,\r
+
+      \          \"name\": \"Pagne de Trantroa\",\r
+
+      \          \"quantityTotal\": 61,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/15904.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 14635,\r
+
+      \          \"name\": \"Pépite\",\r
+
+      \          \"quantityTotal\": 2500,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/50718.png\"\r
+
+      \        }\r
+
+      \      ]\r
+
+      \    },\r
+
+      \    {\r
+
+      \      \"iditem\": 8275,\r
+
+      \      \"name\": \"Sceptre du Minotot\",\r
+
+      \      \"multiplier\": 2,\r
+
+      \      \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/4067.png\",\r
+
+      \      \"ingredients\": [\r
+
+      \        {\r
+
+      \          \"iditem\": 29444,\r
+
+      \          \"name\": \"Galet rayonnant\",\r
+
+      \          \"quantityTotal\": 2,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/152001.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 8408,\r
+
+      \          \"name\": \"Sabot du Minotot\",\r
+
+      \          \"quantityTotal\": 2,\r
+
+      \          \"quantityHave\": 2,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/47754.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 7036,\r
+
+      \          \"name\": \"Rutile\",\r
+
+      \          \"quantityTotal\": 2,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/40707.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 8916,\r
+
+      \          \"name\": \"Ambre du Tynril\",\r
+
+      \          \"quantityTotal\": 2,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/50715.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 840,\r
+
+      \          \"name\": \"Poils du Minotoror\",\r
+
+      \          \"quantityTotal\": 6,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/54201.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 8323,\r
+
+      \          \"name\": \"Cuir de Déminoboule\",\r
+
+      \          \"quantityTotal\": 12,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/56657.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 8326,\r
+
+      \          \"name\": \"Bandelette du Mominotor\",\r
+
+      \          \"quantityTotal\": 12,\r
+
+      \          \"quantityHave\": 0,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/15734.png\"\r
+
+      \        },\r
+
+      \        {\r
+
+      \          \"iditem\": 2999,\r
+
+      \          \"name\": \"Peau de Minos\",\r
+
+      \          \"quantityTotal\": 16,\r
+
+      \          \"quantityHave\": 16,\r
+
+      \          \"img\": \"https://assets.tools.huiitre.fr/tools_dofus/items/png/56655.png\"\r
+
+      \        }\r
+
+      \      ]\r
+
+      \    }\r
+
+      \  ]\r
+
+      }\r\n"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

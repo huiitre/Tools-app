@@ -1,0 +1,25 @@
+info:
+  name: Dofus
+  type: folder
+  seq: 5
+
+request:
+  auth: inherit
+  scripts:
+    - type: before-request
+      code: |-
+        // Valeur par défaut si absente
+        if (!bru.getEnvVar('GAME_VERSION_ID')) {
+          bru.setEnvVar('GAME_VERSION_ID', '1')
+        }
+
+        // Injection du header
+        req.setHeader('X-Game-Version-Id', bru.getEnvVar('GAME_VERSION_ID'))
+
+        // Valeur par défaut si absente
+        if (!bru.getEnvVar('GAME_SERVER_ID')) {
+          bru.setEnvVar('GAME_SERVER_ID', '1')
+        }
+
+        // Injection du header
+        req.setHeader('X-Game-Serve-Id', bru.getEnvVar('GAME_SERVER_ID'))

@@ -1,0 +1,20 @@
+info:
+  name: Génération lien de partage d'un set
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{apiUrl}}dofus/set/61/share"
+  body:
+    type: json
+    data: ""
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

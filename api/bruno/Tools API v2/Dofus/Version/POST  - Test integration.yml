@@ -1,0 +1,18 @@
+info:
+  name: POST  - Test integration
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{apiUrl}}dofus/version/test"
+  body:
+    type: json
+    data: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

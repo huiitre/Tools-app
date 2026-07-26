@@ -1,0 +1,27 @@
+info:
+  name: POST Add Subscription
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{apiUrl}}/dofus/almanax/subscriptions"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "almanaxId": 1,
+        "date": "2026-05-28"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

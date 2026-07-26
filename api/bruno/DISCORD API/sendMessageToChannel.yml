@@ -1,0 +1,36 @@
+info:
+  name: sendMessageToChannel
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:3000/send-message
+  body:
+    type: json
+    data: "{\r
+
+      \    \"isTemplate\": true,\r
+
+      \    \"template\": \"welcome\",\r
+
+      \    \"dataTemplate\": {\r
+
+      \        \"username\": \"huiitre\"\r
+
+      \    },\r
+
+      \    \"idcanal\": \"1222674130386681937\"\r
+
+      \    // easybot 1222674130386681937\r
+
+      \    // général 1173318843901415445\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

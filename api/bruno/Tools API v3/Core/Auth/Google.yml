@@ -1,0 +1,29 @@
+info:
+  name: Google
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{apiUrl}}/auth/google"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"idToken\": \"eyJhbGciOiJSUzI1NiIsImtpZCI6IjdiZjU5NTQ4OWEwYmIxNThiMDg1ZTIzZTdiNTJiZjk4OTFlMDQ1MzgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI0MDQ5Nzg3NjU2ODItaHBldmw0M2xlM3F0Y2Zjamw4dXVqbjhuaTJmNmVndW4uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI0MDQ5Nzg3NjU2ODItaHBldmw0M2xlM3F0Y2Zjamw4dXVqbjhuaTJmNmVndW4uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMTIxMTk3MTgzMTQ4MzUyMTU5NjkiLCJlbWFpbCI6InlhbmlzZGVsdWNhNjlAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5iZiI6MTc2ODYxMTg1MiwibmFtZSI6Imh1aWl0cmUiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSUtDZUJTOWVrOHJrbHF2Y3otRGgyTGp6aG54YlNtQ2k4UmFlOGhoTE9VRElDR2VjbEo9czk2LWMiLCJnaXZlbl9uYW1lIjoiaHVpaXRyZSIsImlhdCI6MTc2ODYxMjE1MiwiZXhwIjoxNzY4NjE1NzUyLCJqdGkiOiI2ZDViOTNiMjcyNjgzMDIyYmQ3ZTUxYjllNTQ5ZjZiNWVhMTFhYWY0In0.Hw9FcLYYyBJF0UuyhMw8eOEp6iE3lefKj-26iVwanRNh103eOIZ2avUoisAeHF7iC-U4ya_xvWUGjMNSEs48skfBSQRpcNgCXZZdhbTFSfmUuPqJRBhIdadEcmtAr25_9vnn7SNRd4h9pS6rU6k-qG8xpCHrKLUqJicgb5-YcBJfohYSgpqAGKo5z0bXMFOt3SjUPVdk21kM5OcRLAuJU9mmCuRsAIUeJWqjxEgwPsIQtDbjocOS2X1Jt-BQQXl-TFGqFGSJI5OU7tagUEeTlFA14KrKShdur6tUgjX159XPFa4fgw8m8lgT1mO-r4l6mcYqiLbTVLO_0YIrwR4eaA\"\r
+
+      }"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const json = res.getBody();
+        console.log(json);
+        bru.setEnvVar('token', json.accessToken);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,38 @@
+info:
+  name: translate
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{apiUrl}}dtl/translation/translate"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"value\": [\r
+
+      \        \"Export complet des données\",\r
+
+      \        \"Statut de connexion API\",\r
+
+      \        \"Synchronisation\",\r
+
+      \        \"Nombre de tâche traitement en attente\",\r
+
+      \        \"Ressource\"\r
+
+      \    ],\r
+
+      \    \"source\": \"fr\",\r
+
+      \    \"target\": \"de\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

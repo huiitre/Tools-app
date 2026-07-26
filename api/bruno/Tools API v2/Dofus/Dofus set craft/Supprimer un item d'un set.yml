@@ -1,0 +1,28 @@
+info:
+  name: Supprimer un item d'un set
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{apiUrl}}dofus/set/53/item/delete"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"list\": [\r
+
+      \        915845\r
+
+      \    ]\r
+
+      }"
+  auth:
+    type: bearer
+    token: "{{token}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

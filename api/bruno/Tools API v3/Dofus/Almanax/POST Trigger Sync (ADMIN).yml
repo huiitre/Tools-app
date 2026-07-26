@@ -1,0 +1,18 @@
+info:
+  name: POST Trigger Sync (ADMIN)
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{apiUrl}}/dofus/almanax/subscriptions/admin/sync"
+  headers:
+    - name: Authorization
+      value: Bearer {{token}}
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

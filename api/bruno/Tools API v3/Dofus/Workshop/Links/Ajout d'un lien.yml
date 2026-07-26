@@ -1,0 +1,24 @@
+info:
+  name: Ajout d'un lien
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}/dofus/workshops/{{workshopId}}/links"
+  body:
+    type: json
+    data: "{\r
+
+      \    \"source\": \"DOFUSBOOK\",\r
+
+      \    \"url\": \"https://www.dofusbook.net/fr/equipement/22257026-db/objets\"\r
+
+      }"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

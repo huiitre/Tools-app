@@ -1,0 +1,26 @@
+info:
+  name: POST - Create monster-item link
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{apiUrl}}dofus/monster-item"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "idmonster": 31,
+        "iditem": 362,
+        "percentDrop": 55.0
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
