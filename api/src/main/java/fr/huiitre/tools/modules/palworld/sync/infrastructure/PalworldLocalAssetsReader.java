@@ -1,0 +1,53 @@
+package fr.huiitre.tools.modules.palworld.sync.infrastructure;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.annotation.PostConstruct;
+
+@Component
+public class PalworldLocalAssetsReader {
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private Path palworldRoot;
+
+    @Value("${tools.assets.base-path}")
+    private Path assetsBasePath;
+
+    @PostConstruct
+    void init() {
+        if (assetsBasePath == null) {
+            throw new IllegalStateException("tools.assets.base-path is not configured");
+        }
+        palworldRoot = assetsBasePath.resolve("tools_palworld/palworld");
+    }
+
+    public String readFile(String relativePath) {
+        Path file = palworldRoot.resolve(relativePath);
+        try {
+            return Files.readString(file);
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to read Palworld asset file: " + file, e);
+        }
+    }
+
+    public OffsetDateTime readScrapedAt() {
+        try {
+            JsonNode root = objectMapper.readTree(readFile("version.json"));
+            return Instant.parse(root.path("scrapedAt").asText()).atOffset(ZoneOffset.UTC);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to read Palworld version.json scrapedAt", e);
+        }
+    }
+}
