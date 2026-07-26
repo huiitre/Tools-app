@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { fetchGuilds, fetchBasePals, fetchPalInstanceHistory } from '../../server/fetch/palworldServerData.fetch'
+import { usePalworldConfigStore } from '../../shared/palworldConfig.store'
 import type {
   PalworldGuildSummary,
   PalworldPalInstanceSummary,
   PalworldPalInstanceSnapshot,
 } from '../../server/types/palworldServerData.types'
 import PalHistoryModal from '../components/PalHistoryModal.vue'
+
+const configStore = usePalworldConfigStore()
 
 const guilds = ref<PalworldGuildSummary[]>([])
 const guildsLoading = ref(true)
@@ -135,8 +138,47 @@ const sortedBasePals = computed(() => {
   })
 })
 
+// Refresh périodique silencieux (mêmes données, pas de flash "Chargement…") —
+// si un appel échoue, les données précédemment affichées restent telles quelles.
+async function refreshGuilds() {
+  try {
+    guilds.value = await fetchGuilds()
+  } catch {
+    // silencieux
+  }
+}
+
+async function refreshBasePals() {
+  if (!selectedBaseId.value) return
+  try {
+    basePals.value = await fetchBasePals(selectedBaseId.value)
+  } catch {
+    // silencieux
+  }
+}
+
+async function refreshAll() {
+  await refreshGuilds()
+  await refreshBasePals()
+}
+
+let refreshIntervalId: number | undefined
+
+function restartRefreshInterval() {
+  if (refreshIntervalId) clearInterval(refreshIntervalId)
+  refreshIntervalId = window.setInterval(refreshAll, configStore.refreshIntervalSeconds * 1000)
+}
+
+watch(() => configStore.refreshIntervalSeconds, restartRefreshInterval)
+
 onMounted(() => {
+  configStore.hydrate()
   loadGuilds()
+  restartRefreshInterval()
+})
+
+onUnmounted(() => {
+  if (refreshIntervalId) clearInterval(refreshIntervalId)
 })
 </script>
 
