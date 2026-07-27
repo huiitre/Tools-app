@@ -16,6 +16,8 @@ const STATS: { key: keyof PalworldPalListItem; label: string }[] = [
   { key: 'baseWorkSpeed', label: 'Vitesse de travail' },
   { key: 'baseSupport', label: 'Support' },
   { key: 'foodAmount', label: 'Capacité de faim' },
+  { key: 'runSpeed', label: 'Vitesse de course' },
+  { key: 'rideSprintSpeed', label: 'Vitesse en sprint (monture)' },
   { key: 'rarity', label: 'Rareté' },
 ]
 
@@ -42,6 +44,9 @@ function statValue(key: keyof PalworldPalListItem): string {
         </div>
       </div>
     </div>
+
+    <!-- DESCRIPTION -->
+    <p v-if="pal.description" class="description">{{ pal.description }}</p>
 
     <!-- ELEMENTS -->
     <div v-if="pal.elements.length" class="elements-row">
@@ -74,6 +79,18 @@ function statValue(key: keyof PalworldPalListItem): string {
           <img v-if="ws.iconUrl" :src="ws.iconUrl" :alt="ws.name" class="ws-icon">
           <span class="ws-name">{{ ws.name }}</span>
           <strong>Nv. {{ ws.level }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMPÉTENCE DE PARTENAIRE -->
+    <div v-if="pal.partnerSkill" class="section">
+      <div class="section-title">Compétence de partenaire</div>
+      <div class="partner-skill">
+        <img v-if="pal.partnerSkill.iconUrl" :src="pal.partnerSkill.iconUrl" :alt="pal.partnerSkill.title" class="partner-icon">
+        <div class="partner-info">
+          <div class="partner-title">{{ pal.partnerSkill.title }}</div>
+          <p v-if="pal.partnerSkill.description" class="partner-description">{{ pal.partnerSkill.description }}</p>
         </div>
       </div>
     </div>
@@ -201,6 +218,44 @@ function statValue(key: keyof PalworldPalListItem): string {
 
 .ws-name {
   color: var(--pico-muted-color);
+}
+
+/* DESCRIPTION */
+.description {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--pico-muted-color);
+}
+
+/* PARTNER SKILL */
+.partner-skill {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.partner-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.partner-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.partner-title {
+  font-weight: 600;
+  font-size: 0.78rem;
+  overflow-wrap: break-word;
+}
+
+.partner-description {
+  margin: 0.2rem 0 0;
+  font-size: 0.72rem;
+  color: var(--pico-muted-color);
+  overflow-wrap: break-word;
 }
 
 /* FOOTER */

@@ -1,5 +1,6 @@
 package fr.huiitre.tools.modules.palworld.catalog.application.view;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public record PalListItemView(
@@ -9,6 +10,7 @@ public record PalListItemView(
         String paldexSuffix,
         String name,
         String imageUrl,
+        String description,
         Integer rarity,
         String size,
         Integer baseHp,
@@ -17,6 +19,19 @@ public record PalListItemView(
         Integer baseWorkSpeed,
         Integer baseSupport,
         Integer foodAmount,
+        Integer runSpeed,
+        Integer rideSprintSpeed,
+        BigDecimal captureRateCorrect,
+        BigDecimal maleProbability,
+        Integer combiRank,
+        Integer goldCoin,
+        String eggType,
         String bestWorkSuitabilityLabel,
         List<ElementSummaryView> elements,
-        List<WorkSuitabilitySummaryView> workSuitabilities) {}
+        List<WorkSuitabilitySummaryView> workSuitabilities,
+        List<PassiveSkillSummaryView> passiveSkills,
+        List<ActiveSkillSummaryView> activeSkills,
+        PartnerSkillSummaryView partnerSkill,
+        List<DropSummaryView> drops,
+        List<VariantSummaryView> variants,
+        List<SpawnZoneSummaryView> spawnZones) {}

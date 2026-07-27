@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.huiitre.tools.modules.palworld.application.ports.PalworldServerPort;
 import fr.huiitre.tools.modules.palworld.infrastructure.PalworldMockAdapter;
 import fr.huiitre.tools.modules.palworld.infrastructure.PalworldRestAdapter;
-import fr.huiitre.tools.modules.palworld.tierlist.application.ports.PalworldTierListProvider;
-import fr.huiitre.tools.modules.palworld.tierlist.infrastructure.PalworldGgTierListScraper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,10 +40,5 @@ public class PalworldConfig {
         restTemplate.getMessageConverters().add(jsonConverter);
 
         return new PalworldRestAdapter(restTemplate, objectMapper, baseUrl);
-    }
-
-    @Bean
-    public PalworldTierListProvider palworldTierListProvider() {
-        return new PalworldGgTierListScraper();
     }
 }

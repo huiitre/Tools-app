@@ -44,6 +44,8 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
             (Integer) rs.getObject("base_work_speed"),
             (Integer) rs.getObject("base_support"),
             (Integer) rs.getObject("food_amount"),
+            (Integer) rs.getObject("run_speed"),
+            (Integer) rs.getObject("ride_sprint_speed"),
             rs.getBigDecimal("capture_rate_correct"),
             rs.getBigDecimal("male_probability"),
             (Integer) rs.getObject("combi_rank"),
@@ -55,8 +57,9 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
     public List<PalRefView> findAll() {
         final String sql = """
                 SELECT id, tribe, paldex_index, paldex_suffix, name, image_url, description, size, rarity,
-                       base_hp, base_attack, base_defense, base_work_speed, base_support, food_amount, capture_rate_correct,
-                       male_probability, combi_rank, gold_coin, egg_type, best_work_suitability_label
+                       base_hp, base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed,
+                       ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type,
+                       best_work_suitability_label
                 FROM tools_palworld.pal
                 """;
         return jdbcTemplate.query(sql, ROW_MAPPER);
@@ -67,17 +70,18 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
         final String sql = """
                 INSERT INTO tools_palworld.pal
                     (tribe, paldex_index, paldex_suffix, name, image_url, description, size, rarity,
-                     base_hp, base_attack, base_defense, base_work_speed, base_support, food_amount, capture_rate_correct,
-                     male_probability, combi_rank, gold_coin, egg_type, best_work_suitability_label)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     base_hp, base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed,
+                     ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type,
+                     best_work_suitability_label)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 RETURNING id
                 """;
         return jdbcTemplate.queryForObject(sql, Long.class,
                 data.getTribe(), data.getPaldexIndex(), data.getPaldexSuffix(), data.getName(), data.getImageUrl(),
                 data.getDescription(), data.getSize(), data.getRarity(), data.getBaseHp(), data.getBaseAttack(),
-                data.getBaseDefense(), data.getBaseWorkSpeed(), data.getBaseSupport(), data.getFoodAmount(), data.getCaptureRateCorrect(),
-                data.getMaleProbability(), data.getCombiRank(), data.getGoldCoin(), data.getEggType(),
-                data.getBestWorkSuitabilityLabel());
+                data.getBaseDefense(), data.getBaseWorkSpeed(), data.getBaseSupport(), data.getFoodAmount(), data.getRunSpeed(),
+                data.getRideSprintSpeed(), data.getCaptureRateCorrect(), data.getMaleProbability(), data.getCombiRank(),
+                data.getGoldCoin(), data.getEggType(), data.getBestWorkSuitabilityLabel());
     }
 
     @Override
@@ -86,15 +90,16 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 UPDATE tools_palworld.pal
                 SET paldex_index = ?, paldex_suffix = ?, name = ?, image_url = ?, description = ?, size = ?,
                     rarity = ?, base_hp = ?, base_attack = ?, base_defense = ?, base_work_speed = ?, base_support = ?,
-                    food_amount = ?, capture_rate_correct = ?, male_probability = ?, combi_rank = ?, gold_coin = ?, egg_type = ?,
-                    best_work_suitability_label = ?, updated_at = now()
+                    food_amount = ?, run_speed = ?, ride_sprint_speed = ?, capture_rate_correct = ?, male_probability = ?,
+                    combi_rank = ?, gold_coin = ?, egg_type = ?, best_work_suitability_label = ?, updated_at = now()
                 WHERE id = ?
                 """;
         jdbcTemplate.update(sql,
                 data.getPaldexIndex(), data.getPaldexSuffix(), data.getName(), data.getImageUrl(), data.getDescription(),
                 data.getSize(), data.getRarity(), data.getBaseHp(), data.getBaseAttack(), data.getBaseDefense(),
-                data.getBaseWorkSpeed(), data.getBaseSupport(), data.getFoodAmount(), data.getCaptureRateCorrect(), data.getMaleProbability(),
-                data.getCombiRank(), data.getGoldCoin(), data.getEggType(), data.getBestWorkSuitabilityLabel(), id);
+                data.getBaseWorkSpeed(), data.getBaseSupport(), data.getFoodAmount(), data.getRunSpeed(), data.getRideSprintSpeed(),
+                data.getCaptureRateCorrect(), data.getMaleProbability(), data.getCombiRank(), data.getGoldCoin(),
+                data.getEggType(), data.getBestWorkSuitabilityLabel(), id);
     }
 
     @Override

@@ -20,6 +20,8 @@ public class PalSyncData {
     private final Integer baseWorkSpeed;
     private final Integer baseSupport;
     private final Integer foodAmount;
+    private final Integer runSpeed;
+    private final Integer rideSprintSpeed;
     private final BigDecimal captureRateCorrect;
     private final BigDecimal maleProbability;
     private final Integer combiRank;
@@ -41,7 +43,8 @@ public class PalSyncData {
 
     public PalSyncData(String tribe, Integer paldexIndex, String paldexSuffix, String name, String imageUrl, String description,
             String size, Integer rarity, Integer baseHp, Integer baseAttack, Integer baseDefense, Integer baseWorkSpeed,
-            Integer baseSupport, Integer foodAmount, BigDecimal captureRateCorrect, BigDecimal maleProbability, Integer combiRank, Integer goldCoin,
+            Integer baseSupport, Integer foodAmount, Integer runSpeed, Integer rideSprintSpeed, BigDecimal captureRateCorrect,
+            BigDecimal maleProbability, Integer combiRank, Integer goldCoin,
             String eggType, String bestWorkSuitabilityLabel, List<PalElementSyncData> elements,
             List<PalWorkSuitabilitySyncData> workSuitabilities, List<PalActiveSkillSyncData> activeSkills,
             List<PalPassiveSkillSyncData> passiveSkills, PalPartnerSkillSyncData partnerSkill, List<PalDropSyncData> drops,
@@ -61,6 +64,8 @@ public class PalSyncData {
         this.baseWorkSpeed = baseWorkSpeed;
         this.baseSupport = baseSupport;
         this.foodAmount = foodAmount;
+        this.runSpeed = runSpeed;
+        this.rideSprintSpeed = rideSprintSpeed;
         this.captureRateCorrect = captureRateCorrect;
         this.maleProbability = maleProbability;
         this.combiRank = combiRank;
@@ -95,6 +100,8 @@ public class PalSyncData {
     public Integer getBaseWorkSpeed() { return baseWorkSpeed; }
     public Integer getBaseSupport() { return baseSupport; }
     public Integer getFoodAmount() { return foodAmount; }
+    public Integer getRunSpeed() { return runSpeed; }
+    public Integer getRideSprintSpeed() { return rideSprintSpeed; }
     public BigDecimal getCaptureRateCorrect() { return captureRateCorrect; }
     public BigDecimal getMaleProbability() { return maleProbability; }
     public Integer getCombiRank() { return combiRank; }
