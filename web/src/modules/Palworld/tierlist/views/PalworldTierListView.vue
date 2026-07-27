@@ -2,8 +2,19 @@
 import { ref, computed, onMounted } from 'vue'
 import { usePalworldTierListStore } from '../palworldTierList.store'
 import type { PalworldPal } from '../types/palworldTierList.types'
+import { usePaldexStore } from '../../paldex/paldex.store'
+import PalContextTrigger from '../../paldex/components/PalContextTrigger.vue'
 
 const store = usePalworldTierListStore()
+const paldexStore = usePaldexStore()
+
+const paldexByName = computed(() => {
+  const map = new Map<string, typeof paldexStore.pals[number]>()
+  for (const pal of paldexStore.pals) {
+    map.set(pal.name.toLowerCase(), pal)
+  }
+  return map
+})
 
 const CATEGORIES: { id: string; label: string }[] = [
   { id: 'best', label: 'Meilleurs' },
@@ -39,6 +50,7 @@ const isRowAllDimmed = (pals: PalworldPal[]) =>
 
 onMounted(() => {
   store.ensureLoaded()
+  paldexStore.ensureLoaded()
 })
 </script>
 
@@ -84,18 +96,22 @@ onMounted(() => {
 
     <template v-else>
       <div v-if="normalizedQuery" class="search-results">
-        <a
+        <PalContextTrigger
           v-for="pal in searchResults"
           :key="pal.name + pal.tier"
-          :href="pal.href"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="search-result-row"
+          :pal="paldexByName.get(pal.name.toLowerCase())"
         >
-          <img :src="pal.image" :alt="pal.name" loading="lazy">
-          <span class="result-name">{{ pal.name }}</span>
-          <span class="result-tier" :class="`tier-${pal.tier}`">{{ pal.tier }}</span>
-        </a>
+          <a
+            :href="pal.href"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="search-result-row"
+          >
+            <img :src="pal.image" :alt="pal.name" loading="lazy">
+            <span class="result-name">{{ pal.name }}</span>
+            <span class="result-tier" :class="`tier-${pal.tier}`">{{ pal.tier }}</span>
+          </a>
+        </PalContextTrigger>
 
         <p v-if="searchResults.length === 0" class="empty">Aucun pal trouvé.</p>
       </div>
@@ -109,25 +125,29 @@ onMounted(() => {
         >
           <div class="tier-badge" :class="`tier-${group.tier}`">{{ group.tier }}</div>
           <div class="tier-pals">
-            <a
+            <PalContextTrigger
               v-for="pal in group.pals"
               :key="pal.name"
-              :href="pal.href"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="pal-card"
-              :class="{ dimmed: !matches(pal), wide: !!pal.workSkills?.length }"
+              :pal="paldexByName.get(pal.name.toLowerCase())"
             >
-              <img :src="pal.image" :alt="pal.name" width="72" height="72" loading="lazy">
-              <span class="pal-name">{{ pal.name }}</span>
-              <span v-if="pal.speed" class="pal-speed">{{ pal.speed.min }} - {{ pal.speed.max }}</span>
-              <span v-if="pal.workSkills?.length" class="pal-workskills">
-                <span v-for="skill in pal.workSkills" :key="skill.name" class="workskill" :title="skill.name">
-                  <img :src="skill.icon" :alt="skill.name" width="16" height="16" loading="lazy">
-                  <span class="workskill-level">{{ skill.level }}</span>
+              <a
+                :href="pal.href"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="pal-card"
+                :class="{ dimmed: !matches(pal), wide: !!pal.workSkills?.length }"
+              >
+                <img :src="pal.image" :alt="pal.name" width="72" height="72" loading="lazy">
+                <span class="pal-name">{{ pal.name }}</span>
+                <span v-if="pal.speed" class="pal-speed">{{ pal.speed.min }} - {{ pal.speed.max }}</span>
+                <span v-if="pal.workSkills?.length" class="pal-workskills">
+                  <span v-for="skill in pal.workSkills" :key="skill.name" class="workskill" :title="skill.name">
+                    <img :src="skill.icon" :alt="skill.name" width="16" height="16" loading="lazy">
+                    <span class="workskill-level">{{ skill.level }}</span>
+                  </span>
                 </span>
-              </span>
-            </a>
+              </a>
+            </PalContextTrigger>
           </div>
         </div>
 
