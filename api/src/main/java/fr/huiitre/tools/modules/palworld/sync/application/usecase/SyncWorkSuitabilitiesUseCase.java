@@ -46,11 +46,14 @@ public class SyncWorkSuitabilitiesUseCase implements SecuredUseCase {
     public WorkSuitabilitySyncResult execute() {
         List<WorkSuitabilitySyncData> external = dataProvider.fetchAll();
 
-        Map<String, WorkSuitabilityRefView> currentBySlug = syncRepository.findAll().stream()
-                .collect(Collectors.toMap(WorkSuitabilityRefView::slug, it -> it));
+        // Matching sur external_code (id stable côté paldb.cc, ex: "03"), pas sur slug : le slug peut
+        // changer de format d'un scrape à l'autre (ex: "GeneratingElectricity" -> "Generating_Electricity"),
+        // alors qu'external_code, lui, ne bouge jamais pour une même entrée.
+        Map<String, WorkSuitabilityRefView> currentByExternalCode = syncRepository.findAll().stream()
+                .collect(Collectors.toMap(WorkSuitabilityRefView::externalCode, it -> it));
 
-        Set<String> externalSlugs = external.stream()
-                .map(WorkSuitabilitySyncData::getSlug)
+        Set<String> externalCodes = external.stream()
+                .map(WorkSuitabilitySyncData::getExternalCode)
                 .collect(Collectors.toSet());
 
         Map<String, Long> idBySlug = new HashMap<>();
@@ -59,7 +62,7 @@ public class SyncWorkSuitabilitiesUseCase implements SecuredUseCase {
         int deleted = 0;
 
         for (WorkSuitabilitySyncData ext : external) {
-            WorkSuitabilityRefView existing = currentBySlug.get(ext.getSlug());
+            WorkSuitabilityRefView existing = currentByExternalCode.get(ext.getExternalCode());
 
             if (existing == null) {
                 Long newId = syncRepository.save(ext);
@@ -70,7 +73,7 @@ public class SyncWorkSuitabilitiesUseCase implements SecuredUseCase {
 
             idBySlug.put(ext.getSlug(), existing.id());
 
-            boolean changed = !Objects.equals(existing.externalCode(), ext.getExternalCode())
+            boolean changed = !Objects.equals(existing.slug(), ext.getSlug())
                     || !Objects.equals(existing.name(), ext.getName())
                     || !Objects.equals(existing.iconUrl(), ext.getIconUrl());
 
@@ -80,8 +83,8 @@ public class SyncWorkSuitabilitiesUseCase implements SecuredUseCase {
             }
         }
 
-        for (WorkSuitabilityRefView current : currentBySlug.values()) {
-            if (!externalSlugs.contains(current.slug())) {
+        for (WorkSuitabilityRefView current : currentByExternalCode.values()) {
+            if (!externalCodes.contains(current.externalCode())) {
                 syncRepository.delete(current.id());
                 deleted++;
             }

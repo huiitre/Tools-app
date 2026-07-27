@@ -44,10 +44,10 @@ public class PostgresWorkSuitabilitySyncRepository implements WorkSuitabilitySyn
     public void update(Long id, WorkSuitabilitySyncData data) {
         final String sql = """
                 UPDATE tools_palworld.work_suitability
-                SET external_code = ?, name = ?, icon_url = ?
+                SET slug = ?, name = ?, icon_url = ?
                 WHERE id = ?
                 """;
-        jdbcTemplate.update(sql, data.getExternalCode(), data.getName(), data.getIconUrl(), id);
+        jdbcTemplate.update(sql, data.getSlug(), data.getName(), data.getIconUrl(), id);
     }
 
     @Override

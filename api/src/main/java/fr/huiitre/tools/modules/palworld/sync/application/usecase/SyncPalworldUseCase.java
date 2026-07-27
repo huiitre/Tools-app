@@ -12,6 +12,7 @@ import fr.huiitre.tools.modules.palworld.sync.application.ElementSyncResult;
 import fr.huiitre.tools.modules.palworld.sync.application.PalworldGlobalSyncReport;
 import fr.huiitre.tools.modules.palworld.sync.application.PalworldSyncReport;
 import fr.huiitre.tools.modules.palworld.sync.application.SkillSyncResult;
+import fr.huiitre.tools.modules.palworld.sync.application.WorkPrioritySyncResult;
 import fr.huiitre.tools.modules.palworld.sync.application.WorkSuitabilitySyncResult;
 
 @Service
@@ -20,16 +21,19 @@ public class SyncPalworldUseCase implements SecuredUseCase {
 
     private final SyncElementsUseCase syncElementsUseCase;
     private final SyncWorkSuitabilitiesUseCase syncWorkSuitabilitiesUseCase;
+    private final SyncWorkPrioritiesUseCase syncWorkPrioritiesUseCase;
     private final SyncSkillsUseCase syncSkillsUseCase;
     private final SyncPalsUseCase syncPalsUseCase;
 
     public SyncPalworldUseCase(
             SyncElementsUseCase syncElementsUseCase,
             SyncWorkSuitabilitiesUseCase syncWorkSuitabilitiesUseCase,
+            SyncWorkPrioritiesUseCase syncWorkPrioritiesUseCase,
             SyncSkillsUseCase syncSkillsUseCase,
             SyncPalsUseCase syncPalsUseCase) {
         this.syncElementsUseCase = syncElementsUseCase;
         this.syncWorkSuitabilitiesUseCase = syncWorkSuitabilitiesUseCase;
+        this.syncWorkPrioritiesUseCase = syncWorkPrioritiesUseCase;
         this.syncSkillsUseCase = syncSkillsUseCase;
         this.syncPalsUseCase = syncPalsUseCase;
     }
@@ -47,12 +51,14 @@ public class SyncPalworldUseCase implements SecuredUseCase {
     public PalworldGlobalSyncReport execute() {
         ElementSyncResult elements = syncElementsUseCase.execute();
         WorkSuitabilitySyncResult workSuitabilities = syncWorkSuitabilitiesUseCase.execute();
+        WorkPrioritySyncResult workPriorities = syncWorkPrioritiesUseCase.execute(workSuitabilities.idBySlug());
         SkillSyncResult skills = syncSkillsUseCase.execute(elements.idByExternalCode());
         PalworldSyncReport pals = syncPalsUseCase.execute(
                 elements.idByExternalCode(),
                 workSuitabilities.idBySlug(),
                 skills.idBySlug());
 
-        return new PalworldGlobalSyncReport(elements.report(), workSuitabilities.report(), skills.report(), pals);
+        return new PalworldGlobalSyncReport(
+                elements.report(), workSuitabilities.report(), workPriorities.report(), skills.report(), pals);
     }
 }
