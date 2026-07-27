@@ -1,52 +1,130 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { usePalworldTierListStore } from '../palworldTierList.store'
-import type { PalworldPal } from '../types/palworldTierList.types'
 import { usePaldexStore } from '../../paldex/paldex.store'
+import type { PalworldPalListItem, PalworldElementSummary, PalworldWorkSuitabilitySummary } from '../../paldex/types/paldex.types'
 import PalContextTrigger from '../../paldex/components/PalContextTrigger.vue'
+
+interface TierPal extends PalworldPalListItem {
+  tier: string
+}
 
 const store = usePalworldTierListStore()
 const paldexStore = usePaldexStore()
 
-const paldexByName = computed(() => {
-  const map = new Map<string, typeof paldexStore.pals[number]>()
+const paldexById = computed(() => {
+  const map = new Map<number, PalworldPalListItem>()
   for (const pal of paldexStore.pals) {
-    map.set(pal.name.toLowerCase(), pal)
+    map.set(pal.id, pal)
   }
   return map
 })
 
 const CATEGORIES: { id: string; label: string }[] = [
-  { id: 'best', label: 'Meilleurs' },
+  { id: 'general', label: 'Meilleurs' },
   { id: 'base-work', label: 'Meilleur Travailleur' },
   { id: 'flying-mounts', label: 'Montures Volantes' },
   { id: 'ground-mounts', label: 'Montures Terrestres' },
   { id: 'combat', label: 'Combat' },
 ]
 
-const activeCategory = ref('best')
+const SPEED_CATEGORIES = new Set(['flying-mounts', 'ground-mounts'])
+
+const activeCategory = ref('general')
 const searchQuery = ref('')
 
-const currentTiers = computed(() => store.data?.[activeCategory.value] ?? [])
+const availableSources = computed(() => Object.keys(store.data ?? {}))
+const selectedSource = ref<string | null>(null)
+
+watch(availableSources, sources => {
+  if ((!selectedSource.value || !sources.includes(selectedSource.value)) && sources.length) {
+    selectedSource.value = sources[0]
+  }
+}, { immediate: true })
+
+const currentSourceData = computed(() => (selectedSource.value ? store.data?.[selectedSource.value] : null) ?? {})
+
+const currentTiers = computed(() => {
+  const groups = currentSourceData.value[activeCategory.value] ?? []
+  return groups.map(group => ({
+    tier: group.tier,
+    pals: group.palIds
+      .map(id => paldexById.value.get(id))
+      .filter((pal): pal is PalworldPalListItem => !!pal),
+  }))
+})
+
+const showWorkSuitabilities = computed(() => activeCategory.value === 'base-work')
+const showSpeed = computed(() => SPEED_CATEGORIES.has(activeCategory.value))
 
 const normalizedQuery = computed(() => searchQuery.value.trim().toLowerCase())
 
-const matches = (pal: PalworldPal) => !normalizedQuery.value || pal.name.toLowerCase().includes(normalizedQuery.value)
+const allCurrentPals = computed(() => currentTiers.value.flatMap(group => group.pals))
+
+const availableElements = computed<PalworldElementSummary[]>(() => {
+  const byId = new Map<number, PalworldElementSummary>()
+  for (const pal of allCurrentPals.value) {
+    for (const element of pal.elements) {
+      if (!byId.has(element.id)) byId.set(element.id, element)
+    }
+  }
+  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name))
+})
+
+const availableWorkSuitabilities = computed<PalworldWorkSuitabilitySummary[]>(() => {
+  if (!showWorkSuitabilities.value) return []
+  const byId = new Map<number, PalworldWorkSuitabilitySummary>()
+  for (const pal of allCurrentPals.value) {
+    for (const ws of pal.workSuitabilities) {
+      if (!byId.has(ws.id)) byId.set(ws.id, ws)
+    }
+  }
+  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name))
+})
+
+const selectedElementIds = ref<Set<number>>(new Set())
+const selectedWorkSuitabilityIds = ref<Set<number>>(new Set())
+
+function toggleElement(id: number) {
+  const next = new Set(selectedElementIds.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  selectedElementIds.value = next
+}
+
+function toggleWorkSuitability(id: number) {
+  const next = new Set(selectedWorkSuitabilityIds.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  selectedWorkSuitabilityIds.value = next
+}
+
+const hasActiveFilter = computed(() =>
+  !!normalizedQuery.value || selectedElementIds.value.size > 0 || selectedWorkSuitabilityIds.value.size > 0,
+)
+
+const matches = (pal: PalworldPalListItem) => {
+  if (normalizedQuery.value && !pal.name.toLowerCase().includes(normalizedQuery.value)) return false
+  if (selectedElementIds.value.size && !pal.elements.some(e => selectedElementIds.value.has(e.id))) return false
+  if (showWorkSuitabilities.value && selectedWorkSuitabilityIds.value.size
+      && !pal.workSuitabilities.some(ws => selectedWorkSuitabilityIds.value.has(ws.id))) return false
+  return true
+}
 
 const totalCount = computed(() => currentTiers.value.reduce((sum, group) => sum + group.pals.length, 0))
 const visibleCount = computed(() => currentTiers.value.reduce(
   (sum, group) => sum + group.pals.filter(matches).length, 0,
 ))
 
-const searchResults = computed(() => {
+const searchResults = computed<TierPal[]>(() => {
   if (!normalizedQuery.value) return []
   return currentTiers.value.flatMap(group =>
     group.pals.filter(matches).map(pal => ({ ...pal, tier: group.tier })),
   )
 })
 
-const isRowAllDimmed = (pals: PalworldPal[]) =>
-  !!normalizedQuery.value && pals.every(pal => !matches(pal))
+const isRowAllDimmed = (pals: PalworldPalListItem[]) =>
+  hasActiveFilter.value && pals.every(pal => !matches(pal))
 
 onMounted(() => {
   store.ensureLoaded()
@@ -57,6 +135,19 @@ onMounted(() => {
 <template>
   <div class="tierlist">
     <div class="tierlist-header">
+      <nav v-if="availableSources.length > 1" class="source-tabs">
+        <button
+          v-for="source in availableSources"
+          :key="source"
+          type="button"
+          class="source-tab"
+          :class="{ active: selectedSource === source }"
+          @click="selectedSource = source"
+        >
+          {{ source }}
+        </button>
+      </nav>
+
       <nav class="category-tabs">
         <button
           v-for="cat in CATEGORIES"
@@ -71,17 +162,58 @@ onMounted(() => {
       </nav>
 
       <div class="search-bar">
-        <div class="search-wrapper">
-          <i class="mdi mdi-magnify" />
-          <input v-model="searchQuery" type="text" placeholder="Rechercher un pal…" autocomplete="off">
-        </div>
-        <span v-if="normalizedQuery" class="search-counter">
-          <strong>{{ visibleCount }}</strong> / {{ totalCount }} pals trouvés
+        <input v-model="searchQuery" type="search" placeholder="Rechercher un pal..." class="search-input">
+
+        <span class="search-count">
+          <span class="count-sep" />
+          <strong>{{ visibleCount }}</strong> / {{ totalCount }} pals
         </span>
-        <button type="button" class="clear-btn" @click="searchQuery = ''">
+
+        <button v-if="normalizedQuery" type="button" class="clear-btn" @click="searchQuery = ''">
           Effacer
         </button>
       </div>
+
+      <nav v-if="availableElements.length || availableWorkSuitabilities.length" class="element-tabs">
+        <button
+          v-for="element in availableElements"
+          :key="`element-${element.id}`"
+          type="button"
+          class="element-tab"
+          :class="{ active: selectedElementIds.has(element.id) }"
+          @click="toggleElement(element.id)"
+        >
+          <span
+            v-if="element.iconUrl"
+            class="element-icon-crop"
+            :style="{ backgroundImage: `url(${element.iconUrl})` }"
+          />
+          {{ element.name }}
+        </button>
+
+        <span v-if="availableElements.length && availableWorkSuitabilities.length" class="filter-separator" />
+
+        <button
+          v-for="ws in availableWorkSuitabilities"
+          :key="`ws-${ws.id}`"
+          type="button"
+          class="element-tab"
+          :class="{ active: selectedWorkSuitabilityIds.has(ws.id) }"
+          @click="toggleWorkSuitability(ws.id)"
+        >
+          <img v-if="ws.iconUrl" :src="ws.iconUrl" :alt="ws.name" width="16" height="16" loading="lazy">
+          {{ ws.name }}
+        </button>
+
+        <button
+          v-if="selectedElementIds.size || selectedWorkSuitabilityIds.size"
+          type="button"
+          class="clear-btn"
+          @click="selectedElementIds = new Set(); selectedWorkSuitabilityIds = new Set()"
+        >
+          Effacer les filtres
+        </button>
+      </nav>
     </div>
 
     <div v-if="store.error" class="error-banner">
@@ -98,19 +230,14 @@ onMounted(() => {
       <div v-if="normalizedQuery" class="search-results">
         <PalContextTrigger
           v-for="pal in searchResults"
-          :key="pal.name + pal.tier"
-          :pal="paldexByName.get(pal.name.toLowerCase())"
+          :key="pal.id + pal.tier"
+          :pal="pal"
         >
-          <a
-            :href="pal.href"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="search-result-row"
-          >
-            <img :src="pal.image" :alt="pal.name" loading="lazy">
+          <div class="search-result-row">
+            <img v-if="pal.imageUrl" :src="pal.imageUrl" :alt="pal.name" loading="lazy">
             <span class="result-name">{{ pal.name }}</span>
             <span class="result-tier" :class="`tier-${pal.tier}`">{{ pal.tier }}</span>
-          </a>
+          </div>
         </PalContextTrigger>
 
         <p v-if="searchResults.length === 0" class="empty">Aucun pal trouvé.</p>
@@ -127,26 +254,25 @@ onMounted(() => {
           <div class="tier-pals">
             <PalContextTrigger
               v-for="pal in group.pals"
-              :key="pal.name"
-              :pal="paldexByName.get(pal.name.toLowerCase())"
+              :key="pal.id"
+              :pal="pal"
             >
-              <a
-                :href="pal.href"
-                target="_blank"
-                rel="noopener noreferrer"
+              <div
                 class="pal-card"
-                :class="{ dimmed: !matches(pal), wide: !!pal.workSkills?.length }"
+                :class="{ dimmed: !matches(pal), wide: showWorkSuitabilities && !!pal.workSuitabilities.length }"
               >
-                <img :src="pal.image" :alt="pal.name" width="72" height="72" loading="lazy">
+                <img v-if="pal.imageUrl" :src="pal.imageUrl" :alt="pal.name" width="72" height="72" loading="lazy">
                 <span class="pal-name">{{ pal.name }}</span>
-                <span v-if="pal.speed" class="pal-speed">{{ pal.speed.min }} - {{ pal.speed.max }}</span>
-                <span v-if="pal.workSkills?.length" class="pal-workskills">
-                  <span v-for="skill in pal.workSkills" :key="skill.name" class="workskill" :title="skill.name">
-                    <img :src="skill.icon" :alt="skill.name" width="16" height="16" loading="lazy">
-                    <span class="workskill-level">{{ skill.level }}</span>
+                <span v-if="showSpeed && pal.runSpeed && pal.rideSprintSpeed" class="pal-speed">
+                  {{ pal.runSpeed }} - {{ pal.rideSprintSpeed }}
+                </span>
+                <span v-if="showWorkSuitabilities && pal.workSuitabilities.length" class="pal-workskills">
+                  <span v-for="ws in pal.workSuitabilities" :key="ws.id" class="workskill" :title="ws.name">
+                    <img v-if="ws.iconUrl" :src="ws.iconUrl" :alt="ws.name" width="16" height="16" loading="lazy">
+                    <span class="workskill-level">{{ ws.level }}</span>
                   </span>
                 </span>
-              </a>
+              </div>
             </PalContextTrigger>
           </div>
         </div>
@@ -182,6 +308,37 @@ onMounted(() => {
   gap: 1rem;
 }
 
+.source-tabs {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.source-tab {
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--pico-card-border-color);
+  background: transparent;
+  color: var(--pico-muted-color);
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin: 0;
+  width: auto;
+
+  &:hover {
+    color: var(--pico-color);
+    border-color: var(--pico-primary);
+  }
+
+  &.active {
+    border-color: var(--pico-primary);
+    color: var(--pico-primary);
+    font-weight: 700;
+  }
+}
+
 .category-tabs {
   display: flex;
   gap: 0.5rem;
@@ -214,41 +371,39 @@ onMounted(() => {
   }
 }
 
-/* ── Search bar ──────────────────────────────────────────────────── */
+/* ── Search bar (style Paldex) ───────────────────────────────────── */
 .search-bar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 
-.search-wrapper {
-  position: relative;
-  flex: 0 0 280px;
-
-  i {
-    position: absolute;
-    left: 0.6rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--pico-muted-color);
-    font-size: 1rem;
-    pointer-events: none;
-  }
-
-  input {
-    width: 100%;
-    margin: 0;
-    padding: 0.45rem 0.7rem 0.45rem 2rem;
-    font-size: 0.85rem;
-  }
+.search-input {
+  margin: 0;
+  height: 2rem;
+  font-size: 0.75rem;
+  width: 220px;
 }
 
-.search-counter {
-  font-size: 0.78rem;
+.search-count {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
   color: var(--pico-muted-color);
+  white-space: nowrap;
+  margin-left: auto;
 
-  strong { color: var(--pico-primary); }
+  strong { color: var(--pico-primary); font-weight: 700; }
+}
+
+.count-sep {
+  display: inline-block;
+  width: 1px;
+  height: 1rem;
+  background: var(--pico-muted-border-color);
+  margin-right: 0.15rem;
 }
 
 .clear-btn {
@@ -266,6 +421,64 @@ onMounted(() => {
     color: var(--pico-color);
     border-color: var(--pico-color);
   }
+}
+
+/* ── Element tabs (identique au Paldex) ──────────────────────────── */
+.element-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-separator {
+  width: 1px;
+  align-self: stretch;
+  min-height: 1.5rem;
+  background: var(--pico-card-border-color);
+  margin: 0 0.25rem;
+}
+
+.element-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--pico-card-border-color);
+  background: transparent;
+  color: var(--pico-muted-color);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin: 0;
+  width: auto;
+
+  img { border-radius: 3px; }
+
+  &:hover {
+    color: var(--pico-color);
+    border-color: var(--pico-primary);
+  }
+
+  &.active {
+    border-color: var(--pico-primary);
+    color: var(--pico-primary);
+    font-weight: 700;
+  }
+}
+
+/* Bannières élément (104x32, pictogramme dans le tiers gauche) — recadrage identique au Paldex */
+.element-icon-crop {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-size: auto 100%;
 }
 
 /* ── Status / error ──────────────────────────────────────────────── */

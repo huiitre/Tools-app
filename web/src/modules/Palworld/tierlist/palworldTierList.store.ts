@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia'
 import { fetchPalworldTierLists } from './fetch/palworldTierList.fetch'
-import type { PalworldTierListsByCategory } from './types/palworldTierList.types'
+import type { PalworldTierListsBySource } from './types/palworldTierList.types'
 
 export const usePalworldTierListStore = defineStore('palworldTierList', {
   state: () => ({
-    data: null as PalworldTierListsByCategory | null,
+    data: null as PalworldTierListsBySource | null,
     loading: false,
     error: null as string | null,
   }),
