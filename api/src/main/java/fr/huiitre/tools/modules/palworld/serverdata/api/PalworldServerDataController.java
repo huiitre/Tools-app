@@ -1,32 +1,30 @@
 package fr.huiitre.tools.modules.palworld.serverdata.api;
 
-import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import fr.huiitre.tools.modules.core.common.api.RequiredRole;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
-import fr.huiitre.tools.modules.palworld.serverdata.application.ServerDataSyncReport;
 import fr.huiitre.tools.modules.palworld.serverdata.application.usecase.GetBasePalsUseCase;
 import fr.huiitre.tools.modules.palworld.serverdata.application.usecase.GetGuildsUseCase;
 import fr.huiitre.tools.modules.palworld.serverdata.application.usecase.GetPalInstanceHistoryUseCase;
 import fr.huiitre.tools.modules.palworld.serverdata.application.usecase.SyncServerDataUseCase;
-import fr.huiitre.tools.modules.palworld.serverdata.application.view.GuildSummaryView;
-import fr.huiitre.tools.modules.palworld.serverdata.application.view.PalInstanceSnapshotView;
-import fr.huiitre.tools.modules.palworld.serverdata.application.view.PalInstanceSummaryView;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Palworld - Server data")
 @RestController
 @RequestMapping("/palworld/server-data")
 public class PalworldServerDataController {
+
+    private static final String DISABLED_MESSAGE = "Endpoint désactivé.";
 
     private final SyncServerDataUseCase syncServerDataUseCase;
     private final GetGuildsUseCase getGuildsUseCase;
@@ -46,29 +44,29 @@ public class PalworldServerDataController {
 
     @RequiredRole(RoleCode.TECH)
     @PostMapping("/admin/sync")
-    @ResponseStatus(HttpStatus.OK)
-    public ServerDataSyncReport sync() {
-        return syncServerDataUseCase.execute();
+    public ResponseEntity<Map<String, String>> sync() {
+        return disabled();
     }
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping("/guilds")
-    @ResponseStatus(HttpStatus.OK)
-    public List<GuildSummaryView> getGuilds() {
-        return getGuildsUseCase.execute();
+    public ResponseEntity<Map<String, String>> getGuilds() {
+        return disabled();
     }
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping("/bases/{baseId}/pals")
-    @ResponseStatus(HttpStatus.OK)
-    public List<PalInstanceSummaryView> getBasePals(@PathVariable UUID baseId) {
-        return getBasePalsUseCase.execute(baseId);
+    public ResponseEntity<Map<String, String>> getBasePals(@PathVariable UUID baseId) {
+        return disabled();
     }
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping("/pal-instances/{instanceId}/history")
-    @ResponseStatus(HttpStatus.OK)
-    public List<PalInstanceSnapshotView> getPalInstanceHistory(@PathVariable UUID instanceId) {
-        return getPalInstanceHistoryUseCase.execute(instanceId);
+    public ResponseEntity<Map<String, String>> getPalInstanceHistory(@PathVariable UUID instanceId) {
+        return disabled();
+    }
+
+    private ResponseEntity<Map<String, String>> disabled() {
+        return ResponseEntity.status(HttpStatus.GONE).body(Map.of("message", DISABLED_MESSAGE));
     }
 }
