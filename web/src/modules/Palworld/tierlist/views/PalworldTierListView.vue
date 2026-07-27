@@ -128,7 +128,6 @@ const isRowAllDimmed = (pals: PalworldPalListItem[]) =>
 
 onMounted(() => {
   store.ensureLoaded()
-  paldexStore.ensureLoaded()
 })
 </script>
 
@@ -235,6 +234,15 @@ onMounted(() => {
         >
           <div class="search-result-row">
             <img v-if="pal.imageUrl" :src="pal.imageUrl" :alt="pal.name" loading="lazy">
+            <span class="result-elements">
+              <span
+                v-for="element in pal.elements"
+                :key="element.id"
+                class="element-icon-crop"
+                :title="element.name"
+                :style="element.iconUrl ? { backgroundImage: `url(${element.iconUrl})` } : {}"
+              />
+            </span>
             <span class="result-name">{{ pal.name }}</span>
             <span class="result-tier" :class="`tier-${pal.tier}`">{{ pal.tier }}</span>
           </div>
@@ -263,6 +271,15 @@ onMounted(() => {
               >
                 <img v-if="pal.imageUrl" :src="pal.imageUrl" :alt="pal.name" width="72" height="72" loading="lazy">
                 <span class="pal-name">{{ pal.name }}</span>
+                <span v-if="pal.elements.length" class="pal-elements-row">
+                  <span
+                    v-for="element in pal.elements"
+                    :key="element.id"
+                    class="element-icon-crop"
+                    :title="element.name"
+                    :style="element.iconUrl ? { backgroundImage: `url(${element.iconUrl})` } : {}"
+                  />
+                </span>
                 <span v-if="showSpeed && pal.runSpeed && pal.rideSprintSpeed" class="pal-speed">
                   {{ pal.runSpeed }} - {{ pal.rideSprintSpeed }}
                 </span>
@@ -427,6 +444,7 @@ onMounted(() => {
 .element-tabs {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
@@ -609,6 +627,13 @@ onMounted(() => {
   }
 }
 
+.pal-elements-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
 .pal-name {
   font-size: 10.5px;
   color: var(--pico-color);
@@ -681,6 +706,13 @@ onMounted(() => {
     border-radius: 6px;
     flex-shrink: 0;
   }
+}
+
+.result-elements {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
 }
 
 .result-name {

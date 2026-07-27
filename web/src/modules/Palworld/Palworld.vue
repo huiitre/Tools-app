@@ -1,5 +1,13 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import PalworldNav from '@/modules/Palworld/shared/components/PalworldNav.vue'
+import { usePaldexStore } from '@/modules/Palworld/paldex/paldex.store'
+
+// Catalogue Paldex (pals/éléments/aptitudes) partagé par plusieurs onglets (Paldex, Tierlist) :
+// chargé une fois à l'entrée sur /palworld, gardé en mémoire (comme le cache prix Dofus).
+onMounted(() => {
+  usePaldexStore().ensureLoaded()
+})
 </script>
 
 <template>
