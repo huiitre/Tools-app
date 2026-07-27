@@ -26,9 +26,11 @@ public class PalworldLocalWorkSuitabilityDataProvider implements WorkSuitability
 
             List<WorkSuitabilitySyncData> result = new ArrayList<>();
             for (JsonNode ws : root) {
-                String externalCode = ws.path("id").asText(null);
-                String slug = ws.path("name").asText(null);
-                result.add(new WorkSuitabilitySyncData(externalCode, slug, slug, null));
+                result.add(new WorkSuitabilitySyncData(
+                        ws.path("id").asText(null),
+                        ws.path("slug").asText(null),
+                        ws.path("name").asText(null),
+                        ws.path("icon").isNull() ? null : ws.path("icon").asText(null)));
             }
 
             return result;
