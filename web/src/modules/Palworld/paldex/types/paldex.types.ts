@@ -41,6 +41,8 @@ export interface PalworldPalListItem {
   baseWorkSpeed: number | null
   baseSupport: number | null
   foodAmount: number | null
+  runSpeed: number | null
+  rideSprintSpeed: number | null
   bestWorkSuitabilityLabel: string | null
   elements: PalworldElementSummary[]
   workSuitabilities: PalworldWorkSuitabilitySummary[]

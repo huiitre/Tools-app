@@ -53,6 +53,7 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
     private PalSyncData toSyncData(JsonNode pal, OffsetDateTime fetchedAt) {
         JsonNode stats = pal.path("raw").path("Stats");
         JsonNode others = pal.path("raw").path("Others");
+        JsonNode movement = pal.path("raw").path("Movement");
 
         return new PalSyncData(
                 pal.path("tribe").asText(null),
@@ -69,6 +70,8 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
                 parseInt(statText(stats, "Vitesse de travail")),
                 parseInt(statText(stats, "Support")),
                 parseInt(statText(stats, "Quantité de nourriture")),
+                parseInt(movement.path("RunSpeed").asText(null)),
+                parseInt(movement.path("RideSprintSpeed").asText(null)),
                 parseDecimal(statText(stats, "CaptureRateCorrect")),
                 parseDecimal(statText(stats, "MaleProbability")),
                 parseInt(statText(stats, "CombiRank")),

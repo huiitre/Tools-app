@@ -16,6 +16,8 @@ const STATS: { key: keyof PalworldPalListItem; label: string }[] = [
   { key: 'baseWorkSpeed', label: 'Vitesse de travail' },
   { key: 'baseSupport', label: 'Support' },
   { key: 'foodAmount', label: 'Capacité de faim' },
+  { key: 'runSpeed', label: 'Vitesse de course' },
+  { key: 'rideSprintSpeed', label: 'Vitesse en sprint (monture)' },
   { key: 'rarity', label: 'Rareté' },
 ]
 

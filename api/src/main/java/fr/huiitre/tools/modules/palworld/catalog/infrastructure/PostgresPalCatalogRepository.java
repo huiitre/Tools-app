@@ -168,8 +168,8 @@ public class PostgresPalCatalogRepository implements PalCatalogRepository {
 
         final String palsSql = """
                 SELECT id, tribe, paldex_index, paldex_suffix, name, image_url, description, rarity, size, base_hp,
-                       base_attack, base_defense, base_work_speed, base_support, food_amount, capture_rate_correct,
-                       male_probability, combi_rank, gold_coin, egg_type, best_work_suitability_label
+                       base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed, ride_sprint_speed,
+                       capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type, best_work_suitability_label
                 FROM tools_palworld.pal
                 ORDER BY paldex_index, paldex_suffix
                 """;
@@ -191,6 +191,8 @@ public class PostgresPalCatalogRepository implements PalCatalogRepository {
                     (Integer) rs.getObject("base_work_speed"),
                     (Integer) rs.getObject("base_support"),
                     (Integer) rs.getObject("food_amount"),
+                    (Integer) rs.getObject("run_speed"),
+                    (Integer) rs.getObject("ride_sprint_speed"),
                     rs.getBigDecimal("capture_rate_correct"),
                     rs.getBigDecimal("male_probability"),
                     (Integer) rs.getObject("combi_rank"),

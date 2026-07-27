@@ -19,6 +19,8 @@ public record PalListItemView(
         Integer baseWorkSpeed,
         Integer baseSupport,
         Integer foodAmount,
+        Integer runSpeed,
+        Integer rideSprintSpeed,
         BigDecimal captureRateCorrect,
         BigDecimal maleProbability,
         Integer combiRank,
