@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { usePaldexStore } from '../paldex.store'
 import { paldexLabel } from '../utils/paldexLabel'
 import PalContextTrigger from '../components/PalContextTrigger.vue'
@@ -108,9 +108,7 @@ const visiblePals = computed(() => {
   return sorted
 })
 
-onMounted(() => {
-  store.ensureLoaded()
-})
+// Chargement du catalogue Paldex géré au niveau parent (Palworld.vue), partagé avec la Tierlist.
 </script>
 
 <template>
@@ -351,6 +349,7 @@ onMounted(() => {
 .element-tabs {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
