@@ -15,6 +15,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +35,8 @@ import jakarta.annotation.PostConstruct;
 
 @Component
 public class PalworldServerSnapshotFileAdapter implements ServerSnapshotFilePort {
+
+    private static final Logger log = LoggerFactory.getLogger(PalworldServerSnapshotFileAdapter.class);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -53,7 +57,8 @@ public class PalworldServerSnapshotFileAdapter implements ServerSnapshotFilePort
         try {
             Files.createDirectories(archiveDirectory);
         } catch (IOException e) {
-            throw new IllegalStateException("Unable to create Palworld server-data archive directory: " + archiveDirectory, e);
+            log.warn("Palworld server-data directory unavailable ({}), feature will be inactive until it is: {}",
+                    archiveDirectory, e.getMessage());
         }
     }
 
