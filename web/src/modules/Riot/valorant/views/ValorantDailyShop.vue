@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useValorantShop, REGIONS } from '../composables/useValorantShop'
+import { useValorantShop } from '../composables/useValorantShop'
 import { useValorantSkinDetail } from '../composables/useValorantSkinDetail'
-import ValorantAuthCard from '../components/ValorantAuthCard.vue'
+import { useValorantAccounts } from '../composables/useValorantAccounts'
 import ValorantBundleCard from '../components/ValorantBundleCard.vue'
 import ValorantSkinActions from '../components/ValorantSkinActions.vue'
 import ValorantNightMarket from '../components/ValorantNightMarket.vue'
@@ -10,21 +10,25 @@ import ValorantSkinIdBadge from '../components/ValorantSkinIdBadge.vue'
 
 const {
   view, skins, bundles, nightMarket, isRenewing, error, bundleNow,
-  formattedTime, handleSubmit, reset, currentRegionLabel,
+  formattedTime, currentRegionLabel,
 } = useValorantShop()
 
+const { openLinkForm } = useValorantAccounts()
 const { open: openSkinDetail } = useValorantSkinDetail()
 </script>
 
 <template>
   <div class="valorant-shop-view">
-    <!-- ── FORM ───────────────────────────────────────────────── -->
-    <div v-if="view === 'form'" class="form-wrapper">
-      <ValorantAuthCard
-        :error="error"
-        :regions="REGIONS"
-        @submit="({ token, region, mode }) => handleSubmit(token, region, mode)"
-      />
+    <!-- ── EMPTY (aucun compte lié) ─────────────────────────────── -->
+    <div v-if="view === 'empty'" class="empty-wrapper">
+      <i class="mdi mdi-crosshairs empty-icon" />
+      <h3>Aucun compte Valorant lié</h3>
+      <p v-if="error" class="empty-error">{{ error }}</p>
+      <p v-else class="empty-hint">Liez un compte pour consulter sa boutique quotidienne.</p>
+      <button @click="openLinkForm">
+        <i class="mdi mdi-plus" />
+        Ajouter un compte
+      </button>
     </div>
 
     <!-- ── LOADING (skeleton) ─────────────────────────────────── -->
@@ -55,10 +59,6 @@ const { open: openSkinDetail } = useValorantSkinDetail()
         </span>
         <div class="shop-actions">
           <ValorantShopHistoryPopup />
-          <button class="reset-btn" @click="reset">
-            <i class="mdi mdi-refresh" />
-            Changer de token
-          </button>
         </div>
       </div>
 
@@ -128,12 +128,35 @@ const { open: openSkinDetail } = useValorantSkinDetail()
   width: 100%;
 }
 
-.form-wrapper {
+.empty-wrapper {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
   min-height: calc(100vh - 56px - 52px);
   padding: 2rem 1rem;
+  text-align: center;
+
+  h3 { margin: 0; }
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  color: var(--pico-primary);
+  opacity: 0.7;
+}
+
+.empty-hint {
+  color: var(--pico-muted-color);
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
+}
+
+.empty-error {
+  color: var(--pico-del-color);
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
 }
 
 .shop-wrapper {
@@ -165,27 +188,6 @@ const { open: openSkinDetail } = useValorantSkinDetail()
   display: flex;
   align-items: center;
   gap: 0.75rem;
-}
-
-.reset-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.8rem;
-  padding: 0.35rem 0.75rem;
-  background: transparent;
-  border: 1px solid var(--pico-muted-border-color);
-  border-radius: 6px;
-  color: var(--pico-muted-color);
-  cursor: pointer;
-  width: auto;
-  transition: border-color 0.15s ease, color 0.15s ease;
-
-  &:hover {
-    border-color: var(--pico-primary);
-    color: var(--pico-primary);
-    background: transparent;
-  }
 }
 
 /* ── Timer ───────────────────────────────────────────────────────────────── */

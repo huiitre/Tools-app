@@ -15,33 +15,33 @@ public class PostgresValorantStoreHistoryRepository implements ValorantStoreHist
     }
 
     @Override
-    public Map<LocalDate, List<Long>> findAllRawByUserId(Long userId) {
+    public Map<LocalDate, List<Long>> findAllRawByAccountId(Long accountId) {
         final String sql = """
                 SELECT seen_at, skin_id
                 FROM tools_riot.valorant_store_history
-                WHERE user_id = ?
+                WHERE valorant_account_id = ?
                 ORDER BY seen_at DESC
                 """;
-        
+
         Map<LocalDate, List<Long>> history = new LinkedHashMap<>();
         jdbcTemplate.query(sql, rs -> {
             LocalDate date = rs.getDate("seen_at").toLocalDate();
             Long skinId = rs.getLong("skin_id");
             history.computeIfAbsent(date, k -> new ArrayList<>()).add(skinId);
-        }, userId);
-        
+        }, accountId);
+
         return history;
     }
 
     @Override
-    public Long add(Long userId, Long skinId, LocalDate seenAt) {
-        final String sql = "INSERT INTO tools_riot.valorant_store_history (user_id, skin_id, seen_at) VALUES (?, ?, ?) RETURNING id";
-        return jdbcTemplate.queryForObject(sql, Long.class, userId, skinId, seenAt);
+    public Long add(Long accountId, Long skinId, LocalDate seenAt) {
+        final String sql = "INSERT INTO tools_riot.valorant_store_history (valorant_account_id, skin_id, seen_at) VALUES (?, ?, ?) RETURNING id";
+        return jdbcTemplate.queryForObject(sql, Long.class, accountId, skinId, seenAt);
     }
 
     @Override
-    public boolean existsByUserIdAndSkinIdAndDate(Long userId, Long skinId, LocalDate seenAt) {
-        final String sql = "SELECT EXISTS (SELECT 1 FROM tools_riot.valorant_store_history WHERE user_id = ? AND skin_id = ? AND seen_at = ?)";
-        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, userId, skinId, seenAt));
+    public boolean existsByAccountIdAndSkinIdAndDate(Long accountId, Long skinId, LocalDate seenAt) {
+        final String sql = "SELECT EXISTS (SELECT 1 FROM tools_riot.valorant_store_history WHERE valorant_account_id = ? AND skin_id = ? AND seen_at = ?)";
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, accountId, skinId, seenAt));
     }
 }

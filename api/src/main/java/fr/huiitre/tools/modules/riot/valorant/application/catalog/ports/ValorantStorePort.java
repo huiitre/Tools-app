@@ -5,6 +5,9 @@ import java.util.List;
 public interface ValorantStorePort {
     RawStorefront fetchStorefront(String puuid, String region, String accessToken, String entitlementsToken, String clientVersion);
     String fetchEntitlementsToken(String accessToken);
+    RiotId fetchRiotId(String puuid, String region, String accessToken, String entitlementsToken, String clientVersion);
+
+    record RiotId(String gameName, String tagLine) {}
 
     record RawStorefront(
         List<RawOffer> singleItemOffers,

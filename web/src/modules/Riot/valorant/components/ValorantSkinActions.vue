@@ -12,16 +12,18 @@ const isOwned = computed(() => riotStore.isSkinOwned(props.skinId))
 const isWatched = computed(() => riotStore.isSkinWatched(props.skinId))
 
 async function toggleOwned() {
+  const accountId = riotStore.selectedAccountId
+  if (accountId == null) return
   const targetState = !isOwned.value
   try {
     if (targetState) {
       if (isWatched.value) {
-        await removeFromWatchlist(props.skinId)
+        await removeFromWatchlist(props.skinId, accountId)
         riotStore.removeFromWatchlistLocally(props.skinId)
       }
-      await addToMySkins(props.skinId)
+      await addToMySkins(props.skinId, accountId)
     } else {
-      await removeFromMySkins(props.skinId)
+      await removeFromMySkins(props.skinId, accountId)
     }
     riotStore.toggleOwnedLocally(props.skinId, targetState)
   } catch (e: any) {
@@ -31,14 +33,16 @@ async function toggleOwned() {
 
 async function toggleWatched() {
   if (isOwned.value) return
+  const accountId = riotStore.selectedAccountId
+  if (accountId == null) return
 
   const targetState = !isWatched.value
   try {
     if (targetState) {
-      await addToWatchlist(props.skinId)
+      await addToWatchlist(props.skinId, accountId)
       riotStore.addToWatchlistLocally(props.skinId)
     } else {
-      await removeFromWatchlist(props.skinId)
+      await removeFromWatchlist(props.skinId, accountId)
       riotStore.removeFromWatchlistLocally(props.skinId)
     }
   } catch (e: any) {

@@ -11,20 +11,24 @@ import fr.huiitre.tools.modules.core.security.application.ports.AuthenticatedUse
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantWeaponRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantAuthRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 
 @Service
 public class GetValorantWeaponSkinsUseCase implements SecuredUseCase {
 
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final ValorantAuthRepository valorantAuthRepository;
     private final ValorantWeaponRepository weaponRepository;
     private final ValorantSkinRepository skinRepository;
 
     public GetValorantWeaponSkinsUseCase(
             AuthenticatedUserProvider authenticatedUserProvider,
+            ValorantAuthRepository valorantAuthRepository,
             ValorantWeaponRepository weaponRepository,
             ValorantSkinRepository skinRepository) {
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.valorantAuthRepository = valorantAuthRepository;
         this.weaponRepository = weaponRepository;
         this.skinRepository = skinRepository;
     }
@@ -39,11 +43,13 @@ public class GetValorantWeaponSkinsUseCase implements SecuredUseCase {
         return RoleCode.READ_ONLY;
     }
 
-    public List<ValorantSkinView> execute(Long weaponId) {
+    public List<ValorantSkinView> execute(Long weaponId, Long accountId) {
         weaponRepository.findById(weaponId)
                 .orElseThrow(() -> new IllegalArgumentException("Weapon not found: " + weaponId));
 
-        Long userId = authenticatedUserProvider.getUserId();
-        return skinRepository.findAllByWeaponId(weaponId, userId);
+        if (accountId != null && !valorantAuthRepository.existsByIdAndUserId(accountId, authenticatedUserProvider.getUserId())) {
+            throw new IllegalArgumentException("VALORANT_ACCOUNT_NOT_FOUND");
+        }
+        return skinRepository.findAllByWeaponId(weaponId, accountId);
     }
 }

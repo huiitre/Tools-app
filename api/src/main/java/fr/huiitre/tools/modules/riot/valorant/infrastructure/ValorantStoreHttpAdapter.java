@@ -14,6 +14,7 @@ public class ValorantStoreHttpAdapter implements ValorantStorePort {
 
     private static final String ENTITLEMENTS_URL = "https://entitlements.auth.riotgames.com/api/token/v1";
     private static final String STOREFRONT_URL_TEMPLATE = "https://pd.%s.a.pvp.net/store/v3/storefront/%s";
+    private static final String NAME_SERVICE_URL_TEMPLATE = "https://pd.%s.a.pvp.net/name-service/v2/players";
     
     private static final String VP_CURRENCY_ID = "85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741";
     private static final String SKIN_TYPE_ID = "e7c63390-eda7-46e0-bb7a-a6abdacd2433";
@@ -73,6 +74,34 @@ public class ValorantStoreHttpAdapter implements ValorantStorePort {
             return parseStorefront(body);
         } catch (HttpClientErrorException e) {
             throw new IllegalArgumentException("RIOT_STOREFRONT_FETCH_FAILED");
+        }
+    }
+
+    @Override
+    public RiotId fetchRiotId(String puuid, String region, String accessToken, String entitlementsToken, String clientVersion) {
+        String url = String.format(NAME_SERVICE_URL_TEMPLATE, region);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        headers.set("X-Riot-Entitlements-JWT", entitlementsToken);
+        headers.set("X-Riot-ClientPlatform", CLIENT_PLATFORM);
+        headers.set("X-Riot-ClientVersion", clientVersion);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<List<String>> request = new HttpEntity<>(List.of(puuid), headers);
+
+        try {
+            ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
+                    url, HttpMethod.PUT, request,
+                    new ParameterizedTypeReference<>() {});
+
+            List<Map<String, Object>> body = response.getBody();
+            if (body == null || body.isEmpty()) return new RiotId(null, null);
+
+            Map<String, Object> player = body.get(0);
+            return new RiotId((String) player.get("GameName"), (String) player.get("TagLine"));
+        } catch (HttpClientErrorException e) {
+            return new RiotId(null, null);
         }
     }
 

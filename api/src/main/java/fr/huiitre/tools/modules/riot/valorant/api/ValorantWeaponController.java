@@ -4,6 +4,7 @@ import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import fr.huiitre.tools.modules.core.common.api.RequiredRole;
@@ -45,7 +46,7 @@ public class ValorantWeaponController {
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping("/weapons/{id}/skins")
-    public List<ValorantSkinView> getWeaponSkins(@PathVariable Long id) {
-        return getWeaponSkinsUseCase.execute(id);
+    public List<ValorantSkinView> getWeaponSkins(@PathVariable Long id, @RequestParam(required = false) Long accountId) {
+        return getWeaponSkinsUseCase.execute(id, accountId);
     }
 }

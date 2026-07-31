@@ -5,11 +5,14 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiUrl}}/riot/valorant/my-skins/:skinId"
+  url: "{{apiUrl}}/riot/valorant/my-skins/:skinId?accountId=1"
   params:
     - name: skinId
       value: "1"
       type: path
+    - name: accountId
+      value: "1"
+      type: query
 
 settings:
   encodeUrl: true

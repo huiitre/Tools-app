@@ -9,32 +9,71 @@ export interface UserSkinData {
   addedAt: string
 }
 
+export interface ValorantAccount {
+  id: number
+  puuid: string
+  region: RiotRegion
+  gameName: string | null
+  tagLine: string | null
+  label: string | null
+}
+
 export const useRiotStore = defineStore('riot', () => {
   // Uniquement en mémoire vive
-  const accessToken = ref<string | null>(null)
   const region = ref<RiotRegion>('eu')
 
-  // User Skins & Watchlist state
+  // Comptes Valorant liés
+  const accounts = ref<ValorantAccount[]>([])
+  const selectedAccountId = ref<number | null>(null)
+
+  // User Skins & Watchlist state (scoped au compte sélectionné)
   const ownedSkins = ref<UserSkinData[]>([])
   const watchedSkins = ref<UserSkinData[]>([])
   const storeHistory = ref<ValorantStoreHistoryView[]>([])
-
-  function setAuth(token: string, reg: RiotRegion) {
-    accessToken.value = token
-    region.value = reg
-  }
-
-  function setAccessToken(token: string) {
-    accessToken.value = token
-  }
 
   function setRegion(reg: RiotRegion) {
     region.value = reg
   }
 
   function clearAll() {
-    accessToken.value = null
+    accounts.value = []
+    selectedAccountId.value = null
+    ownedSkins.value = []
+    watchedSkins.value = []
+    storeHistory.value = []
     // On garde la région en mémoire pour le confort
+  }
+
+  /* =========================
+     COMPTES VALORANT
+  ========================= */
+
+  function setAccounts(list: ValorantAccount[]) {
+    accounts.value = list
+  }
+
+  function addAccount(account: ValorantAccount) {
+    const idx = accounts.value.findIndex(a => a.id === account.id)
+    if (idx === -1) accounts.value.push(account)
+    else accounts.value[idx] = account
+  }
+
+  function removeAccount(id: number) {
+    accounts.value = accounts.value.filter(a => a.id !== id)
+  }
+
+  function setSelectedAccountId(id: number | null) {
+    selectedAccountId.value = id
+  }
+
+  /**
+   * Réinitialise l'état propre au compte sélectionné (mes skins, watchlist, historique)
+   * sans toucher à la liste des comptes liés ni au compte sélectionné lui-même.
+   */
+  function clearAccountSession() {
+    ownedSkins.value = []
+    watchedSkins.value = []
+    storeHistory.value = []
   }
 
   /* =========================
@@ -120,15 +159,19 @@ export const useRiotStore = defineStore('riot', () => {
   }
 
   return {
-    accessToken,
     region,
+    accounts,
+    selectedAccountId,
     ownedSkins,
     watchedSkins,
     storeHistory,
-    setAuth,
-    setAccessToken,
     setRegion,
     clearAll,
+    setAccounts,
+    addAccount,
+    removeAccount,
+    setSelectedAccountId,
+    clearAccountSession,
     setOwnedSkins,
     isSkinOwned,
     getOwnedAddedAt,

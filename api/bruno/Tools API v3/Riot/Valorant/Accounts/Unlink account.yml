@@ -1,0 +1,21 @@
+info:
+  name: Unlink account
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/riot/valorant/accounts/:accountId"
+  params:
+    - name: accountId
+      value: "1"
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Délie un compte Valorant du compte Tools courant (supprime le refresh token stocké).

@@ -13,7 +13,8 @@ http:
     type: json
     data: |-
       {
-        "skinId": 1
+        "skinId": 1,
+        "accountId": 1
       }
 
 settings:
