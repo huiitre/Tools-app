@@ -31,8 +31,8 @@ public class ValorantUserSkinController {
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping
-    public List<ValorantSkinView> getMyUserSkins() {
-        return getMyValorantUserSkinsUseCase.execute();
+    public List<ValorantSkinView> getMyUserSkins(@RequestParam Long accountId) {
+        return getMyValorantUserSkinsUseCase.execute(accountId);
     }
 
     @RequiredRole(RoleCode.USER)
@@ -45,7 +45,7 @@ public class ValorantUserSkinController {
     @RequiredRole(RoleCode.USER)
     @DeleteMapping("/{skinId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeMySkin(@PathVariable Long skinId) {
-        removeMyValorantSkinUseCase.execute(skinId);
+    public void removeMySkin(@PathVariable Long skinId, @RequestParam Long accountId) {
+        removeMyValorantSkinUseCase.execute(skinId, accountId);
     }
 }

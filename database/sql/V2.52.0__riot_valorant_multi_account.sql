@@ -42,7 +42,8 @@ COMMENT ON COLUMN tools_riot.valorant_account.expires_at IS 'Date d''expiration 
 
 CREATE INDEX idx_valorant_account_user ON tools_riot.valorant_account (user_id);
 
--- Watchlist, mes skins et historique boutique deviennent propres à chaque compte Valorant lié.
+-- Watchlist, mes skins et historique boutique deviennent propres à chaque compte Valorant lié
+-- (le rattachement à l'utilisateur Tools reste implicite via valorant_account.user_id).
 -- On vide les tables existantes (perte assumée) avant d'ajouter la colonne NOT NULL.
 
 TRUNCATE TABLE tools_riot.valorant_skin_watchlist;
@@ -52,7 +53,9 @@ ALTER TABLE tools_riot.valorant_skin_watchlist
         FOREIGN KEY (valorant_account_id)
         REFERENCES tools_riot.valorant_account (id)
         ON DELETE CASCADE,
+    DROP CONSTRAINT fk_valorant_watchlist_user,
     DROP CONSTRAINT uq_valorant_watchlist_user_skin,
+    DROP COLUMN user_id,
     ADD CONSTRAINT uq_valorant_watchlist_account_skin UNIQUE (valorant_account_id, skin_id);
 
 COMMENT ON COLUMN tools_riot.valorant_skin_watchlist.valorant_account_id IS 'Compte Valorant pour lequel ce skin est surveillé';
@@ -64,7 +67,9 @@ ALTER TABLE tools_riot.valorant_user_skins
         FOREIGN KEY (valorant_account_id)
         REFERENCES tools_riot.valorant_account (id)
         ON DELETE CASCADE,
+    DROP CONSTRAINT fk_valorant_user_skins_user,
     DROP CONSTRAINT uq_valorant_user_skins_user_skin,
+    DROP COLUMN user_id,
     ADD CONSTRAINT uq_valorant_user_skins_account_skin UNIQUE (valorant_account_id, skin_id);
 
 COMMENT ON COLUMN tools_riot.valorant_user_skins.valorant_account_id IS 'Compte Valorant sur lequel ce skin est possédé';
@@ -76,7 +81,9 @@ ALTER TABLE tools_riot.valorant_store_history
         FOREIGN KEY (valorant_account_id)
         REFERENCES tools_riot.valorant_account (id)
         ON DELETE CASCADE,
+    DROP CONSTRAINT fk_valorant_store_history_user,
     DROP CONSTRAINT uq_valorant_store_history_user_skin_date,
+    DROP COLUMN user_id,
     ADD CONSTRAINT uq_valorant_store_history_account_skin_date UNIQUE (valorant_account_id, skin_id, seen_at);
 
 COMMENT ON COLUMN tools_riot.valorant_store_history.valorant_account_id IS 'Compte Valorant sur lequel ce skin a été vu en boutique';

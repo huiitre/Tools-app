@@ -5,7 +5,11 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/riot/valorant/skins/70c97fb2-4d79-d4bb-5173-a1888cd4bfd9"
+  url: "{{apiUrl}}/riot/valorant/skins/70c97fb2-4d79-d4bb-5173-a1888cd4bfd9?accountId=1"
+  params:
+    - name: accountId
+      value: "1"
+      type: query
   auth: inherit
 
 settings:

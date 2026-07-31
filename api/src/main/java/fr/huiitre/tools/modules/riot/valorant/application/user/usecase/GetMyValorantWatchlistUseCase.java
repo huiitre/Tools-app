@@ -5,6 +5,7 @@ import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.ports.AuthenticatedUserProvider;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantAuthRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.util.Optional;
 public class GetMyValorantWatchlistUseCase implements SecuredUseCase {
 
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final ValorantAuthRepository valorantAuthRepository;
     private final ValorantSkinRepository skinRepository;
 
     @Override
@@ -29,13 +31,17 @@ public class GetMyValorantWatchlistUseCase implements SecuredUseCase {
 
     public GetMyValorantWatchlistUseCase(
             AuthenticatedUserProvider authenticatedUserProvider,
+            ValorantAuthRepository valorantAuthRepository,
             ValorantSkinRepository skinRepository) {
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.valorantAuthRepository = valorantAuthRepository;
         this.skinRepository = skinRepository;
     }
 
-    public List<ValorantSkinView> execute() {
-        Long userId = authenticatedUserProvider.getUserId();
-        return skinRepository.findAllWatchedByUserId(userId);
+    public List<ValorantSkinView> execute(Long accountId) {
+        if (!valorantAuthRepository.existsByIdAndUserId(accountId, authenticatedUserProvider.getUserId())) {
+            throw new IllegalArgumentException("VALORANT_ACCOUNT_NOT_FOUND");
+        }
+        return skinRepository.findAllWatchedByAccountId(accountId);
     }
 }

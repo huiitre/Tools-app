@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import fr.huiitre.tools.modules.core.common.api.RequiredRole;
@@ -42,31 +43,31 @@ public class ValorantSkinController {
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping("/skins")
-    public List<ValorantSkinView> listSkins() {
-        return listValorantSkinsUseCase.execute();
+    public List<ValorantSkinView> listSkins(@RequestParam(required = false) Long accountId) {
+        return listValorantSkinsUseCase.execute(accountId);
     }
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping("/skins/{id}")
-    public ValorantSkinView getSkin(@PathVariable Long id) {
-        return getSkinUseCase.execute(id);
+    public ValorantSkinView getSkin(@PathVariable Long id, @RequestParam(required = false) Long accountId) {
+        return getSkinUseCase.execute(id, accountId);
     }
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping("/skins/by-asset/{assetId}")
-    public ValorantSkinView getSkinByAssetId(@PathVariable UUID assetId) {
-        return getSkinByAssetIdUseCase.execute(assetId);
+    public ValorantSkinView getSkinByAssetId(@PathVariable UUID assetId, @RequestParam(required = false) Long accountId) {
+        return getSkinByAssetIdUseCase.execute(assetId, accountId);
     }
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping("/skins/by-level/{levelAssetId}")
-    public ValorantSkinView getSkinByLevel(@PathVariable UUID levelAssetId) {
-        return getSkinByLevelUseCase.execute(levelAssetId);
+    public ValorantSkinView getSkinByLevel(@PathVariable UUID levelAssetId, @RequestParam(required = false) Long accountId) {
+        return getSkinByLevelUseCase.execute(levelAssetId, accountId);
     }
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping("/skins/by-theme/{themeUuid}")
-    public List<ValorantSkinView> listSkinsByTheme(@PathVariable UUID themeUuid) {
-        return listSkinsByThemeUseCase.execute(themeUuid);
+    public List<ValorantSkinView> listSkinsByTheme(@PathVariable UUID themeUuid, @RequestParam(required = false) Long accountId) {
+        return listSkinsByThemeUseCase.execute(themeUuid, accountId);
     }
 }

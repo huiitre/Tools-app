@@ -5,7 +5,11 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/riot/valorant/store-history"
+  url: "{{apiUrl}}/riot/valorant/store-history?accountId=1"
+  params:
+    - name: accountId
+      value: "1"
+      type: query
   auth: inherit
 
 settings:

@@ -5,11 +5,15 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/riot/valorant/store"
+  url: "{{apiUrl}}/riot/valorant/store?accountId=1"
   headers:
     - name: X-Riot-Token
       value: "{{riotAccessToken}}"
-      description: "Optionnel : utilise le token en mémoire du front. Si absent, l'API utilise le refresh token en base."
+      description: "Optionnel : si fourni, mode manuel (pas de compte lié requis). Sinon, accountId est obligatoire et utilise le refresh token stocké pour ce compte."
+  params:
+    - name: accountId
+      value: "1"
+      type: query
   auth: inherit
 
 settings:

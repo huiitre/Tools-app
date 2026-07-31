@@ -28,7 +28,7 @@ public class ValorantWatchlistScheduler {
     @Scheduled(cron = "0 0 6 * * *")
     public void runDailyValorantSync() {
         log.info("Executing daily Valorant Watchlist & History sync...");
-        watchlistNotifier.processAllUsers();
+        watchlistNotifier.processAllAccounts();
         log.info("Daily Valorant sync completed.");
     }
 }

@@ -1,17 +1,18 @@
 info:
-  name: Refresh token
+  name: Link account
   type: http
-  seq: 8
+  seq: 1
 
 http:
   method: POST
-  url: "{{apiUrl}}/riot/valorant/refresh-token"
+  url: "{{apiUrl}}/riot/valorant/accounts"
   body:
     type: json
     data: |-
       {
           "refreshToken": "eyJlbmMiOiJBMTI4Q0JDLUhTMjU2IiwiYWxnIjoiZGlyIn0..Meu90L2UGAa7KsObSz8yPg.9XMZfmtXInD_m9K6kHhuTmo_yLqkZOu6bYEftV8E8AR8TSBmSTTCeNvO3lO7tsgV7zsjlqoYeEeu5d7lV-sxRa-w85FsBPMtm3kRHPLJ0eECEk4HJkS4iyS0LxcEosakTjDNhvSGzQAbwMe-tVKZPozxzIyW85mIoSSm2FxqIu1dZsOQX4vp16z00vUadEfbYPJDYfq-s47Pd5-p5a6qzwMwckwzUk4rbvlVzhYlCKix_gwEXy4PizmolOn1WdXnRXpe9L6okKyFPEG4ZB9pWCLvUomZ1rzuCqMO68xfhbvSG0rlzjnVj_BQ1pMRVsHiaJkJtsG_7oo0l_73odLIi3GHzax9n1Db90WGBSVyKVl9gmqIluIgxdhGH33QCRukEnuMxVsvo7EeVtStvmmoybZUuT0qo5diVAx1dHI0ZH6L2kXovbbtmSSISaU7QLz-eYwAnRbaaiwj5cqWnZFKK8LVPAN4rTGkIgSCyiejU-CevJgSU74MXxe4XBDCeIbfnp0V4mdFVcBjuwQmMwtR6jOgudMubNprYhU7FvnpS1FbL6yTM7egBCUI-CXITjHw9Te0vS5D7QHXNgEN2dTdOPoM5XH6tIefko8djDi3BGblBShxqQdKKv8EfQgIsJaQb7kEmYp_WzA2uo1I4pyoXxUJ0G8S3YM3ixWHj-GlmyCMfsjILpOZsfx5h0Mx1FjredsMZvJmPV6c3Xvfb_nSzNHjws-PU9P2B49iq6aFt3EUrL7uAs8YeS75E_fje6iO4IVkca7Jx7ZDyaIp1z_m0XWn38CLqdMeReNZ5Q7s2zWu0guUULIawL1WfGNDlgosy_dX-A4ZcvoHxLrxovBpVO6Hl59t_apEbfjHj9y4Yat_aGb7fcTLKFpZ6Pfd3qF8hYqfKEWrs1mehlDtEAm75iF23xCj812_8DBeEhCN7EuogWZEROj_dBsm0ItSE7EXfqvOfEg3qWLVv78iDSKEzYL6Ow0-rSF3GI-tjl9zdAeKZJuxFVCmXVZ6MwJXeRTxYDFsIvuwQUJXL6pGwywLpWWa95HGKd-CzhjbJY6NwIU.YuyqoMqj8hlajGHYqua7Pg",
-          "region": "eu"
+          "region": "eu",
+          "label": "Main"
       }
   auth: inherit
 
@@ -20,3 +21,7 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: |-
+  Lie un nouveau compte Valorant au compte Tools courant (upsert sur user_id + puuid).
+  Réponse : { account: { id, puuid, region, gameName, tagLine, label }, accessToken }

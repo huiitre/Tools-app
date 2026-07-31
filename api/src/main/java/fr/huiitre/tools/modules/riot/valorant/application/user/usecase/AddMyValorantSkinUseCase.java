@@ -4,6 +4,7 @@ import fr.huiitre.tools.modules.core.module.domain.ModuleCode;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.ports.AuthenticatedUserProvider;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantAuthRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.user.command.AddUserSkinCommand;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantUserSkinRepository;
@@ -18,6 +19,7 @@ import java.util.Optional;
 public class AddMyValorantSkinUseCase implements SecuredUseCase {
 
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final ValorantAuthRepository valorantAuthRepository;
     private final ValorantSkinRepository skinRepository;
     private final ValorantUserSkinRepository userSkinRepository;
 
@@ -33,23 +35,29 @@ public class AddMyValorantSkinUseCase implements SecuredUseCase {
 
     public AddMyValorantSkinUseCase(
             AuthenticatedUserProvider authenticatedUserProvider,
+            ValorantAuthRepository valorantAuthRepository,
             ValorantSkinRepository skinRepository,
             ValorantUserSkinRepository userSkinRepository) {
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.valorantAuthRepository = valorantAuthRepository;
         this.skinRepository = skinRepository;
         this.userSkinRepository = userSkinRepository;
     }
 
     public ValorantSkinView execute(AddUserSkinCommand command) {
         Long userId = authenticatedUserProvider.getUserId();
+        Long accountId = command.getAccountId();
 
-        if (userSkinRepository.existsByUserIdAndSkinId(userId, command.getSkinId())) {
+        if (!valorantAuthRepository.existsByIdAndUserId(accountId, userId)) {
+            throw new IllegalArgumentException("VALORANT_ACCOUNT_NOT_FOUND");
+        }
+        if (userSkinRepository.existsByAccountIdAndSkinId(accountId, command.getSkinId())) {
             throw new IllegalArgumentException("SKIN_ALREADY_OWNED");
         }
 
-        userSkinRepository.add(userId, command.getSkinId());
-        
-        return skinRepository.findById(command.getSkinId(), userId)
+        userSkinRepository.add(accountId, command.getSkinId());
+
+        return skinRepository.findById(command.getSkinId(), accountId)
                 .orElseThrow(() -> new IllegalArgumentException("SKIN_NOT_FOUND"));
     }
 }

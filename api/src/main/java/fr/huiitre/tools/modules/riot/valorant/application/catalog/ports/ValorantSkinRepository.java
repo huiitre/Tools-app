@@ -8,19 +8,19 @@ import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkin
 
 public interface ValorantSkinRepository {
 
-    List<ValorantSkinView> findAll(Long userId);
+    List<ValorantSkinView> findAll(Long accountId);
 
-    Optional<ValorantSkinView> findById(Long id, Long userId);
+    Optional<ValorantSkinView> findById(Long id, Long accountId);
 
-    Optional<ValorantSkinView> findByLevelAssetId(UUID levelAssetId, Long userId);
+    Optional<ValorantSkinView> findByLevelAssetId(UUID levelAssetId, Long accountId);
 
-    Optional<ValorantSkinView> findByAssetId(UUID assetId, Long userId);
+    Optional<ValorantSkinView> findByAssetId(UUID assetId, Long accountId);
 
-    List<ValorantSkinView> findAllByWeaponId(Long weaponId, Long userId);
+    List<ValorantSkinView> findAllByWeaponId(Long weaponId, Long accountId);
 
-    List<ValorantSkinView> findAllByTierUuid(UUID tierUuid, Long userId);
+    List<ValorantSkinView> findAllByTierUuid(UUID tierUuid, Long accountId);
 
-    List<ValorantSkinView> findAllOwnedByUserId(Long userId);
+    List<ValorantSkinView> findAllOwnedByAccountId(Long accountId);
 
-    List<ValorantSkinView> findAllWatchedByUserId(Long userId);
+    List<ValorantSkinView> findAllWatchedByAccountId(Long accountId);
 }

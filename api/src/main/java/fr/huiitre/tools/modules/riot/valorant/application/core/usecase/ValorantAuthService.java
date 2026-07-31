@@ -5,7 +5,7 @@ import fr.huiitre.tools.modules.riot.valorant.application.core.ports.RiotAuthPor
 import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantAuthRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Service
 public class ValorantAuthService {
@@ -22,9 +22,9 @@ public class ValorantAuthService {
         this.encryptionService = encryptionService;
     }
 
-    public String getOrRefreshAccessToken(Long userId) {
+    public String getOrRefreshAccessToken(Long accountId) {
         // 1. Récupération des données chiffrées en base
-        ValorantAuthRepository.ValorantAuthData authData = valorantAuthRepository.findByUserId(userId)
+        ValorantAuthRepository.ValorantAuthData authData = valorantAuthRepository.findById(accountId)
                 .orElseThrow(() -> new IllegalArgumentException("RIOT_AUTH_NOT_FOUND"));
 
         // 2. Déchiffrement du Refresh Token
@@ -34,14 +34,17 @@ public class ValorantAuthService {
             // 3. Appel Riot pour un nouvel Access Token
             RiotAuthPort.ValorantAuthResponse riotResponse = riotAuthPort.refresh(refreshToken);
 
-            // 4. Mise à jour du nouveau Refresh Token (Rotation)
+            // 4. Mise à jour du nouveau Refresh Token (Rotation) - pas de changement de pseudo à ce stade
             String newIv = encryptionService.generateIv();
             String newEncryptedRefresh = encryptionService.encrypt(riotResponse.refreshToken(), newIv);
 
             valorantAuthRepository.save(
-                    userId,
+                    authData.userId(),
                     riotResponse.puuid(),
                     authData.region(),
+                    null,
+                    null,
+                    null,
                     newEncryptedRefresh,
                     newIv,
                     riotResponse.refreshTokenExpiresAt()
@@ -52,15 +55,15 @@ public class ValorantAuthService {
         } catch (IllegalArgumentException e) {
             // Si le refresh token est invalide (périmé chez Riot), on nettoie la base
             if ("RIOT_TOKEN_INVALID".equals(e.getMessage())) {
-                valorantAuthRepository.deleteByUserId(userId);
+                valorantAuthRepository.deleteById(accountId);
             }
             throw e;
         }
     }
 
-    public void saveAuthData(Long userId, String puuid, String region, String refreshToken, java.time.LocalDateTime expiresAt) {
+    public long saveAuthData(Long userId, String puuid, String region, String gameName, String tagLine, String label, String refreshToken, LocalDateTime expiresAt) {
         String iv = encryptionService.generateIv();
         String encryptedRefresh = encryptionService.encrypt(refreshToken, iv);
-        valorantAuthRepository.save(userId, puuid, region, encryptedRefresh, iv, expiresAt);
+        return valorantAuthRepository.save(userId, puuid, region, gameName, tagLine, label, encryptedRefresh, iv, expiresAt);
     }
 }

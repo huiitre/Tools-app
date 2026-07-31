@@ -1,14 +1,11 @@
 info:
-  name: Refresh
+  name: List accounts
   type: http
-  seq: 10
+  seq: 2
 
 http:
   method: GET
-  url: "{{apiUrl}}/riot/valorant/refresh"
-  body:
-    type: json
-    data: ""
+  url: "{{apiUrl}}/riot/valorant/accounts"
   auth: inherit
 
 settings:
@@ -16,3 +13,5 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: Liste les comptes Valorant liés au compte Tools courant.

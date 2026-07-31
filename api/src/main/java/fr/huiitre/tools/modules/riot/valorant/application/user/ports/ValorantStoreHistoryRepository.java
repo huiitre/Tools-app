@@ -5,8 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface ValorantStoreHistoryRepository {
-    Map<LocalDate, List<Long>> findAllRawByUserId(Long userId);
-    Long add(Long userId, Long skinId, LocalDate seenAt);
-    boolean existsByUserIdAndSkinIdAndDate(Long userId, Long skinId, LocalDate seenAt);
+    Map<LocalDate, List<Long>> findAllRawByAccountId(Long accountId);
+    Long add(Long accountId, Long skinId, LocalDate seenAt);
+    boolean existsByAccountIdAndSkinIdAndDate(Long accountId, Long skinId, LocalDate seenAt);
 }
-

@@ -5,22 +5,20 @@ import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.ports.AuthenticatedUserProvider;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantAuthRepository;
-import fr.huiitre.tools.modules.riot.valorant.application.core.view.ValorantTokenView;
+import fr.huiitre.tools.modules.riot.valorant.application.core.view.ValorantAccountView;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
-public class GetValorantAccessTokenUseCase implements SecuredUseCase {
+public class ListValorantAccountsUseCase implements SecuredUseCase {
 
-    private final ValorantAuthService valorantAuthService;
     private final ValorantAuthRepository valorantAuthRepository;
     private final AuthenticatedUserProvider authenticatedUserProvider;
 
-    public GetValorantAccessTokenUseCase(ValorantAuthService valorantAuthService,
-                                         ValorantAuthRepository valorantAuthRepository,
-                                         AuthenticatedUserProvider authenticatedUserProvider) {
-        this.valorantAuthService = valorantAuthService;
+    public ListValorantAccountsUseCase(ValorantAuthRepository valorantAuthRepository,
+                                        AuthenticatedUserProvider authenticatedUserProvider) {
         this.valorantAuthRepository = valorantAuthRepository;
         this.authenticatedUserProvider = authenticatedUserProvider;
     }
@@ -35,12 +33,10 @@ public class GetValorantAccessTokenUseCase implements SecuredUseCase {
         return RoleCode.READ_ONLY;
     }
 
-    public ValorantTokenView execute(Long accountId) {
+    public List<ValorantAccountView> execute() {
         Long userId = authenticatedUserProvider.getUserId();
-        if (!valorantAuthRepository.existsByIdAndUserId(accountId, userId)) {
-            throw new IllegalArgumentException("VALORANT_ACCOUNT_NOT_FOUND");
-        }
-        String accessToken = valorantAuthService.getOrRefreshAccessToken(accountId);
-        return new ValorantTokenView(accessToken);
+        return valorantAuthRepository.findAllByUserId(userId).stream()
+                .map(a -> new ValorantAccountView(a.id(), a.puuid(), a.region(), a.gameName(), a.tagLine(), a.label()))
+                .toList();
     }
 }

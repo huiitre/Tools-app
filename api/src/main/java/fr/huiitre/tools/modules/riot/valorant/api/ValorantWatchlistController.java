@@ -35,8 +35,8 @@ public class ValorantWatchlistController {
 
     @RequiredRole(RoleCode.READ_ONLY)
     @GetMapping
-    public List<ValorantSkinView> getMyWatchlist() {
-        return getMyWatchlistUseCase.execute();
+    public List<ValorantSkinView> getMyWatchlist(@RequestParam Long accountId) {
+        return getMyWatchlistUseCase.execute(accountId);
     }
 
     @RequiredRole(RoleCode.USER)
@@ -49,14 +49,14 @@ public class ValorantWatchlistController {
     @RequiredRole(RoleCode.USER)
     @DeleteMapping("/{skinId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeFromWatchlist(@PathVariable Long skinId) {
-        removeSkinFromWatchlistUseCase.execute(skinId);
+    public void removeFromWatchlist(@PathVariable Long skinId, @RequestParam Long accountId) {
+        removeSkinFromWatchlistUseCase.execute(skinId, accountId);
     }
 
     @RequiredRole(RoleCode.ADMIN)
     @PostMapping("/admin/sync")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void triggerSync() {
-        watchlistNotifier.processAllUsers();
+        watchlistNotifier.processAllAccounts();
     }
 }

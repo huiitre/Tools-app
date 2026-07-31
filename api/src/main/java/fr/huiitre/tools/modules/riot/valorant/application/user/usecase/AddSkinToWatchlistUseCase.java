@@ -4,6 +4,7 @@ import fr.huiitre.tools.modules.core.module.domain.ModuleCode;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.ports.AuthenticatedUserProvider;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
+import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantAuthRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.user.command.AddToWatchlistCommand;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantWatchlistRepository;
@@ -18,6 +19,7 @@ import java.util.Optional;
 public class AddSkinToWatchlistUseCase implements SecuredUseCase {
 
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final ValorantAuthRepository valorantAuthRepository;
     private final ValorantSkinRepository skinRepository;
     private final ValorantWatchlistRepository watchlistRepository;
 
@@ -33,23 +35,27 @@ public class AddSkinToWatchlistUseCase implements SecuredUseCase {
 
     public AddSkinToWatchlistUseCase(
             AuthenticatedUserProvider authenticatedUserProvider,
+            ValorantAuthRepository valorantAuthRepository,
             ValorantSkinRepository skinRepository,
             ValorantWatchlistRepository watchlistRepository) {
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.valorantAuthRepository = valorantAuthRepository;
         this.skinRepository = skinRepository;
         this.watchlistRepository = watchlistRepository;
     }
 
     public ValorantSkinView execute(AddToWatchlistCommand command) {
-        Long userId = authenticatedUserProvider.getUserId();
-
-        if (watchlistRepository.existsByUserIdAndSkinId(userId, command.getSkinId())) {
+        Long accountId = command.getAccountId();
+        if (!valorantAuthRepository.existsByIdAndUserId(accountId, authenticatedUserProvider.getUserId())) {
+            throw new IllegalArgumentException("VALORANT_ACCOUNT_NOT_FOUND");
+        }
+        if (watchlistRepository.existsByAccountIdAndSkinId(accountId, command.getSkinId())) {
             throw new IllegalArgumentException("SKIN_ALREADY_IN_WATCHLIST");
         }
 
-        watchlistRepository.add(userId, command.getSkinId());
-        
-        return skinRepository.findById(command.getSkinId(), userId)
+        watchlistRepository.add(accountId, command.getSkinId());
+
+        return skinRepository.findById(command.getSkinId(), accountId)
                 .orElseThrow(() -> new IllegalArgumentException("SKIN_NOT_FOUND"));
     }
 }

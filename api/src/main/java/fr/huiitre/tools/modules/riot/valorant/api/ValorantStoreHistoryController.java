@@ -24,8 +24,8 @@ public class ValorantStoreHistoryController {
     }
 
     @GetMapping
-    public List<ValorantStoreHistoryView> getMyStoreHistory() {
-        return getMyValorantStoreHistoryUseCase.execute();
+    public List<ValorantStoreHistoryView> getMyStoreHistory(@RequestParam Long accountId) {
+        return getMyValorantStoreHistoryUseCase.execute(accountId);
     }
 
     @PostMapping

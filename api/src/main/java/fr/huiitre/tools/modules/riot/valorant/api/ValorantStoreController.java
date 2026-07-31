@@ -18,8 +18,9 @@ public class ValorantStoreController {
 
     @RequiredRole(RoleCode.USER)
     @GetMapping("/store")
-    public ValorantStoreView getStore(@RequestHeader(value = "X-Riot-Token", required = false) String accessToken,
+    public ValorantStoreView getStore(@RequestParam(required = false) Long accountId,
+                                      @RequestHeader(value = "X-Riot-Token", required = false) String accessToken,
                                       @RequestParam(required = false) String region) {
-        return getValorantStoreUseCase.execute(accessToken, region);
+        return getValorantStoreUseCase.execute(accountId, accessToken, region);
     }
 }

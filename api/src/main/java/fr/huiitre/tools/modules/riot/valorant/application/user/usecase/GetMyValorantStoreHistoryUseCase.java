@@ -5,6 +5,7 @@ import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.ports.AuthenticatedUserProvider;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
+import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantAuthRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.user.ports.ValorantStoreHistoryRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.user.view.ValorantStoreHistoryView;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 public class GetMyValorantStoreHistoryUseCase implements SecuredUseCase {
 
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final ValorantAuthRepository valorantAuthRepository;
     private final ValorantStoreHistoryRepository storeHistoryRepository;
     private final ValorantSkinRepository skinRepository;
 
@@ -32,20 +34,24 @@ public class GetMyValorantStoreHistoryUseCase implements SecuredUseCase {
 
     public GetMyValorantStoreHistoryUseCase(
             AuthenticatedUserProvider authenticatedUserProvider,
+            ValorantAuthRepository valorantAuthRepository,
             ValorantStoreHistoryRepository storeHistoryRepository,
             ValorantSkinRepository skinRepository) {
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.valorantAuthRepository = valorantAuthRepository;
         this.storeHistoryRepository = storeHistoryRepository;
         this.skinRepository = skinRepository;
     }
 
-    public List<ValorantStoreHistoryView> execute() {
-        Long userId = authenticatedUserProvider.getUserId();
-        return storeHistoryRepository.findAllRawByUserId(userId).entrySet().stream()
+    public List<ValorantStoreHistoryView> execute(Long accountId) {
+        if (!valorantAuthRepository.existsByIdAndUserId(accountId, authenticatedUserProvider.getUserId())) {
+            throw new IllegalArgumentException("VALORANT_ACCOUNT_NOT_FOUND");
+        }
+        return storeHistoryRepository.findAllRawByAccountId(accountId).entrySet().stream()
                 .map(entry -> new ValorantStoreHistoryView(
                         entry.getKey(),
                         entry.getValue().stream()
-                                .map(skinId -> skinRepository.findById(skinId, userId))
+                                .map(skinId -> skinRepository.findById(skinId, accountId))
                                 .filter(Optional::isPresent)
                                 .map(Optional::get)
                                 .collect(Collectors.toList())

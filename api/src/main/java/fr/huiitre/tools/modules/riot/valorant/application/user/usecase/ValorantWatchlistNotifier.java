@@ -2,11 +2,9 @@ package fr.huiitre.tools.modules.riot.valorant.application.user.usecase;
 
 import fr.huiitre.tools.modules.core.notification.application.event.NotificationEvent;
 import fr.huiitre.tools.modules.core.notification.domain.entity.NotificationType;
-import fr.huiitre.tools.modules.core.user.application.ports.UserRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantSkinRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.catalog.ports.ValorantStorePort;
 import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantVersionProvider;
-import fr.huiitre.tools.modules.riot.valorant.application.catalog.view.ValorantStoreOffer;
 import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantAuthRepository;
 import fr.huiitre.tools.modules.riot.valorant.application.core.usecase.ValorantAuthService;
 import fr.huiitre.tools.modules.riot.valorant.application.skin.view.ValorantSkinView;
@@ -54,26 +52,26 @@ public class ValorantWatchlistNotifier {
         this.eventPublisher = eventPublisher;
     }
 
-    public void processAllUsers() {
-        // On récupère uniquement ceux qui ont des credentials Valorant persistés
-        List<Long> userIds = valorantAuthRepository.findAllUserIds();
-        log.info("Starting Valorant Watchlist & History sync for {} users", userIds.size());
+    public void processAllAccounts() {
+        // On récupère uniquement les comptes Valorant liés avec des credentials persistés
+        List<Long> accountIds = valorantAuthRepository.findAllAccountIds();
+        log.info("Starting Valorant Watchlist & History sync for {} accounts", accountIds.size());
 
-        for (Long userId : userIds) {
+        for (Long accountId : accountIds) {
             try {
-                processUser(userId);
+                processAccount(accountId);
             } catch (Exception e) {
-                log.error("Error processing Valorant sync for user {}: {}", userId, e.getMessage());
+                log.error("Error processing Valorant sync for account {}: {}", accountId, e.getMessage());
             }
         }
     }
 
-    private void processUser(Long userId) {
-        Optional<ValorantAuthRepository.ValorantAuthData> authDataOpt = valorantAuthRepository.findByUserId(userId);
+    private void processAccount(Long accountId) {
+        Optional<ValorantAuthRepository.ValorantAuthData> authDataOpt = valorantAuthRepository.findById(accountId);
         if (authDataOpt.isEmpty()) return;
 
         ValorantAuthRepository.ValorantAuthData authData = authDataOpt.get();
-        String accessToken = valorantAuthService.getOrRefreshAccessToken(userId);
+        String accessToken = valorantAuthService.getOrRefreshAccessToken(accountId);
         String entitlementsToken = valorantStorePort.fetchEntitlementsToken(accessToken);
         String clientVersion = versionProvider.getVersion().get("riotClientVersion").toString();
 
@@ -86,23 +84,23 @@ public class ValorantWatchlistNotifier {
         List<Long> skinDbIds = new ArrayList<>();
 
         for (ValorantStorePort.RawOffer offer : raw.singleItemOffers()) {
-            skinRepository.findByLevelAssetId(UUID.fromString(offer.itemId()), userId)
+            skinRepository.findByLevelAssetId(UUID.fromString(offer.itemId()), accountId)
                     .ifPresent(skin -> {
                         skinDbIds.add(skin.id());
-                        if (!storeHistoryRepository.existsByUserIdAndSkinIdAndDate(userId, skin.id(), shopDate)) {
-                            storeHistoryRepository.add(userId, skin.id(), shopDate);
+                        if (!storeHistoryRepository.existsByAccountIdAndSkinIdAndDate(accountId, skin.id(), shopDate)) {
+                            storeHistoryRepository.add(accountId, skin.id(), shopDate);
                         }
                     });
         }
 
         // 2. Vérification Watchlist & Notification
-        List<ValorantSkinView> watchlist = skinRepository.findAllWatchedByUserId(userId);
+        List<ValorantSkinView> watchlist = skinRepository.findAllWatchedByAccountId(accountId);
         List<ValorantSkinView> matches = watchlist.stream()
                 .filter(w -> skinDbIds.contains(w.id()))
                 .collect(Collectors.toList());
 
         if (!matches.isEmpty()) {
-            sendNotification(userId, matches);
+            sendNotification(authData.userId(), accountId, matches);
         }
     }
 
@@ -116,10 +114,17 @@ public class ValorantWatchlistNotifier {
                 .toLocalDate();
     }
 
-    private void sendNotification(Long userId, List<ValorantSkinView> matches) {
-        String title = "Valorant Shop - Skins disponibles !";
+    private void sendNotification(long userId, Long accountId, List<ValorantSkinView> matches) {
+        String accountLabel = valorantAuthRepository.findAllByUserId(userId).stream()
+                .filter(a -> a.id() == accountId)
+                .findFirst()
+                .map(a -> a.label() != null ? a.label() : (a.gameName() != null ? a.gameName() + "#" + a.tagLine() : null))
+                .orElse(null);
+        String accountSuffix = accountLabel != null ? " (" + accountLabel + ")" : "";
+
+        String title = "Valorant Shop - Skins disponibles !" + accountSuffix;
         String body;
-        
+
         if (matches.size() == 1) {
             body = "Le skin \"" + matches.get(0).name() + "\" est disponible dans ta boutique !";
         } else {

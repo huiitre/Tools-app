@@ -36,8 +36,8 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
                    ct.highlight_color AS ct_highlight_color, ct.display_icon_url AS ct_display_icon_url
             FROM tools_riot.valorant_weapon_skins s
             LEFT JOIN tools_riot.valorant_skin_levels l ON l.skin_id = s.id
-            LEFT JOIN tools_riot.valorant_user_skins us ON us.skin_id = s.id AND us.user_id = ?
-            LEFT JOIN tools_riot.valorant_skin_watchlist w ON w.skin_id = s.id AND w.user_id = ?
+            LEFT JOIN tools_riot.valorant_user_skins us ON us.skin_id = s.id AND us.valorant_account_id = ?
+            LEFT JOIN tools_riot.valorant_skin_watchlist w ON w.skin_id = s.id AND w.valorant_account_id = ?
             LEFT JOIN tools_riot.valorant_content_tiers ct ON ct.asset_id = s.content_tier_uuid
             """;
 
@@ -49,54 +49,54 @@ public class PostgresValorantSkinRepository implements ValorantSkinRepository {
             """;
 
     @Override
-    public List<ValorantSkinView> findAll(Long userId) {
+    public List<ValorantSkinView> findAll(Long accountId) {
         final String sql = SELECT_WITH_LEVELS + " ORDER BY s.name, l.level_index";
-        return buildMany(sql, userId, userId);
+        return buildMany(sql, accountId, accountId);
     }
 
     @Override
-    public Optional<ValorantSkinView> findById(Long id, Long userId) {
+    public Optional<ValorantSkinView> findById(Long id, Long accountId) {
         final String sql = SELECT_WITH_LEVELS + " WHERE s.id = ? ORDER BY l.level_index";
-        return buildSingle(sql, userId, userId, id);
+        return buildSingle(sql, accountId, accountId, id);
     }
 
     @Override
-    public Optional<ValorantSkinView> findByAssetId(UUID assetId, Long userId) {
+    public Optional<ValorantSkinView> findByAssetId(UUID assetId, Long accountId) {
         final String sql = SELECT_WITH_LEVELS + " WHERE s.asset_id = ? ORDER BY l.level_index";
-        return buildSingle(sql, userId, userId, assetId);
+        return buildSingle(sql, accountId, accountId, assetId);
     }
 
     @Override
-    public Optional<ValorantSkinView> findByLevelAssetId(UUID levelAssetId, Long userId) {
+    public Optional<ValorantSkinView> findByLevelAssetId(UUID levelAssetId, Long accountId) {
         final String sql = SELECT_WITH_LEVELS + """
                  WHERE s.id = (SELECT skin_id FROM tools_riot.valorant_skin_levels WHERE asset_id = ?)
                  ORDER BY l.level_index
                 """;
-        return buildSingle(sql, userId, userId, levelAssetId);
+        return buildSingle(sql, accountId, accountId, levelAssetId);
     }
 
     @Override
-    public List<ValorantSkinView> findAllByWeaponId(Long weaponId, Long userId) {
+    public List<ValorantSkinView> findAllByWeaponId(Long weaponId, Long accountId) {
         final String sql = SELECT_WITH_LEVELS + " WHERE s.weapon_id = ? ORDER BY s.name, l.level_index";
-        return buildMany(sql, userId, userId, weaponId);
+        return buildMany(sql, accountId, accountId, weaponId);
     }
 
     @Override
-    public List<ValorantSkinView> findAllByTierUuid(UUID tierUuid, Long userId) {
+    public List<ValorantSkinView> findAllByTierUuid(UUID tierUuid, Long accountId) {
         final String sql = SELECT_WITH_LEVELS + " WHERE s.tier_uuid = ? ORDER BY s.name, l.level_index";
-        return buildMany(sql, userId, userId, tierUuid);
+        return buildMany(sql, accountId, accountId, tierUuid);
     }
 
     @Override
-    public List<ValorantSkinView> findAllOwnedByUserId(Long userId) {
+    public List<ValorantSkinView> findAllOwnedByAccountId(Long accountId) {
         final String sql = SELECT_WITH_LEVELS + " WHERE us.id IS NOT NULL ORDER BY s.name, l.level_index";
-        return buildMany(sql, userId, userId);
+        return buildMany(sql, accountId, accountId);
     }
 
     @Override
-    public List<ValorantSkinView> findAllWatchedByUserId(Long userId) {
+    public List<ValorantSkinView> findAllWatchedByAccountId(Long accountId) {
         final String sql = SELECT_WITH_LEVELS + " WHERE w.id IS NOT NULL ORDER BY s.name, l.level_index";
-        return buildMany(sql, userId, userId);
+        return buildMany(sql, accountId, accountId);
     }
 
     private List<ValorantSkinView> buildMany(String sql, Object... params) {
