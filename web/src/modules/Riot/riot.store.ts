@@ -34,6 +34,9 @@ export const useRiotStore = defineStore('riot', () => {
 
   function clearAll() {
     accessToken.value = null
+    ownedSkins.value = []
+    watchedSkins.value = []
+    storeHistory.value = []
     // On garde la région en mémoire pour le confort
   }
 
