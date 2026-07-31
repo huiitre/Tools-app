@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRiotStore, type RiotRegion } from '@/modules/Riot/riot.store'
-import type { AuthMode } from '../composables/useValorantShop'
 
 const props = defineProps<{
   error: string | null
@@ -9,35 +8,19 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  submit: [{ token: string; region: RiotRegion; mode: AuthMode }]
+  submit: [{ token: string; region: RiotRegion }]
 }>()
 
 const riotStore = useRiotStore()
 
-const authMode = ref<AuthMode>('access')
 const tokenInput = ref('')
 const showToken = ref(false)
 const selectedRegion = ref<RiotRegion>(riotStore.region)
 
-function getTokenLabel() {
-  return authMode.value === 'access' ? 'Access Token' : 'Refresh Token'
-}
-
-function getTokenPlaceholder() {
-  return authMode.value === 'access'
-    ? 'Collez votre __Secure-access_token ici...'
-    : 'Collez votre __Secure-refresh_token ici...'
-}
-
 function onSubmit() {
   const token = tokenInput.value.trim()
   if (!token) return
-  emit('submit', { token, region: selectedRegion.value, mode: authMode.value })
-}
-
-function switchMode(mode: AuthMode) {
-  authMode.value = mode
-  tokenInput.value = ''
+  emit('submit', { token, region: selectedRegion.value })
 }
 </script>
 
@@ -46,7 +29,7 @@ function switchMode(mode: AuthMode) {
     <div class="auth-header">
       <i class="mdi mdi-crosshairs auth-icon" />
       <div>
-        <h3 class="auth-title">Valorant Daily Shop</h3>
+        <h3 class="auth-title">Lier un compte Valorant</h3>
         <p class="auth-subtitle">Consultez votre boutique sans ouvrir le jeu</p>
       </div>
     </div>
@@ -54,21 +37,6 @@ function switchMode(mode: AuthMode) {
     <div v-if="props.error" class="error-banner" role="alert">
       <i class="mdi mdi-alert-circle-outline" />
       {{ props.error }}
-    </div>
-
-    <div class="auth-mode-switch">
-      <button
-        :class="['mode-btn', { active: authMode === 'access' }]"
-        @click="switchMode('access')"
-      >
-        Access Token
-      </button>
-      <button
-        :class="['mode-btn', { active: authMode === 'refresh' }]"
-        @click="switchMode('refresh')"
-      >
-        Refresh Token
-      </button>
     </div>
 
     <label>
@@ -79,12 +47,12 @@ function switchMode(mode: AuthMode) {
     </label>
 
     <label>
-      {{ getTokenLabel() }}
+      Refresh Token
       <div class="token-input-wrap">
         <input
           :type="showToken ? 'text' : 'password'"
           v-model="tokenInput"
-          :placeholder="getTokenPlaceholder()"
+          placeholder="Collez votre __Secure-refresh_token ici..."
         />
         <button
           type="button"
@@ -97,43 +65,27 @@ function switchMode(mode: AuthMode) {
       </div>
     </label>
 
-    <p v-if="authMode === 'refresh'" class="help-note">
+    <p class="help-note">
       Une fois lié, votre compte sera automatiquement maintenu à jour par le serveur.
-    </p>
-    <p v-else class="help-note">
-      L'access token n'est pas persistant et expire après environ 1h.
     </p>
 
     <details>
       <summary>Comment récupérer mon token ?</summary>
       <div class="help-content">
-        <template v-if="authMode === 'access'">
-          <ol class="help-steps">
-            <li>Connectez-vous sur <a href="https://playvalorant.com" target="_blank" rel="noopener">playvalorant.com</a></li>
-            <li>Ouvrez les DevTools (F12) → onglet <strong>Application</strong></li>
-            <li>Dans le panneau gauche : <strong>Cookies</strong> → <code>https://playvalorant.com</code></li>
-            <li>Cherchez <code>__Secure-access_token</code> et copiez la colonne <strong>Value</strong></li>
-          </ol>
-          <p class="help-note" style="background: transparent; border-color: transparent; color: var(--pico-muted-color);">
-            Ces cookies sont HttpOnly — non lisibles via la console JS, utilisez uniquement l'onglet Application.
-          </p>
-        </template>
-        <template v-else>
-          <ol class="help-steps">
-            <li>Connectez-vous sur <a href="https://playvalorant.com" target="_blank" rel="noopener">playvalorant.com</a></li>
-            <li>Ouvrez les DevTools (F12) → onglet <strong>Application</strong></li>
-            <li>Dans le panneau gauche : <strong>Cookies</strong> → <code>https://playvalorant.com</code></li>
-            <li>Cherchez <code>__Secure-refresh_token</code> et copiez la colonne <strong>Value</strong></li>
-          </ol>
-          <p class="help-note" style="background: transparent; border-color: transparent; color: var(--pico-muted-color);">
-            Ces cookies sont HttpOnly — non lisibles via la console JS, utilisez uniquement l'onglet Application.
-          </p>
-        </template>
+        <ol class="help-steps">
+          <li>Connectez-vous sur <a href="https://playvalorant.com" target="_blank" rel="noopener">playvalorant.com</a></li>
+          <li>Ouvrez les DevTools (F12) → onglet <strong>Application</strong></li>
+          <li>Dans le panneau gauche : <strong>Cookies</strong> → <code>https://playvalorant.com</code></li>
+          <li>Cherchez <code>__Secure-refresh_token</code> et copiez la colonne <strong>Value</strong></li>
+        </ol>
+        <p class="help-note" style="background: transparent; border-color: transparent; color: var(--pico-muted-color);">
+          Ce cookie est HttpOnly — non lisible via la console JS, utilisez uniquement l'onglet Application.
+        </p>
       </div>
     </details>
 
     <button :disabled="!tokenInput.trim()" @click="onSubmit">
-      Afficher ma boutique
+      Lier ce compte
     </button>
   </div>
 </template>
@@ -173,39 +125,6 @@ function switchMode(mode: AuthMode) {
   margin: 0.2rem 0 0;
   font-size: 0.85rem;
   color: var(--pico-muted-color);
-}
-
-.auth-mode-switch {
-  display: flex;
-  background: var(--pico-muted-border-color);
-  border-radius: 8px;
-  padding: 3px;
-  gap: 3px;
-}
-
-.mode-btn {
-  flex: 1;
-  padding: 0.4rem 0.5rem;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  color: var(--pico-muted-color);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-  margin: 0;
-  width: auto;
-
-  &.active {
-    background: var(--pico-card-background-color);
-    color: var(--pico-color);
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-  }
-
-  &:not(.active):hover {
-    color: var(--pico-color);
-    background: transparent;
-  }
 }
 
 .error-banner {

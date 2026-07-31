@@ -10,6 +10,7 @@ public interface ValorantAuthRepository {
     List<ValorantAccountData> findAllByUserId(long userId);
     boolean existsByIdAndUserId(long accountId, long userId);
     boolean existsByUserIdAndPuuid(long userId, String puuid);
+    void updateLabel(long accountId, String label);
     void deleteById(long accountId);
     List<Long> findAllAccountIds();
 

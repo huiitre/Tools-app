@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import ValorantAccountSelect from '@/modules/Riot/valorant/components/ValorantAccountSelect.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -43,7 +44,9 @@ const goTo = (tabName: string) => {
       </li>
     </ul>
 
-    <div class="riot-nav-spacer" />
+    <div class="riot-nav-spacer riot-nav-spacer--right">
+      <ValorantAccountSelect />
+    </div>
   </nav>
 </template>
 
@@ -62,6 +65,12 @@ const goTo = (tabName: string) => {
 
 .riot-nav-spacer {
   flex: 1 0 0;
+}
+
+.riot-nav-spacer--right {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 0.75rem;
 }
 
 .riot-nav-list {

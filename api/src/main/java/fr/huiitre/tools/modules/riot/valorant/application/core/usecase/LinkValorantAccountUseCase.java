@@ -10,12 +10,16 @@ import fr.huiitre.tools.modules.riot.valorant.application.core.ports.RiotAuthPor
 import fr.huiitre.tools.modules.riot.valorant.application.core.ports.ValorantVersionProvider;
 import fr.huiitre.tools.modules.riot.valorant.application.core.view.ValorantAccountAuthView;
 import fr.huiitre.tools.modules.riot.valorant.application.core.view.ValorantAccountView;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
 public class LinkValorantAccountUseCase implements SecuredUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(LinkValorantAccountUseCase.class);
 
     private final RiotAuthPort riotAuthPort;
     private final ValorantStorePort valorantStorePort;
@@ -59,10 +63,7 @@ public class LinkValorantAccountUseCase implements SecuredUseCase {
         RiotAuthPort.ValorantAuthResponse riotResponse = riotAuthPort.refresh(command.refreshToken());
 
         // 2. Résolution du pseudo Riot ID (best-effort, ne bloque pas la liaison en cas d'échec)
-        String entitlementsToken = valorantStorePort.fetchEntitlementsToken(riotResponse.accessToken());
-        String clientVersion = versionProvider.getVersion().get("riotClientVersion").toString();
-        ValorantStorePort.RiotId riotId = valorantStorePort.fetchRiotId(
-                riotResponse.puuid(), command.region(), riotResponse.accessToken(), entitlementsToken, clientVersion);
+        ValorantStorePort.RiotId riotId = resolveRiotId(riotResponse, command.region());
 
         // 3. Persistance via le service (gestion chiffrement centralisée)
         long accountId = valorantAuthService.saveAuthData(
@@ -80,5 +81,17 @@ public class LinkValorantAccountUseCase implements SecuredUseCase {
                 accountId, riotResponse.puuid(), command.region(), riotId.gameName(), riotId.tagLine(), command.label());
 
         return new ValorantAccountAuthView(accountView, riotResponse.accessToken());
+    }
+
+    private ValorantStorePort.RiotId resolveRiotId(RiotAuthPort.ValorantAuthResponse riotResponse, String region) {
+        try {
+            String entitlementsToken = valorantStorePort.fetchEntitlementsToken(riotResponse.accessToken());
+            String clientVersion = versionProvider.getVersion().get("riotClientVersion").toString();
+            return valorantStorePort.fetchRiotId(
+                    riotResponse.puuid(), region, riotResponse.accessToken(), entitlementsToken, clientVersion);
+        } catch (Exception e) {
+            log.warn("Unable to resolve Riot ID for puuid {}: {}", riotResponse.puuid(), e.getMessage());
+            return new ValorantStorePort.RiotId(null, null);
+        }
     }
 }

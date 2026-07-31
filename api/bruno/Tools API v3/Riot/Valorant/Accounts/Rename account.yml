@@ -1,0 +1,27 @@
+info:
+  name: Rename account
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: "{{apiUrl}}/riot/valorant/accounts/:accountId"
+  params:
+    - name: accountId
+      value: "1"
+      type: path
+  body:
+    type: json
+    data: |-
+      {
+          "label": "Main"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: Renomme (label manuel) un compte Valorant lié.

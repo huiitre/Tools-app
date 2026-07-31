@@ -76,6 +76,12 @@ public class PostgresValorantAuthRepository implements ValorantAuthRepository {
     }
 
     @Override
+    public void updateLabel(long accountId, String label) {
+        final String sql = "UPDATE tools_riot.valorant_account SET label = ?, updated_at = now() WHERE id = ?";
+        jdbcTemplate.update(sql, label, accountId);
+    }
+
+    @Override
     public void deleteById(long accountId) {
         final String sql = "DELETE FROM tools_riot.valorant_account WHERE id = ?";
         jdbcTemplate.update(sql, accountId);

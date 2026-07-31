@@ -199,18 +199,33 @@ function initObserver() {
   if (sentinel.value) observer.observe(sentinel.value)
 }
 
+async function loadSkins() {
+  try {
+    riotStore.clearAccountSession()
+    const { data } = await clientV3.get<ValorantSkin[]>('/riot/valorant/skins', {
+      params: { accountId: riotStore.selectedAccountId ?? undefined },
+    })
+    skins.value = data
+    riotStore.syncFromSkins(data)
+    error.value = null
+  } catch {
+    error.value = 'Impossible de charger les skins.'
+  }
+}
+
+watch(() => riotStore.selectedAccountId, () => {
+  if (!loading.value) loadSkins()
+})
+
 onMounted(async () => {
   hydrateFilters()
   window.addEventListener('scroll', handleScroll, { passive: true })
   try {
-    const [skinsRes, weaponsRes] = await Promise.all([
-      clientV3.get<ValorantSkin[]>('/riot/valorant/skins'),
+    const [, weaponsRes] = await Promise.all([
+      loadSkins(),
       fetchWeapons()
     ])
-    skins.value = skinsRes.data
     weapons.value = weaponsRes.sort((a, b) => a.name.localeCompare(b.name))
-    
-    riotStore.syncFromSkins(skinsRes.data)
 
     await nextTick()
     initObserver()

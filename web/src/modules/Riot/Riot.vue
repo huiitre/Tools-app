@@ -1,5 +1,14 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import RiotNav from '@/modules/Riot/shared/components/RiotNav.vue'
+import ValorantLinkAccountModal from '@/modules/Riot/valorant/components/ValorantLinkAccountModal.vue'
+import { useValorantAccounts } from '@/modules/Riot/valorant/composables/useValorantAccounts'
+
+const { ensureLoaded } = useValorantAccounts()
+
+onMounted(() => {
+  ensureLoaded()
+})
 </script>
 
 <template>
@@ -13,6 +22,8 @@ import RiotNav from '@/modules/Riot/shared/components/RiotNav.vue'
         </Transition>
       </router-view>
     </section>
+
+    <ValorantLinkAccountModal />
   </div>
 </template>
 
