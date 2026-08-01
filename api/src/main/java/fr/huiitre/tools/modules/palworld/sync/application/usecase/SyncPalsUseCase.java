@@ -113,7 +113,10 @@ public class SyncPalsUseCase implements SecuredUseCase {
                 || !Objects.equals(existing.combiRank(), ext.getCombiRank())
                 || !Objects.equals(existing.goldCoin(), ext.getGoldCoin())
                 || !Objects.equals(existing.eggType(), ext.getEggType())
-                || !Objects.equals(existing.bestWorkSuitabilityLabel(), ext.getBestWorkSuitabilityLabel());
+                || !Objects.equals(existing.bestWorkSuitabilityLabel(), ext.getBestWorkSuitabilityLabel())
+                || !Objects.equals(existing.foodGaugeFilled(), ext.getFoodGaugeFilled())
+                || !Objects.equals(existing.foodGaugeEmpty(), ext.getFoodGaugeEmpty())
+                || !Objects.equals(existing.foodGaugeIconUrl(), ext.getFoodGaugeIconUrl());
     }
 
     private void replaceChildren(

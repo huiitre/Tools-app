@@ -25,4 +25,7 @@ public record PalRefView(
         Integer combiRank,
         Integer goldCoin,
         String eggType,
-        String bestWorkSuitabilityLabel) {}
+        String bestWorkSuitabilityLabel,
+        Integer foodGaugeFilled,
+        Integer foodGaugeEmpty,
+        String foodGaugeIconUrl) {}

@@ -43,7 +43,8 @@ public class PostgresPalCatalogRepository implements PalCatalogRepository {
 
         Map<Long, List<WorkSuitabilitySummaryView>> workSuitabilitiesByPalId = new LinkedHashMap<>();
         final String workSuitabilitiesSql = """
-                SELECT pws.pal_id, ws.id, ws.slug, ws.name, ws.icon_url, pws.level
+                SELECT pws.pal_id, ws.id, ws.slug, ws.name, ws.icon_url, pws.level, pws.max_level, pws.star_segments,
+                       pws.empty_segments, pws.is_priority
                 FROM tools_palworld.pal_work_suitability pws
                 JOIN tools_palworld.work_suitability ws ON ws.id = pws.work_suitability_id
                 ORDER BY pws.pal_id, pws.level DESC
@@ -51,7 +52,9 @@ public class PostgresPalCatalogRepository implements PalCatalogRepository {
         jdbcTemplate.query(workSuitabilitiesSql, rs -> {
             workSuitabilitiesByPalId.computeIfAbsent(rs.getLong("pal_id"), id -> new ArrayList<>())
                     .add(new WorkSuitabilitySummaryView(rs.getLong("id"), rs.getString("slug"), rs.getString("name"),
-                            rs.getString("icon_url"), rs.getInt("level")));
+                            rs.getString("icon_url"), rs.getInt("level"), (Integer) rs.getObject("max_level"),
+                            (Integer) rs.getObject("star_segments"), (Integer) rs.getObject("empty_segments"),
+                            rs.getBoolean("is_priority")));
         });
 
         Map<Long, List<PassiveSkillSummaryView>> passiveSkillsByPalId = new LinkedHashMap<>();
@@ -169,7 +172,8 @@ public class PostgresPalCatalogRepository implements PalCatalogRepository {
         final String palsSql = """
                 SELECT id, tribe, paldex_index, paldex_suffix, name, image_url, description, rarity, size, base_hp,
                        base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed, ride_sprint_speed,
-                       capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type, best_work_suitability_label
+                       capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type, best_work_suitability_label,
+                       food_gauge_filled, food_gauge_empty, food_gauge_icon_url
                 FROM tools_palworld.pal
                 ORDER BY paldex_index, paldex_suffix
                 """;
@@ -199,6 +203,9 @@ public class PostgresPalCatalogRepository implements PalCatalogRepository {
                     (Integer) rs.getObject("gold_coin"),
                     rs.getString("egg_type"),
                     rs.getString("best_work_suitability_label"),
+                    (Integer) rs.getObject("food_gauge_filled"),
+                    (Integer) rs.getObject("food_gauge_empty"),
+                    rs.getString("food_gauge_icon_url"),
                     elementsByPalId.getOrDefault(id, List.of()),
                     workSuitabilitiesByPalId.getOrDefault(id, List.of()),
                     passiveSkillsByPalId.getOrDefault(id, List.of()),

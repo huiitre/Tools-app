@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { usePaldexStore } from '../paldex.store'
 import { paldexLabel } from '../utils/paldexLabel'
 import PalContextTrigger from '../components/PalContextTrigger.vue'
@@ -11,6 +11,8 @@ import type {
 } from '../types/paldex.types'
 
 const store = usePaldexStore()
+
+const STORAGE_KEY_SORT = 'palworld.paldex.sort'
 
 const SORT_OPTIONS: { id: PaldexSortKey; label: string }[] = [
   { id: 'paldex', label: 'Paldex' },
@@ -106,6 +108,26 @@ const visiblePals = computed(() => {
     return sortDir.value === 'asc' ? cmp : -cmp
   })
   return sorted
+})
+
+function hydrateSort() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_SORT)
+    if (!raw) return
+    const data = JSON.parse(raw)
+    if (data.sortKey) sortKey.value = data.sortKey
+    if (data.sortDir) sortDir.value = data.sortDir
+  } catch (e) {
+    console.warn('Failed to hydrate Paldex sort', e)
+  }
+}
+
+watch([sortKey, sortDir], () => {
+  localStorage.setItem(STORAGE_KEY_SORT, JSON.stringify({ sortKey: sortKey.value, sortDir: sortDir.value }))
+})
+
+onMounted(() => {
+  hydrateSort()
 })
 
 // Chargement du catalogue Paldex géré au niveau parent (Palworld.vue), partagé avec la Tierlist.
@@ -340,8 +362,8 @@ const visiblePals = computed(() => {
   gap: 0.35rem;
 
   &:hover {
-    color: var(--pico-color);
-    border-color: var(--pico-color);
+    color: var(--pico-contrast);
+    border-color: var(--pico-contrast);
   }
 }
 
@@ -381,7 +403,7 @@ const visiblePals = computed(() => {
   img { border-radius: 3px; }
 
   &:hover {
-    color: var(--pico-color);
+    color: var(--pico-contrast);
     border-color: var(--pico-primary);
   }
 
@@ -437,16 +459,16 @@ const visiblePals = computed(() => {
 /* ── Pal grid ────────────────────────────────────────────────────── */
 .pal-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.85rem;
 }
 
 .pal-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 0.75rem 0.5rem;
+  gap: 5px;
+  padding: 0.85rem 0.6rem;
   border-radius: 10px;
   background: var(--pico-card-background-color);
   border: 1px solid var(--pico-card-border-color);
@@ -457,21 +479,21 @@ const visiblePals = computed(() => {
   }
 
   img {
-    width: 72px;
-    height: 72px;
+    width: 84px;
+    height: 84px;
     border-radius: 6px;
     display: block;
   }
 }
 
 .pal-index {
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   color: var(--pico-muted-color);
   font-weight: 600;
 }
 
 .pal-name {
-  font-size: 0.78rem;
+  font-size: 0.86rem;
   color: var(--pico-color);
   text-align: center;
   line-height: 1.3;
@@ -480,8 +502,13 @@ const visiblePals = computed(() => {
 
 .pal-elements {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.3rem;
   margin-top: 0.15rem;
+
+  .element-icon-crop {
+    width: 23px;
+    height: 23px;
+  }
 }
 
 /* Les icônes d'élément sont des bannières rectangulaires 104×32 (pictogramme
@@ -509,20 +536,20 @@ const visiblePals = computed(() => {
 .worksuitability {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 1px 3px;
+  gap: 3px;
+  padding: 2px 4px;
   border-radius: 4px;
   background: color-mix(in srgb, var(--pico-color) 8%, transparent);
 
   img {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 0;
   }
 }
 
 .worksuitability-level {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--pico-color);
 }

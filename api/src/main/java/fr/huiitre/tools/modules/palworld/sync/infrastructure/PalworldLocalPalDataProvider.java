@@ -78,6 +78,9 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
                 parseInt(statText(stats, "Pièce d'or")),
                 statText(stats, "Egg"),
                 statText(others, "BestWorkSuitability"),
+                parseInt(pal.path("foodAmount").path("on").asText(null)),
+                parseInt(pal.path("foodAmount").path("off").asText(null)),
+                pal.path("foodAmount").path("icon").asText(null),
                 elements(pal.path("elements")),
                 workSuitabilities(pal.path("workSuitability")),
                 activeSkills(pal.path("activeSkills")),
@@ -109,7 +112,12 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
         List<PalWorkSuitabilitySyncData> result = new ArrayList<>();
         for (JsonNode ws : node) {
             Integer level = parseInt(ws.path("level").asText(null));
-            result.add(new PalWorkSuitabilitySyncData(ws.path("slug").asText(null), ws.path("icon").asText(null), level != null ? level : 0));
+            Integer maxLevel = parseInt(ws.path("maxLevel").asText(null));
+            Integer starSegments = parseInt(ws.path("starSegments").asText(null));
+            Integer emptySegments = parseInt(ws.path("emptySegments").asText(null));
+            boolean isPriority = ws.path("isPriority").asBoolean(false);
+            result.add(new PalWorkSuitabilitySyncData(ws.path("slug").asText(null), ws.path("icon").asText(null),
+                    level != null ? level : 0, maxLevel, starSegments, emptySegments, isPriority));
         }
         return result;
     }

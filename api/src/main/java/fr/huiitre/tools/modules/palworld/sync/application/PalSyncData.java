@@ -28,6 +28,9 @@ public class PalSyncData {
     private final Integer goldCoin;
     private final String eggType;
     private final String bestWorkSuitabilityLabel;
+    private final Integer foodGaugeFilled;
+    private final Integer foodGaugeEmpty;
+    private final String foodGaugeIconUrl;
     private final List<PalElementSyncData> elements;
     private final List<PalWorkSuitabilitySyncData> workSuitabilities;
     private final List<PalActiveSkillSyncData> activeSkills;
@@ -45,7 +48,8 @@ public class PalSyncData {
             String size, Integer rarity, Integer baseHp, Integer baseAttack, Integer baseDefense, Integer baseWorkSpeed,
             Integer baseSupport, Integer foodAmount, Integer runSpeed, Integer rideSprintSpeed, BigDecimal captureRateCorrect,
             BigDecimal maleProbability, Integer combiRank, Integer goldCoin,
-            String eggType, String bestWorkSuitabilityLabel, List<PalElementSyncData> elements,
+            String eggType, String bestWorkSuitabilityLabel, Integer foodGaugeFilled, Integer foodGaugeEmpty,
+            String foodGaugeIconUrl, List<PalElementSyncData> elements,
             List<PalWorkSuitabilitySyncData> workSuitabilities, List<PalActiveSkillSyncData> activeSkills,
             List<PalPassiveSkillSyncData> passiveSkills, PalPartnerSkillSyncData partnerSkill, List<PalDropSyncData> drops,
             List<PalVariantSyncData> variants, List<PalSpawnZoneSyncData> spawnZones, String sourceSlug, String sourceUrl,
@@ -72,6 +76,9 @@ public class PalSyncData {
         this.goldCoin = goldCoin;
         this.eggType = eggType;
         this.bestWorkSuitabilityLabel = bestWorkSuitabilityLabel;
+        this.foodGaugeFilled = foodGaugeFilled;
+        this.foodGaugeEmpty = foodGaugeEmpty;
+        this.foodGaugeIconUrl = foodGaugeIconUrl;
         this.elements = elements;
         this.workSuitabilities = workSuitabilities;
         this.activeSkills = activeSkills;
@@ -108,6 +115,9 @@ public class PalSyncData {
     public Integer getGoldCoin() { return goldCoin; }
     public String getEggType() { return eggType; }
     public String getBestWorkSuitabilityLabel() { return bestWorkSuitabilityLabel; }
+    public Integer getFoodGaugeFilled() { return foodGaugeFilled; }
+    public Integer getFoodGaugeEmpty() { return foodGaugeEmpty; }
+    public String getFoodGaugeIconUrl() { return foodGaugeIconUrl; }
     public List<PalElementSyncData> getElements() { return elements; }
     public List<PalWorkSuitabilitySyncData> getWorkSuitabilities() { return workSuitabilities; }
     public List<PalActiveSkillSyncData> getActiveSkills() { return activeSkills; }

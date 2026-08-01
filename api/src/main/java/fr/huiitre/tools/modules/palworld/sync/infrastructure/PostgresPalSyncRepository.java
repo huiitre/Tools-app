@@ -51,7 +51,10 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
             (Integer) rs.getObject("combi_rank"),
             (Integer) rs.getObject("gold_coin"),
             rs.getString("egg_type"),
-            rs.getString("best_work_suitability_label"));
+            rs.getString("best_work_suitability_label"),
+            (Integer) rs.getObject("food_gauge_filled"),
+            (Integer) rs.getObject("food_gauge_empty"),
+            rs.getString("food_gauge_icon_url"));
 
     @Override
     public List<PalRefView> findAll() {
@@ -59,7 +62,7 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 SELECT id, tribe, paldex_index, paldex_suffix, name, image_url, description, size, rarity,
                        base_hp, base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed,
                        ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type,
-                       best_work_suitability_label
+                       best_work_suitability_label, food_gauge_filled, food_gauge_empty, food_gauge_icon_url
                 FROM tools_palworld.pal
                 """;
         return jdbcTemplate.query(sql, ROW_MAPPER);
@@ -72,8 +75,8 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                     (tribe, paldex_index, paldex_suffix, name, image_url, description, size, rarity,
                      base_hp, base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed,
                      ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type,
-                     best_work_suitability_label)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     best_work_suitability_label, food_gauge_filled, food_gauge_empty, food_gauge_icon_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 RETURNING id
                 """;
         return jdbcTemplate.queryForObject(sql, Long.class,
@@ -81,7 +84,8 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 data.getDescription(), data.getSize(), data.getRarity(), data.getBaseHp(), data.getBaseAttack(),
                 data.getBaseDefense(), data.getBaseWorkSpeed(), data.getBaseSupport(), data.getFoodAmount(), data.getRunSpeed(),
                 data.getRideSprintSpeed(), data.getCaptureRateCorrect(), data.getMaleProbability(), data.getCombiRank(),
-                data.getGoldCoin(), data.getEggType(), data.getBestWorkSuitabilityLabel());
+                data.getGoldCoin(), data.getEggType(), data.getBestWorkSuitabilityLabel(), data.getFoodGaugeFilled(),
+                data.getFoodGaugeEmpty(), data.getFoodGaugeIconUrl());
     }
 
     @Override
@@ -91,7 +95,8 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 SET paldex_index = ?, paldex_suffix = ?, name = ?, image_url = ?, description = ?, size = ?,
                     rarity = ?, base_hp = ?, base_attack = ?, base_defense = ?, base_work_speed = ?, base_support = ?,
                     food_amount = ?, run_speed = ?, ride_sprint_speed = ?, capture_rate_correct = ?, male_probability = ?,
-                    combi_rank = ?, gold_coin = ?, egg_type = ?, best_work_suitability_label = ?, updated_at = now()
+                    combi_rank = ?, gold_coin = ?, egg_type = ?, best_work_suitability_label = ?, food_gauge_filled = ?,
+                    food_gauge_empty = ?, food_gauge_icon_url = ?, updated_at = now()
                 WHERE id = ?
                 """;
         jdbcTemplate.update(sql,
@@ -99,7 +104,8 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 data.getSize(), data.getRarity(), data.getBaseHp(), data.getBaseAttack(), data.getBaseDefense(),
                 data.getBaseWorkSpeed(), data.getBaseSupport(), data.getFoodAmount(), data.getRunSpeed(), data.getRideSprintSpeed(),
                 data.getCaptureRateCorrect(), data.getMaleProbability(), data.getCombiRank(), data.getGoldCoin(),
-                data.getEggType(), data.getBestWorkSuitabilityLabel(), id);
+                data.getEggType(), data.getBestWorkSuitabilityLabel(), data.getFoodGaugeFilled(), data.getFoodGaugeEmpty(),
+                data.getFoodGaugeIconUrl(), id);
     }
 
     @Override
@@ -166,8 +172,9 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
     @Override
     public void saveWorkSuitabilities(Long palId, PalSyncData data, Map<String, Long> workSuitabilityIdBySlug) {
         final String sql = """
-                INSERT INTO tools_palworld.pal_work_suitability (pal_id, work_suitability_id, level)
-                VALUES (?, ?, ?)
+                INSERT INTO tools_palworld.pal_work_suitability
+                    (pal_id, work_suitability_id, level, max_level, star_segments, empty_segments, is_priority)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (pal_id, work_suitability_id) DO NOTHING
                 """;
         final String backfillIconSql = """
@@ -176,7 +183,8 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
         for (PalWorkSuitabilitySyncData ws : data.getWorkSuitabilities()) {
             Long workSuitabilityId = workSuitabilityIdBySlug.get(ws.getSlug());
             if (workSuitabilityId == null) continue;
-            jdbcTemplate.update(sql, palId, workSuitabilityId, ws.getLevel());
+            jdbcTemplate.update(sql, palId, workSuitabilityId, ws.getLevel(), ws.getMaxLevel(), ws.getStarSegments(),
+                    ws.getEmptySegments(), ws.isPriority());
             if (ws.getIconUrl() != null) {
                 jdbcTemplate.update(backfillIconSql, ws.getIconUrl(), workSuitabilityId);
             }
