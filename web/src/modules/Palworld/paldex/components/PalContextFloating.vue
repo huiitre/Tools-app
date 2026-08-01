@@ -127,28 +127,28 @@ function statValue(key: keyof PalworldPalListItem): string {
   z-index: 1000;
   pointer-events: none;
 
-  width: 300px;
+  width: 330px;
 
   background: var(--pico-card-background-color);
   border: 1px solid color-mix(in srgb, var(--pico-primary) 30%, transparent);
   box-shadow: var(--pico-card-box-shadow);
   border-radius: 10px;
 
-  padding: 0.75rem;
-  font-size: 0.8rem;
+  padding: 0.85rem;
+  font-size: 0.88rem;
   color: var(--pico-color);
 }
 
 /* HEADER */
 .header {
   display: flex;
-  gap: 0.6rem;
+  gap: 0.7rem;
   align-items: center;
 }
 
 .pal-icon {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 6px;
 }
 
@@ -157,7 +157,7 @@ function statValue(key: keyof PalworldPalListItem): string {
 }
 
 .meta .sub {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: var(--pico-muted-color);
 }
 
@@ -173,8 +173,8 @@ function statValue(key: keyof PalworldPalListItem): string {
 .element-icon-crop {
   display: inline-block;
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 4px;
   background-repeat: no-repeat;
   background-position: left center;
@@ -182,7 +182,7 @@ function statValue(key: keyof PalworldPalListItem): string {
 }
 
 .element-name {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: var(--pico-muted-color);
 }
 
@@ -193,7 +193,7 @@ function statValue(key: keyof PalworldPalListItem): string {
 
 .section-title {
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   margin-bottom: 0.4rem;
   color: var(--pico-primary);
 }
@@ -202,14 +202,14 @@ function statValue(key: keyof PalworldPalListItem): string {
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.2rem 0.75rem;
+  gap: 0.25rem 0.75rem;
 }
 
 .stat-line {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
-  font-size: 0.75rem;
+  font-size: 0.82rem;
 
   span { color: var(--pico-muted-color); }
 }
@@ -225,14 +225,14 @@ function statValue(key: keyof PalworldPalListItem): string {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.75rem;
+  font-size: 0.82rem;
 
   strong { margin-left: auto; }
 }
 
 .ws-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 .ws-name {
@@ -252,8 +252,8 @@ function statValue(key: keyof PalworldPalListItem): string {
 
 .food-icon {
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
@@ -269,7 +269,7 @@ function statValue(key: keyof PalworldPalListItem): string {
 /* DESCRIPTION */
 .description {
   margin: 0.5rem 0 0;
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   color: var(--pico-muted-color);
 }
 
@@ -281,8 +281,8 @@ function statValue(key: keyof PalworldPalListItem): string {
 }
 
 .partner-icon {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   flex-shrink: 0;
 }
 
@@ -293,13 +293,13 @@ function statValue(key: keyof PalworldPalListItem): string {
 
 .partner-title {
   font-weight: 600;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   overflow-wrap: break-word;
 }
 
 .partner-description {
   margin: 0.2rem 0 0;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: var(--pico-muted-color);
   overflow-wrap: break-word;
 }
@@ -309,7 +309,7 @@ function statValue(key: keyof PalworldPalListItem): string {
   margin-top: 0.6rem;
   padding-top: 0.45rem;
   border-top: 1px dashed var(--pico-muted-border-color);
-  font-size: 0.7rem;
+  font-size: 0.76rem;
   color: var(--pico-muted-color);
 }
 </style>

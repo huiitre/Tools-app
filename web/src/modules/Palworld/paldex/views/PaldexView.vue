@@ -459,16 +459,16 @@ onMounted(() => {
 /* ── Pal grid ────────────────────────────────────────────────────── */
 .pal-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.85rem;
 }
 
 .pal-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 0.75rem 0.5rem;
+  gap: 5px;
+  padding: 0.85rem 0.6rem;
   border-radius: 10px;
   background: var(--pico-card-background-color);
   border: 1px solid var(--pico-card-border-color);
@@ -479,21 +479,21 @@ onMounted(() => {
   }
 
   img {
-    width: 72px;
-    height: 72px;
+    width: 84px;
+    height: 84px;
     border-radius: 6px;
     display: block;
   }
 }
 
 .pal-index {
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   color: var(--pico-muted-color);
   font-weight: 600;
 }
 
 .pal-name {
-  font-size: 0.78rem;
+  font-size: 0.86rem;
   color: var(--pico-color);
   text-align: center;
   line-height: 1.3;
@@ -502,8 +502,13 @@ onMounted(() => {
 
 .pal-elements {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.3rem;
   margin-top: 0.15rem;
+
+  .element-icon-crop {
+    width: 23px;
+    height: 23px;
+  }
 }
 
 /* Les icônes d'élément sont des bannières rectangulaires 104×32 (pictogramme
@@ -531,20 +536,20 @@ onMounted(() => {
 .worksuitability {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 1px 3px;
+  gap: 3px;
+  padding: 2px 4px;
   border-radius: 4px;
   background: color-mix(in srgb, var(--pico-color) 8%, transparent);
 
   img {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 0;
   }
 }
 
 .worksuitability-level {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--pico-color);
 }
