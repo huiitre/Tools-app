@@ -10,6 +10,10 @@ export interface PalworldWorkSuitabilitySummary {
   name: string
   iconUrl: string | null
   level: number
+  maxLevel: number | null
+  starSegments: number | null
+  emptySegments: number | null
+  isPriority: boolean
 }
 
 export interface PalworldPassiveSkillSummary {
@@ -44,6 +48,9 @@ export interface PalworldPalListItem {
   runSpeed: number | null
   rideSprintSpeed: number | null
   bestWorkSuitabilityLabel: string | null
+  foodGaugeFilled: number | null
+  foodGaugeEmpty: number | null
+  foodGaugeIconUrl: string | null
   elements: PalworldElementSummary[]
   workSuitabilities: PalworldWorkSuitabilitySummary[]
   passiveSkills: PalworldPassiveSkillSummary[]

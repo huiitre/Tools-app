@@ -78,8 +78,27 @@ function statValue(key: keyof PalworldPalListItem): string {
         <div v-for="ws in pal.workSuitabilities" :key="ws.id" class="ws-line">
           <img v-if="ws.iconUrl" :src="ws.iconUrl" :alt="ws.name" class="ws-icon">
           <span class="ws-name">{{ ws.name }}</span>
-          <strong>Nv. {{ ws.level }}</strong>
+          <strong>
+            Nv. {{ ws.level }}
+            <template v-if="ws.maxLevel && ws.maxLevel !== ws.level">
+              <span class="ws-max">→ {{ ws.maxLevel }} ★</span>
+            </template>
+          </strong>
         </div>
+      </div>
+    </div>
+
+    <!-- JAUGE DE NOURRITURE -->
+    <div v-if="pal.foodGaugeIconUrl" class="section">
+      <div class="section-title">Nourriture</div>
+      <div class="food-gauge">
+        <span
+          v-for="n in 10"
+          :key="n"
+          class="food-icon"
+          :class="{ filled: n <= (pal.foodGaugeFilled ?? 0) }"
+          :style="{ backgroundImage: `url(${pal.foodGaugeIconUrl})` }"
+        />
       </div>
     </div>
 
@@ -218,6 +237,33 @@ function statValue(key: keyof PalworldPalListItem): string {
 
 .ws-name {
   color: var(--pico-muted-color);
+}
+
+.ws-max {
+  color: #f1c40f;
+  margin-left: 0.2rem;
+}
+
+/* FOOD GAUGE */
+.food-gauge {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.food-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  filter: grayscale(100%);
+  opacity: 0.35;
+}
+
+.food-icon.filled {
+  filter: none;
+  opacity: 1;
 }
 
 /* DESCRIPTION */

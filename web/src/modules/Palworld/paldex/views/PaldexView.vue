@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { usePaldexStore } from '../paldex.store'
 import { paldexLabel } from '../utils/paldexLabel'
 import PalContextTrigger from '../components/PalContextTrigger.vue'
@@ -11,6 +11,8 @@ import type {
 } from '../types/paldex.types'
 
 const store = usePaldexStore()
+
+const STORAGE_KEY_SORT = 'palworld.paldex.sort'
 
 const SORT_OPTIONS: { id: PaldexSortKey; label: string }[] = [
   { id: 'paldex', label: 'Paldex' },
@@ -106,6 +108,26 @@ const visiblePals = computed(() => {
     return sortDir.value === 'asc' ? cmp : -cmp
   })
   return sorted
+})
+
+function hydrateSort() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_SORT)
+    if (!raw) return
+    const data = JSON.parse(raw)
+    if (data.sortKey) sortKey.value = data.sortKey
+    if (data.sortDir) sortDir.value = data.sortDir
+  } catch (e) {
+    console.warn('Failed to hydrate Paldex sort', e)
+  }
+}
+
+watch([sortKey, sortDir], () => {
+  localStorage.setItem(STORAGE_KEY_SORT, JSON.stringify({ sortKey: sortKey.value, sortDir: sortDir.value }))
+})
+
+onMounted(() => {
+  hydrateSort()
 })
 
 // Chargement du catalogue Paldex géré au niveau parent (Palworld.vue), partagé avec la Tierlist.
@@ -340,8 +362,8 @@ const visiblePals = computed(() => {
   gap: 0.35rem;
 
   &:hover {
-    color: var(--pico-color);
-    border-color: var(--pico-color);
+    color: var(--pico-contrast);
+    border-color: var(--pico-contrast);
   }
 }
 
@@ -381,7 +403,7 @@ const visiblePals = computed(() => {
   img { border-radius: 3px; }
 
   &:hover {
-    color: var(--pico-color);
+    color: var(--pico-contrast);
     border-color: var(--pico-primary);
   }
 

@@ -345,7 +345,7 @@ onMounted(() => {
   width: auto;
 
   &:hover {
-    color: var(--pico-color);
+    color: var(--pico-contrast);
     border-color: var(--pico-primary);
   }
 
@@ -376,7 +376,7 @@ onMounted(() => {
   width: auto;
 
   &:hover {
-    color: var(--pico-color);
+    color: var(--pico-contrast);
     border-color: var(--pico-primary);
   }
 
@@ -435,8 +435,8 @@ onMounted(() => {
   cursor: pointer;
 
   &:hover {
-    color: var(--pico-color);
-    border-color: var(--pico-color);
+    color: var(--pico-contrast);
+    border-color: var(--pico-contrast);
   }
 }
 
@@ -476,7 +476,7 @@ onMounted(() => {
   img { border-radius: 3px; }
 
   &:hover {
-    color: var(--pico-color);
+    color: var(--pico-contrast);
     border-color: var(--pico-primary);
   }
 
