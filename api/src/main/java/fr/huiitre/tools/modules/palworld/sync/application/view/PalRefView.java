@@ -19,14 +19,5 @@ public record PalRefView(
         BigDecimal captureRateCorrect,
         BigDecimal maleProbability,
         Integer combiRank,
-<<<<<<< Updated upstream
-        Integer goldCoin,
-        String eggType,
-        String bestWorkSuitabilityLabel,
-        Integer foodGaugeFilled,
-        Integer foodGaugeEmpty,
-        String foodGaugeIconUrl) {}
-=======
         Integer price,
         String bestWorkSuitabilityLabel) {}
->>>>>>> Stashed changes

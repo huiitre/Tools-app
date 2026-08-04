@@ -86,31 +86,6 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
                 tribe,
                 intOrNull(pal.path("paldexIndex")),
                 pal.path("name").asText(null),
-<<<<<<< Updated upstream
-                pal.path("image").asText(null),
-                pal.path("description").asText(null),
-                statText(stats, "Size"),
-                parseInt(statText(stats, "Rarity")),
-                parseInt(statText(stats, "PV")),
-                parseInt(statText(stats, "Attaque")),
-                parseInt(statText(stats, "Défense")),
-                parseInt(statText(stats, "Vitesse de travail")),
-                parseInt(statText(stats, "Support")),
-                parseInt(statText(stats, "Quantité de nourriture")),
-                parseInt(statText(movement, "RunSpeed")),
-                parseInt(statText(movement, "RideSprintSpeed")),
-                parseDecimal(statText(stats, "CaptureRateCorrect")),
-                parseDecimal(statText(stats, "MaleProbability")),
-                parseInt(statText(stats, "CombiRank")),
-                parseInt(statText(stats, "Pièce d'or")),
-                statText(stats, "Egg"),
-                statText(others, "BestWorkSuitability"),
-                parseInt(pal.path("foodAmount").path("on").asText(null)),
-                parseInt(pal.path("foodAmount").path("off").asText(null)),
-                pal.path("foodAmount").path("icon").asText(null),
-                elements(pal.path("elements")),
-                workSuitabilities(pal.path("workSuitability")),
-=======
                 pal.path("size").asText(null),
                 intOrNull(pal.path("rarity")),
                 intOrNull(stats.path("hp")),
@@ -125,9 +100,9 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
                 intOrNull(pal.path("combiRank")),
                 intOrNull(pal.path("price")),
                 bestWorkSuitability(workSuitabilities),
+                null, null, null,
                 elements(pal.path("elementTypes")),
                 workSuitabilities,
->>>>>>> Stashed changes
                 activeSkills(pal.path("activeSkills")),
                 passiveSkills(pal.path("passiveSkills")),
                 drops(pal.path("drops")),
@@ -151,15 +126,6 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
     private List<PalWorkSuitabilitySyncData> workSuitabilities(JsonNode node) {
         List<PalWorkSuitabilitySyncData> result = new ArrayList<>();
         for (JsonNode ws : node) {
-<<<<<<< Updated upstream
-            Integer level = parseInt(ws.path("level").asText(null));
-            Integer maxLevel = parseInt(ws.path("maxLevel").asText(null));
-            Integer starSegments = parseInt(ws.path("starSegments").asText(null));
-            Integer emptySegments = parseInt(ws.path("emptySegments").asText(null));
-            boolean isPriority = ws.path("isPriority").asBoolean(false);
-            result.add(new PalWorkSuitabilitySyncData(ws.path("slug").asText(null), ws.path("icon").asText(null),
-                    level != null ? level : 0, maxLevel, starSegments, emptySegments, isPriority));
-=======
             int level = ws.path("level").asInt(0);
             // Le pak liste les 13 catégories pour chaque Pal (0 pour celles qu'il n'a pas) — l'ancien scraper
             // ne remontait que les aptitudes réellement présentes (~2,5 en moyenne par Pal contre 13 sinon).
@@ -167,8 +133,9 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
 
             String pakCategory = ws.path("category").asText(null);
             String slug = WORK_SUITABILITY_SLUG_BY_PAK_CATEGORY.getOrDefault(pakCategory, pakCategory);
-            result.add(new PalWorkSuitabilitySyncData(slug, null, level));
->>>>>>> Stashed changes
+            // maxLevel/starSegments/emptySegments/isPriority : pas de donnée pak, cf. note dans
+            // PostgresPalSyncRepository.saveWorkSuitabilities().
+            result.add(new PalWorkSuitabilitySyncData(slug, null, level, null, null, null, false));
         }
         return result;
     }

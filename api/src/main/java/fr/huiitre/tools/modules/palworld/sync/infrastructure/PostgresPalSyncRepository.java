@@ -42,31 +42,15 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
             rs.getBigDecimal("capture_rate_correct"),
             rs.getBigDecimal("male_probability"),
             (Integer) rs.getObject("combi_rank"),
-<<<<<<< Updated upstream
-            (Integer) rs.getObject("gold_coin"),
-            rs.getString("egg_type"),
-            rs.getString("best_work_suitability_label"),
-            (Integer) rs.getObject("food_gauge_filled"),
-            (Integer) rs.getObject("food_gauge_empty"),
-            rs.getString("food_gauge_icon_url"));
-=======
             (Integer) rs.getObject("price"),
             rs.getString("best_work_suitability_label"));
->>>>>>> Stashed changes
 
     @Override
     public List<PalRefView> findAll() {
         final String sql = """
-<<<<<<< Updated upstream
-                SELECT id, tribe, paldex_index, paldex_suffix, name, image_url, description, size, rarity,
-                       base_hp, base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed,
-                       ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type,
-                       best_work_suitability_label, food_gauge_filled, food_gauge_empty, food_gauge_icon_url
-=======
                 SELECT id, tribe, paldex_index, name, size, rarity, base_hp, base_attack, base_defense,
                        base_work_speed, base_support, run_speed, ride_sprint_speed, capture_rate_correct,
                        male_probability, combi_rank, price, best_work_suitability_label
->>>>>>> Stashed changes
                 FROM tools_palworld.pal
                 """;
         return jdbcTemplate.query(sql, ROW_MAPPER);
@@ -78,23 +62,9 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 INSERT INTO tools_palworld.pal
                     (tribe, paldex_index, paldex_suffix, name, image_url, description, size, rarity,
                      base_hp, base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed,
-<<<<<<< Updated upstream
-                     ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type,
-                     best_work_suitability_label, food_gauge_filled, food_gauge_empty, food_gauge_icon_url)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                RETURNING id
-                """;
-        return jdbcTemplate.queryForObject(sql, Long.class,
-                data.getTribe(), data.getPaldexIndex(), data.getPaldexSuffix(), data.getName(), data.getImageUrl(),
-                data.getDescription(), data.getSize(), data.getRarity(), data.getBaseHp(), data.getBaseAttack(),
-                data.getBaseDefense(), data.getBaseWorkSpeed(), data.getBaseSupport(), data.getFoodAmount(), data.getRunSpeed(),
-                data.getRideSprintSpeed(), data.getCaptureRateCorrect(), data.getMaleProbability(), data.getCombiRank(),
-                data.getGoldCoin(), data.getEggType(), data.getBestWorkSuitabilityLabel(), data.getFoodGaugeFilled(),
-                data.getFoodGaugeEmpty(), data.getFoodGaugeIconUrl());
-=======
                      ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, price,
-                     best_work_suitability_label)
-                VALUES (?, ?, NULL, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?)
+                     best_work_suitability_label, food_gauge_filled, food_gauge_empty, food_gauge_icon_url)
+                VALUES (?, ?, NULL, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
                 RETURNING id
                 """;
         return jdbcTemplate.queryForObject(sql, Long.class,
@@ -102,29 +72,12 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 data.getBaseAttack(), data.getBaseDefense(), data.getBaseWorkSpeed(), data.getBaseSupport(),
                 data.getRunSpeed(), data.getRideSprintSpeed(), data.getCaptureRateCorrect(), data.getMaleProbability(),
                 data.getCombiRank(), data.getPrice(), data.getBestWorkSuitabilityLabel());
->>>>>>> Stashed changes
     }
 
     @Override
     public void update(Long id, PalSyncData data) {
         final String sql = """
                 UPDATE tools_palworld.pal
-<<<<<<< Updated upstream
-                SET paldex_index = ?, paldex_suffix = ?, name = ?, image_url = ?, description = ?, size = ?,
-                    rarity = ?, base_hp = ?, base_attack = ?, base_defense = ?, base_work_speed = ?, base_support = ?,
-                    food_amount = ?, run_speed = ?, ride_sprint_speed = ?, capture_rate_correct = ?, male_probability = ?,
-                    combi_rank = ?, gold_coin = ?, egg_type = ?, best_work_suitability_label = ?, food_gauge_filled = ?,
-                    food_gauge_empty = ?, food_gauge_icon_url = ?, updated_at = now()
-                WHERE id = ?
-                """;
-        jdbcTemplate.update(sql,
-                data.getPaldexIndex(), data.getPaldexSuffix(), data.getName(), data.getImageUrl(), data.getDescription(),
-                data.getSize(), data.getRarity(), data.getBaseHp(), data.getBaseAttack(), data.getBaseDefense(),
-                data.getBaseWorkSpeed(), data.getBaseSupport(), data.getFoodAmount(), data.getRunSpeed(), data.getRideSprintSpeed(),
-                data.getCaptureRateCorrect(), data.getMaleProbability(), data.getCombiRank(), data.getGoldCoin(),
-                data.getEggType(), data.getBestWorkSuitabilityLabel(), data.getFoodGaugeFilled(), data.getFoodGaugeEmpty(),
-                data.getFoodGaugeIconUrl(), id);
-=======
                 SET paldex_index = ?, name = ?, size = ?, rarity = ?, base_hp = ?, base_attack = ?, base_defense = ?,
                     base_work_speed = ?, base_support = ?, run_speed = ?, ride_sprint_speed = ?, capture_rate_correct = ?,
                     male_probability = ?, combi_rank = ?, price = ?, best_work_suitability_label = ?, updated_at = now()
@@ -135,7 +88,6 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 data.getBaseAttack(), data.getBaseDefense(), data.getBaseWorkSpeed(), data.getBaseSupport(),
                 data.getRunSpeed(), data.getRideSprintSpeed(), data.getCaptureRateCorrect(), data.getMaleProbability(),
                 data.getCombiRank(), data.getPrice(), data.getBestWorkSuitabilityLabel(), id);
->>>>>>> Stashed changes
     }
 
     @Override
@@ -200,15 +152,10 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
         for (PalWorkSuitabilitySyncData ws : data.getWorkSuitabilities()) {
             Long workSuitabilityId = workSuitabilityIdBySlug.get(ws.getSlug());
             if (workSuitabilityId == null) continue;
-<<<<<<< Updated upstream
+            // max_level/star_segments/empty_segments/is_priority : pas de donnée pak, toujours null/false ici
+            // (fonctionnalité alimentée par l'ancien scraper, cf. V2.53.0 — en attente d'une vraie source).
             jdbcTemplate.update(sql, palId, workSuitabilityId, ws.getLevel(), ws.getMaxLevel(), ws.getStarSegments(),
                     ws.getEmptySegments(), ws.isPriority());
-            if (ws.getIconUrl() != null) {
-                jdbcTemplate.update(backfillIconSql, ws.getIconUrl(), workSuitabilityId);
-            }
-=======
-            jdbcTemplate.update(sql, palId, workSuitabilityId, ws.getLevel());
->>>>>>> Stashed changes
         }
     }
 

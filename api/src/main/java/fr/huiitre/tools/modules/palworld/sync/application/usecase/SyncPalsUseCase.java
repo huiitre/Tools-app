@@ -127,17 +127,8 @@ public class SyncPalsUseCase implements SecuredUseCase {
                 || !Objects.equals(existing.captureRateCorrect(), ext.getCaptureRateCorrect())
                 || !Objects.equals(existing.maleProbability(), ext.getMaleProbability())
                 || !Objects.equals(existing.combiRank(), ext.getCombiRank())
-<<<<<<< Updated upstream
-                || !Objects.equals(existing.goldCoin(), ext.getGoldCoin())
-                || !Objects.equals(existing.eggType(), ext.getEggType())
-                || !Objects.equals(existing.bestWorkSuitabilityLabel(), ext.getBestWorkSuitabilityLabel())
-                || !Objects.equals(existing.foodGaugeFilled(), ext.getFoodGaugeFilled())
-                || !Objects.equals(existing.foodGaugeEmpty(), ext.getFoodGaugeEmpty())
-                || !Objects.equals(existing.foodGaugeIconUrl(), ext.getFoodGaugeIconUrl());
-=======
                 || !Objects.equals(existing.price(), ext.getPrice())
                 || !Objects.equals(existing.bestWorkSuitabilityLabel(), ext.getBestWorkSuitabilityLabel());
->>>>>>> Stashed changes
     }
 
     private void replaceChildren(

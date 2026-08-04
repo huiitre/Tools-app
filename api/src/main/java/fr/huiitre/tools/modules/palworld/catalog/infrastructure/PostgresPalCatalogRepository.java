@@ -146,12 +146,8 @@ public class PostgresPalCatalogRepository implements PalCatalogRepository {
         final String palsSql = """
                 SELECT id, tribe, paldex_index, paldex_suffix, name, image_url, description, rarity, size, base_hp,
                        base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed, ride_sprint_speed,
-<<<<<<< Updated upstream
-                       capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type, best_work_suitability_label,
+                       capture_rate_correct, male_probability, combi_rank, price, best_work_suitability_label,
                        food_gauge_filled, food_gauge_empty, food_gauge_icon_url
-=======
-                       capture_rate_correct, male_probability, combi_rank, price, best_work_suitability_label
->>>>>>> Stashed changes
                 FROM tools_palworld.pal
                 ORDER BY paldex_index, paldex_suffix
                 """;

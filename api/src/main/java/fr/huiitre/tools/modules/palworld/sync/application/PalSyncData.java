@@ -36,19 +36,11 @@ public class PalSyncData {
     private final String rawPayloadJson;
     private final OffsetDateTime fetchedAt;
 
-<<<<<<< Updated upstream
-    public PalSyncData(String tribe, Integer paldexIndex, String paldexSuffix, String name, String imageUrl, String description,
-            String size, Integer rarity, Integer baseHp, Integer baseAttack, Integer baseDefense, Integer baseWorkSpeed,
-            Integer baseSupport, Integer foodAmount, Integer runSpeed, Integer rideSprintSpeed, BigDecimal captureRateCorrect,
-            BigDecimal maleProbability, Integer combiRank, Integer goldCoin,
-            String eggType, String bestWorkSuitabilityLabel, Integer foodGaugeFilled, Integer foodGaugeEmpty,
-            String foodGaugeIconUrl, List<PalElementSyncData> elements,
-=======
     public PalSyncData(String tribe, Integer paldexIndex, String name, String size, Integer rarity, Integer baseHp,
             Integer baseAttack, Integer baseDefense, Integer baseWorkSpeed, Integer baseSupport, Integer runSpeed,
             Integer rideSprintSpeed, BigDecimal captureRateCorrect, BigDecimal maleProbability, Integer combiRank,
-            Integer price, String bestWorkSuitabilityLabel, List<PalElementSyncData> elements,
->>>>>>> Stashed changes
+            Integer price, String bestWorkSuitabilityLabel, Integer foodGaugeFilled, Integer foodGaugeEmpty,
+            String foodGaugeIconUrl, List<PalElementSyncData> elements,
             List<PalWorkSuitabilitySyncData> workSuitabilities, List<PalActiveSkillSyncData> activeSkills,
             List<PalPassiveSkillSyncData> passiveSkills, List<PalDropSyncData> drops, String sourceSlug, String sourceUrl,
             String rawPayloadJson, OffsetDateTime fetchedAt) {
