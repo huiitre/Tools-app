@@ -52,11 +52,22 @@ public class SyncPalworldUseCase implements SecuredUseCase {
         ElementSyncResult elements = syncElementsUseCase.execute();
         WorkSuitabilitySyncResult workSuitabilities = syncWorkSuitabilitiesUseCase.execute();
         WorkPrioritySyncResult workPriorities = syncWorkPrioritiesUseCase.execute(workSuitabilities.idBySlug());
-        SkillSyncResult skills = syncSkillsUseCase.execute(elements.idByExternalCode());
+        // idByPalElementType : pal.elementTypes[] et skill.element utilisent tous les deux le vocabulaire
+        // brut EPalElementType (ex: "Earth"), différent de element.code ("Ground") et de element.name
+        // (texte traduit) — cf. elements.json[].palElementType.
+        SkillSyncResult skillsCreateOrUpdate = syncSkillsUseCase.syncCreateOrUpdate(elements.idByPalElementType());
         PalworldSyncReport pals = syncPalsUseCase.execute(
-                elements.idByName(),
+                elements.idByPalElementType(),
                 workSuitabilities.idBySlug(),
-                skills.idByName());
+                skillsCreateOrUpdate.idBySlug());
+        // Suppression des compétences obsolètes APRÈS la sync des Pals (deleteAllChildren() a déjà vidé
+        // pal_active_skill) — sinon FK violation si une compétence supprimée est encore référencée par un
+        // Pal de l'ancien run. Voir SyncSkillsUseCase.deleteStale().
+        int skillsDeleted = syncSkillsUseCase.deleteStale();
+        SkillSyncResult skills = new SkillSyncResult(
+                new PalworldSyncReport(skillsCreateOrUpdate.report().created(), skillsCreateOrUpdate.report().updated(), skillsDeleted),
+                skillsCreateOrUpdate.idBySlug(),
+                skillsCreateOrUpdate.idByName());
 
         return new PalworldGlobalSyncReport(
                 elements.report(), workSuitabilities.report(), workPriorities.report(), skills.report(), pals);

@@ -23,6 +23,8 @@ public class PalSyncData {
     private final Integer combiRank;
     private final Integer price;
     private final String bestWorkSuitabilityLabel;
+    private final String imageUrl;
+    private final String description;
     private final Integer foodGaugeFilled;
     private final Integer foodGaugeEmpty;
     private final String foodGaugeIconUrl;
@@ -39,8 +41,8 @@ public class PalSyncData {
     public PalSyncData(String tribe, Integer paldexIndex, String name, String size, Integer rarity, Integer baseHp,
             Integer baseAttack, Integer baseDefense, Integer baseWorkSpeed, Integer baseSupport, Integer runSpeed,
             Integer rideSprintSpeed, BigDecimal captureRateCorrect, BigDecimal maleProbability, Integer combiRank,
-            Integer price, String bestWorkSuitabilityLabel, Integer foodGaugeFilled, Integer foodGaugeEmpty,
-            String foodGaugeIconUrl, List<PalElementSyncData> elements,
+            Integer price, String bestWorkSuitabilityLabel, String imageUrl, String description, Integer foodGaugeFilled,
+            Integer foodGaugeEmpty, String foodGaugeIconUrl, List<PalElementSyncData> elements,
             List<PalWorkSuitabilitySyncData> workSuitabilities, List<PalActiveSkillSyncData> activeSkills,
             List<PalPassiveSkillSyncData> passiveSkills, List<PalDropSyncData> drops, String sourceSlug, String sourceUrl,
             String rawPayloadJson, OffsetDateTime fetchedAt) {
@@ -61,6 +63,8 @@ public class PalSyncData {
         this.combiRank = combiRank;
         this.price = price;
         this.bestWorkSuitabilityLabel = bestWorkSuitabilityLabel;
+        this.imageUrl = imageUrl;
+        this.description = description;
         this.foodGaugeFilled = foodGaugeFilled;
         this.foodGaugeEmpty = foodGaugeEmpty;
         this.foodGaugeIconUrl = foodGaugeIconUrl;
@@ -92,6 +96,8 @@ public class PalSyncData {
     public Integer getCombiRank() { return combiRank; }
     public Integer getPrice() { return price; }
     public String getBestWorkSuitabilityLabel() { return bestWorkSuitabilityLabel; }
+    public String getImageUrl() { return imageUrl; }
+    public String getDescription() { return description; }
     public Integer getFoodGaugeFilled() { return foodGaugeFilled; }
     public Integer getFoodGaugeEmpty() { return foodGaugeEmpty; }
     public String getFoodGaugeIconUrl() { return foodGaugeIconUrl; }

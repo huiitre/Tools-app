@@ -43,14 +43,16 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
             rs.getBigDecimal("male_probability"),
             (Integer) rs.getObject("combi_rank"),
             (Integer) rs.getObject("price"),
-            rs.getString("best_work_suitability_label"));
+            rs.getString("best_work_suitability_label"),
+            rs.getString("image_url"),
+            rs.getString("description"));
 
     @Override
     public List<PalRefView> findAll() {
         final String sql = """
                 SELECT id, tribe, paldex_index, name, size, rarity, base_hp, base_attack, base_defense,
                        base_work_speed, base_support, run_speed, ride_sprint_speed, capture_rate_correct,
-                       male_probability, combi_rank, price, best_work_suitability_label
+                       male_probability, combi_rank, price, best_work_suitability_label, image_url, description
                 FROM tools_palworld.pal
                 """;
         return jdbcTemplate.query(sql, ROW_MAPPER);
@@ -64,30 +66,32 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                      base_hp, base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed,
                      ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, price,
                      best_work_suitability_label, food_gauge_filled, food_gauge_empty, food_gauge_icon_url)
-                VALUES (?, ?, NULL, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
+                VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
                 RETURNING id
                 """;
         return jdbcTemplate.queryForObject(sql, Long.class,
-                data.getTribe(), data.getPaldexIndex(), data.getName(), data.getSize(), data.getRarity(), data.getBaseHp(),
-                data.getBaseAttack(), data.getBaseDefense(), data.getBaseWorkSpeed(), data.getBaseSupport(),
-                data.getRunSpeed(), data.getRideSprintSpeed(), data.getCaptureRateCorrect(), data.getMaleProbability(),
-                data.getCombiRank(), data.getPrice(), data.getBestWorkSuitabilityLabel());
+                data.getTribe(), data.getPaldexIndex(), data.getName(), data.getImageUrl(), data.getDescription(),
+                data.getSize(), data.getRarity(), data.getBaseHp(), data.getBaseAttack(), data.getBaseDefense(),
+                data.getBaseWorkSpeed(), data.getBaseSupport(), data.getRunSpeed(), data.getRideSprintSpeed(),
+                data.getCaptureRateCorrect(), data.getMaleProbability(), data.getCombiRank(), data.getPrice(),
+                data.getBestWorkSuitabilityLabel());
     }
 
     @Override
     public void update(Long id, PalSyncData data) {
         final String sql = """
                 UPDATE tools_palworld.pal
-                SET paldex_index = ?, name = ?, size = ?, rarity = ?, base_hp = ?, base_attack = ?, base_defense = ?,
-                    base_work_speed = ?, base_support = ?, run_speed = ?, ride_sprint_speed = ?, capture_rate_correct = ?,
-                    male_probability = ?, combi_rank = ?, price = ?, best_work_suitability_label = ?, updated_at = now()
+                SET paldex_index = ?, name = ?, image_url = ?, description = ?, size = ?, rarity = ?, base_hp = ?,
+                    base_attack = ?, base_defense = ?, base_work_speed = ?, base_support = ?, run_speed = ?,
+                    ride_sprint_speed = ?, capture_rate_correct = ?, male_probability = ?, combi_rank = ?, price = ?,
+                    best_work_suitability_label = ?, updated_at = now()
                 WHERE id = ?
                 """;
         jdbcTemplate.update(sql,
-                data.getPaldexIndex(), data.getName(), data.getSize(), data.getRarity(), data.getBaseHp(),
-                data.getBaseAttack(), data.getBaseDefense(), data.getBaseWorkSpeed(), data.getBaseSupport(),
-                data.getRunSpeed(), data.getRideSprintSpeed(), data.getCaptureRateCorrect(), data.getMaleProbability(),
-                data.getCombiRank(), data.getPrice(), data.getBestWorkSuitabilityLabel(), id);
+                data.getPaldexIndex(), data.getName(), data.getImageUrl(), data.getDescription(), data.getSize(),
+                data.getRarity(), data.getBaseHp(), data.getBaseAttack(), data.getBaseDefense(), data.getBaseWorkSpeed(),
+                data.getBaseSupport(), data.getRunSpeed(), data.getRideSprintSpeed(), data.getCaptureRateCorrect(),
+                data.getMaleProbability(), data.getCombiRank(), data.getPrice(), data.getBestWorkSuitabilityLabel(), id);
     }
 
     @Override

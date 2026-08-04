@@ -20,32 +20,34 @@ public class PostgresElementSyncRepository implements ElementSyncRepository {
     private static final RowMapper<ElementRefView> ROW_MAPPER = (rs, rowNum) -> new ElementRefView(
             rs.getLong("id"),
             rs.getString("external_code"),
+            rs.getString("code"),
             rs.getString("name"),
             rs.getString("icon_url"));
 
     @Override
     public List<ElementRefView> findAll() {
-        return jdbcTemplate.query("SELECT id, external_code, name, icon_url FROM tools_palworld.element", ROW_MAPPER);
+        return jdbcTemplate.query("SELECT id, external_code, code, name, icon_url FROM tools_palworld.element", ROW_MAPPER);
     }
 
     @Override
     public Long save(ElementSyncData data) {
         final String sql = """
-                INSERT INTO tools_palworld.element (external_code, name, icon_url)
-                VALUES (?, ?, ?)
+                INSERT INTO tools_palworld.element (external_code, code, name, icon_url)
+                VALUES (?, ?, ?, ?)
                 RETURNING id
                 """;
-        return jdbcTemplate.queryForObject(sql, Long.class, data.getExternalCode(), data.getName(), data.getIconUrl());
+        return jdbcTemplate.queryForObject(sql, Long.class,
+                data.getExternalCode(), data.getCode(), data.getName(), data.getIconUrl());
     }
 
     @Override
     public void update(Long id, ElementSyncData data) {
         final String sql = """
                 UPDATE tools_palworld.element
-                SET name = ?, icon_url = ?
+                SET code = ?, name = ?, icon_url = ?
                 WHERE id = ?
                 """;
-        jdbcTemplate.update(sql, data.getName(), data.getIconUrl(), id);
+        jdbcTemplate.update(sql, data.getCode(), data.getName(), data.getIconUrl(), id);
     }
 
     @Override

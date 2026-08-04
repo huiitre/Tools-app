@@ -53,8 +53,7 @@ public class SyncElementsUseCase implements SecuredUseCase {
                 .map(ElementSyncData::getExternalCode)
                 .collect(Collectors.toSet());
 
-        Map<String, Long> idByExternalCode = new HashMap<>();
-        Map<String, Long> idByName = new HashMap<>();
+        Map<String, Long> idByPalElementType = new HashMap<>();
         int created = 0;
         int updated = 0;
         int deleted = 0;
@@ -64,16 +63,15 @@ public class SyncElementsUseCase implements SecuredUseCase {
 
             if (existing == null) {
                 Long newId = syncRepository.save(ext);
-                idByExternalCode.put(ext.getExternalCode(), newId);
-                idByName.put(ext.getName(), newId);
+                idByPalElementType.put(ext.getPalElementType(), newId);
                 created++;
                 continue;
             }
 
-            idByExternalCode.put(ext.getExternalCode(), existing.id());
-            idByName.put(ext.getName(), existing.id());
+            idByPalElementType.put(ext.getPalElementType(), existing.id());
 
-            boolean changed = !Objects.equals(existing.name(), ext.getName())
+            boolean changed = !Objects.equals(existing.code(), ext.getCode())
+                    || !Objects.equals(existing.name(), ext.getName())
                     || !Objects.equals(existing.iconUrl(), ext.getIconUrl());
 
             if (changed) {
@@ -89,6 +87,6 @@ public class SyncElementsUseCase implements SecuredUseCase {
             }
         }
 
-        return new ElementSyncResult(new PalworldSyncReport(created, updated, deleted), idByExternalCode, idByName);
+        return new ElementSyncResult(new PalworldSyncReport(created, updated, deleted), idByPalElementType);
     }
 }

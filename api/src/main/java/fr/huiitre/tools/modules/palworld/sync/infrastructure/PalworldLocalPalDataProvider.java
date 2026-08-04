@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,23 +19,9 @@ import fr.huiitre.tools.modules.palworld.sync.application.PalPassiveSkillSyncDat
 import fr.huiitre.tools.modules.palworld.sync.application.PalSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalWorkSuitabilitySyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PalDataProvider;
+import fr.huiitre.tools.modules.palworld.sync.application.ports.PalworldLanguageDataProvider;
 
 public class PalworldLocalPalDataProvider implements PalDataProvider {
-
-    // Le pak expose les valeurs internes du jeu (enum EPalElementType / EPalWorkSuitability), alors que
-    // elements.json/work_suitability.json (scraper paldb.cc, inchangés) utilisent leur propre vocabulaire
-    // anglais. Ce ne sont ni les mêmes casse ni les mêmes mots : table de correspondance figée, ces deux
-    // catalogues sont petits et stables entre mises à jour du jeu.
-    private static final Map<String, String> ELEMENT_NAME_BY_PAK_TYPE = Map.of(
-            "Fire", "Fire",
-            "Water", "Water",
-            "Electricity", "Electric",
-            "Leaf", "Grass",
-            "Dark", "Dark",
-            "Dragon", "Dragon",
-            "Earth", "Ground",
-            "Ice", "Ice",
-            "Normal", "Neutral");
 
     private static final Map<String, String> WORK_SUITABILITY_SLUG_BY_PAK_CATEGORY = Map.ofEntries(
             Map.entry("EmitFlame", "Kindling"),
@@ -53,10 +40,15 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
     // (paldb.cc ne le référence pas). Aucun Pal du jeu n'a ce niveau > 0 à ce jour, donc sans impact visible.
 
     private final PalworldLocalAssetsReader assetsReader;
+    private final PalworldLanguageDataProvider languageDataProvider;
+    private final String assetsBaseUrl;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public PalworldLocalPalDataProvider(PalworldLocalAssetsReader assetsReader) {
+    public PalworldLocalPalDataProvider(
+            PalworldLocalAssetsReader assetsReader, PalworldLanguageDataProvider languageDataProvider, String assetsBaseUrl) {
         this.assetsReader = assetsReader;
+        this.languageDataProvider = languageDataProvider;
+        this.assetsBaseUrl = assetsBaseUrl;
     }
 
     @Override
@@ -65,9 +57,18 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
             JsonNode root = objectMapper.readTree(assetsReader.readFile("pals.json"));
             OffsetDateTime fetchedAt = assetsReader.readScrapedAt();
 
+            // Le pak ne référence aucune image : le rip d'assets img/pal/{tribe}.webp vit sur le NAS,
+            // indépendamment du pak, avec quelques divergences de casse (BluePlatypus -> Blueplatypus.webp)
+            // et des Pals très récents pas encore rippés (cf. matching insensible à la casse ci-dessous).
+            Map<String, String> palImageFileNameByTribeUpper = assetsReader.listImageFileNames("pal").stream()
+                    .collect(Collectors.toMap(
+                            fileName -> stripExtension(fileName).toUpperCase(),
+                            fileName -> fileName,
+                            (a, b) -> a));
+
             List<PalSyncData> result = new ArrayList<>();
             for (JsonNode pal : root) {
-                result.add(toSyncData(pal, fetchedAt));
+                result.add(toSyncData(pal, fetchedAt, palImageFileNameByTribeUpper));
             }
             return result;
         } catch (Exception e) {
@@ -75,7 +76,17 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
         }
     }
 
-    private PalSyncData toSyncData(JsonNode pal, OffsetDateTime fetchedAt) {
+    private String stripExtension(String fileName) {
+        int dot = fileName.lastIndexOf('.');
+        return dot > 0 ? fileName.substring(0, dot) : fileName;
+    }
+
+    private String resolveImageUrl(String tribe, Map<String, String> palImageFileNameByTribeUpper) {
+        String fileName = palImageFileNameByTribeUpper.get(tribe.toUpperCase());
+        return fileName != null ? assetsBaseUrl + "/tools_palworld/palworld/img/pal/" + fileName : null;
+    }
+
+    private PalSyncData toSyncData(JsonNode pal, OffsetDateTime fetchedAt, Map<String, String> palImageFileNameByTribeUpper) {
         JsonNode stats = pal.path("stats");
         JsonNode movement = pal.path("movement");
         String tribe = pal.path("id").asText(null);
@@ -85,7 +96,7 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
         return new PalSyncData(
                 tribe,
                 intOrNull(pal.path("paldexIndex")),
-                pal.path("name").asText(null),
+                languageDataProvider.getString(pal.path("name").asText(null)),
                 pal.path("size").asText(null),
                 intOrNull(pal.path("rarity")),
                 intOrNull(stats.path("hp")),
@@ -100,6 +111,8 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
                 intOrNull(pal.path("combiRank")),
                 intOrNull(pal.path("price")),
                 bestWorkSuitability(workSuitabilities),
+                resolveImageUrl(tribe, palImageFileNameByTribeUpper),
+                languageDataProvider.getDescription(pal.path("description").asText(null)),
                 null, null, null,
                 elements(pal.path("elementTypes")),
                 workSuitabilities,
@@ -116,9 +129,9 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
         List<PalElementSyncData> result = new ArrayList<>();
         int order = 0;
         for (JsonNode element : node) {
-            String pakType = element.asText(null);
-            String elementName = ELEMENT_NAME_BY_PAK_TYPE.getOrDefault(pakType, pakType);
-            result.add(new PalElementSyncData(elementName, null, order++));
+            // Valeur brute EPalElementType (ex: "Leaf") — jointe via elements.json[].palElementType,
+            // cf. SyncElementsUseCase.idByPalElementType(). Pas de vocabulaire à traduire côté Java.
+            result.add(new PalElementSyncData(element.asText(null), null, order++));
         }
         return result;
     }
@@ -151,10 +164,9 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
         List<PalActiveSkillSyncData> result = new ArrayList<>();
         int order = 0;
         for (JsonNode skill : node) {
-            // Jointure par nom (FR) et non par id : le "id" interne du pak (ex: "PoisonFog") ne correspond pas
-            // au slug scrapé de skills.json (ex: "Poison_Fog" est en fait un slug propre à paldb.cc, sans lien
-            // mécanique avec le nom interne) — en revanche le nom affiché est bien le même texte des deux côtés.
-            result.add(new PalActiveSkillSyncData(skill.path("name").asText(null), skill.path("level").asInt(0), order++));
+            // Jointure par "id" (ex: "PoisonFog") : correspond exactement à skill.id de skills.json,
+            // stocké dans tools_palworld.skill.slug (cf. PalworldLocalSkillDataProvider).
+            result.add(new PalActiveSkillSyncData(skill.path("id").asText(null), skill.path("level").asInt(0), order++));
         }
         return result;
     }
@@ -162,7 +174,7 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
     private List<PalPassiveSkillSyncData> passiveSkills(JsonNode node) {
         List<PalPassiveSkillSyncData> result = new ArrayList<>();
         for (JsonNode passive : node) {
-            String name = passive.path("name").asText(null);
+            String name = languageDataProvider.getString(passive.path("name").asText(null));
             boolean alreadyPresent = result.stream().anyMatch(p -> Objects.equals(p.getName(), name));
             if (!alreadyPresent) {
                 result.add(new PalPassiveSkillSyncData(name, null, null));

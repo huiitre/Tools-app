@@ -20,4 +20,6 @@ public record PalRefView(
         BigDecimal maleProbability,
         Integer combiRank,
         Integer price,
-        String bestWorkSuitabilityLabel) {}
+        String bestWorkSuitabilityLabel,
+        String imageUrl,
+        String description) {}

@@ -43,24 +43,24 @@ public class SyncSkillsUseCase implements SecuredUseCase {
         return RoleCode.TECH;
     }
 
-    public SkillSyncResult execute(Map<String, Long> elementIdByExternalCode) {
+    // Séparé de deleteStale() : les compétences supprimées ici référencent encore pal_active_skill tant
+    // que SyncPalsUseCase n'a pas remplacé les enfants du Pal (deleteAllChildren()) — supprimer une
+    // compétence encore référencée casse la FK. Il faut donc créer/mettre à jour les compétences (pour
+    // avoir idBySlug, nécessaire à la sync des Pals), laisser la sync des Pals tourner, PUIS supprimer les
+    // compétences obsolètes. Voir SyncPalworldUseCase pour l'ordre d'appel.
+    public SkillSyncResult syncCreateOrUpdate(Map<String, Long> elementIdByCode) {
         List<SkillSyncData> external = dataProvider.fetchAll();
 
         Map<String, SkillRefView> currentBySlug = syncRepository.findAll().stream()
                 .collect(Collectors.toMap(SkillRefView::slug, it -> it));
 
-        Set<String> externalSlugs = external.stream()
-                .map(SkillSyncData::getSlug)
-                .collect(Collectors.toSet());
-
         Map<String, Long> idBySlug = new HashMap<>();
         Map<String, Long> idByName = new HashMap<>();
         int created = 0;
         int updated = 0;
-        int deleted = 0;
 
         for (SkillSyncData ext : external) {
-            Long elementId = elementIdByExternalCode.get(ext.getElementExternalCode());
+            Long elementId = elementIdByCode.get(ext.getElementExternalCode());
             SkillRefView existing = currentBySlug.get(ext.getSlug());
 
             if (existing == null) {
@@ -92,13 +92,23 @@ public class SyncSkillsUseCase implements SecuredUseCase {
             syncRepository.upsertSource(existing.id(), ext.getSlug(), ext.getSourceUrl(), ext.getRawPayloadJson(), ext.getFetchedAt());
         }
 
-        for (SkillRefView current : currentBySlug.values()) {
+        return new SkillSyncResult(new PalworldSyncReport(created, updated, 0), idBySlug, idByName);
+    }
+
+    public int deleteStale() {
+        List<SkillSyncData> external = dataProvider.fetchAll();
+
+        Set<String> externalSlugs = external.stream()
+                .map(SkillSyncData::getSlug)
+                .collect(Collectors.toSet());
+
+        int deleted = 0;
+        for (SkillRefView current : syncRepository.findAll()) {
             if (!externalSlugs.contains(current.slug())) {
                 syncRepository.delete(current.id());
                 deleted++;
             }
         }
-
-        return new SkillSyncResult(new PalworldSyncReport(created, updated, deleted), idBySlug, idByName);
+        return deleted;
     }
 }
