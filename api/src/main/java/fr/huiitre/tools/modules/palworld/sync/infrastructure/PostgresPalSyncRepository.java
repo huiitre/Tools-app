@@ -156,8 +156,9 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
         for (PalWorkSuitabilitySyncData ws : data.getWorkSuitabilities()) {
             Long workSuitabilityId = workSuitabilityIdBySlug.get(ws.getSlug());
             if (workSuitabilityId == null) continue;
-            // max_level/star_segments/empty_segments/is_priority : pas de donnée pak, toujours null/false ici
-            // (fonctionnalité alimentée par l'ancien scraper, cf. V2.53.0 — en attente d'une vraie source).
+            // star_segments/empty_segments : pas de donnée pak (jauge visuelle scrapée par l'ancien scraper,
+            // cf. V2.53.0), toujours null ici. max_level/is_priority sont calculés — cf.
+            // WorkSuitabilityMaxLevelCalculator et PalworldLocalPalDataProvider.workSuitabilities().
             jdbcTemplate.update(sql, palId, workSuitabilityId, ws.getLevel(), ws.getMaxLevel(), ws.getStarSegments(),
                     ws.getEmptySegments(), ws.isPriority());
         }
