@@ -3,7 +3,7 @@ package fr.huiitre.tools.modules.palworld.sync.infrastructure;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import fr.huiitre.tools.modules.palworld.domain.WorkSuitabilityMaxLevelCalculator;
 import fr.huiitre.tools.modules.palworld.sync.application.PalActiveSkillSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalDropSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalElementSyncData;
@@ -38,6 +39,8 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
             Map.entry("MonsterFarm", "Farming"));
     // "OilExtraction" (pak) n'a aucun équivalent dans work_suitability.json — absent du catalogue scrapé
     // (paldb.cc ne le référence pas). Aucun Pal du jeu n'a ce niveau > 0 à ce jour, donc sans impact visible.
+
+    private static final String PAK_WORK_SUITABILITY_ENUM_PREFIX = "EPalWorkSuitability::";
 
     private final PalworldLocalAssetsReader assetsReader;
     private final PalworldLanguageDataProvider languageDataProvider;
@@ -91,7 +94,9 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
         JsonNode movement = pal.path("movement");
         String tribe = pal.path("id").asText(null);
 
-        List<PalWorkSuitabilitySyncData> workSuitabilities = workSuitabilities(pal.path("workSuitability"));
+        String bestWorkSuitabilityPakCategory = bestWorkSuitabilityPakCategory(pal.path("raw"));
+        List<PalWorkSuitabilitySyncData> workSuitabilities =
+                workSuitabilities(pal.path("workSuitability"), bestWorkSuitabilityPakCategory);
 
         return new PalSyncData(
                 tribe,
@@ -110,7 +115,7 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
                 decimalOrNull(pal.path("maleProbability")),
                 intOrNull(pal.path("combiRank")),
                 intOrNull(pal.path("price")),
-                bestWorkSuitability(workSuitabilities),
+                bestWorkSuitabilityLabel(bestWorkSuitabilityPakCategory),
                 resolveImageUrl(tribe, palImageFileNameByTribeUpper),
                 languageDataProvider.getDescription(pal.path("description").asText(null)),
                 null, null, null,
@@ -136,28 +141,40 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
         return result;
     }
 
-    private List<PalWorkSuitabilitySyncData> workSuitabilities(JsonNode node) {
-        List<PalWorkSuitabilitySyncData> result = new ArrayList<>();
-        for (JsonNode ws : node) {
-            int level = ws.path("level").asInt(0);
-            // Le pak liste les 13 catégories pour chaque Pal (0 pour celles qu'il n'a pas) — l'ancien scraper
-            // ne remontait que les aptitudes réellement présentes (~2,5 en moyenne par Pal contre 13 sinon).
-            if (level <= 0) continue;
-
-            String pakCategory = ws.path("category").asText(null);
-            String slug = WORK_SUITABILITY_SLUG_BY_PAK_CATEGORY.getOrDefault(pakCategory, pakCategory);
-            // maxLevel/starSegments/emptySegments/isPriority : pas de donnée pak, cf. note dans
-            // PostgresPalSyncRepository.saveWorkSuitabilities().
-            result.add(new PalWorkSuitabilitySyncData(slug, null, level, null, null, null, false));
-        }
-        return result;
+    private String bestWorkSuitabilityPakCategory(JsonNode raw) {
+        String value = raw.path("BestWorkSuitability").asText(null);
+        if (value == null) return null;
+        return value.startsWith(PAK_WORK_SUITABILITY_ENUM_PREFIX)
+                ? value.substring(PAK_WORK_SUITABILITY_ENUM_PREFIX.length())
+                : value;
     }
 
-    private String bestWorkSuitability(List<PalWorkSuitabilitySyncData> workSuitabilities) {
-        return workSuitabilities.stream()
-                .max(Comparator.comparingInt(PalWorkSuitabilitySyncData::getLevel))
-                .map(PalWorkSuitabilitySyncData::getSlug)
-                .orElse(null);
+    private String bestWorkSuitabilityLabel(String bestWorkSuitabilityPakCategory) {
+        if (bestWorkSuitabilityPakCategory == null) return null;
+        return WORK_SUITABILITY_SLUG_BY_PAK_CATEGORY.getOrDefault(bestWorkSuitabilityPakCategory, bestWorkSuitabilityPakCategory);
+    }
+
+    private List<PalWorkSuitabilitySyncData> workSuitabilities(JsonNode node, String bestWorkSuitabilityPakCategory) {
+        // Le pak liste les 13 catégories pour chaque Pal (0 pour celles qu'il n'a pas) — seules celles
+        // réellement présentes (level > 0) alimentent le calcul et sont exposées (~2,5 en moyenne par Pal).
+        Map<String, Integer> levelByPakCategory = new LinkedHashMap<>();
+        for (JsonNode ws : node) {
+            int level = ws.path("level").asInt(0);
+            if (level <= 0) continue;
+            levelByPakCategory.put(ws.path("category").asText(null), level);
+        }
+
+        Map<String, Integer> maxLevelByPakCategory =
+                WorkSuitabilityMaxLevelCalculator.computeMaxLevels(bestWorkSuitabilityPakCategory, levelByPakCategory);
+
+        List<PalWorkSuitabilitySyncData> result = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : levelByPakCategory.entrySet()) {
+            String pakCategory = entry.getKey();
+            String slug = WORK_SUITABILITY_SLUG_BY_PAK_CATEGORY.getOrDefault(pakCategory, pakCategory);
+            result.add(new PalWorkSuitabilitySyncData(slug, null, entry.getValue(), maxLevelByPakCategory.get(pakCategory),
+                    null, null, pakCategory.equals(bestWorkSuitabilityPakCategory)));
+        }
+        return result;
     }
 
     private List<PalActiveSkillSyncData> activeSkills(JsonNode node) {
