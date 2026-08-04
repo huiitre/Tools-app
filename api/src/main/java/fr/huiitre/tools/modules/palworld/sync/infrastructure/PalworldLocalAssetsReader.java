@@ -6,6 +6,9 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -42,12 +45,22 @@ public class PalworldLocalAssetsReader {
         }
     }
 
+    public Set<String> listImageFileNames(String imgSubDir) {
+        Path dir = palworldRoot.resolve("img").resolve(imgSubDir);
+        try (Stream<Path> stream = Files.list(dir)) {
+            return stream.map(p -> p.getFileName().toString()).collect(Collectors.toSet());
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to list Palworld image directory: " + dir, e);
+        }
+    }
+
     public OffsetDateTime readScrapedAt() {
         try {
             JsonNode root = objectMapper.readTree(readFile("version.json"));
-            return Instant.parse(root.path("scrapedAt").asText()).atOffset(ZoneOffset.UTC);
+            // "scrapedAt" (ancien extracteur scraper) a été remplacé par "generatedAt" (extracteur pak).
+            return Instant.parse(root.path("generatedAt").asText()).atOffset(ZoneOffset.UTC);
         } catch (Exception e) {
-            throw new IllegalStateException("Unable to read Palworld version.json scrapedAt", e);
+            throw new IllegalStateException("Unable to read Palworld version.json generatedAt", e);
         }
     }
 }

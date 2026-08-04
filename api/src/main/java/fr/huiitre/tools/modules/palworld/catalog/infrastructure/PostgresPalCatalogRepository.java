@@ -15,8 +15,6 @@ import fr.huiitre.tools.modules.palworld.catalog.application.view.PalListItemVie
 import fr.huiitre.tools.modules.palworld.catalog.application.view.PartnerSkillRankSummaryView;
 import fr.huiitre.tools.modules.palworld.catalog.application.view.PartnerSkillSummaryView;
 import fr.huiitre.tools.modules.palworld.catalog.application.view.PassiveSkillSummaryView;
-import fr.huiitre.tools.modules.palworld.catalog.application.view.SpawnZoneSummaryView;
-import fr.huiitre.tools.modules.palworld.catalog.application.view.VariantSummaryView;
 import fr.huiitre.tools.modules.palworld.catalog.application.view.WorkSuitabilitySummaryView;
 
 public class PostgresPalCatalogRepository implements PalCatalogRepository {
@@ -145,34 +143,10 @@ public class PostgresPalCatalogRepository implements PalCatalogRepository {
                             rs.getString("level_label")));
         });
 
-        Map<Long, List<VariantSummaryView>> variantsByPalId = new LinkedHashMap<>();
-        final String variantsSql = """
-                SELECT pal_id, id, slug, name, icon_url, role
-                FROM tools_palworld.pal_variant
-                ORDER BY pal_id, sort_order
-                """;
-        jdbcTemplate.query(variantsSql, rs -> {
-            variantsByPalId.computeIfAbsent(rs.getLong("pal_id"), id -> new ArrayList<>())
-                    .add(new VariantSummaryView(rs.getLong("id"), rs.getString("slug"), rs.getString("name"),
-                            rs.getString("icon_url"), rs.getString("role")));
-        });
-
-        Map<Long, List<SpawnZoneSummaryView>> spawnZonesByPalId = new LinkedHashMap<>();
-        final String spawnZonesSql = """
-                SELECT pal_id, id, level_label, location_label, location_link
-                FROM tools_palworld.pal_spawn_zone
-                ORDER BY pal_id, sort_order
-                """;
-        jdbcTemplate.query(spawnZonesSql, rs -> {
-            spawnZonesByPalId.computeIfAbsent(rs.getLong("pal_id"), id -> new ArrayList<>())
-                    .add(new SpawnZoneSummaryView(rs.getLong("id"), rs.getString("level_label"),
-                            rs.getString("location_label"), rs.getString("location_link")));
-        });
-
         final String palsSql = """
                 SELECT id, tribe, paldex_index, paldex_suffix, name, image_url, description, rarity, size, base_hp,
                        base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed, ride_sprint_speed,
-                       capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type, best_work_suitability_label,
+                       capture_rate_correct, male_probability, combi_rank, price, best_work_suitability_label,
                        food_gauge_filled, food_gauge_empty, food_gauge_icon_url
                 FROM tools_palworld.pal
                 ORDER BY paldex_index, paldex_suffix
@@ -200,8 +174,7 @@ public class PostgresPalCatalogRepository implements PalCatalogRepository {
                     rs.getBigDecimal("capture_rate_correct"),
                     rs.getBigDecimal("male_probability"),
                     (Integer) rs.getObject("combi_rank"),
-                    (Integer) rs.getObject("gold_coin"),
-                    rs.getString("egg_type"),
+                    (Integer) rs.getObject("price"),
                     rs.getString("best_work_suitability_label"),
                     (Integer) rs.getObject("food_gauge_filled"),
                     (Integer) rs.getObject("food_gauge_empty"),
@@ -211,9 +184,7 @@ public class PostgresPalCatalogRepository implements PalCatalogRepository {
                     passiveSkillsByPalId.getOrDefault(id, List.of()),
                     activeSkillsByPalId.getOrDefault(id, List.of()),
                     partnerSkillByPalId.get(id),
-                    dropsByPalId.getOrDefault(id, List.of()),
-                    variantsByPalId.getOrDefault(id, List.of()),
-                    spawnZonesByPalId.getOrDefault(id, List.of()));
+                    dropsByPalId.getOrDefault(id, List.of()));
         });
     }
 }

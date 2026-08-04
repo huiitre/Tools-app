@@ -1,5 +1,6 @@
 package fr.huiitre.tools.config.palworld;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -8,6 +9,7 @@ import fr.huiitre.tools.modules.palworld.sync.application.ports.ElementDataProvi
 import fr.huiitre.tools.modules.palworld.sync.application.ports.ElementSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PalDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PalSyncRepository;
+import fr.huiitre.tools.modules.palworld.sync.application.ports.PalworldLanguageDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.SkillDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.SkillSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.WorkPriorityDataProvider;
@@ -16,6 +18,7 @@ import fr.huiitre.tools.modules.palworld.sync.application.ports.WorkSuitabilityD
 import fr.huiitre.tools.modules.palworld.sync.application.ports.WorkSuitabilitySyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalAssetsReader;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalElementDataProvider;
+import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalLanguageDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalPalDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalSkillDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalWorkPriorityDataProvider;
@@ -30,8 +33,16 @@ import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresWorkSuitabi
 public class PalworldSyncConfig {
 
     @Bean
-    public ElementDataProvider elementDataProvider(PalworldLocalAssetsReader assetsReader) {
-        return new PalworldLocalElementDataProvider(assetsReader);
+    public PalworldLanguageDataProvider palworldLanguageDataProvider(PalworldLocalAssetsReader assetsReader) {
+        return new PalworldLocalLanguageDataProvider(assetsReader);
+    }
+
+    @Bean
+    public ElementDataProvider elementDataProvider(
+            PalworldLocalAssetsReader assetsReader,
+            PalworldLanguageDataProvider languageDataProvider,
+            @Value("${app.assets.base-url}") String assetsBaseUrl) {
+        return new PalworldLocalElementDataProvider(assetsReader, languageDataProvider, assetsBaseUrl);
     }
 
     @Bean
@@ -40,8 +51,11 @@ public class PalworldSyncConfig {
     }
 
     @Bean
-    public WorkSuitabilityDataProvider workSuitabilityDataProvider(PalworldLocalAssetsReader assetsReader) {
-        return new PalworldLocalWorkSuitabilityDataProvider(assetsReader);
+    public WorkSuitabilityDataProvider workSuitabilityDataProvider(
+            PalworldLocalAssetsReader assetsReader,
+            PalworldLanguageDataProvider languageDataProvider,
+            @Value("${app.assets.base-url}") String assetsBaseUrl) {
+        return new PalworldLocalWorkSuitabilityDataProvider(assetsReader, languageDataProvider, assetsBaseUrl);
     }
 
     @Bean
@@ -50,8 +64,9 @@ public class PalworldSyncConfig {
     }
 
     @Bean
-    public WorkPriorityDataProvider workPriorityDataProvider(PalworldLocalAssetsReader assetsReader) {
-        return new PalworldLocalWorkPriorityDataProvider(assetsReader);
+    public WorkPriorityDataProvider workPriorityDataProvider(
+            PalworldLocalAssetsReader assetsReader, PalworldLanguageDataProvider languageDataProvider) {
+        return new PalworldLocalWorkPriorityDataProvider(assetsReader, languageDataProvider);
     }
 
     @Bean
@@ -60,8 +75,9 @@ public class PalworldSyncConfig {
     }
 
     @Bean
-    public SkillDataProvider skillDataProvider(PalworldLocalAssetsReader assetsReader) {
-        return new PalworldLocalSkillDataProvider(assetsReader);
+    public SkillDataProvider skillDataProvider(
+            PalworldLocalAssetsReader assetsReader, PalworldLanguageDataProvider languageDataProvider) {
+        return new PalworldLocalSkillDataProvider(assetsReader, languageDataProvider);
     }
 
     @Bean
@@ -70,8 +86,11 @@ public class PalworldSyncConfig {
     }
 
     @Bean
-    public PalDataProvider palDataProvider(PalworldLocalAssetsReader assetsReader) {
-        return new PalworldLocalPalDataProvider(assetsReader);
+    public PalDataProvider palDataProvider(
+            PalworldLocalAssetsReader assetsReader,
+            PalworldLanguageDataProvider languageDataProvider,
+            @Value("${app.assets.base-url}") String assetsBaseUrl) {
+        return new PalworldLocalPalDataProvider(assetsReader, languageDataProvider, assetsBaseUrl);
     }
 
     @Bean

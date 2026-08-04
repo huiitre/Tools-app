@@ -20,12 +20,9 @@ public interface PalSyncRepository {
 
     void deleteAllChildren();
 
-    void saveElements(Long palId, PalSyncData data, Map<String, Long> elementIdByExternalCode);
+    void saveElements(Long palId, PalSyncData data, Map<String, Long> elementIdByName);
     void saveWorkSuitabilities(Long palId, PalSyncData data, Map<String, Long> workSuitabilityIdBySlug);
-    void saveActiveSkills(Long palId, PalSyncData data, Map<String, Long> skillIdBySlug);
+    void saveActiveSkills(Long palId, PalSyncData data, Map<String, Long> skillIdByName);
     void savePassiveSkills(Long palId, PalSyncData data);
-    void savePartnerSkill(Long palId, PalSyncData data);
     void saveDrops(Long palId, PalSyncData data);
-    void saveVariants(Long palId, PalSyncData data);
-    void saveSpawnZones(Long palId, PalSyncData data);
 }

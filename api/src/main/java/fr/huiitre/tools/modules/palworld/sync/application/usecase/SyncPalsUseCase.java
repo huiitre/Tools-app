@@ -1,5 +1,6 @@
 package fr.huiitre.tools.modules.palworld.sync.application.usecase;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +26,8 @@ import fr.huiitre.tools.modules.palworld.sync.application.view.PalRefView;
 @Service
 @Transactional
 public class SyncPalsUseCase implements SecuredUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(SyncPalsUseCase.class);
 
     private final PalDataProvider dataProvider;
     private final PalSyncRepository syncRepository;
@@ -43,32 +48,36 @@ public class SyncPalsUseCase implements SecuredUseCase {
     }
 
     public PalworldSyncReport execute(
-            Map<String, Long> elementIdByExternalCode,
+            Map<String, Long> elementIdByName,
             Map<String, Long> workSuitabilityIdBySlug,
-            Map<String, Long> skillIdBySlug) {
+            Map<String, Long> skillIdByName) {
         List<PalSyncData> external = dataProvider.fetchAll();
 
-        Map<String, PalRefView> currentByTribe = syncRepository.findAll().stream()
-                .collect(Collectors.toMap(PalRefView::tribe, it -> it));
+        // Matching insensible à la casse : cf. tools_palworld.pal_instance qui résout déjà character_id -> pal
+        // via findIdByTribeUpper() (PostgresPalLookupRepository). "BluePlatypus" (pak) vs "Blueplatypus" (ancien
+        // scraper) sont le même Pal, seule la casse diffère d'une source à l'autre.
+        Map<String, PalRefView> currentByTribeUpper = syncRepository.findAll().stream()
+                .collect(Collectors.toMap(pal -> pal.tribe().toUpperCase(), it -> it));
 
-        Set<String> externalTribes = external.stream()
-                .map(PalSyncData::getTribe)
+        Set<String> externalTribesUpper = external.stream()
+                .map(pal -> pal.getTribe().toUpperCase())
                 .collect(Collectors.toSet());
 
-        Map<String, Long> palIdByTribe = new HashMap<>();
+        Map<String, Long> palIdByTribeUpper = new HashMap<>();
         int created = 0;
         int updated = 0;
         int deleted = 0;
 
         for (PalSyncData ext : external) {
-            PalRefView existing = currentByTribe.get(ext.getTribe());
+            String tribeUpper = ext.getTribe().toUpperCase();
+            PalRefView existing = currentByTribeUpper.get(tribeUpper);
 
             if (existing == null) {
                 Long newId = syncRepository.save(ext);
-                palIdByTribe.put(ext.getTribe(), newId);
+                palIdByTribeUpper.put(tribeUpper, newId);
                 created++;
             } else {
-                palIdByTribe.put(ext.getTribe(), existing.id());
+                palIdByTribeUpper.put(tribeUpper, existing.id());
 
                 if (hasChanged(existing, ext)) {
                     syncRepository.update(existing.id(), ext);
@@ -76,28 +85,36 @@ public class SyncPalsUseCase implements SecuredUseCase {
                 }
             }
 
-            syncRepository.upsertSource(palIdByTribe.get(ext.getTribe()), ext.getSourceSlug(), ext.getSourceUrl(),
+            syncRepository.upsertSource(palIdByTribeUpper.get(tribeUpper), ext.getSourceSlug(), ext.getSourceUrl(),
                     ext.getRawPayloadJson(), ext.getFetchedAt());
         }
 
-        for (PalRefView current : currentByTribe.values()) {
-            if (!externalTribes.contains(current.tribe())) {
+        List<String> deletedTribes = new ArrayList<>();
+        for (PalRefView current : currentByTribeUpper.values()) {
+            if (!externalTribesUpper.contains(current.tribe().toUpperCase())) {
                 syncRepository.delete(current.id());
+                deletedTribes.add(current.tribe());
                 deleted++;
             }
         }
 
-        replaceChildren(external, palIdByTribe, elementIdByExternalCode, workSuitabilityIdBySlug, skillIdBySlug);
+        // Garde-fou : si la clé tribe (id pak vs tribe ex-scraper) a changé de format pour une part significative
+        // des Pals, cette liste explose au lieu de rester proche de 0 — signal à vérifier avant de faire confiance
+        // au sync (perte silencieuse d'image_url/description "sticky" pour tout Pal vu comme supprimé+recréé).
+        List<String> createdTribes = external.stream()
+                .map(PalSyncData::getTribe)
+                .filter(tribe -> !currentByTribeUpper.containsKey(tribe.toUpperCase()))
+                .toList();
+        log.info("Palworld pals sync: {} created {}, {} deleted {}", created, createdTribes, deleted, deletedTribes);
+
+        replaceChildren(external, palIdByTribeUpper, elementIdByName, workSuitabilityIdBySlug, skillIdByName);
 
         return new PalworldSyncReport(created, updated, deleted);
     }
 
     private boolean hasChanged(PalRefView existing, PalSyncData ext) {
         return !Objects.equals(existing.paldexIndex(), ext.getPaldexIndex())
-                || !Objects.equals(existing.paldexSuffix(), ext.getPaldexSuffix())
                 || !Objects.equals(existing.name(), ext.getName())
-                || !Objects.equals(existing.imageUrl(), ext.getImageUrl())
-                || !Objects.equals(existing.description(), ext.getDescription())
                 || !Objects.equals(existing.size(), ext.getSize())
                 || !Objects.equals(existing.rarity(), ext.getRarity())
                 || !Objects.equals(existing.baseHp(), ext.getBaseHp())
@@ -105,40 +122,34 @@ public class SyncPalsUseCase implements SecuredUseCase {
                 || !Objects.equals(existing.baseDefense(), ext.getBaseDefense())
                 || !Objects.equals(existing.baseWorkSpeed(), ext.getBaseWorkSpeed())
                 || !Objects.equals(existing.baseSupport(), ext.getBaseSupport())
-                || !Objects.equals(existing.foodAmount(), ext.getFoodAmount())
                 || !Objects.equals(existing.runSpeed(), ext.getRunSpeed())
                 || !Objects.equals(existing.rideSprintSpeed(), ext.getRideSprintSpeed())
                 || !Objects.equals(existing.captureRateCorrect(), ext.getCaptureRateCorrect())
                 || !Objects.equals(existing.maleProbability(), ext.getMaleProbability())
                 || !Objects.equals(existing.combiRank(), ext.getCombiRank())
-                || !Objects.equals(existing.goldCoin(), ext.getGoldCoin())
-                || !Objects.equals(existing.eggType(), ext.getEggType())
+                || !Objects.equals(existing.price(), ext.getPrice())
                 || !Objects.equals(existing.bestWorkSuitabilityLabel(), ext.getBestWorkSuitabilityLabel())
-                || !Objects.equals(existing.foodGaugeFilled(), ext.getFoodGaugeFilled())
-                || !Objects.equals(existing.foodGaugeEmpty(), ext.getFoodGaugeEmpty())
-                || !Objects.equals(existing.foodGaugeIconUrl(), ext.getFoodGaugeIconUrl());
+                || !Objects.equals(existing.imageUrl(), ext.getImageUrl())
+                || !Objects.equals(existing.description(), ext.getDescription());
     }
 
     private void replaceChildren(
             List<PalSyncData> external,
-            Map<String, Long> palIdByTribe,
-            Map<String, Long> elementIdByExternalCode,
+            Map<String, Long> palIdByTribeUpper,
+            Map<String, Long> elementIdByName,
             Map<String, Long> workSuitabilityIdBySlug,
-            Map<String, Long> skillIdBySlug) {
+            Map<String, Long> skillIdByName) {
         syncRepository.deleteAllChildren();
 
         for (PalSyncData pal : external) {
-            Long palId = palIdByTribe.get(pal.getTribe());
+            Long palId = palIdByTribeUpper.get(pal.getTribe().toUpperCase());
             if (palId == null) continue;
 
-            syncRepository.saveElements(palId, pal, elementIdByExternalCode);
+            syncRepository.saveElements(palId, pal, elementIdByName);
             syncRepository.saveWorkSuitabilities(palId, pal, workSuitabilityIdBySlug);
-            syncRepository.saveActiveSkills(palId, pal, skillIdBySlug);
+            syncRepository.saveActiveSkills(palId, pal, skillIdByName);
             syncRepository.savePassiveSkills(palId, pal);
-            syncRepository.savePartnerSkill(palId, pal);
             syncRepository.saveDrops(palId, pal);
-            syncRepository.saveVariants(palId, pal);
-            syncRepository.saveSpawnZones(palId, pal);
         }
     }
 }

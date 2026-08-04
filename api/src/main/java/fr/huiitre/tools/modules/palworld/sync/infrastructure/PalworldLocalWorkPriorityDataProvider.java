@@ -7,15 +7,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.huiitre.tools.modules.palworld.sync.application.WorkPrioritySyncData;
+import fr.huiitre.tools.modules.palworld.sync.application.ports.PalworldLanguageDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.WorkPriorityDataProvider;
 
 public class PalworldLocalWorkPriorityDataProvider implements WorkPriorityDataProvider {
 
     private final PalworldLocalAssetsReader assetsReader;
+    private final PalworldLanguageDataProvider languageDataProvider;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public PalworldLocalWorkPriorityDataProvider(PalworldLocalAssetsReader assetsReader) {
+    public PalworldLocalWorkPriorityDataProvider(
+            PalworldLocalAssetsReader assetsReader, PalworldLanguageDataProvider languageDataProvider) {
         this.assetsReader = assetsReader;
+        this.languageDataProvider = languageDataProvider;
     }
 
     @Override
@@ -28,10 +32,10 @@ public class PalworldLocalWorkPriorityDataProvider implements WorkPriorityDataPr
             for (JsonNode wp : root) {
                 result.add(new WorkPrioritySyncData(
                         wp.path("code").asText(null),
-                        wp.path("name").asText(null),
-                        wp.path("icon").isNull() ? null : wp.path("icon").asText(null),
+                        languageDataProvider.getString(wp.path("nameStringId").asText(null)),
+                        null,
                         wp.path("workSuitabilitySlug").isNull() ? null : wp.path("workSuitabilitySlug").asText(null),
-                        Integer.parseInt(wp.path("priority").asText())));
+                        wp.path("priority").asInt()));
             }
             return result;
         } catch (Exception e) {
