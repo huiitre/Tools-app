@@ -26,3 +26,5 @@ jobs:
           file: ./database/Dockerfile
           push: true
           tags: huiitre/tools-db-migration:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
