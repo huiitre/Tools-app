@@ -11,11 +11,8 @@ import org.springframework.jdbc.core.RowMapper;
 import fr.huiitre.tools.modules.palworld.sync.application.PalActiveSkillSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalDropSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalElementSyncData;
-import fr.huiitre.tools.modules.palworld.sync.application.PalPartnerSkillRankSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalPassiveSkillSyncData;
-import fr.huiitre.tools.modules.palworld.sync.application.PalSpawnZoneSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalSyncData;
-import fr.huiitre.tools.modules.palworld.sync.application.PalVariantSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalWorkSuitabilitySyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PalSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.application.view.PalRefView;
@@ -32,10 +29,7 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
             rs.getLong("id"),
             rs.getString("tribe"),
             (Integer) rs.getObject("paldex_index"),
-            rs.getString("paldex_suffix"),
             rs.getString("name"),
-            rs.getString("image_url"),
-            rs.getString("description"),
             rs.getString("size"),
             (Integer) rs.getObject("rarity"),
             (Integer) rs.getObject("base_hp"),
@@ -43,26 +37,36 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
             (Integer) rs.getObject("base_defense"),
             (Integer) rs.getObject("base_work_speed"),
             (Integer) rs.getObject("base_support"),
-            (Integer) rs.getObject("food_amount"),
             (Integer) rs.getObject("run_speed"),
             (Integer) rs.getObject("ride_sprint_speed"),
             rs.getBigDecimal("capture_rate_correct"),
             rs.getBigDecimal("male_probability"),
             (Integer) rs.getObject("combi_rank"),
+<<<<<<< Updated upstream
             (Integer) rs.getObject("gold_coin"),
             rs.getString("egg_type"),
             rs.getString("best_work_suitability_label"),
             (Integer) rs.getObject("food_gauge_filled"),
             (Integer) rs.getObject("food_gauge_empty"),
             rs.getString("food_gauge_icon_url"));
+=======
+            (Integer) rs.getObject("price"),
+            rs.getString("best_work_suitability_label"));
+>>>>>>> Stashed changes
 
     @Override
     public List<PalRefView> findAll() {
         final String sql = """
+<<<<<<< Updated upstream
                 SELECT id, tribe, paldex_index, paldex_suffix, name, image_url, description, size, rarity,
                        base_hp, base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed,
                        ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type,
                        best_work_suitability_label, food_gauge_filled, food_gauge_empty, food_gauge_icon_url
+=======
+                SELECT id, tribe, paldex_index, name, size, rarity, base_hp, base_attack, base_defense,
+                       base_work_speed, base_support, run_speed, ride_sprint_speed, capture_rate_correct,
+                       male_probability, combi_rank, price, best_work_suitability_label
+>>>>>>> Stashed changes
                 FROM tools_palworld.pal
                 """;
         return jdbcTemplate.query(sql, ROW_MAPPER);
@@ -74,6 +78,7 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 INSERT INTO tools_palworld.pal
                     (tribe, paldex_index, paldex_suffix, name, image_url, description, size, rarity,
                      base_hp, base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed,
+<<<<<<< Updated upstream
                      ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, gold_coin, egg_type,
                      best_work_suitability_label, food_gauge_filled, food_gauge_empty, food_gauge_icon_url)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -86,12 +91,25 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 data.getRideSprintSpeed(), data.getCaptureRateCorrect(), data.getMaleProbability(), data.getCombiRank(),
                 data.getGoldCoin(), data.getEggType(), data.getBestWorkSuitabilityLabel(), data.getFoodGaugeFilled(),
                 data.getFoodGaugeEmpty(), data.getFoodGaugeIconUrl());
+=======
+                     ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, price,
+                     best_work_suitability_label)
+                VALUES (?, ?, NULL, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?)
+                RETURNING id
+                """;
+        return jdbcTemplate.queryForObject(sql, Long.class,
+                data.getTribe(), data.getPaldexIndex(), data.getName(), data.getSize(), data.getRarity(), data.getBaseHp(),
+                data.getBaseAttack(), data.getBaseDefense(), data.getBaseWorkSpeed(), data.getBaseSupport(),
+                data.getRunSpeed(), data.getRideSprintSpeed(), data.getCaptureRateCorrect(), data.getMaleProbability(),
+                data.getCombiRank(), data.getPrice(), data.getBestWorkSuitabilityLabel());
+>>>>>>> Stashed changes
     }
 
     @Override
     public void update(Long id, PalSyncData data) {
         final String sql = """
                 UPDATE tools_palworld.pal
+<<<<<<< Updated upstream
                 SET paldex_index = ?, paldex_suffix = ?, name = ?, image_url = ?, description = ?, size = ?,
                     rarity = ?, base_hp = ?, base_attack = ?, base_defense = ?, base_work_speed = ?, base_support = ?,
                     food_amount = ?, run_speed = ?, ride_sprint_speed = ?, capture_rate_correct = ?, male_probability = ?,
@@ -106,6 +124,18 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 data.getCaptureRateCorrect(), data.getMaleProbability(), data.getCombiRank(), data.getGoldCoin(),
                 data.getEggType(), data.getBestWorkSuitabilityLabel(), data.getFoodGaugeFilled(), data.getFoodGaugeEmpty(),
                 data.getFoodGaugeIconUrl(), id);
+=======
+                SET paldex_index = ?, name = ?, size = ?, rarity = ?, base_hp = ?, base_attack = ?, base_defense = ?,
+                    base_work_speed = ?, base_support = ?, run_speed = ?, ride_sprint_speed = ?, capture_rate_correct = ?,
+                    male_probability = ?, combi_rank = ?, price = ?, best_work_suitability_label = ?, updated_at = now()
+                WHERE id = ?
+                """;
+        jdbcTemplate.update(sql,
+                data.getPaldexIndex(), data.getName(), data.getSize(), data.getRarity(), data.getBaseHp(),
+                data.getBaseAttack(), data.getBaseDefense(), data.getBaseWorkSpeed(), data.getBaseSupport(),
+                data.getRunSpeed(), data.getRideSprintSpeed(), data.getCaptureRateCorrect(), data.getMaleProbability(),
+                data.getCombiRank(), data.getPrice(), data.getBestWorkSuitabilityLabel(), id);
+>>>>>>> Stashed changes
     }
 
     @Override
@@ -117,7 +147,7 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
     public void upsertSource(Long palId, String slug, String sourceUrl, String rawPayloadJson, OffsetDateTime fetchedAt) {
         final String sql = """
                 INSERT INTO tools_palworld.pal_source (pal_id, source_code, external_slug, external_url, raw_payload, fetched_at)
-                VALUES (?, 'paldb_cc', ?, ?, ?::jsonb, ?)
+                VALUES (?, 'palworld_pak', ?, ?, ?::jsonb, ?)
                 ON CONFLICT (pal_id, source_code)
                 DO UPDATE SET external_slug = EXCLUDED.external_slug, external_url = EXCLUDED.external_url,
                     raw_payload = EXCLUDED.raw_payload, fetched_at = EXCLUDED.fetched_at
@@ -138,34 +168,24 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
 
     @Override
     public void deleteAllChildren() {
-        jdbcTemplate.update("DELETE FROM tools_palworld.pal_partner_skill_rank");
-        jdbcTemplate.update("DELETE FROM tools_palworld.pal_partner_skill");
         jdbcTemplate.update("DELETE FROM tools_palworld.pal_element");
         jdbcTemplate.update("DELETE FROM tools_palworld.pal_work_suitability");
         jdbcTemplate.update("DELETE FROM tools_palworld.pal_active_skill");
         jdbcTemplate.update("DELETE FROM tools_palworld.pal_passive_skill");
         jdbcTemplate.update("DELETE FROM tools_palworld.pal_drop");
-        jdbcTemplate.update("DELETE FROM tools_palworld.pal_variant");
-        jdbcTemplate.update("DELETE FROM tools_palworld.pal_spawn_zone");
     }
 
     @Override
-    public void saveElements(Long palId, PalSyncData data, Map<String, Long> elementIdByExternalCode) {
+    public void saveElements(Long palId, PalSyncData data, Map<String, Long> elementIdByName) {
         final String sql = """
                 INSERT INTO tools_palworld.pal_element (pal_id, element_id, sort_order)
                 VALUES (?, ?, ?)
                 ON CONFLICT (pal_id, element_id) DO NOTHING
                 """;
-        final String backfillIconSql = """
-                UPDATE tools_palworld.element SET icon_url = ? WHERE id = ? AND icon_url IS NULL
-                """;
         for (PalElementSyncData element : data.getElements()) {
-            Long elementId = elementIdByExternalCode.get(element.getExternalCode());
+            Long elementId = elementIdByName.get(element.getElementName());
             if (elementId == null) continue;
             jdbcTemplate.update(sql, palId, elementId, element.getSortOrder());
-            if (element.getIconUrl() != null) {
-                jdbcTemplate.update(backfillIconSql, element.getIconUrl(), elementId);
-            }
         }
     }
 
@@ -177,29 +197,30 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (pal_id, work_suitability_id) DO NOTHING
                 """;
-        final String backfillIconSql = """
-                UPDATE tools_palworld.work_suitability SET icon_url = ? WHERE id = ? AND icon_url IS NULL
-                """;
         for (PalWorkSuitabilitySyncData ws : data.getWorkSuitabilities()) {
             Long workSuitabilityId = workSuitabilityIdBySlug.get(ws.getSlug());
             if (workSuitabilityId == null) continue;
+<<<<<<< Updated upstream
             jdbcTemplate.update(sql, palId, workSuitabilityId, ws.getLevel(), ws.getMaxLevel(), ws.getStarSegments(),
                     ws.getEmptySegments(), ws.isPriority());
             if (ws.getIconUrl() != null) {
                 jdbcTemplate.update(backfillIconSql, ws.getIconUrl(), workSuitabilityId);
             }
+=======
+            jdbcTemplate.update(sql, palId, workSuitabilityId, ws.getLevel());
+>>>>>>> Stashed changes
         }
     }
 
     @Override
-    public void saveActiveSkills(Long palId, PalSyncData data, Map<String, Long> skillIdBySlug) {
+    public void saveActiveSkills(Long palId, PalSyncData data, Map<String, Long> skillIdByName) {
         final String sql = """
                 INSERT INTO tools_palworld.pal_active_skill (pal_id, skill_id, unlock_level, sort_order)
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT (pal_id, skill_id, unlock_level) DO NOTHING
                 """;
         for (PalActiveSkillSyncData skill : data.getActiveSkills()) {
-            Long skillId = skillIdBySlug.get(skill.getSkillSlug());
+            Long skillId = skillIdByName.get(skill.getSkillName());
             if (skillId == null) continue;
             jdbcTemplate.update(sql, palId, skillId, skill.getUnlockLevel(), skill.getSortOrder());
         }
@@ -217,26 +238,6 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
     }
 
     @Override
-    public void savePartnerSkill(Long palId, PalSyncData data) {
-        if (data.getPartnerSkill() == null) return;
-
-        final String sql = """
-                INSERT INTO tools_palworld.pal_partner_skill (pal_id, title, description, icon_url)
-                VALUES (?, ?, ?, ?)
-                """;
-        jdbcTemplate.update(sql, palId, data.getPartnerSkill().getTitle(), data.getPartnerSkill().getDescription(),
-                data.getPartnerSkill().getIconUrl());
-
-        final String rankSql = """
-                INSERT INTO tools_palworld.pal_partner_skill_rank (pal_id, sort_order, level_label, detail)
-                VALUES (?, ?, ?, ?)
-                """;
-        for (PalPartnerSkillRankSyncData rank : data.getPartnerSkill().getRanks()) {
-            jdbcTemplate.update(rankSql, palId, rank.getSortOrder(), rank.getLevelLabel(), rank.getDetail());
-        }
-    }
-
-    @Override
     public void saveDrops(Long palId, PalSyncData data) {
         final String sql = """
                 INSERT INTO tools_palworld.pal_drop
@@ -249,31 +250,6 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
             Long itemId = findOrCreateItem(drop.getItemSlug(), drop.getItemName(), drop.getItemIconUrl());
             jdbcTemplate.update(sql, palId, itemId, drop.getQuantityMin(), drop.getQuantityMax(),
                     drop.getProbabilityPercent(), drop.getLevelLabel(), drop.getSortOrder());
-        }
-    }
-
-    @Override
-    public void saveVariants(Long palId, PalSyncData data) {
-        final String sql = """
-                INSERT INTO tools_palworld.pal_variant (pal_id, slug, name, icon_url, role, sort_order)
-                VALUES (?, ?, ?, ?, ?, ?)
-                ON CONFLICT (pal_id, slug, role) DO NOTHING
-                """;
-        for (PalVariantSyncData variant : data.getVariants()) {
-            jdbcTemplate.update(sql, palId, variant.getSlug(), variant.getName(), variant.getIconUrl(),
-                    variant.getRole(), variant.getSortOrder());
-        }
-    }
-
-    @Override
-    public void saveSpawnZones(Long palId, PalSyncData data) {
-        final String sql = """
-                INSERT INTO tools_palworld.pal_spawn_zone (pal_id, level_label, location_label, location_link, sort_order)
-                VALUES (?, ?, ?, ?, ?)
-                """;
-        for (PalSpawnZoneSyncData zone : data.getSpawnZones()) {
-            jdbcTemplate.update(sql, palId, zone.getLevelLabel(), zone.getLocationLabel(), zone.getLocationLink(),
-                    zone.getSortOrder());
         }
     }
 }

@@ -54,9 +54,9 @@ public class SyncPalworldUseCase implements SecuredUseCase {
         WorkPrioritySyncResult workPriorities = syncWorkPrioritiesUseCase.execute(workSuitabilities.idBySlug());
         SkillSyncResult skills = syncSkillsUseCase.execute(elements.idByExternalCode());
         PalworldSyncReport pals = syncPalsUseCase.execute(
-                elements.idByExternalCode(),
+                elements.idByName(),
                 workSuitabilities.idBySlug(),
-                skills.idBySlug());
+                skills.idByName());
 
         return new PalworldGlobalSyncReport(
                 elements.report(), workSuitabilities.report(), workPriorities.report(), skills.report(), pals);

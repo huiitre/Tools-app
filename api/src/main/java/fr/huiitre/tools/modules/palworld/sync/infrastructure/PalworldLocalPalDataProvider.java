@@ -3,9 +3,10 @@ package fr.huiitre.tools.modules.palworld.sync.infrastructure;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Map;
+import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,19 +14,43 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.huiitre.tools.modules.palworld.sync.application.PalActiveSkillSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalDropSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalElementSyncData;
-import fr.huiitre.tools.modules.palworld.sync.application.PalPartnerSkillRankSyncData;
-import fr.huiitre.tools.modules.palworld.sync.application.PalPartnerSkillSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalPassiveSkillSyncData;
-import fr.huiitre.tools.modules.palworld.sync.application.PalSpawnZoneSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalSyncData;
-import fr.huiitre.tools.modules.palworld.sync.application.PalVariantSyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.PalWorkSuitabilitySyncData;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PalDataProvider;
 
 public class PalworldLocalPalDataProvider implements PalDataProvider {
 
-    private static final Pattern PROBABILITY_WITH_LEVEL = Pattern.compile("^(Lv\\.?\\s*\\d+)\\s+([\\d.]+)%$");
-    private static final Pattern PROBABILITY_PLAIN = Pattern.compile("^([\\d.]+)%$");
+    // Le pak expose les valeurs internes du jeu (enum EPalElementType / EPalWorkSuitability), alors que
+    // elements.json/work_suitability.json (scraper paldb.cc, inchangés) utilisent leur propre vocabulaire
+    // anglais. Ce ne sont ni les mêmes casse ni les mêmes mots : table de correspondance figée, ces deux
+    // catalogues sont petits et stables entre mises à jour du jeu.
+    private static final Map<String, String> ELEMENT_NAME_BY_PAK_TYPE = Map.of(
+            "Fire", "Fire",
+            "Water", "Water",
+            "Electricity", "Electric",
+            "Leaf", "Grass",
+            "Dark", "Dark",
+            "Dragon", "Dragon",
+            "Earth", "Ground",
+            "Ice", "Ice",
+            "Normal", "Neutral");
+
+    private static final Map<String, String> WORK_SUITABILITY_SLUG_BY_PAK_CATEGORY = Map.ofEntries(
+            Map.entry("EmitFlame", "Kindling"),
+            Map.entry("Watering", "Watering"),
+            Map.entry("Seeding", "Planting"),
+            Map.entry("GenerateElectricity", "Generating_Electricity"),
+            Map.entry("Handcraft", "Handiwork"),
+            Map.entry("Collection", "Gathering"),
+            Map.entry("Deforest", "Lumbering"),
+            Map.entry("Mining", "Mining"),
+            Map.entry("ProductMedicine", "Medicine_Production"),
+            Map.entry("Cool", "Cooling"),
+            Map.entry("Transport", "Transporting"),
+            Map.entry("MonsterFarm", "Farming"));
+    // "OilExtraction" (pak) n'a aucun équivalent dans work_suitability.json — absent du catalogue scrapé
+    // (paldb.cc ne le référence pas). Aucun Pal du jeu n'a ce niveau > 0 à ce jour, donc sans impact visible.
 
     private final PalworldLocalAssetsReader assetsReader;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -51,15 +76,17 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
     }
 
     private PalSyncData toSyncData(JsonNode pal, OffsetDateTime fetchedAt) {
-        JsonNode stats = pal.path("raw").path("Stats");
-        JsonNode others = pal.path("raw").path("Others");
-        JsonNode movement = pal.path("raw").path("Movement");
+        JsonNode stats = pal.path("stats");
+        JsonNode movement = pal.path("movement");
+        String tribe = pal.path("id").asText(null);
+
+        List<PalWorkSuitabilitySyncData> workSuitabilities = workSuitabilities(pal.path("workSuitability"));
 
         return new PalSyncData(
-                pal.path("tribe").asText(null),
-                parseInt(pal.path("paldexIndex").asText(null)),
-                pal.path("suffix").isNull() ? null : pal.path("suffix").asText(null),
+                tribe,
+                intOrNull(pal.path("paldexIndex")),
                 pal.path("name").asText(null),
+<<<<<<< Updated upstream
                 pal.path("image").asText(null),
                 pal.path("description").asText(null),
                 statText(stats, "Size"),
@@ -83,27 +110,40 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
                 pal.path("foodAmount").path("icon").asText(null),
                 elements(pal.path("elements")),
                 workSuitabilities(pal.path("workSuitability")),
+=======
+                pal.path("size").asText(null),
+                intOrNull(pal.path("rarity")),
+                intOrNull(stats.path("hp")),
+                intOrNull(stats.path("meleeAttack")),
+                intOrNull(stats.path("defense")),
+                intOrNull(stats.path("craftSpeed")),
+                intOrNull(stats.path("support")),
+                intOrNull(movement.path("run")),
+                intOrNull(movement.path("rideSprint")),
+                decimalOrNull(pal.path("captureRateCorrect")),
+                decimalOrNull(pal.path("maleProbability")),
+                intOrNull(pal.path("combiRank")),
+                intOrNull(pal.path("price")),
+                bestWorkSuitability(workSuitabilities),
+                elements(pal.path("elementTypes")),
+                workSuitabilities,
+>>>>>>> Stashed changes
                 activeSkills(pal.path("activeSkills")),
                 passiveSkills(pal.path("passiveSkills")),
-                partnerSkill(pal.path("partnerSkill")),
                 drops(pal.path("drops")),
-                variants(pal.path("tribeVariants")),
-                spawnZones(pal.path("spawner")),
-                pal.path("slug").asText(null),
+                tribe,
                 null,
                 pal.toString(),
                 fetchedAt);
-    }
-
-    private String statText(JsonNode block, String key) {
-        return block.path(key).path("text").asText(null);
     }
 
     private List<PalElementSyncData> elements(JsonNode node) {
         List<PalElementSyncData> result = new ArrayList<>();
         int order = 0;
         for (JsonNode element : node) {
-            result.add(new PalElementSyncData(element.path("id").asText(null), element.path("icon").asText(null), order++));
+            String pakType = element.asText(null);
+            String elementName = ELEMENT_NAME_BY_PAK_TYPE.getOrDefault(pakType, pakType);
+            result.add(new PalElementSyncData(elementName, null, order++));
         }
         return result;
     }
@@ -111,6 +151,7 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
     private List<PalWorkSuitabilitySyncData> workSuitabilities(JsonNode node) {
         List<PalWorkSuitabilitySyncData> result = new ArrayList<>();
         for (JsonNode ws : node) {
+<<<<<<< Updated upstream
             Integer level = parseInt(ws.path("level").asText(null));
             Integer maxLevel = parseInt(ws.path("maxLevel").asText(null));
             Integer starSegments = parseInt(ws.path("starSegments").asText(null));
@@ -118,16 +159,35 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
             boolean isPriority = ws.path("isPriority").asBoolean(false);
             result.add(new PalWorkSuitabilitySyncData(ws.path("slug").asText(null), ws.path("icon").asText(null),
                     level != null ? level : 0, maxLevel, starSegments, emptySegments, isPriority));
+=======
+            int level = ws.path("level").asInt(0);
+            // Le pak liste les 13 catégories pour chaque Pal (0 pour celles qu'il n'a pas) — l'ancien scraper
+            // ne remontait que les aptitudes réellement présentes (~2,5 en moyenne par Pal contre 13 sinon).
+            if (level <= 0) continue;
+
+            String pakCategory = ws.path("category").asText(null);
+            String slug = WORK_SUITABILITY_SLUG_BY_PAK_CATEGORY.getOrDefault(pakCategory, pakCategory);
+            result.add(new PalWorkSuitabilitySyncData(slug, null, level));
+>>>>>>> Stashed changes
         }
         return result;
+    }
+
+    private String bestWorkSuitability(List<PalWorkSuitabilitySyncData> workSuitabilities) {
+        return workSuitabilities.stream()
+                .max(Comparator.comparingInt(PalWorkSuitabilitySyncData::getLevel))
+                .map(PalWorkSuitabilitySyncData::getSlug)
+                .orElse(null);
     }
 
     private List<PalActiveSkillSyncData> activeSkills(JsonNode node) {
         List<PalActiveSkillSyncData> result = new ArrayList<>();
         int order = 0;
         for (JsonNode skill : node) {
-            Integer level = parseInt(skill.path("level").asText(null));
-            result.add(new PalActiveSkillSyncData(skill.path("link").asText(null), level != null ? level : 0, order++));
+            // Jointure par nom (FR) et non par id : le "id" interne du pak (ex: "PoisonFog") ne correspond pas
+            // au slug scrapé de skills.json (ex: "Poison_Fog" est en fait un slug propre à paldb.cc, sans lien
+            // mécanique avec le nom interne) — en revanche le nom affiché est bien le même texte des deux côtés.
+            result.add(new PalActiveSkillSyncData(skill.path("name").asText(null), skill.path("level").asInt(0), order++));
         }
         return result;
     }
@@ -136,137 +196,40 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
         List<PalPassiveSkillSyncData> result = new ArrayList<>();
         for (JsonNode passive : node) {
             String name = passive.path("name").asText(null);
-            String tooltip = passive.path("tooltip").isNull() ? null : passive.path("tooltip").asText(null);
-            String rankIconUrl = passive.path("rankIcon").asText(null);
-
-            boolean alreadyPresent = result.stream()
-                    .anyMatch(p -> java.util.Objects.equals(p.getName(), name) && java.util.Objects.equals(p.getTooltip(), tooltip));
+            boolean alreadyPresent = result.stream().anyMatch(p -> Objects.equals(p.getName(), name));
             if (!alreadyPresent) {
-                result.add(new PalPassiveSkillSyncData(name, tooltip, rankIconUrl));
+                result.add(new PalPassiveSkillSyncData(name, null, null));
             }
         }
         return result;
-    }
-
-    private PalPartnerSkillSyncData partnerSkill(JsonNode node) {
-        if (node.isMissingNode() || node.isNull()) {
-            return null;
-        }
-
-        List<PalPartnerSkillRankSyncData> ranks = new ArrayList<>();
-        int order = 1;
-        for (JsonNode rank : node.path("ranks")) {
-            ranks.add(new PalPartnerSkillRankSyncData(order++, rank.path("level").asText(null), rank.path("detail").asText(null)));
-        }
-
-        return new PalPartnerSkillSyncData(
-                node.path("title").asText(null),
-                node.path("description").asText(null),
-                node.path("icon").asText(null),
-                ranks);
     }
 
     private List<PalDropSyncData> drops(JsonNode node) {
         List<PalDropSyncData> result = new ArrayList<>();
         int order = 0;
-        for (JsonNode drop : node) {
-            int[] quantity = parseQuantity(drop.path("quantity").asText(null));
-            String probabilityRaw = drop.path("probability").asText(null);
-
-            result.add(new PalDropSyncData(
-                    drop.path("item").asText(null),
-                    drop.path("itemName").asText(null),
-                    drop.path("icon").asText(null),
-                    quantity[0] >= 0 ? quantity[0] : null,
-                    quantity[1] >= 0 ? quantity[1] : null,
-                    parseProbabilityPercent(probabilityRaw),
-                    parseProbabilityLevelLabel(probabilityRaw),
-                    order++));
-        }
-        return result;
-    }
-
-    private List<PalVariantSyncData> variants(JsonNode node) {
-        List<PalVariantSyncData> result = new ArrayList<>();
-        int order = 0;
-        for (JsonNode variant : node) {
-            result.add(new PalVariantSyncData(
-                    variant.path("slug").asText(null),
-                    variant.path("name").asText(null),
-                    variant.path("icon").asText(null),
-                    variant.path("role").asText(null),
-                    order++));
-        }
-        return result;
-    }
-
-    private List<PalSpawnZoneSyncData> spawnZones(JsonNode node) {
-        List<PalSpawnZoneSyncData> result = new ArrayList<>();
-        int order = 0;
-        for (JsonNode zone : node) {
-            result.add(new PalSpawnZoneSyncData(
-                    zone.path("level").asText(null),
-                    zone.path("location").asText(null),
-                    zone.path("locationLink").isNull() ? null : zone.path("locationLink").asText(null),
-                    order++));
-        }
-        return result;
-    }
-
-    private int[] parseQuantity(String raw) {
-        if (raw == null || raw.isBlank()) {
-            return new int[] { -1, -1 };
-        }
-        String[] parts = raw.split("[–-]");
-        try {
-            if (parts.length == 2) {
-                return new int[] { Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()) };
+        for (JsonNode levelDrop : node) {
+            String levelLabel = levelDrop.path("level").asText(null);
+            for (JsonNode item : levelDrop.path("items")) {
+                String itemId = item.path("itemId").asText(null);
+                result.add(new PalDropSyncData(
+                        itemId,
+                        itemId,
+                        null,
+                        intOrNull(item.path("min")),
+                        intOrNull(item.path("max")),
+                        decimalOrNull(item.path("rate")),
+                        levelLabel,
+                        order++));
             }
-            int value = Integer.parseInt(raw.trim());
-            return new int[] { value, value };
-        } catch (NumberFormatException e) {
-            return new int[] { -1, -1 };
         }
+        return result;
     }
 
-    private BigDecimal parseProbabilityPercent(String raw) {
-        if (raw == null || raw.isBlank()) return null;
-
-        Matcher withLevel = PROBABILITY_WITH_LEVEL.matcher(raw.trim());
-        if (withLevel.matches()) {
-            return new BigDecimal(withLevel.group(2));
-        }
-
-        Matcher plain = PROBABILITY_PLAIN.matcher(raw.trim());
-        if (plain.matches()) {
-            return new BigDecimal(plain.group(1));
-        }
-
-        return null;
+    private Integer intOrNull(JsonNode node) {
+        return node.isMissingNode() || node.isNull() ? null : node.asInt();
     }
 
-    private String parseProbabilityLevelLabel(String raw) {
-        if (raw == null || raw.isBlank()) return null;
-
-        Matcher withLevel = PROBABILITY_WITH_LEVEL.matcher(raw.trim());
-        return withLevel.matches() ? withLevel.group(1) : null;
-    }
-
-    private Integer parseInt(String raw) {
-        if (raw == null || raw.isBlank()) return null;
-        try {
-            return Integer.valueOf(raw.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private BigDecimal parseDecimal(String raw) {
-        if (raw == null || raw.isBlank()) return null;
-        try {
-            return new BigDecimal(raw.trim());
-        } catch (NumberFormatException e) {
-            return null;
-        }
+    private BigDecimal decimalOrNull(JsonNode node) {
+        return node.isMissingNode() || node.isNull() ? null : node.decimalValue();
     }
 }

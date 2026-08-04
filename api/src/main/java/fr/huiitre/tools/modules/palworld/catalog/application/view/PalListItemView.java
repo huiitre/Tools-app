@@ -24,8 +24,7 @@ public record PalListItemView(
         BigDecimal captureRateCorrect,
         BigDecimal maleProbability,
         Integer combiRank,
-        Integer goldCoin,
-        String eggType,
+        Integer price,
         String bestWorkSuitabilityLabel,
         Integer foodGaugeFilled,
         Integer foodGaugeEmpty,
@@ -35,6 +34,4 @@ public record PalListItemView(
         List<PassiveSkillSummaryView> passiveSkills,
         List<ActiveSkillSummaryView> activeSkills,
         PartnerSkillSummaryView partnerSkill,
-        List<DropSummaryView> drops,
-        List<VariantSummaryView> variants,
-        List<SpawnZoneSummaryView> spawnZones) {}
+        List<DropSummaryView> drops) {}
