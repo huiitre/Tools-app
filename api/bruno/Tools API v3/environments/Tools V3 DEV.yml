@@ -10,4 +10,4 @@ variables:
   - secret: true
     name: admin
   - name: token
-    value: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0b29scy1hcGkiLCJzdWIiOiIxIiwidG9rZW5UeXBlIjoiQUNDRVNTIiwiaXNBY3RpdmUiOnRydWUsInVzZXJUeXBlIjoiSFVNQU4iLCJpYXQiOjE3ODU5MzA2NzcsImV4cCI6MTc4NTkzMTI3N30.BeKsLl9xU4EFthtYwjGxHtIePa4ZT7Qug_qSyTW5X44
+    value: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0b29scy1hcGkiLCJzdWIiOiIxIiwidG9rZW5UeXBlIjoiQUNDRVNTIiwiaXNBY3RpdmUiOnRydWUsInVzZXJUeXBlIjoiSFVNQU4iLCJpYXQiOjE3ODU5MzY0MjQsImV4cCI6MTc4NTkzNzAyNH0.w-5F1WcrnQ_wX0WTlalIafdokXElMk7Let18F7NWvDM

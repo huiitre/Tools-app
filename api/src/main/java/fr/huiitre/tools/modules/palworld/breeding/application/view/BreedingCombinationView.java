@@ -5,22 +5,25 @@ import fr.huiitre.tools.modules.palworld.domain.breeding.BreedingPal;
 import fr.huiitre.tools.modules.palworld.domain.breeding.BreedingRule;
 import fr.huiitre.tools.modules.palworld.domain.breeding.Gender;
 
-public record BreedingParentPairView(
+public record BreedingCombinationView(
         BreedingSpeciesRefView parentA,
         BreedingSpeciesRefView parentB,
         String parentAGender,
         String parentBGender,
         String rule,
-        BreedingFormulaDetailsView formula) {
+        BreedingFormulaDetailsView formula,
+        BreedingSpeciesRefView child) {
 
-    public static BreedingParentPairView from(BreedingPal parentA, BreedingPal parentB, BreedingPairResult pairResult) {
-        return new BreedingParentPairView(
+    public static BreedingCombinationView from(
+            BreedingPal parentA, BreedingPal parentB, BreedingPal child, BreedingPairResult pairResult) {
+        return new BreedingCombinationView(
                 BreedingSpeciesRefView.from(parentA),
                 BreedingSpeciesRefView.from(parentB),
                 genderCode(pairResult.parentAGender()),
                 genderCode(pairResult.parentBGender()),
                 pairResult.rule() == BreedingRule.EXCEPTION ? "exception" : "formula",
-                BreedingFormulaDetailsView.from(pairResult.formulaDetails()));
+                BreedingFormulaDetailsView.from(pairResult.formulaDetails()),
+                BreedingSpeciesRefView.from(child));
     }
 
     private static String genderCode(Gender gender) {

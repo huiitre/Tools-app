@@ -63,11 +63,8 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
             // Le pak ne référence aucune image : le rip d'assets img/pal/{tribe}.webp vit sur le NAS,
             // indépendamment du pak, avec quelques divergences de casse (BluePlatypus -> Blueplatypus.webp)
             // et des Pals très récents pas encore rippés (cf. matching insensible à la casse ci-dessous).
-            Map<String, String> palImageFileNameByTribeUpper = assetsReader.listImageFileNames("pal").stream()
-                    .collect(Collectors.toMap(
-                            fileName -> stripExtension(fileName).toUpperCase(),
-                            fileName -> fileName,
-                            (a, b) -> a));
+            Map<String, String> palImageFileNameByTribeUpper = assetsReader.preferredImageFileNameByBaseName("pal").entrySet().stream()
+                    .collect(Collectors.toMap(e -> e.getKey().toUpperCase(), Map.Entry::getValue, (a, b) -> a));
 
             List<PalSyncData> result = new ArrayList<>();
             for (JsonNode pal : root) {
@@ -77,11 +74,6 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to load Palworld pals from local assets", e);
         }
-    }
-
-    private String stripExtension(String fileName) {
-        int dot = fileName.lastIndexOf('.');
-        return dot > 0 ? fileName.substring(0, dot) : fileName;
     }
 
     private String resolveImageUrl(String tribe, Map<String, String> palImageFileNameByTribeUpper) {

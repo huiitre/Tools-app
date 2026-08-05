@@ -288,6 +288,72 @@ Les fonctions `useAddWorkshopLink`, `useUpdateWorkshopLink`, `useDeleteWorkshopL
 - **Electron**: GitHub releases via `electron-updater` (`.github/workflows/deploy.yml` on master)
 - **QA**: separate workflow `deploy-qa.yml` on the `qa` branch
 
+## Module Palworld — Breeding Calculator (ÉTAT RÉEL au 2026-08-05 — 3/4 vues construites, UI pas satisfaisante)
+
+**Cette section datait du démarrage du chantier (spec pure) — elle est maintenant dépassée par l'implémentation réelle.** Avant de retoucher quoi que ce soit ici, lire la mémoire projet `palworld-breeding-frontend-spec` (état exact, fichiers touchés, ce qui reste à faire) et `palworld-breeding-engine` (décisions backend). Résumé :
+
+- **Construit** : Calculateur d'élevage, Recherche de combinaisons (enfant/parent), Path Finder (sélection manuelle de Pals possédés + arbre récursif). Routes imbriquées sous `palworld-breeding`, store partagé `breeding.store.ts`.
+- **Pas construit** : vue "Arbre d'élevage" autonome (sans contrainte de possession) — seul le composant de rendu d'arbre existe, utilisé par Path Finder.
+- **L'utilisateur a explicitement dit que l'UI du Path Finder "va pas trop" après deux passes de correctifs CSS à l'aveugle (jamais vérifiées dans un vrai navigateur).** Ne pas repartir sur une 3ème passe de devinettes CSS — lancer l'app et regarder avant de retoucher, cf. mémoire `feedback-test-ui-in-browser-before-commit`.
+- Backend étendu avec `GET /breeding/as-parent` et `GET /breeding/path?target=&owned=` (algorithme `BreedingPathBuilder`, point fixe ET/OU, pas d'optimisation de profondeur).
+
+### Objectif
+
+Nouvelle page Palworld avec plusieurs vues, accessible via une URL qui porte un Pal en paramètre (ex. `?pal={palId}`, exact nom du param au choix de l'implémenteur mais rester cohérent partout). Ça permet à **n'importe quelle page qui affiche des Pals** (Paldex, Tierlist, futures pages) de rediriger vers cette page avec le Pal cliqué déjà pré-sélectionné.
+
+Références visuelles (structure UI à reproduire dans nos codes/conventions, pas à copier tel quel) :
+- https://palworld.gg/fr/breeding-calculator (vue par défaut)
+- https://palworld.gg/fr/breeding-path?own=flyingmanta,lazydragon (vue path finder, note l'URL avec `?own=` liste de Pals possédés)
+
+### Ordre de travail demandé par l'utilisateur (ne pas paralléliser)
+
+1. **D'abord** : construire la page avec uniquement la vue par défaut (Calculateur d'élevage).
+2. **Ensuite** : ajouter le lien de redirection depuis les autres pages qui affichent des Pals (au minimum Paldex `PaldexView.vue`, Tierlist) vers `/palworld/breeding?pal={id}` — probablement un item dans un menu contextuel au clic sur une carte Pal (attention : `PalContextTrigger`/`PalContextFloating` dans `paldex/components/` sont un **tooltip au survol**, pas un menu au clic — il faudra un nouveau mécanisme, pas réutiliser ce composant tel quel).
+3. **Ensuite seulement** : peaufiner/étendre aux 3 autres vues.
+
+### Structure de la page
+
+Nouvel onglet top-level dans la nav Palworld (même pattern que Server/Tier list/Paldex) :
+- Nouveau fichier `web/src/modules/Palworld/breeding/breeding.routes.ts`, importé dans `web/src/modules/Palworld/palworld.routes.ts` (`...breedingRoutes`), route `name: 'palworld-breeding'`, `meta: { label: 'Élevage', requireAuth: true }` → apparaît automatiquement dans `PalworldNav.vue` (génère les tabs depuis `route.matched` children + `meta.label`, rien à modifier dans le nav lui-même).
+- À l'intérieur de cette page, **une barre de boutons en haut** pour switcher entre 4 vues (état local `ref`, ou sous-routes enfants `palworld-breeding-calculator` etc. si on veut des URLs distinctes par vue — au choix de l'implémenteur, mais le param `?pal=` doit survivre au changement de vue) :
+  1. **Calculateur d'élevage** — vue par défaut.
+  2. **Trouver toutes les combinaisons pour l'enfant** — vue inverse.
+  3. **Path finder** — cible + Pals possédés.
+  4. **Arbre d'élevage**.
+
+### Vue 1 — Calculateur d'élevage (à faire en premier)
+
+Reproduit `palworld.gg/fr/breeding-calculator` :
+- 3 carrés centraux : `[Parent A] + [Parent B] = [Résultat]`.
+- Clic sur le carré Parent A → un panneau de sélection apparaît juste en dessous : barre de recherche + select (filtre) + bouton tri asc/desc — **copier exactement le pattern de `PaldexView.vue`** (`.paldex-toolbar`, `searchQuery`/`sortKey`/`sortDir` refs, bouton `mdi-sort-ascending`/`mdi-sort-descending`) — puis en dessous la grille de cartes Pal (`.pal-grid`/`.pal-card`, mêmes classes/structure que Paldex, réutilisables telles quelles ou en composant partagé si ça vaut le coup de factoriser).
+- Clic sur une carte → remplit le carré Parent A, **avance automatiquement** la sélection sur le carré Parent B.
+- Sélection de Parent B → calcule immédiatement le résultat via `GET /palworld/breeding/result` et remplit le carré résultat.
+- Prévoir un petit toggle de genre optionnel par parent (Mâle/Femelle/indifférent) — n'a d'effet que sur les 2 exceptions sexe-dépendantes du jeu (Katress/Wixen), sinon ignoré par l'API.
+- Si le pal est passé en URL (`?pal=`), pré-remplir le carré Parent A au chargement.
+- Source des données du picker : réutiliser `usePaldexStore`/`fetchPals()` (`web/src/modules/Palworld/paldex/`) — même liste de Pals que le Paldex, pas besoin d'un nouveau fetch.
+
+### Vue 2 — Trouver toutes les combinaisons pour l'enfant
+
+- Sélection d'un Pal cible (même picker que la vue 1, ou pré-rempli si `?pal=` + vue active).
+- Appelle `GET /palworld/breeding/parents?child={palId}`, affiche la liste des couples (avec contraintes de sexe et règle exception/formule).
+
+### Vue 3 — Path finder
+
+Reproduit `palworld.gg/fr/breeding-path` :
+- Un Pal cible (target).
+- Une liste "Pals que je possède" — **pour l'instant sélection manuelle côté front** (pas de source serveur). Le brancher plus tard sur les Pals réellement possédés (`pal_instance` via `modules/palworld/server-data` côté API) est un TODO explicite de l'utilisateur, pas à faire maintenant — `pal_instance` n'a même pas encore de colonne `gender` (cf. mémoire `palworld-breeding-engine`).
+- Calcule un chemin d'élevage depuis les Pals possédés vers la cible. **Aucun endpoint API dédié n'existe pour ça** — soit ça se calcule côté front en enchaînant des appels à `/breeding/result`/`/breeding/parents`, soit ça nécessite un nouvel endpoint API (à évaluer avec l'utilisateur, ne pas décider seul si c'est gros).
+
+### Vue 4 — Arbre d'élevage
+
+Visualisation en arbre des combinaisons menant à (ou partant de) un Pal. Pas de détail UI fourni par l'utilisateur au-delà du nom — à clarifier avec lui avant de coder cette vue (poser la question plutôt que deviner).
+
+### Points d'architecture à respecter
+
+- Suivre le pattern modulaire existant : `web/src/modules/Palworld/breeding/{fetch,types,components,views}/` + `breeding.store.ts` (Pinia), même sous-structure que `paldex/`.
+- Types de réponse API (`BreedingResultView`, `BreedingParentPairView` côté Java) à retranspiper en interfaces TS dans `breeding/types/breeding.types.ts`, camelCase (Jackson par défaut, pas d'annotation — vérifier le JSON réel une fois l'endpoint appelé plutôt que deviner les noms de champs).
+- Client HTTP : `clientV3` (`@/services/axiosInstance`), comme partout ailleurs dans Palworld.
+
 ## Module Notifications — COMPLÈTE (2026-05-10)
 
 - **Store** : `useNotificationStore` (Pinia) dans `src/modules/Core/Notification/store`.

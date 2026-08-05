@@ -310,6 +310,50 @@ UserAdminView : classe simple, roles = List<Long> (IDs), avatarUrl via LEFT JOIN
 ModuleUserView : classe simple, une ligne par user, RowMapper simple (pas de N+1, 1 role par user par module).
 UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + role WHERE module_id = ?
 
+9b. Module Palworld — Breeding — COMPLÈTE (2026-08-05)
+
+  Source de vérité : les 3 champs de breeding sur `pal` (`combi_rank`, `combi_duplicate_priority`, `ignore_combi`,
+  alimentés par le sync depuis `pals.json`) + la table `tools_palworld.breeding_exception` (alimentée depuis
+  `breeding.json`). **Aucune table de toutes les paires n'est persistée.**
+
+  Routes :
+    GET /palworld/breeding/result?parentA={palId}&parentB={palId}&genderA=&genderB=
+      → BreedingResultView { parentA, parentB, child, rule: "exception"|"formula", formula, exception } (READ_ONLY)
+    GET /palworld/breeding/parents?child={palId}
+      → List<BreedingParentPairView> { parentA, parentB, parentAGender, parentBGender, rule, formula } (READ_ONLY)
+    parentA/parentB/child = pal.id numérique (le même que /palworld/pals), pas la tribe interne.
+
+  Moteur (0 dépendance, `modules/palworld/domain/breeding/`) :
+    BreedingEngine.compute(parentA, genderA, parentB, genderB, exceptions, allPals) — vérifie les exceptions
+    AVANT la formule (`targetRank = floor((rankA+rankB+1)/2)`, plus proche combiRank parmi les Pals
+    ignoreCombi=false, départage par combiDuplicatePriority le plus élevé). Le matching d'exception teste les
+    deux permutations (A,B) et (B,A) — parentA/parentB ne sont que des étiquettes d'appel, pas un ordre figé.
+    BreedingIndexBuilder.buildAll(allPals, exceptions) — construit toutes les paires non-ordonnées (~48k pour
+    309 espèces) à la demande, utilisé par GetBreedingParentsUseCase à chaque appel.
+
+  **Décision importante — PAS de cache/index précalculé.** Une première version construisait un index en
+  mémoire au démarrage (`ApplicationReadyEvent`) et après chaque sync — supprimée : ça faisait planter tout
+  le boot de l'API si Postgres était injoignable (aucun autre composant du module ne fait ça), et le calcul
+  complet des ~48k paires est sub-seconde en JVM (mesuré via les tests), donc inutile de le cacher. Si un futur
+  agent est tenté de réintroduire un cache "pour la perf", vérifier d'abord que c'est réellement nécessaire.
+
+  Sync (`modules/palworld/sync/`, chaîné dans SyncPalworldUseCase après SyncPalsUseCase) :
+    SyncBreedingExceptionsUseCase lit breeding.json, résout les tribes en pal.id, **ignore+logue** (ne fait
+    pas échouer le sync) les références introuvables — 3 connues sur les vrais assets : WindChimes,
+    WindChimes_Ice, Blueplatypus (aucun équivalent pak). Le sync entier fait ~5900 requêtes SQL individuelles
+    non-batchées (pattern préexistant, pas introduit par breeding — breeding n'ajoute que ~258 inserts, ~4%
+    du total) : invisible sur le LAN maison, mais devient 10-20x plus lent via un tunnel SSH distant — comportement
+    accepté par l'utilisateur, ne pas "optimiser" ça sans qu'il le demande.
+
+  Tests : `api/src/test/java/.../palworld/domain/breeding/BreedingEngineTest.java` (260 tests, fixtures réelles
+  dans `api/src/test/resources/palworld/`) — formule+départage, exceptions fixes, exceptions sexe-dépendantes,
+  chaque ligne valide de breeding.json, intégrité des références invalides connues, cohérence calcul
+  direct ↔ index sur l'intégralité des paires.
+
+  **Pas encore fait** : variante "Pals possédés" (nécessite d'ajouter `gender` à `pal_instance`, actuellement
+  absent) — prévue par l'utilisateur mais explicitement hors scope pour l'instant. Voir aussi la spec frontend
+  dans `web/AGENTS.md` (page Breeding Calculator, pas commencée).
+
 10. Discovery Log
 
 [Architecture] Initialisation du squelette DDD Java 21.
@@ -332,6 +376,7 @@ UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + r
 - catalog/ : Armes, Skins et Bundles (données Riot).
 - user/ : Skins possédés, Watchlist et Historique boutique.
 - Suppression des dossiers à plat usecase/, command/, ports/, view/.
+[Feature] Palworld/Breeding — moteur de reproduction, endpoints result/parents, sync breeding.json (voir section 9b). Pas de cache précalculé (décision motivée). Frontend pas commencé, spec dans web/AGENTS.md.
 
 11. Module Notifications — COMPLÈTE (2026-05-10)
 

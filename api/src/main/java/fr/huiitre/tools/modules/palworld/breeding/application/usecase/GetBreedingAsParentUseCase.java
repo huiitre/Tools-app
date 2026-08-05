@@ -17,12 +17,15 @@ import fr.huiitre.tools.modules.palworld.domain.breeding.BreedingIndexBuilder;
 import fr.huiitre.tools.modules.palworld.domain.breeding.BreedingPairResult;
 import fr.huiitre.tools.modules.palworld.domain.breeding.BreedingPal;
 
+// Miroir de GetBreedingParentsUseCase : au lieu de filtrer l'index par enfant, on filtre par une espèce
+// apparaissant comme parentA OU parentB — "toutes les combinaisons possibles en utilisant ce Pal comme
+// parent". Même approche pas de cache (cf. commentaire de GetBreedingParentsUseCase).
 @Service
-public class GetBreedingParentsUseCase implements SecuredUseCase {
+public class GetBreedingAsParentUseCase implements SecuredUseCase {
 
     private final BreedingCatalogRepository breedingCatalogRepository;
 
-    public GetBreedingParentsUseCase(BreedingCatalogRepository breedingCatalogRepository) {
+    public GetBreedingAsParentUseCase(BreedingCatalogRepository breedingCatalogRepository) {
         this.breedingCatalogRepository = breedingCatalogRepository;
     }
 
@@ -36,17 +39,13 @@ public class GetBreedingParentsUseCase implements SecuredUseCase {
         return RoleCode.READ_ONLY;
     }
 
-    // Recalculé à la demande à chaque appel (pas de cache) : ~48k paires pour 309 espèces, de l'ordre de
-    // la dizaine de ms en JVM (cf. BreedingEngineTest#should_keep_direct_computation_and_reverse_index_consistent
-    // qui refait ce calcul en entier) — inutile de précalculer/stocker un index, ça alourdirait juste le
-    // démarrage et introduirait un état à invalider pour rien.
-    public List<BreedingCombinationView> execute(Long childPalId) {
+    public List<BreedingCombinationView> execute(Long parentPalId) {
         List<BreedingPal> allPals = breedingCatalogRepository.findAllPals();
         Map<Long, BreedingPal> byId = allPals.stream().collect(Collectors.toMap(BreedingPal::id, pal -> pal));
         List<BreedingException> exceptions = breedingCatalogRepository.findAllExceptions();
 
         List<BreedingPairResult> pairs = BreedingIndexBuilder.buildAll(allPals, exceptions).stream()
-                .filter(pair -> pair.childPalId().equals(childPalId))
+                .filter(pair -> pair.parentAPalId().equals(parentPalId) || pair.parentBPalId().equals(parentPalId))
                 .toList();
 
         return pairs.stream()
