@@ -24,8 +24,10 @@ const isStandalone = computed(() => route.meta.standalone === true)
   <div v-else class="page">
     <Header />
 
-    <NotAvailableOnScreen v-if="isBlocked" />
-    <slot v-else />
+    <div class="page-content">
+      <NotAvailableOnScreen v-if="isBlocked" />
+      <slot v-else />
+    </div>
 
     <Footer />
   </div>
@@ -33,10 +35,17 @@ const isStandalone = computed(() => route.meta.standalone === true)
 
 <style lang="scss" scoped>
 .page {
-  min-height: 100dvh;
+  height: 100dvh;
+  min-height: 0;
   width: 100%;
-
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+.page-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 </style>

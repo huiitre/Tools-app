@@ -279,9 +279,9 @@ onMounted(async () => {
 </template>
 
 <style lang="scss" scoped>
-.path-finder { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 2rem; align-items: stretch; height: calc(100dvh - 10.5rem); overflow: hidden; }
+.path-finder { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 2rem; align-items: stretch; height: 100%; overflow: hidden; }
 .path-sidebar { min-width: 0; min-height: 0; }
-.path-sidebar-content { position: fixed; top: calc(var(--header-height, 56px) + 124px); left: max(2rem, calc((100dvw - 1800px) / 2 + 2rem)); display: flex; flex-direction: column; gap: .7rem; width: 340px; height: calc(100dvh - var(--header-height, 56px) - 132px); min-height: 0; padding: .2rem; overflow: hidden; }
+.path-sidebar-content { position: sticky; top: .25rem; display: flex; flex-direction: column; gap: .7rem; width: auto; height: 100%; min-height: 0; padding: .2rem; overflow: hidden; }
 .path-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: .55rem; align-items: center; }
 .source-card, .target-card { box-sizing: border-box; min-width: 0; min-height: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .25rem; padding: .65rem .5rem; border: 1px dashed var(--pico-card-border-color); border-radius: var(--pico-border-radius); background: var(--pico-card-background-color); color: var(--pico-muted-color); }
 .source-card.populated { border-style: solid; border-color: var(--pico-primary); color: var(--pico-color); }
@@ -346,7 +346,8 @@ onMounted(async () => {
 .path-result { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 0; }
 .path-result :deep(.path-node-card.owned .breeding-chip-avatar) { border-radius: 50%; background: #fff; }
 .path-result :deep(.path-node-card .breeding-chip-avatar img) { image-rendering: auto; }
-.path-tree-wrap { width: 100%; }
+.path-tree-wrap { width: 100%; height: 100%; }
+.path-result :deep(.path-tree-wrap.path-canvas) { height: 100%; }
 .empty-state, .status, .empty { display: flex; flex-direction: column; align-items: center; gap: .5rem; color: var(--pico-muted-color); text-align: center; }
 .empty-state .mdi, .empty .mdi { font-size: 3rem; color: var(--pico-primary); }
 .empty-state strong, .empty strong { color: var(--pico-color); font-size: 1.05rem; }
