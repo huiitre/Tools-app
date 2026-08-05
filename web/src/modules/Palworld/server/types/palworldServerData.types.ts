@@ -50,3 +50,24 @@ export interface PalworldPalInstanceSnapshot {
   currentWorkAmount: number | null
   requiredWorkAmount: number | null
 }
+
+export type PalworldPalStorageLocation = 'base' | 'palbox' | 'party' | 'dimensional_storage'
+
+export interface PalworldServerPalInventory {
+  instanceId: string
+  palId: number | null
+  ownerPlayerUid: string | null
+  baseId: string | null
+  storageLocation: PalworldPalStorageLocation
+  containerId: string | null
+  gender: 'male' | 'female' | null
+  favoriteIndex: number | null
+  passiveSkillIds: string[]
+  lastSeenAt: string
+}
+
+export interface PalworldServerInventory {
+  lastSyncedAt: string | null
+  guilds: PalworldGuildSummary[]
+  pals: PalworldServerPalInventory[]
+}

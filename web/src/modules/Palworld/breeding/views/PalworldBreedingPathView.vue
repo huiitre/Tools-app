@@ -1,30 +1,71 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { usePaldexStore } from '../../paldex/paldex.store'
 import { useBreedingStore } from '../breeding.store'
+import { usePalworldServerDataStore } from '../../server/serverData.store'
 import { fetchBreedingRules } from '../fetch/breeding.fetch'
-import { BreedingPathEngine } from '../services/BreedingPathEngine'
+import type { BreedingOwnedPal, BreedingPathPalDefinition, BreedingRuleData } from '../services/BreedingPathEngine'
 import BreedingPathCanvas from '../components/BreedingPathCanvas.vue'
 import BreedingPathTreeNode from '../components/BreedingPathTreeNode.vue'
+import BreedingPassiveSelectorModal from '../components/BreedingPassiveSelectorModal.vue'
+import BreedingPathAlternativesModal from '../components/BreedingPathAlternativesModal.vue'
+import WorkerTaskModal from '@/components/ui/WorkerTaskModal.vue'
+import { useWorkerTask } from '@/composables/useWorkerTask'
+import type { BreedingPathWorkerInput } from '../workers/breedingPathWorker.types'
 import type { PalworldElementSummary, PalworldPalListItem } from '../../paldex/types/paldex.types'
-import type { BreedingPathResult } from '../types/breeding.types'
+import type { PalworldPalStorageLocation } from '../../server/types/palworldServerData.types'
+import type { BreedingPathResult, BreedingPathRoute } from '../types/breeding.types'
+import { usePassiveSkillsStore } from '../../passives/passiveSkills.store'
+
+type OwnedPalsSource = 'manual' | 'server'
+
+const OWNED_PALS_SOURCE_STORAGE_KEY = 'palworld.breeding-path.owned-pals-source'
+const SERVER_OPTIONS_STORAGE_KEY = 'palworld.breeding-path.server-options'
 
 const paldexStore = usePaldexStore()
 const breedingStore = useBreedingStore()
+const serverDataStore = usePalworldServerDataStore()
+const passiveSkillsStore = usePassiveSkillsStore()
 
-const ownedIds = ref<Set<number>>(new Set())
+const source = ref<OwnedPalsSource>('manual')
+const manualOwnedIds = ref<Set<number>>(new Set())
 const targetPickerOpen = ref(false)
 const selectedPalsOpen = ref(false)
 const searchQuery = ref('')
 const targetSearchQuery = ref('')
 const selectedElementIds = ref<Set<number>>(new Set())
+const selectedPassiveIds = ref<string[]>([])
+const passiveSelectorOpen = ref(false)
+const alternativesOpen = ref(false)
+const selectedRouteId = ref<string | null>(null)
+const excludeBasePals = ref(false)
+const prioritizeTargetSpecies = ref(true)
 
 const result = ref<BreedingPathResult | null>(null)
-const loading = ref(false)
 const error = ref<string | null>(null)
-const pathEngine = ref<BreedingPathEngine | null>(null)
+const breedingRules = ref<BreedingRuleData[]>([])
+const workerTask = useWorkerTask<BreedingPathWorkerInput, BreedingPathResult>(() =>
+  new Worker(new URL('../workers/breedingPath.worker.ts', import.meta.url), { type: 'module' }))
+const loading = workerTask.isRunning
+
+const routes = computed<BreedingPathRoute[]>(() => result.value?.routes ?? [])
+const displayedRoute = computed(() => routes.value.find(route => route.id === selectedRouteId.value) ?? routes.value[0] ?? null)
+const alternativeRoutesCount = computed(() => Math.max(0, routes.value.length - 1))
+const canCalculate = computed(() => breedingStore.selectedPal !== null && ownedIds.value.size > 0 && breedingRules.value.length > 0)
+const workerTaskDetails = computed(() => Object.entries(workerTask.progress.value?.details ?? {})
+  .map(([label, value]) => ({ label, value })))
+const workerStage = computed(() => workerTask.progress.value?.stage ?? 'Préparation du traitement…')
+const workerElapsedMs = workerTask.elapsedMs
 
 const palById = computed(() => new Map(paldexStore.pals.map(pal => [pal.id, pal])))
+const workerPals = computed<BreedingPathPalDefinition[]>(() => paldexStore.pals.map(pal => ({
+  id: pal.id,
+  tribe: pal.tribe,
+  name: pal.name,
+  combiRank: pal.combiRank,
+  combiDuplicatePriority: pal.combiDuplicatePriority,
+  ignoreCombi: pal.ignoreCombi,
+})))
 const normalizedQuery = computed(() => searchQuery.value.trim().toLocaleLowerCase())
 const normalizedTargetQuery = computed(() => targetSearchQuery.value.trim().toLocaleLowerCase())
 
@@ -49,12 +90,55 @@ function resolvePal(id: number): PalworldPalListItem | null {
   return palById.value.get(id) ?? null
 }
 
+const serverOwnedPals = computed(() => serverDataStore.selectedPals
+  .filter(pal => !excludeBasePals.value || pal.storageLocation !== 'base'))
+
+const ownedIds = computed(() => source.value === 'server'
+  ? new Set(serverOwnedPals.value.flatMap(pal => pal.palId === null ? [] : [pal.palId]))
+  : manualOwnedIds.value)
+
+const ownedPalInputs = computed<BreedingOwnedPal[]>(() => source.value === 'server'
+  ? serverOwnedPals.value.flatMap(pal => pal.palId === null
+    ? []
+    : [{
+      speciesId: pal.palId,
+      passiveSkillIds: pal.passiveSkillIds,
+      gender: pal.gender === 'male' ? 'Male' : pal.gender === 'female' ? 'Female' : null,
+      storageLocation: pal.storageLocation,
+    }])
+  : [...manualOwnedIds.value].map(speciesId => ({ speciesId, passiveSkillIds: [], gender: null, storageLocation: null })))
+
+const availablePassiveIds = computed(() => [...new Set(serverOwnedPals.value
+  .flatMap(pal => pal.passiveSkillIds))])
+
 const ownedPals = computed(() => [...ownedIds.value]
   .map(resolvePal)
   .filter((pal): pal is PalworldPalListItem => pal !== null))
 
 const selectedPreviewPals = computed(() => ownedPals.value.slice(0, 5))
 const remainingSelectedPals = computed(() => Math.max(0, ownedPals.value.length - selectedPreviewPals.value.length))
+const storageLocationsByPalId = computed(() => {
+  const locations = new Map<number, Set<PalworldPalStorageLocation>>()
+  for (const pal of serverOwnedPals.value) {
+    if (pal.palId === null) continue
+    if (!locations.has(pal.palId)) locations.set(pal.palId, new Set())
+    locations.get(pal.palId)!.add(pal.storageLocation)
+  }
+  return locations
+})
+
+function storageLocationLabel(storageLocation: PalworldPalStorageLocation) {
+  return {
+    base: 'Base',
+    palbox: 'Palbox',
+    party: 'Équipe',
+    dimensional_storage: 'Boîte dimensionnelle',
+  }[storageLocation]
+}
+
+function palStorageLocations(palId: number) {
+  return [...(storageLocationsByPalId.value.get(palId) ?? [])].map(storageLocationLabel).join(' · ')
+}
 
 function toggleElement(id: number) {
   const next = new Set(selectedElementIds.value)
@@ -64,18 +148,20 @@ function toggleElement(id: number) {
 }
 
 function toggleOwned(pal: PalworldPalListItem) {
-  const next = new Set(ownedIds.value)
+  const next = new Set(source.value === 'server' ? serverDataStore.selectedPalIds : manualOwnedIds.value)
   if (next.has(pal.id)) next.delete(pal.id)
   else next.add(pal.id)
-  ownedIds.value = next
+
+  manualOwnedIds.value = next
+  source.value = 'manual'
 }
 
 function selectAll() {
-  ownedIds.value = new Set(paldexStore.pals.map(pal => pal.id))
+  manualOwnedIds.value = new Set(paldexStore.pals.map(pal => pal.id))
 }
 
 function clearOwned() {
-  ownedIds.value = new Set()
+  manualOwnedIds.value = new Set()
 }
 
 function selectTarget(pal: PalworldPalListItem) {
@@ -92,31 +178,105 @@ function returnToManualSelection() {
   targetPickerOpen.value = false
 }
 
-function computePath() {
-  if (!breedingStore.selectedPal || ownedIds.value.size === 0 || !pathEngine.value) {
-    result.value = null
-    error.value = null
+function applyPassiveSelection(passiveIds: string[]) {
+  selectedPassiveIds.value = passiveIds
+  passiveSelectorOpen.value = false
+  nextTick(computePath)
+}
+
+function selectAlternativeRoute(routeId: string) {
+  selectedRouteId.value = routeId
+  alternativesOpen.value = false
+}
+
+function restoreOwnedPalsSource() {
+  const storedSource = localStorage.getItem(OWNED_PALS_SOURCE_STORAGE_KEY)
+  if (storedSource === 'manual' || storedSource === 'server') {
+    source.value = storedSource
+  }
+}
+
+function restoreServerOptions() {
+  const storedOptions = localStorage.getItem(SERVER_OPTIONS_STORAGE_KEY)
+  if (!storedOptions) return
+  try {
+    const options: unknown = JSON.parse(storedOptions)
+    if (!options || typeof options !== 'object') return
+    const serverOptions = options as Record<string, unknown>
+    const { excludeBasePals: storedExcludeBasePals, prioritizeTargetSpecies: storedPrioritizeTargetSpecies } = serverOptions
+    if (typeof storedExcludeBasePals === 'boolean') excludeBasePals.value = storedExcludeBasePals
+    if (typeof storedPrioritizeTargetSpecies === 'boolean') prioritizeTargetSpecies.value = storedPrioritizeTargetSpecies
+  } catch {
+    localStorage.removeItem(SERVER_OPTIONS_STORAGE_KEY)
+  }
+}
+
+function invalidatePath() {
+  workerTask.cancel()
+  result.value = null
+  selectedRouteId.value = null
+  alternativesOpen.value = false
+  error.value = null
+}
+
+async function computePath() {
+  if (!canCalculate.value || !breedingStore.selectedPal) {
+    workerTask.cancel()
+    invalidatePath()
     return
   }
+
+  result.value = null
+  error.value = null
   try {
-    result.value = pathEngine.value.compute(breedingStore.selectedPal.id, ownedIds.value)
+    const workerResult = await workerTask.run({
+      pals: workerPals.value,
+      rules: breedingRules.value.map(rule => ({ ...rule })),
+      targetId: breedingStore.selectedPal.id,
+      ownedPals: ownedPalInputs.value.map(ownedPal => ({
+        ...ownedPal,
+        passiveSkillIds: [...ownedPal.passiveSkillIds],
+      })),
+      passiveSkillIds: [...selectedPassiveIds.value],
+      options: { prioritizeTargetSpecies: prioritizeTargetSpecies.value },
+    })
+    if (workerResult === null) return
+    result.value = workerResult
+    selectedRouteId.value = result.value.routes[0]?.id ?? null
+    alternativesOpen.value = false
   } catch {
     result.value = null
+    selectedRouteId.value = null
     error.value = 'Impossible de calculer le chemin.'
   }
 }
 
-watch([() => breedingStore.selectedPalId, ownedIds, pathEngine], computePath)
+watch(
+  [() => breedingStore.selectedPalId, ownedPalInputs, selectedPassiveIds, excludeBasePals, prioritizeTargetSpecies, breedingRules],
+  invalidatePath,
+)
+watch(source, source => localStorage.setItem(OWNED_PALS_SOURCE_STORAGE_KEY, source))
+watch([excludeBasePals, prioritizeTargetSpecies], () => {
+  localStorage.setItem(SERVER_OPTIONS_STORAGE_KEY, JSON.stringify({
+    excludeBasePals: excludeBasePals.value,
+    prioritizeTargetSpecies: prioritizeTargetSpecies.value,
+  }))
+})
+watch(source, source => {
+  if (source === 'manual') selectedPassiveIds.value = []
+})
 
 onMounted(async () => {
+  restoreOwnedPalsSource()
+  restoreServerOptions()
   try {
     await paldexStore.ensureLoaded()
-    const rules = await fetchBreedingRules()
-    pathEngine.value = new BreedingPathEngine(paldexStore.pals, rules)
+    breedingRules.value = await fetchBreedingRules()
   } catch {
     error.value = 'Le catalogue d’élevage est incomplet. Redémarre l’API pour charger les données à jour.'
   }
 })
+
 </script>
 
 <template>
@@ -124,7 +284,7 @@ onMounted(async () => {
     <aside class="path-sidebar">
       <div class="path-sidebar-content">
         <div class="path-summary" aria-label="Configuration du chemin d'élevage">
-          <button type="button" class="source-card" :class="{ populated: ownedPals.length, active: !targetPickerOpen }" @click="returnToManualSelection">
+          <button type="button" class="source-card" :class="{ populated: ownedPals.length, active: !targetPickerOpen }" @click="source = 'manual'; returnToManualSelection()">
             <div class="source-avatars">
               <img
                 v-for="pal in selectedPreviewPals"
@@ -136,7 +296,7 @@ onMounted(async () => {
               <i v-if="ownedPals.length === 0" class="mdi mdi-paw-outline source-empty-icon" />
             </div>
             <strong>{{ ownedPals.length }} Pal{{ ownedPals.length !== 1 ? 's' : '' }}</strong>
-            <small>Sélection manuelle</small>
+            <small>{{ source === 'manual' ? 'Sélection manuelle' : 'Pals du serveur' }}</small>
           </button>
 
           <i class="mdi mdi-arrow-right path-arrow" aria-hidden="true" />
@@ -160,20 +320,42 @@ onMounted(async () => {
           </button>
         </div>
 
-        <button type="button" class="passive-button" disabled>
-          <i class="mdi mdi-plus" /> Ajouter un passif
+        <button
+          v-if="source === 'server' && !targetPickerOpen"
+          type="button"
+          class="passive-button"
+          :disabled="availablePassiveIds.length === 0 || passiveSkillsStore.loading"
+          @click="passiveSelectorOpen = true"
+        >
+          <i class="mdi mdi-plus" />
+          {{ selectedPassiveIds.length ? `${selectedPassiveIds.length} passif${selectedPassiveIds.length > 1 ? 's' : ''} sélectionné${selectedPassiveIds.length > 1 ? 's' : ''}` : 'Ajouter un passif' }}
         </button>
 
         <template v-if="!targetPickerOpen">
           <div class="source-switch" role="group" aria-label="Source des Pals">
-            <button type="button" class="active">Sélection manuelle</button>
-            <button type="button" disabled title="Bientôt disponible">Pals du serveur</button>
+            <button type="button" :class="{ active: source === 'manual' }" @click="source = 'manual'">Sélection manuelle</button>
+            <button type="button" :class="{ active: source === 'server' }" :disabled="serverDataStore.selectedPlayerIds.length === 0" @click="source = 'server'">Pals du serveur</button>
           </div>
+
+          <div v-if="source === 'server'" class="server-path-options">
+            <label>
+              <input v-model="excludeBasePals" type="checkbox">
+              Ignorer les Pals en Base
+            </label>
+            <label>
+              <input v-model="prioritizeTargetSpecies" type="checkbox">
+              Prioriser le Pal cible
+            </label>
+          </div>
+
+          <button type="button" class="calculate-path-button" :disabled="!canCalculate || loading" @click="computePath">
+            <i class="mdi mdi-play" /> Lancer le calcul
+          </button>
 
           <section class="selected-pals-panel">
             <div class="selected-pals-heading">
-              <span><strong>Pals sélectionnés</strong> <small>{{ ownedPals.length }}</small></span>
-              <span class="selected-actions">
+              <span><strong>{{ source === 'manual' ? 'Pals sélectionnés' : 'Pals du serveur' }}</strong> <small>{{ ownedPals.length }}</small></span>
+              <span v-if="source === 'manual'" class="selected-actions">
                 <button type="button" @click="selectAll">Tout sélectionner</button>
                 <button type="button" @click="clearOwned">Effacer</button>
               </span>
@@ -192,7 +374,7 @@ onMounted(async () => {
               <button v-for="pal in ownedPals" :key="pal.id" type="button" @click="toggleOwned(pal)">
                 <img :src="pal.imageUrl ?? ''" :alt="pal.name">
                 <span>{{ pal.name }}</span>
-                <i class="mdi mdi-close" />
+                <i class="mdi" :class="source === 'manual' ? 'mdi-close' : 'mdi-check'" />
               </button>
             </div>
           </section>
@@ -227,7 +409,10 @@ onMounted(async () => {
               @click="toggleOwned(pal)"
             >
               <img :src="pal.imageUrl ?? ''" :alt="pal.name" loading="lazy">
-              <span>{{ pal.name }}</span>
+              <span class="pal-name">
+                <strong>{{ pal.name }}</strong>
+                <small v-if="source === 'server'">{{ palStorageLocations(pal.id) }}</small>
+              </span>
               <span class="pal-elements">
                 <img v-for="element in pal.elements" :key="element.id" :src="element.iconUrl ?? ''" :alt="element.name" :title="element.name">
               </span>
@@ -265,8 +450,20 @@ onMounted(async () => {
           <strong>Aucun chemin d'élevage trouvé</strong>
           <span>Les Pals sélectionnés ne permettent pas d'obtenir {{ breedingStore.selectedPal?.name }}.</span>
         </div>
-        <BreedingPathCanvas v-else class="path-tree-wrap" :reset-key="result.root.species.id">
-          <BreedingPathTreeNode :node="result.root" :resolve-pal="resolvePal" is-root />
+        <BreedingPathCanvas
+          v-else-if="displayedRoute"
+          class="path-tree-wrap"
+          :reset-key="displayedRoute.id"
+          :alternative-routes-count="alternativeRoutesCount"
+          @show-alternatives="alternativesOpen = true"
+        >
+          <BreedingPathTreeNode
+            :node="displayedRoute.root"
+            :resolve-pal="resolvePal"
+            :passive-skills="passiveSkillsStore.passiveSkills"
+            :show-genders="source === 'server'"
+            is-root
+          />
         </BreedingPathCanvas>
       </template>
       <div v-else class="empty-state">
@@ -275,6 +472,34 @@ onMounted(async () => {
         <span>Le chemin d'élevage apparaîtra ici.</span>
       </div>
     </section>
+
+    <BreedingPassiveSelectorModal
+      :open="passiveSelectorOpen"
+      :passive-skills="passiveSkillsStore.passiveSkills"
+      :available-passive-ids="availablePassiveIds"
+      :model-value="selectedPassiveIds"
+      @apply="applyPassiveSelection"
+      @close="passiveSelectorOpen = false"
+    />
+
+    <BreedingPathAlternativesModal
+      :open="alternativesOpen"
+      :routes="routes"
+      :selected-route-id="selectedRouteId"
+      :resolve-pal="resolvePal"
+      @select="selectAlternativeRoute"
+      @close="alternativesOpen = false"
+    />
+
+    <WorkerTaskModal
+      :open="loading"
+      title="Calcul du chemin d’élevage"
+      description="Les règles, passifs et sexes sont analysés hors de l’interface."
+      :stage="workerStage"
+      :elapsed-ms="workerElapsedMs"
+      :details="workerTaskDetails"
+      @cancel="workerTask.cancel"
+    />
   </div>
 </template>
 
@@ -299,10 +524,14 @@ onMounted(async () => {
 .more-pals, .selected-preview > span { display: grid; place-items: center; width: 29px; height: 29px; margin-left: -7px; border-radius: 50%; background: var(--pico-secondary-background); color: var(--pico-secondary-inverse); font-size: .58rem; }
 .source-empty-icon { font-size: 1.5rem; }
 .path-arrow { font-size: 1.15rem; color: var(--pico-primary); }
-.passive-button { margin: 0; padding: .35rem; border: 1px dashed var(--pico-card-border-color); background: transparent; color: var(--pico-muted-color); font-size: .68rem; }
+.passive-button { margin: 0; padding: .35rem; border: 1px dashed var(--pico-card-border-color); background: transparent; color: var(--pico-color); font-size: .68rem; }
 .source-switch { display: grid; grid-template-columns: 1fr 1fr; padding: .2rem; border: 1px solid var(--pico-card-border-color); border-radius: var(--pico-border-radius); }
 .source-switch button { margin: 0; padding: .45rem .25rem; border: 0; background: transparent; color: var(--pico-muted-color); font-size: .68rem; }
 .source-switch button.active { background: var(--pico-primary-background); color: var(--pico-primary-inverse); border-radius: calc(var(--pico-border-radius) - 2px); }
+.server-path-options { display: flex; flex-direction: column; gap: .28rem; padding: .05rem .2rem; }
+.server-path-options label { display: flex; align-items: center; gap: .35rem; color: var(--pico-muted-color); font-size: .62rem; }
+.server-path-options input { width: .85rem; height: .85rem; margin: 0; }
+.calculate-path-button { margin: 0; padding: .55rem; font-size: .72rem; font-weight: 700; }
 .selected-pals-panel { display: flex; flex-direction: column; gap: .35rem; }
 .selected-pals-heading { display: flex; justify-content: space-between; align-items: center; font-size: .67rem; }
 .selected-pals-heading small { color: var(--pico-muted-color); }
@@ -334,6 +563,9 @@ onMounted(async () => {
 .owned-pal-list > button.selected { border-color: var(--pico-primary); background: color-mix(in srgb, var(--pico-primary-background) 18%, var(--pico-card-background-color)); }
 .owned-pal-list > button > img { width: 34px; height: 34px; object-fit: contain; }
 .owned-pal-list > button > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.owned-pal-list .pal-name { display: flex; flex-direction: column; gap: .08rem; min-width: 0; }
+.owned-pal-list .pal-name strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.owned-pal-list .pal-name small { overflow: hidden; color: var(--pico-muted-color); font-size: .54rem; text-overflow: ellipsis; white-space: nowrap; }
 .owned-pal-list > button > .mdi { color: var(--pico-primary); font-size: 1rem; }
 .pal-elements { display: flex; gap: .1rem; }
 .pal-elements img { width: 15px; height: 15px; object-fit: contain; }

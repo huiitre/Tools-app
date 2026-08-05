@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { usePaldexStore } from '../paldex.store'
+import { usePalworldServerDataStore } from '../../server/serverData.store'
 import { paldexLabel } from '../utils/paldexLabel'
 import PalContextTrigger from '../components/PalContextTrigger.vue'
 import type {
@@ -11,6 +12,7 @@ import type {
 } from '../types/paldex.types'
 
 const store = usePaldexStore()
+const serverDataStore = usePalworldServerDataStore()
 
 const STORAGE_KEY_SORT = 'palworld.paldex.sort'
 
@@ -221,6 +223,7 @@ onMounted(() => {
       <div class="pal-grid">
         <PalContextTrigger v-for="pal in visiblePals" :key="pal.id" :pal="pal">
           <div class="pal-card">
+            <span v-if="serverDataStore.selectedPalCounts.get(pal.id)" class="server-pal-count">{{ serverDataStore.selectedPalCounts.get(pal.id) }}</span>
             <span class="pal-index">{{ paldexLabel(pal) }}</span>
             <img v-if="pal.imageUrl" :src="pal.imageUrl" :alt="pal.name" width="72" height="72" loading="lazy">
             <span class="pal-name">{{ pal.name }}</span>
@@ -464,6 +467,7 @@ onMounted(() => {
 }
 
 .pal-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -486,6 +490,23 @@ onMounted(() => {
     border-radius: 6px;
     display: block;
   }
+}
+
+.server-pal-count {
+  position: absolute;
+  top: .45rem;
+  right: .45rem;
+  display: grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 .25rem;
+  border: 1px solid var(--pico-primary);
+  border-radius: 999px;
+  background: var(--pico-card-background-color);
+  color: var(--pico-primary);
+  font-size: .65rem;
+  font-weight: 700;
 }
 
 .pal-index {

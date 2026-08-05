@@ -10,6 +10,8 @@ import fr.huiitre.tools.modules.palworld.sync.application.ports.BreedingExceptio
 import fr.huiitre.tools.modules.palworld.sync.application.ports.ElementDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.ElementSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PalDataProvider;
+import fr.huiitre.tools.modules.palworld.sync.application.ports.PassiveSkillDataProvider;
+import fr.huiitre.tools.modules.palworld.sync.application.ports.PassiveSkillSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PalSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PalworldLanguageDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.SkillDataProvider;
@@ -23,12 +25,14 @@ import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalBreedi
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalElementDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalLanguageDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalPalDataProvider;
+import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalPassiveSkillDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalSkillDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalWorkPriorityDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalWorkSuitabilityDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresBreedingExceptionSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresElementSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresPalSyncRepository;
+import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresPassiveSkillSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresSkillSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresWorkPrioritySyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresWorkSuitabilitySyncRepository;
@@ -100,6 +104,19 @@ public class PalworldSyncConfig {
     @Bean
     public PalSyncRepository palSyncRepository(JdbcTemplate jdbcTemplate) {
         return new PostgresPalSyncRepository(jdbcTemplate);
+    }
+
+    @Bean
+    public PassiveSkillDataProvider passiveSkillDataProvider(
+            PalworldLocalAssetsReader assetsReader,
+            PalworldLanguageDataProvider languageDataProvider,
+            @Value("${app.assets.base-url}") String assetsBaseUrl) {
+        return new PalworldLocalPassiveSkillDataProvider(assetsReader, languageDataProvider, assetsBaseUrl);
+    }
+
+    @Bean
+    public PassiveSkillSyncRepository passiveSkillSyncRepository(JdbcTemplate jdbcTemplate) {
+        return new PostgresPassiveSkillSyncRepository(jdbcTemplate);
     }
 
     @Bean

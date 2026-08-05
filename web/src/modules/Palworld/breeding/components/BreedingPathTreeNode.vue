@@ -1,38 +1,88 @@
 <script setup lang="ts">
 import BreedingPalChip from './BreedingPalChip.vue'
 import type { PalworldPalListItem } from '../../paldex/types/paldex.types'
+import type { PalworldPassiveSkill } from '../../passives/types/passiveSkills.types'
 import type { BreedingPathNode } from '../types/breeding.types'
+import { computed } from 'vue'
 
-const { node, resolvePal, isRoot } = defineProps<{
+const props = defineProps<{
   node: BreedingPathNode
   resolvePal: (id: number) => PalworldPalListItem | null
+  passiveSkills: PalworldPassiveSkill[]
+  showGenders: boolean
   isRoot?: boolean
 }>()
+
+const passiveSkillById = computed(() => new Map(props.passiveSkills.map(passiveSkill => [passiveSkill.id, passiveSkill])))
+const nodePassives = computed(() => props.node.passiveSkillIds
+  .map(passiveSkillId => passiveSkillById.value.get(passiveSkillId))
+  .filter((passiveSkill): passiveSkill is PalworldPassiveSkill => passiveSkill !== undefined))
+const parentAGender = computed(() => props.showGenders ? props.node.step?.parentA.gender ?? null : props.node.step?.parentAGender ?? null)
+const parentBGender = computed(() => props.showGenders ? props.node.step?.parentB.gender ?? null : props.node.step?.parentBGender ?? null)
+const storageLocationLabel = computed(() => {
+  if (props.node.storageLocation === null) return null
+  return {
+    base: 'Base',
+    palbox: 'Palbox',
+    party: 'Équipe',
+    dimensional_storage: 'Boîte dimensionnelle',
+  }[props.node.storageLocation]
+})
 </script>
 
 <template>
   <div class="path-node">
-    <div class="path-node-card" :class="{ owned: node.owned }">
-      <i v-if="isRoot" class="mdi mdi-crown path-node-crown" />
-      <BreedingPalChip :pal="resolvePal(node.species.id)" :size="48" />
-      <span v-if="node.step" class="path-node-rule">
-        {{ node.step.rule === 'exception' ? 'Exception' : 'Formule' }}
+    <div class="path-node-card" :class="{ owned: props.node.owned }">
+      <i v-if="props.isRoot" class="mdi mdi-crown path-node-crown" />
+      <BreedingPalChip
+        :pal="props.resolvePal(props.node.species.id)"
+        :gender="props.showGenders ? props.node.gender : null"
+        :size="48"
+        show-catalog-details
+      />
+      <span v-if="props.node.step" class="path-node-rule">
+        {{ props.node.step.rule === 'exception' ? 'Exception' : 'Formule' }}
       </span>
+      <span v-if="props.node.owned && storageLocationLabel" class="path-node-location">
+        {{ storageLocationLabel }}
+      </span>
+      <div v-if="nodePassives.length" class="path-node-passives">
+        <span
+          v-for="passiveSkill in nodePassives"
+          :key="passiveSkill.id"
+          :title="passiveSkill.description ?? passiveSkill.name"
+          :class="`rank-${passiveSkill.rank}`"
+        >
+          <img v-if="passiveSkill.rankIconUrl" :src="passiveSkill.rankIconUrl" alt="">
+          <i v-else class="mdi mdi-chevron-double-up" aria-hidden="true" />
+          {{ passiveSkill.name }}
+        </span>
+      </div>
     </div>
 
-    <div v-if="node.step" class="path-node-children">
+    <div v-if="props.node.step" class="path-node-children">
       <div class="path-node-branch">
-        <span v-if="node.step.parentAGender" class="path-node-gender" :class="node.step.parentAGender">
-          <i class="mdi" :class="node.step.parentAGender === 'Male' ? 'mdi-gender-male' : 'mdi-gender-female'" />
+        <span v-if="parentAGender" class="path-node-gender" :class="parentAGender">
+          <i class="mdi" :class="parentAGender === 'Male' ? 'mdi-gender-male' : 'mdi-gender-female'" />
         </span>
-        <BreedingPathTreeNode :node="node.step.parentA" :resolve-pal="resolvePal" />
+        <BreedingPathTreeNode
+          :node="props.node.step.parentA"
+          :resolve-pal="props.resolvePal"
+          :passive-skills="props.passiveSkills"
+          :show-genders="props.showGenders"
+        />
       </div>
 
       <div class="path-node-branch">
-        <span v-if="node.step.parentBGender" class="path-node-gender" :class="node.step.parentBGender">
-          <i class="mdi" :class="node.step.parentBGender === 'Male' ? 'mdi-gender-male' : 'mdi-gender-female'" />
+        <span v-if="parentBGender" class="path-node-gender" :class="parentBGender">
+          <i class="mdi" :class="parentBGender === 'Male' ? 'mdi-gender-male' : 'mdi-gender-female'" />
         </span>
-        <BreedingPathTreeNode :node="node.step.parentB" :resolve-pal="resolvePal" />
+        <BreedingPathTreeNode
+          :node="props.node.step.parentB"
+          :resolve-pal="props.resolvePal"
+          :passive-skills="props.passiveSkills"
+          :show-genders="props.showGenders"
+        />
       </div>
     </div>
   </div>
@@ -78,6 +128,43 @@ $half-branch-gap: .45rem;
   color: var(--pico-muted-color);
   white-space: nowrap;
 }
+
+.path-node-location {
+  color: var(--pico-muted-color);
+  font-size: .54rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.path-node-passives {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: .2rem;
+  max-width: 170px;
+
+  > span {
+    display: inline-flex;
+    align-items: center;
+    gap: .12rem;
+    max-width: 100%;
+    padding: .12rem .26rem;
+    border: 1px solid var(--passive-rank-color);
+    border-radius: 999px;
+    color: var(--pico-color);
+    font-size: .52rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  img, i { width: .7rem; height: .7rem; object-fit: contain; color: var(--passive-rank-color); }
+}
+
+.rank-5, .rank-4 { --passive-rank-color: #42d9ff; }
+.rank-3, .rank-2 { --passive-rank-color: #f5df39; }
+.rank-1 { --passive-rank-color: #dceaf0; }
+.rank--1, .rank--2, .rank--3 { --passive-rank-color: #ff4d63; }
 
 /* ── Connecteurs de l'arbre (grid 2 colonnes égales : le centre de chaque
    branche tombe exactement à 25%/75% du conteneur, donc la ligne horizontale

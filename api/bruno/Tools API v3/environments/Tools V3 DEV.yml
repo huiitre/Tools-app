@@ -7,7 +7,11 @@ variables:
     value: ""
   - name: GAME_SERVER_ID
     value: ""
+  - name: baseId
+    value: 9f7ef8a3-9bfa-41f7-8c28-3b8af4051389
+  - name: instanceId
+    value: 73934fc4-5ed4-4ff3-af1d-cff6fd739937
   - secret: true
     name: admin
   - name: token
-    value: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0b29scy1hcGkiLCJzdWIiOiIxIiwiaXNBY3RpdmUiOnRydWUsInVzZXJUeXBlIjoiSFVNQU4iLCJ0b2tlblR5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3ODU5NTUyMTAsImV4cCI6MTc4NTk1NTgxMH0.Quju8heEaGjoS1XhD9rmzULQgSNjOqc3jLmYW3IEB5M
+    value: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0b29scy1hcGkiLCJzdWIiOiIxIiwidXNlclR5cGUiOiJIVU1BTiIsInRva2VuVHlwZSI6IkFDQ0VTUyIsImlzQWN0aXZlIjp0cnVlLCJpYXQiOjE3ODU5NjQ2OTIsImV4cCI6MTc4NTk2NTI5Mn0.YvDfuAoZChUeHquTDlc85U5cPrq-EMRv5jfX5EYvLeg

@@ -17,10 +17,12 @@ import fr.huiitre.tools.modules.palworld.serverdata.application.ServerDataSyncRe
 import fr.huiitre.tools.modules.palworld.serverdata.application.usecase.GetBasePalsUseCase;
 import fr.huiitre.tools.modules.palworld.serverdata.application.usecase.GetGuildsUseCase;
 import fr.huiitre.tools.modules.palworld.serverdata.application.usecase.GetPalInstanceHistoryUseCase;
+import fr.huiitre.tools.modules.palworld.serverdata.application.usecase.GetServerInventoryUseCase;
 import fr.huiitre.tools.modules.palworld.serverdata.application.usecase.SyncServerDataUseCase;
 import fr.huiitre.tools.modules.palworld.serverdata.application.view.GuildSummaryView;
 import fr.huiitre.tools.modules.palworld.serverdata.application.view.PalInstanceSnapshotView;
 import fr.huiitre.tools.modules.palworld.serverdata.application.view.PalInstanceSummaryView;
+import fr.huiitre.tools.modules.palworld.serverdata.application.view.ServerDataInventoryView;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Palworld - Server data")
@@ -32,16 +34,19 @@ public class PalworldServerDataController {
     private final GetGuildsUseCase getGuildsUseCase;
     private final GetBasePalsUseCase getBasePalsUseCase;
     private final GetPalInstanceHistoryUseCase getPalInstanceHistoryUseCase;
+    private final GetServerInventoryUseCase getServerInventoryUseCase;
 
     public PalworldServerDataController(
             SyncServerDataUseCase syncServerDataUseCase,
             GetGuildsUseCase getGuildsUseCase,
             GetBasePalsUseCase getBasePalsUseCase,
-            GetPalInstanceHistoryUseCase getPalInstanceHistoryUseCase) {
+            GetPalInstanceHistoryUseCase getPalInstanceHistoryUseCase,
+            GetServerInventoryUseCase getServerInventoryUseCase) {
         this.syncServerDataUseCase = syncServerDataUseCase;
         this.getGuildsUseCase = getGuildsUseCase;
         this.getBasePalsUseCase = getBasePalsUseCase;
         this.getPalInstanceHistoryUseCase = getPalInstanceHistoryUseCase;
+        this.getServerInventoryUseCase = getServerInventoryUseCase;
     }
 
     @RequiredRole(RoleCode.TECH)
@@ -56,6 +61,13 @@ public class PalworldServerDataController {
     @ResponseStatus(HttpStatus.OK)
     public List<GuildSummaryView> getGuilds() {
         return getGuildsUseCase.execute();
+    }
+
+    @RequiredRole(RoleCode.READ_ONLY)
+    @GetMapping("/inventory")
+    @ResponseStatus(HttpStatus.OK)
+    public ServerDataInventoryView getInventory() {
+        return getServerInventoryUseCase.execute();
     }
 
     @RequiredRole(RoleCode.READ_ONLY)

@@ -2,11 +2,15 @@
 import { onMounted } from 'vue'
 import PalworldNav from '@/modules/Palworld/shared/components/PalworldNav.vue'
 import { usePaldexStore } from '@/modules/Palworld/paldex/paldex.store'
+import { usePalworldServerDataStore } from '@/modules/Palworld/server/serverData.store'
+import { usePassiveSkillsStore } from '@/modules/Palworld/passives/passiveSkills.store'
 
 // Catalogue Paldex (pals/éléments/aptitudes) partagé par plusieurs onglets (Paldex, Tierlist) :
 // chargé une fois à l'entrée sur /palworld, gardé en mémoire (comme le cache prix Dofus).
 onMounted(() => {
   usePaldexStore().ensureLoaded()
+  usePassiveSkillsStore().ensureLoaded()
+  usePalworldServerDataStore().ensureLoaded()
 })
 </script>
 

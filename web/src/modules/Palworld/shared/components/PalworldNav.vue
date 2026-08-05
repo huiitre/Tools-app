@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PalworldConfigButton from './PalworldConfigButton.vue'
+import PalworldServerPlayerSelector from '../../server/components/PalworldServerPlayerSelector.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -30,7 +31,9 @@ const goTo = (tabName: string) => {
 
 <template>
   <nav class="palworld-nav">
-    <div class="palworld-nav-spacer" />
+    <div class="palworld-nav-spacer palworld-nav-spacer--left">
+      <PalworldServerPlayerSelector />
+    </div>
 
     <ul class="palworld-nav-list">
       <li
@@ -67,8 +70,13 @@ const goTo = (tabName: string) => {
   flex: 1 0 0;
 }
 
+.palworld-nav-spacer--left {
+  padding-left: .75rem;
+}
+
 .palworld-nav-spacer--right {
   display: flex;
+  gap: .5rem;
   justify-content: flex-end;
   padding-right: 0.75rem;
 }

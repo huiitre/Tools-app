@@ -3,10 +3,16 @@ import type {
   PalworldGuildSummary,
   PalworldPalInstanceSummary,
   PalworldPalInstanceSnapshot,
+  PalworldServerInventory,
 } from '../types/palworldServerData.types'
 
 export async function fetchGuilds(): Promise<PalworldGuildSummary[]> {
   const { data } = await clientV3.get<PalworldGuildSummary[]>('/palworld/server-data/guilds')
+  return data
+}
+
+export async function fetchServerInventory(): Promise<PalworldServerInventory> {
+  const { data } = await clientV3.get<PalworldServerInventory>('/palworld/server-data/inventory')
   return data
 }
 

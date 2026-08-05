@@ -5,7 +5,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import fr.huiitre.tools.modules.palworld.catalog.application.ports.PalCatalogRepository;
+import fr.huiitre.tools.modules.palworld.catalog.application.ports.PassiveSkillCatalogRepository;
 import fr.huiitre.tools.modules.palworld.catalog.infrastructure.PostgresPalCatalogRepository;
+import fr.huiitre.tools.modules.palworld.catalog.infrastructure.PostgresPassiveSkillCatalogRepository;
 
 @Configuration
 public class PalworldCatalogConfig {
@@ -13,5 +15,10 @@ public class PalworldCatalogConfig {
     @Bean
     public PalCatalogRepository palCatalogRepository(JdbcTemplate jdbcTemplate) {
         return new PostgresPalCatalogRepository(jdbcTemplate);
+    }
+
+    @Bean
+    public PassiveSkillCatalogRepository passiveSkillCatalogRepository(JdbcTemplate jdbcTemplate) {
+        return new PostgresPassiveSkillCatalogRepository(jdbcTemplate);
     }
 }

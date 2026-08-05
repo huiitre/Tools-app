@@ -47,7 +47,7 @@ public class PostgresGuildQueryRepository implements GuildQueryRepository {
         final String basesSql = """
                 SELECT b.guild_id, b.base_id, count(pi.instance_id) AS pal_count
                 FROM tools_palworld.base b
-                LEFT JOIN tools_palworld.pal_instance pi ON pi.base_id = b.base_id
+                LEFT JOIN tools_palworld.pal_instance pi ON pi.base_id = b.base_id AND pi.is_present = TRUE
                 GROUP BY b.guild_id, b.base_id
                 """;
         jdbcTemplate.query(basesSql, rs -> {

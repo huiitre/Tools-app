@@ -8,10 +8,12 @@ import fr.huiitre.tools.modules.palworld.serverdata.application.ports.GuildQuery
 import fr.huiitre.tools.modules.palworld.serverdata.application.ports.PalInstanceQueryRepository;
 import fr.huiitre.tools.modules.palworld.serverdata.application.ports.PalLookupRepository;
 import fr.huiitre.tools.modules.palworld.serverdata.application.ports.ServerDataRepository;
+import fr.huiitre.tools.modules.palworld.serverdata.application.ports.ServerInventoryQueryRepository;
 import fr.huiitre.tools.modules.palworld.serverdata.infrastructure.PostgresGuildQueryRepository;
 import fr.huiitre.tools.modules.palworld.serverdata.infrastructure.PostgresPalInstanceQueryRepository;
 import fr.huiitre.tools.modules.palworld.serverdata.infrastructure.PostgresPalLookupRepository;
 import fr.huiitre.tools.modules.palworld.serverdata.infrastructure.PostgresServerDataRepository;
+import fr.huiitre.tools.modules.palworld.serverdata.infrastructure.PostgresServerInventoryQueryRepository;
 
 @Configuration
 public class PalworldServerDataConfig {
@@ -19,6 +21,11 @@ public class PalworldServerDataConfig {
     @Bean
     public ServerDataRepository serverDataRepository(JdbcTemplate jdbcTemplate) {
         return new PostgresServerDataRepository(jdbcTemplate);
+    }
+
+    @Bean
+    public ServerInventoryQueryRepository serverInventoryQueryRepository(JdbcTemplate jdbcTemplate) {
+        return new PostgresServerInventoryQueryRepository(jdbcTemplate);
     }
 
     @Bean
