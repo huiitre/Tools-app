@@ -28,7 +28,7 @@ function selectPal(slot: Slot, pal: PalworldPalListItem) {
   if (slot === 'parentA') breedingStore.selectPal(pal)
   else parentB.value = pal
 
-  openPicker.value = slot === 'parentA' && !parentB.value ? 'parentB' : null
+  openPicker.value = slot === 'parentA' && !parentB.value ? 'parentB' : slot
 }
 
 function clearAll() {

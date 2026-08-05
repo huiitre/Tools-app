@@ -152,6 +152,11 @@ public class PalworldServerSnapshotFileAdapter implements ServerSnapshotFilePort
                     pal.path("character_id").asText(null),
                     parseUuid(pal.path("owner_player_uid").asText(null)),
                     parseUuid(pal.path("base_id").asText(null)),
+                    pal.path("storage_location").asText("base"),
+                    parseUuid(pal.path("container_id").asText(null)),
+                    pal.path("gender").asText(null),
+                    parseInt(pal.path("favorite_index")),
+                    parseStringList(pal.path("passive_skill_ids")),
                     parseInt(pal.path("level")),
                     parseInt(pal.path("exp")),
                     parseDecimal(pal.path("full_stomach")),
@@ -179,6 +184,15 @@ public class PalworldServerSnapshotFileAdapter implements ServerSnapshotFilePort
 
     private Boolean parseBoolean(JsonNode node) {
         return isAbsent(node) ? null : node.asBoolean();
+    }
+
+    private List<String> parseStringList(JsonNode node) {
+        List<String> values = new ArrayList<>();
+        if (!node.isArray()) return values;
+        for (JsonNode value : node) {
+            values.add(value.asText());
+        }
+        return values;
     }
 
     private boolean isAbsent(JsonNode node) {

@@ -467,6 +467,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  height: 100%;
+  box-sizing: border-box;
   gap: 5px;
   padding: 0.85rem 0.6rem;
   border-radius: 10px;
