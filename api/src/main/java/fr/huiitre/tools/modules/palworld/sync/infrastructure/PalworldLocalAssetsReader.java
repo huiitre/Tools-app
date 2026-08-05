@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -52,6 +54,32 @@ public class PalworldLocalAssetsReader {
         } catch (IOException e) {
             throw new IllegalStateException("Unable to list Palworld image directory: " + dir, e);
         }
+    }
+
+    // Certains dossiers img/ contiennent à la fois un .png et un .webp pour le même nom de base — seul
+    // le .png est réellement servi par assets.tools.huiitre.fr (le .webp renvoie 404, vérifié 2026-08-05
+    // sur pal/element/workSuitability). Sans préférence explicite, un Set non-ordonné choisirait l'un ou
+    // l'autre au hasard selon le hash des noms de fichiers, cassant l'image pour certaines entrées
+    // seulement. Le .webp est mis en premier puis systématiquement écrasé par le .png si présent.
+    public Map<String, String> preferredImageFileNameByBaseName(String imgSubDir) {
+        Set<String> fileNames = listImageFileNames(imgSubDir);
+        Map<String, String> result = new HashMap<>();
+        for (String fileName : fileNames) {
+            if (fileName.toLowerCase().endsWith(".webp")) result.put(stripExtension(fileName), fileName);
+        }
+        for (String fileName : fileNames) {
+            if (fileName.toLowerCase().endsWith(".png")) result.put(stripExtension(fileName), fileName);
+        }
+        for (String fileName : fileNames) {
+            String base = stripExtension(fileName);
+            result.putIfAbsent(base, fileName);
+        }
+        return result;
+    }
+
+    private String stripExtension(String fileName) {
+        int dot = fileName.lastIndexOf('.');
+        return dot > 0 ? fileName.substring(0, dot) : fileName;
     }
 
     public OffsetDateTime readScrapedAt() {

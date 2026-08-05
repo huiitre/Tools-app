@@ -24,6 +24,8 @@ public record PalListItemView(
         BigDecimal captureRateCorrect,
         BigDecimal maleProbability,
         Integer combiRank,
+        Integer combiDuplicatePriority,
+        boolean ignoreCombi,
         Integer price,
         String bestWorkSuitabilityLabel,
         Integer foodGaugeFilled,

@@ -19,6 +19,8 @@ public record PalRefView(
         BigDecimal captureRateCorrect,
         BigDecimal maleProbability,
         Integer combiRank,
+        Integer combiDuplicatePriority,
+        boolean ignoreCombi,
         Integer price,
         String bestWorkSuitabilityLabel,
         String imageUrl,

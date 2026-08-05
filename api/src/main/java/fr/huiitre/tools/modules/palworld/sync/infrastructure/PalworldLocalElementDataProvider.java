@@ -3,7 +3,6 @@ package fr.huiitre.tools.modules.palworld.sync.infrastructure;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,10 +31,9 @@ public class PalworldLocalElementDataProvider implements ElementDataProvider {
             String json = assetsReader.readFile("elements.json");
             JsonNode root = objectMapper.readTree(json);
 
-            // elements.json "id" (ex: "05") correspond exactement au nom de fichier rippé img/element/05.webp,
+            // elements.json "id" (ex: "05") correspond exactement au nom de fichier rippé img/element/05.png,
             // pas de divergence de casse/nommage ici contrairement aux Pals (cf. PalworldLocalPalDataProvider).
-            Map<String, String> imageFileNameByCode = assetsReader.listImageFileNames("element").stream()
-                    .collect(Collectors.toMap(this::stripExtension, fileName -> fileName, (a, b) -> a));
+            Map<String, String> imageFileNameByCode = assetsReader.preferredImageFileNameByBaseName("element");
 
             List<ElementSyncData> result = new ArrayList<>();
             for (JsonNode element : root) {
@@ -51,11 +49,6 @@ public class PalworldLocalElementDataProvider implements ElementDataProvider {
         } catch (Exception e) {
             throw new IllegalStateException("Failed to load Palworld elements from local assets", e);
         }
-    }
-
-    private String stripExtension(String fileName) {
-        int dot = fileName.lastIndexOf('.');
-        return dot > 0 ? fileName.substring(0, dot) : fileName;
     }
 
     private String resolveIconUrl(String externalCode, Map<String, String> imageFileNameByCode) {

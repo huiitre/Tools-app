@@ -5,4 +5,5 @@ public record PalworldGlobalSyncReport(
         PalworldSyncReport workSuitabilities,
         PalworldSyncReport workPriorities,
         PalworldSyncReport skills,
-        PalworldSyncReport pals) {}
+        PalworldSyncReport pals,
+        BreedingExceptionSyncReport breedingExceptions) {}

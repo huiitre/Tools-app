@@ -42,6 +42,8 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
             rs.getBigDecimal("capture_rate_correct"),
             rs.getBigDecimal("male_probability"),
             (Integer) rs.getObject("combi_rank"),
+            (Integer) rs.getObject("combi_duplicate_priority"),
+            rs.getBoolean("ignore_combi"),
             (Integer) rs.getObject("price"),
             rs.getString("best_work_suitability_label"),
             rs.getString("image_url"),
@@ -52,7 +54,8 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
         final String sql = """
                 SELECT id, tribe, paldex_index, name, size, rarity, base_hp, base_attack, base_defense,
                        base_work_speed, base_support, run_speed, ride_sprint_speed, capture_rate_correct,
-                       male_probability, combi_rank, price, best_work_suitability_label, image_url, description
+                       male_probability, combi_rank, combi_duplicate_priority, ignore_combi, price,
+                       best_work_suitability_label, image_url, description
                 FROM tools_palworld.pal
                 """;
         return jdbcTemplate.query(sql, ROW_MAPPER);
@@ -64,16 +67,17 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 INSERT INTO tools_palworld.pal
                     (tribe, paldex_index, paldex_suffix, name, image_url, description, size, rarity,
                      base_hp, base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed,
-                     ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, price,
-                     best_work_suitability_label, food_gauge_filled, food_gauge_empty, food_gauge_icon_url)
-                VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
+                     ride_sprint_speed, capture_rate_correct, male_probability, combi_rank, combi_duplicate_priority,
+                     ignore_combi, price, best_work_suitability_label, food_gauge_filled, food_gauge_empty, food_gauge_icon_url)
+                VALUES (?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
                 RETURNING id
                 """;
         return jdbcTemplate.queryForObject(sql, Long.class,
                 data.getTribe(), data.getPaldexIndex(), data.getName(), data.getImageUrl(), data.getDescription(),
                 data.getSize(), data.getRarity(), data.getBaseHp(), data.getBaseAttack(), data.getBaseDefense(),
                 data.getBaseWorkSpeed(), data.getBaseSupport(), data.getRunSpeed(), data.getRideSprintSpeed(),
-                data.getCaptureRateCorrect(), data.getMaleProbability(), data.getCombiRank(), data.getPrice(),
+                data.getCaptureRateCorrect(), data.getMaleProbability(), data.getCombiRank(),
+                data.getCombiDuplicatePriority(), data.isIgnoreCombi(), data.getPrice(),
                 data.getBestWorkSuitabilityLabel());
     }
 
@@ -83,7 +87,8 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 UPDATE tools_palworld.pal
                 SET paldex_index = ?, name = ?, image_url = ?, description = ?, size = ?, rarity = ?, base_hp = ?,
                     base_attack = ?, base_defense = ?, base_work_speed = ?, base_support = ?, run_speed = ?,
-                    ride_sprint_speed = ?, capture_rate_correct = ?, male_probability = ?, combi_rank = ?, price = ?,
+                    ride_sprint_speed = ?, capture_rate_correct = ?, male_probability = ?, combi_rank = ?,
+                    combi_duplicate_priority = ?, ignore_combi = ?, price = ?,
                     best_work_suitability_label = ?, updated_at = now()
                 WHERE id = ?
                 """;
@@ -91,7 +96,8 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
                 data.getPaldexIndex(), data.getName(), data.getImageUrl(), data.getDescription(), data.getSize(),
                 data.getRarity(), data.getBaseHp(), data.getBaseAttack(), data.getBaseDefense(), data.getBaseWorkSpeed(),
                 data.getBaseSupport(), data.getRunSpeed(), data.getRideSprintSpeed(), data.getCaptureRateCorrect(),
-                data.getMaleProbability(), data.getCombiRank(), data.getPrice(), data.getBestWorkSuitabilityLabel(), id);
+                data.getMaleProbability(), data.getCombiRank(), data.getCombiDuplicatePriority(), data.isIgnoreCombi(),
+                data.getPrice(), data.getBestWorkSuitabilityLabel(), id);
     }
 
     @Override

@@ -21,6 +21,8 @@ public class PalSyncData {
     private final BigDecimal captureRateCorrect;
     private final BigDecimal maleProbability;
     private final Integer combiRank;
+    private final Integer combiDuplicatePriority;
+    private final boolean ignoreCombi;
     private final Integer price;
     private final String bestWorkSuitabilityLabel;
     private final String imageUrl;
@@ -41,6 +43,7 @@ public class PalSyncData {
     public PalSyncData(String tribe, Integer paldexIndex, String name, String size, Integer rarity, Integer baseHp,
             Integer baseAttack, Integer baseDefense, Integer baseWorkSpeed, Integer baseSupport, Integer runSpeed,
             Integer rideSprintSpeed, BigDecimal captureRateCorrect, BigDecimal maleProbability, Integer combiRank,
+            Integer combiDuplicatePriority, boolean ignoreCombi,
             Integer price, String bestWorkSuitabilityLabel, String imageUrl, String description, Integer foodGaugeFilled,
             Integer foodGaugeEmpty, String foodGaugeIconUrl, List<PalElementSyncData> elements,
             List<PalWorkSuitabilitySyncData> workSuitabilities, List<PalActiveSkillSyncData> activeSkills,
@@ -61,6 +64,8 @@ public class PalSyncData {
         this.captureRateCorrect = captureRateCorrect;
         this.maleProbability = maleProbability;
         this.combiRank = combiRank;
+        this.combiDuplicatePriority = combiDuplicatePriority;
+        this.ignoreCombi = ignoreCombi;
         this.price = price;
         this.bestWorkSuitabilityLabel = bestWorkSuitabilityLabel;
         this.imageUrl = imageUrl;
@@ -94,6 +99,8 @@ public class PalSyncData {
     public BigDecimal getCaptureRateCorrect() { return captureRateCorrect; }
     public BigDecimal getMaleProbability() { return maleProbability; }
     public Integer getCombiRank() { return combiRank; }
+    public Integer getCombiDuplicatePriority() { return combiDuplicatePriority; }
+    public boolean isIgnoreCombi() { return ignoreCombi; }
     public Integer getPrice() { return price; }
     public String getBestWorkSuitabilityLabel() { return bestWorkSuitabilityLabel; }
     public String getImageUrl() { return imageUrl; }

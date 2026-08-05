@@ -1,7 +1,8 @@
 import { serverRoutes } from '@/modules/Palworld/server/palworld.server.routes'
 import { tierlistRoutes } from '@/modules/Palworld/tierlist/tierlist.routes'
 import { paldexRoutes } from '@/modules/Palworld/paldex/paldex.routes'
-// import { activityRoutes } from '@/modules/Palworld/activity/activity.routes'
+import { breedingRoutes } from '@/modules/Palworld/breeding/breeding.routes'
+import { activityRoutes } from '@/modules/Palworld/activity/activity.routes'
 
 export const routes = [
   {
@@ -12,9 +13,10 @@ export const routes = [
     redirect: { name: 'palworld-server' },
     children: [
       ...serverRoutes,
+      ...activityRoutes,
       ...tierlistRoutes,
       ...paldexRoutes,
-      // ...activityRoutes, // onglet désactivé (pas encore fonctionnel), code conservé intact
+      ...breedingRoutes,
     ],
   },
 ]

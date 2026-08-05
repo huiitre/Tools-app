@@ -1,0 +1,15 @@
+info:
+  name: Get Breeding Path
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{apiUrl}}/palworld/breeding/path?target=1&owned=2,3,4"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

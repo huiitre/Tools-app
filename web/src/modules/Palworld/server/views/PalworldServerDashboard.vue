@@ -235,7 +235,7 @@ onMounted(async () => {
     loading.value = false
   }
 
-  // loadGuilds() // désactivé : /palworld/server-data/guilds retourne 410 (feature en pause)
+  loadGuilds()
   restartRefreshInterval()
 })
 
@@ -530,8 +530,8 @@ async function handleStop() {
       <p v-else-if="!loading" class="empty">Aucun joueur connecté.</p>
     </div>
 
-    <!-- Guildes (masqué : dépend de /palworld/server-data, désactivé côté API) -->
-    <div v-if="false" class="section">
+    <!-- Guildes -->
+    <div class="section">
       <div class="section-header">
         <h3 class="section-title">Guildes</h3>
       </div>

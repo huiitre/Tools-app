@@ -127,6 +127,8 @@ public class SyncPalsUseCase implements SecuredUseCase {
                 || !Objects.equals(existing.captureRateCorrect(), ext.getCaptureRateCorrect())
                 || !Objects.equals(existing.maleProbability(), ext.getMaleProbability())
                 || !Objects.equals(existing.combiRank(), ext.getCombiRank())
+                || !Objects.equals(existing.combiDuplicatePriority(), ext.getCombiDuplicatePriority())
+                || existing.ignoreCombi() != ext.isIgnoreCombi()
                 || !Objects.equals(existing.price(), ext.getPrice())
                 || !Objects.equals(existing.bestWorkSuitabilityLabel(), ext.getBestWorkSuitabilityLabel())
                 || !Objects.equals(existing.imageUrl(), ext.getImageUrl())

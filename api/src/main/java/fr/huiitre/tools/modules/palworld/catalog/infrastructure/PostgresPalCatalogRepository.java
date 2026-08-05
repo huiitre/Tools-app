@@ -146,7 +146,7 @@ public class PostgresPalCatalogRepository implements PalCatalogRepository {
         final String palsSql = """
                 SELECT id, tribe, paldex_index, paldex_suffix, name, image_url, description, rarity, size, base_hp,
                        base_attack, base_defense, base_work_speed, base_support, food_amount, run_speed, ride_sprint_speed,
-                       capture_rate_correct, male_probability, combi_rank, price, best_work_suitability_label,
+                       capture_rate_correct, male_probability, combi_rank, combi_duplicate_priority, ignore_combi, price, best_work_suitability_label,
                        food_gauge_filled, food_gauge_empty, food_gauge_icon_url
                 FROM tools_palworld.pal
                 ORDER BY paldex_index, paldex_suffix
@@ -174,6 +174,8 @@ public class PostgresPalCatalogRepository implements PalCatalogRepository {
                     rs.getBigDecimal("capture_rate_correct"),
                     rs.getBigDecimal("male_probability"),
                     (Integer) rs.getObject("combi_rank"),
+                    (Integer) rs.getObject("combi_duplicate_priority"),
+                    rs.getBoolean("ignore_combi"),
                     (Integer) rs.getObject("price"),
                     rs.getString("best_work_suitability_label"),
                     (Integer) rs.getObject("food_gauge_filled"),

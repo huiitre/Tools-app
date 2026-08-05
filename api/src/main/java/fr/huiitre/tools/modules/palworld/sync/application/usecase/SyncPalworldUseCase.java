@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.huiitre.tools.modules.core.module.domain.ModuleCode;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
+import fr.huiitre.tools.modules.palworld.sync.application.BreedingExceptionSyncReport;
 import fr.huiitre.tools.modules.palworld.sync.application.ElementSyncResult;
 import fr.huiitre.tools.modules.palworld.sync.application.PalworldGlobalSyncReport;
 import fr.huiitre.tools.modules.palworld.sync.application.PalworldSyncReport;
@@ -24,18 +25,21 @@ public class SyncPalworldUseCase implements SecuredUseCase {
     private final SyncWorkPrioritiesUseCase syncWorkPrioritiesUseCase;
     private final SyncSkillsUseCase syncSkillsUseCase;
     private final SyncPalsUseCase syncPalsUseCase;
+    private final SyncBreedingExceptionsUseCase syncBreedingExceptionsUseCase;
 
     public SyncPalworldUseCase(
             SyncElementsUseCase syncElementsUseCase,
             SyncWorkSuitabilitiesUseCase syncWorkSuitabilitiesUseCase,
             SyncWorkPrioritiesUseCase syncWorkPrioritiesUseCase,
             SyncSkillsUseCase syncSkillsUseCase,
-            SyncPalsUseCase syncPalsUseCase) {
+            SyncPalsUseCase syncPalsUseCase,
+            SyncBreedingExceptionsUseCase syncBreedingExceptionsUseCase) {
         this.syncElementsUseCase = syncElementsUseCase;
         this.syncWorkSuitabilitiesUseCase = syncWorkSuitabilitiesUseCase;
         this.syncWorkPrioritiesUseCase = syncWorkPrioritiesUseCase;
         this.syncSkillsUseCase = syncSkillsUseCase;
         this.syncPalsUseCase = syncPalsUseCase;
+        this.syncBreedingExceptionsUseCase = syncBreedingExceptionsUseCase;
     }
 
     @Override
@@ -69,7 +73,11 @@ public class SyncPalworldUseCase implements SecuredUseCase {
                 skillsCreateOrUpdate.idBySlug(),
                 skillsCreateOrUpdate.idByName());
 
+        // Résout les tribes de breeding.json en pal.id : doit tourner après syncPalsUseCase (pal.id à jour
+        // pour les nouvelles espèces).
+        BreedingExceptionSyncReport breedingExceptions = syncBreedingExceptionsUseCase.execute();
+
         return new PalworldGlobalSyncReport(
-                elements.report(), workSuitabilities.report(), workPriorities.report(), skills.report(), pals);
+                elements.report(), workSuitabilities.report(), workPriorities.report(), skills.report(), pals, breedingExceptions);
     }
 }

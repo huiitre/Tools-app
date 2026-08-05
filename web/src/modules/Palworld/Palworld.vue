@@ -32,7 +32,6 @@ onMounted(() => {
 
 .palworld-content {
   flex: 1;
-  overflow: auto;
 }
 
 .palworld-page-enter-active,
