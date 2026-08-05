@@ -21,7 +21,7 @@ const emit = defineEmits<{
     <div class="breeding-square-body">
       <span v-if="loading" class="spinner" />
       <template v-else-if="pal">
-        <img v-if="pal.imageUrl" :src="pal.imageUrl" :alt="pal.name" width="80" height="80" loading="lazy">
+        <img v-if="pal.imageUrl" :src="pal.imageUrl" :alt="pal.name" width="72" height="72" loading="lazy">
         <span class="pal-name">{{ pal.name }}</span>
         <span v-if="pal.elements.length" class="pal-elements">
           <span
@@ -46,8 +46,8 @@ const emit = defineEmits<{
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  padding: 1rem;
-  width: 160px;
+  padding: 0.75rem;
+  width: 140px;
   border-radius: 12px;
   background: var(--pico-card-background-color);
   border: 2px solid var(--pico-card-border-color);
@@ -78,7 +78,7 @@ const emit = defineEmits<{
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
-  min-height: 110px;
+  min-height: 100px;
   justify-content: center;
 }
 
@@ -109,8 +109,8 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   border: 1px dashed var(--pico-muted-border-color);
   color: var(--pico-muted-color);

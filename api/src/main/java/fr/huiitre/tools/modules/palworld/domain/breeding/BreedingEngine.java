@@ -1,6 +1,7 @@
 package fr.huiitre.tools.modules.palworld.domain.breeding;
 
 import java.util.List;
+import java.util.Set;
 
 public final class BreedingEngine {
 
@@ -20,11 +21,14 @@ public final class BreedingEngine {
         }
 
         int targetRank = Math.floorDiv(parentA.combiRank() + parentB.combiRank() + 1, 2);
+        Set<Long> specialChildren = exceptions.stream()
+                .map(BreedingException::childPalId)
+                .collect(java.util.stream.Collectors.toSet());
         BreedingPal best = null;
         int bestDistance = Integer.MAX_VALUE;
 
         for (BreedingPal candidate : allPals) {
-            if (candidate.ignoreCombi() || candidate.combiRank() == null) continue;
+            if (!isFormulaCandidate(candidate, specialChildren)) continue;
 
             int distance = Math.abs(candidate.combiRank() - targetRank);
             if (best == null) {
@@ -43,6 +47,13 @@ public final class BreedingEngine {
 
         return BreedingComputation.formula(best.id(),
                 new FormulaDetails(parentA.combiRank(), parentB.combiRank(), targetRank, bestDistance));
+    }
+
+    private static boolean isFormulaCandidate(BreedingPal candidate, Set<Long> specialChildren) {
+        return !candidate.ignoreCombi()
+                && candidate.combiRank() != null
+                && candidate.combiDuplicatePriority() != null
+                && !specialChildren.contains(candidate.id());
     }
 
     // Une exception ne "connait" pas parentA/parentB de l'appelant : elle stocke sa propre paire ordonnée.

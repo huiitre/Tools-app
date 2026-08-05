@@ -14,11 +14,11 @@ import fr.huiitre.tools.modules.core.common.api.RequiredRole;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.palworld.breeding.application.usecase.GetBreedingAsParentUseCase;
 import fr.huiitre.tools.modules.palworld.breeding.application.usecase.GetBreedingParentsUseCase;
-import fr.huiitre.tools.modules.palworld.breeding.application.usecase.GetBreedingPathUseCase;
 import fr.huiitre.tools.modules.palworld.breeding.application.usecase.GetBreedingResultUseCase;
+import fr.huiitre.tools.modules.palworld.breeding.application.usecase.GetBreedingRulesUseCase;
 import fr.huiitre.tools.modules.palworld.breeding.application.view.BreedingCombinationView;
-import fr.huiitre.tools.modules.palworld.breeding.application.view.BreedingPathResultView;
 import fr.huiitre.tools.modules.palworld.breeding.application.view.BreedingResultView;
+import fr.huiitre.tools.modules.palworld.breeding.application.view.BreedingRuleView;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Palworld - Breeding")
@@ -29,17 +29,17 @@ public class PalworldBreedingController {
     private final GetBreedingResultUseCase getBreedingResultUseCase;
     private final GetBreedingParentsUseCase getBreedingParentsUseCase;
     private final GetBreedingAsParentUseCase getBreedingAsParentUseCase;
-    private final GetBreedingPathUseCase getBreedingPathUseCase;
+    private final GetBreedingRulesUseCase getBreedingRulesUseCase;
 
     public PalworldBreedingController(
             GetBreedingResultUseCase getBreedingResultUseCase,
             GetBreedingParentsUseCase getBreedingParentsUseCase,
             GetBreedingAsParentUseCase getBreedingAsParentUseCase,
-            GetBreedingPathUseCase getBreedingPathUseCase) {
+            GetBreedingRulesUseCase getBreedingRulesUseCase) {
         this.getBreedingResultUseCase = getBreedingResultUseCase;
         this.getBreedingParentsUseCase = getBreedingParentsUseCase;
         this.getBreedingAsParentUseCase = getBreedingAsParentUseCase;
-        this.getBreedingPathUseCase = getBreedingPathUseCase;
+        this.getBreedingRulesUseCase = getBreedingRulesUseCase;
     }
 
     @RequiredRole(RoleCode.READ_ONLY)
@@ -68,9 +68,9 @@ public class PalworldBreedingController {
     }
 
     @RequiredRole(RoleCode.READ_ONLY)
-    @GetMapping("/path")
+    @GetMapping("/rules")
     @ResponseStatus(HttpStatus.OK)
-    public BreedingPathResultView getPath(@RequestParam Long target, @RequestParam Set<Long> owned) {
-        return getBreedingPathUseCase.execute(target, owned);
+    public List<BreedingRuleView> getRules() {
+        return getBreedingRulesUseCase.execute();
     }
 }

@@ -3,7 +3,7 @@ import BreedingPalChip from './BreedingPalChip.vue'
 import type { PalworldPalListItem } from '../../paldex/types/paldex.types'
 import type { BreedingPathNode } from '../types/breeding.types'
 
-defineProps<{
+const { node, resolvePal, isRoot } = defineProps<{
   node: BreedingPathNode
   resolvePal: (id: number) => PalworldPalListItem | null
   isRoot?: boolean
@@ -40,7 +40,9 @@ defineProps<{
 
 <style lang="scss" scoped>
 $line-color: var(--pico-muted-border-color);
-$connector-height: 1.5rem;
+$connector-height: 1rem;
+$branch-gap: .9rem;
+$half-branch-gap: .45rem;
 
 .path-node {
   display: flex;
@@ -52,8 +54,8 @@ $connector-height: 1.5rem;
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.85rem;
+  gap: 0.35rem;
+  padding: 0.4rem 0.6rem;
   border-radius: 10px;
   background: color-mix(in srgb, #f59e0b 12%, var(--pico-card-background-color));
   border: 2px solid #f59e0b;
@@ -84,30 +86,18 @@ $connector-height: 1.5rem;
 .path-node-children {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 2.5rem;
-  padding-top: $connector-height;
-  margin-top: 0.25rem;
+  grid-template-columns: max-content max-content;
+  column-gap: $branch-gap;
+  margin-top: $connector-height;
 
-  /* trait vertical descendant depuis la carte parente jusqu'au trait horizontal */
   &::after {
     content: '';
     position: absolute;
-    top: 0;
+    top: -$connector-height;
     left: 50%;
     width: 0;
     height: $connector-height;
     border-left: 2px solid #{$line-color};
-  }
-
-  /* trait horizontal reliant le centre des deux branches */
-  &::before {
-    content: '';
-    position: absolute;
-    top: $connector-height;
-    left: 25%;
-    right: 25%;
-    border-top: 2px solid #{$line-color};
   }
 }
 
@@ -118,15 +108,32 @@ $connector-height: 1.5rem;
   align-items: center;
   padding-top: $connector-height;
 
-  /* trait vertical descendant du trait horizontal jusqu'à la carte de cette branche */
   &::before {
     content: '';
     position: absolute;
-    top: $connector-height;
+    top: 0;
     left: 50%;
     width: 0;
     height: $connector-height;
     border-left: 2px solid #{$line-color};
+  }
+
+  &:first-child::after,
+  &:last-child::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    border-top: 2px solid #{$line-color};
+  }
+
+  &:first-child::after {
+    left: 50%;
+    width: calc(50% + #{$half-branch-gap});
+  }
+
+  &:last-child::after {
+    right: 50%;
+    width: calc(50% + #{$half-branch-gap});
   }
 }
 

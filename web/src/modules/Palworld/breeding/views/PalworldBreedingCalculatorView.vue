@@ -160,7 +160,7 @@ function goToBreedingOf(pal: PalworldPalListItem) {
     </div>
 
     <div v-if="openPicker" class="breeding-picker-panel">
-      <BreedingPalPicker @select="pal => selectPal(openPicker!, pal)" />
+      <BreedingPalPicker display="cards" show-element-filters show-count @select="pal => selectPal(openPicker!, pal)" />
     </div>
   </div>
 </template>

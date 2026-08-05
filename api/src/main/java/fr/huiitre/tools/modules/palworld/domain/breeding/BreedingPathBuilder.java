@@ -21,7 +21,17 @@ public final class BreedingPathBuilder {
 
     public static Optional<BreedingPathNode> build(Long targetSpeciesId, Set<Long> ownedSpeciesIds, List<BreedingPairResult> allPairs) {
         if (ownedSpeciesIds.contains(targetSpeciesId)) {
-            return Optional.of(new BreedingPathNode(targetSpeciesId, true, null));
+            BreedingPathNode ownedTarget = new BreedingPathNode(targetSpeciesId, true, null);
+            BreedingPairResult selfBreeding = new BreedingPairResult(
+                    targetSpeciesId, null,
+                    targetSpeciesId, null,
+                    BreedingRule.FORMULA,
+                    targetSpeciesId,
+                    null);
+            return Optional.of(new BreedingPathNode(
+                    targetSpeciesId,
+                    false,
+                    new BreedingPathStep(ownedTarget, ownedTarget, selfBreeding)));
         }
 
         Map<Long, List<BreedingPairResult>> pairsByChild = allPairs.stream()

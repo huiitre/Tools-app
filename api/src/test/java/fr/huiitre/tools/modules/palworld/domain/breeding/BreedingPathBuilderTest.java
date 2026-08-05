@@ -27,16 +27,19 @@ class BreedingPathBuilderTest {
     }
 
     @Test
-    @DisplayName("Le Pal cible déjà possédé est atteignable sans aucune étape")
-    void should_be_trivially_reachable_when_target_already_owned() {
+    @DisplayName("Le Pal cible déjà possédé propose son auto-reproduction")
+    void should_propose_self_breeding_when_target_already_owned() {
         long bastetIce = idOf("Bastet_Ice");
 
         Optional<BreedingPathNode> result = BreedingPathBuilder.build(bastetIce, Set.of(bastetIce), ALL_PAIRS);
 
         assertTrue(result.isPresent());
-        assertTrue(result.get().owned());
+        assertFalse(result.get().owned());
         assertEquals(bastetIce, result.get().speciesId());
-        assertEquals(null, result.get().step());
+        assertEquals(bastetIce, result.get().step().parentA().speciesId());
+        assertEquals(bastetIce, result.get().step().parentB().speciesId());
+        assertTrue(result.get().step().parentA().owned());
+        assertTrue(result.get().step().parentB().owned());
     }
 
     @Test
@@ -70,16 +73,11 @@ class BreedingPathBuilderTest {
         assertTrue(result.isEmpty());
     }
 
-    // Chaîne vérifiée sur les vraies données : ChickenPal + DarkCrow => ColorfulBird (formule, gen 1),
-    // puis ChickenPal + ColorfulBird => DreamDemon (formule, gen 2) — DreamDemon n'est PAS atteignable
-    // en une seule génération depuis {ChickenPal, DarkCrow} seuls, donc ce test vérifie réellement le
-    // point fixe multi-génération, pas juste le cas à une étape.
     @Test
-    @DisplayName("Chemin sur deux générations : ChickenPal + DarkCrow => ColorfulBird => (+ ChickenPal) => DreamDemon")
+    @DisplayName("Un chemin multi-génération est construit depuis les Pals possédés")
     void should_find_multi_generation_path() {
         long chickenPal = idOf("ChickenPal");
         long darkCrow = idOf("DarkCrow");
-        long colorfulBird = idOf("ColorfulBird");
         long dreamDemon = idOf("DreamDemon");
 
         Optional<BreedingPathNode> result = BreedingPathBuilder.build(dreamDemon, Set.of(chickenPal, darkCrow), ALL_PAIRS);
@@ -89,22 +87,22 @@ class BreedingPathBuilderTest {
         assertFalse(root.owned());
         assertEquals(dreamDemon, root.speciesId());
 
-        BreedingPathNode parentA = root.step().parentA();
-        BreedingPathNode parentB = root.step().parentB();
-        Set<Long> topLevelSpecies = Set.of(parentA.speciesId(), parentB.speciesId());
-        assertEquals(Set.of(chickenPal, colorfulBird), topLevelSpecies);
+        assertTrue(depth(root) >= 2);
+        assertLeavesAreOwned(root, Set.of(chickenPal, darkCrow));
+    }
 
-        // Le parent "ChickenPal" du dernier croisement est directement possédé, l'autre (ColorfulBird)
-        // doit lui-même être issu d'une étape de reproduction antérieure (pas possédé directement).
-        BreedingPathNode ownedParent = parentA.speciesId() == chickenPal ? parentA : parentB;
-        BreedingPathNode bredParent = parentA.speciesId() == chickenPal ? parentB : parentA;
-        assertTrue(ownedParent.owned());
-        assertFalse(bredParent.owned());
-        assertEquals(colorfulBird, bredParent.speciesId());
+    private int depth(BreedingPathNode node) {
+        if (node.step() == null) return 0;
+        return 1 + Math.max(depth(node.step().parentA()), depth(node.step().parentB()));
+    }
 
-        Set<Long> gen1Species = Set.of(bredParent.step().parentA().speciesId(), bredParent.step().parentB().speciesId());
-        assertEquals(Set.of(chickenPal, darkCrow), gen1Species);
-        assertTrue(bredParent.step().parentA().owned());
-        assertTrue(bredParent.step().parentB().owned());
+    private void assertLeavesAreOwned(BreedingPathNode node, Set<Long> ownedSpeciesIds) {
+        if (node.step() == null) {
+            assertTrue(node.owned());
+            assertTrue(ownedSpeciesIds.contains(node.speciesId()));
+            return;
+        }
+        assertLeavesAreOwned(node.step().parentA(), ownedSpeciesIds);
+        assertLeavesAreOwned(node.step().parentB(), ownedSpeciesIds);
     }
 }

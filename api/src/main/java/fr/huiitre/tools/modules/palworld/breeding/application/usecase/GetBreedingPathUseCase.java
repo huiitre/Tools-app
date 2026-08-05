@@ -50,6 +50,11 @@ public class GetBreedingPathUseCase implements SecuredUseCase {
         Map<Long, BreedingPal> byId = allPals.stream().collect(Collectors.toMap(BreedingPal::id, pal -> pal));
         if (!byId.containsKey(targetSpeciesId)) throw new BreedingSpeciesNotFoundException(targetSpeciesId);
 
+        if (ownedSpeciesIds.contains(targetSpeciesId)) {
+            BreedingPathNode path = BreedingPathBuilder.build(targetSpeciesId, ownedSpeciesIds, List.of()).orElseThrow();
+            return new BreedingPathResultView(true, toView(path, byId));
+        }
+
         List<BreedingException> exceptions = breedingCatalogRepository.findAllExceptions();
         List<BreedingPairResult> allPairs = BreedingIndexBuilder.buildAll(allPals, exceptions);
 

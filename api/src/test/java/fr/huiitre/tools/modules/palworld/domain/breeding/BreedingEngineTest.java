@@ -33,12 +33,12 @@ class BreedingEngineTest {
     private static final Set<String> KNOWN_UNRESOLVABLE_TRIBES = Set.of("WindChimes", "WindChimes_Ice", "Blueplatypus");
 
     @Test
-    @DisplayName("Formule + départage : Chikipi(ChickenPal) + Cawgnito(DarkCrow) => Tocotoco(ColorfulBird)")
+    @DisplayName("Formule + départage : Chikipi(ChickenPal) + Cawgnito(DarkCrow) => Tocotoco")
     void should_apply_formula_and_tiebreak_for_chikipi_and_cawgnito() {
         // NB: l'exemple donné dans la spec métier ("Chikipi + Nox") utilise un combiRank (2370) qui, sur les
         // vrais assets, appartient à Cawgnito (DarkCrow) et non Nox (NightFox, combiRank réel 2920) — le calcul
-        // (target 2725, Tocotoco 2730 vs Melpaca 2720, distance 5 de part et d'autre, Tocotoco gagne au
-        // departage 273000 > 272000) est vérifié ici avec les vraies données, donc avec la bonne espèce.
+        // (target 2725, Tocotoco 2730 vs Melpaca 2720, distance 5 de part et d'autre). La règle du jeu
+        // retient la priorité de reproduction la plus élevée : Tocotoco.
         BreedingPal chikipi = BreedingFixtures.byTribe(ALL_PALS, "ChickenPal");
         BreedingPal cawgnito = BreedingFixtures.byTribe(ALL_PALS, "DarkCrow");
         BreedingPal tocotoco = BreedingFixtures.byTribe(ALL_PALS, "ColorfulBird");
@@ -52,6 +52,30 @@ class BreedingEngineTest {
         assertEquals(tocotoco.id(), result.childPalId());
         assertEquals(2725, result.formulaDetails().targetRank());
         assertEquals(5, result.formulaDetails().distance());
+    }
+
+    @Test
+    @DisplayName("Les variantes spéciales ne sont pas des enfants de formule : Fuack Ignis + Direhowl => Muffly")
+    void should_exclude_special_variants_from_formula_children() {
+        BreedingPal fuackIgnis = BreedingFixtures.byTribe(ALL_PALS, "BluePlatypus_Fire");
+        BreedingPal direhowl = BreedingFixtures.byTribe(ALL_PALS, "Garm");
+        BreedingPal muffly = BreedingFixtures.byTribe(ALL_PALS, "FluffyBird");
+
+        BreedingComputation result = BreedingEngine.compute(fuackIgnis, null, direhowl, null, VALID_EXCEPTIONS, ALL_PALS);
+
+        assertEquals(muffly.id(), result.childPalId());
+    }
+
+    @Test
+    @DisplayName("Les enfants de combinaisons spéciales sont exclus : Fuack Ignis + Fuack => Jelliette")
+    void should_exclude_all_special_combination_children() {
+        BreedingPal fuackIgnis = BreedingFixtures.byTribe(ALL_PALS, "BluePlatypus_Fire");
+        BreedingPal fuack = BreedingFixtures.byTribe(ALL_PALS, "BluePlatypus");
+        BreedingPal jelliette = BreedingFixtures.byTribe(ALL_PALS, "JellyfishFairy");
+
+        BreedingComputation result = BreedingEngine.compute(fuackIgnis, null, fuack, null, VALID_EXCEPTIONS, ALL_PALS);
+
+        assertEquals(jelliette.id(), result.childPalId());
     }
 
     @Test

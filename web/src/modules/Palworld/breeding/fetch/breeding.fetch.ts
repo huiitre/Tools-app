@@ -1,5 +1,6 @@
 import { clientV3 } from '@/services/axiosInstance'
-import type { BreedingResult, BreedingCombination, BreedingPathResult } from '../types/breeding.types'
+import type { BreedingResult, BreedingCombination } from '../types/breeding.types'
+import type { BreedingRuleData } from '../services/BreedingPathEngine'
 
 export async function fetchBreedingResult(
   parentA: number,
@@ -27,9 +28,7 @@ export async function fetchBreedingAsParent(palId: number): Promise<BreedingComb
   return data
 }
 
-export async function fetchBreedingPath(targetId: number, ownedIds: number[]): Promise<BreedingPathResult> {
-  const { data } = await clientV3.get<BreedingPathResult>('/palworld/breeding/path', {
-    params: { target: targetId, owned: ownedIds.join(',') },
-  })
+export async function fetchBreedingRules(): Promise<BreedingRuleData[]> {
+  const { data } = await clientV3.get<BreedingRuleData[]>('/palworld/breeding/rules')
   return data
 }

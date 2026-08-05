@@ -6,10 +6,12 @@ withDefaults(defineProps<{
   gender?: 'Male' | 'Female' | null
   size?: number
   clickable?: boolean
+  layout?: 'horizontal' | 'vertical'
 }>(), {
   gender: null,
   size: 40,
   clickable: false,
+  layout: 'horizontal',
 })
 
 const emit = defineEmits<{
@@ -18,7 +20,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <span class="breeding-chip" :class="{ clickable }" @click="clickable && emit('click')">
+  <span class="breeding-chip" :class="[layout, { clickable }]" @click="clickable && emit('click')">
     <span class="breeding-chip-avatar" :style="{ width: `${size}px`, height: `${size}px` }">
       <img v-if="pal?.imageUrl" :src="pal.imageUrl" :alt="pal.name" :width="size" :height="size" loading="lazy">
       <i v-else class="mdi mdi-help" />
@@ -39,6 +41,13 @@ const emit = defineEmits<{
 
   &.clickable {
     cursor: pointer;
+  }
+
+  &.vertical {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 0;
   }
 }
 
@@ -61,6 +70,14 @@ const emit = defineEmits<{
   font-size: 0.82rem;
   color: var(--pico-color);
   white-space: nowrap;
+}
+
+.vertical .breeding-chip-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  font-size: 0.82rem;
 }
 
 .gender-male { color: #4a90d9; }

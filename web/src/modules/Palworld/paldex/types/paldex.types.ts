@@ -51,6 +51,9 @@ export interface PalworldPalListItem {
   foodGaugeFilled: number | null
   foodGaugeEmpty: number | null
   foodGaugeIconUrl: string | null
+  combiRank: number | null
+  combiDuplicatePriority: number | null
+  ignoreCombi: boolean
   elements: PalworldElementSummary[]
   workSuitabilities: PalworldWorkSuitabilitySummary[]
   passiveSkills: PalworldPassiveSkillSummary[]
