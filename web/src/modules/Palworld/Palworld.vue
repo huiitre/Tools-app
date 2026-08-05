@@ -32,6 +32,7 @@ onMounted(() => {
 
 .palworld-content {
   flex: 1;
+  min-height: 0;
 }
 
 .palworld-page-enter-active,

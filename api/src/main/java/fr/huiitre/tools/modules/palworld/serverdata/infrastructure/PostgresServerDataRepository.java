@@ -1,6 +1,8 @@
 package fr.huiitre.tools.modules.palworld.serverdata.infrastructure;
 
+import java.sql.Array;
 import java.sql.Timestamp;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -44,6 +46,7 @@ public class PostgresServerDataRepository implements ServerDataRepository {
             upsertBase(base, extractedAt);
         }
 
+        markMissingPalsAsNotPresent(extractedAt);
         for (PalInstanceSyncData pal : data.getPalInstances()) {
             Long palId = resolvePalId(pal, palIdByTribeUpper);
             upsertPalInstance(pal, palId, extractedAt);
@@ -51,6 +54,14 @@ public class PostgresServerDataRepository implements ServerDataRepository {
         }
 
         insertImportTrackingRow(fileName, data, extractedAt);
+    }
+
+    private void markMissingPalsAsNotPresent(Timestamp extractedAt) {
+        jdbcTemplate.update("""
+                UPDATE tools_palworld.pal_instance
+                SET is_present = FALSE
+                WHERE is_present = TRUE AND last_seen_at < ?
+                """, extractedAt);
     }
 
     private Long resolvePalId(PalInstanceSyncData pal, Map<String, Long> palIdByTribeUpper) {
@@ -93,26 +104,59 @@ public class PostgresServerDataRepository implements ServerDataRepository {
     private void upsertPalInstance(PalInstanceSyncData pal, Long palId, Timestamp extractedAt) {
         final String sql = """
                 INSERT INTO tools_palworld.pal_instance
-                    (instance_id, character_id, pal_id, is_alpha, owner_player_uid, base_id, level, exp, full_stomach,
+                    (instance_id, character_id, pal_id, is_alpha, owner_player_uid, base_id, storage_location, container_id,
+                     gender, favorite_index, passive_skill_ids, is_present, level, exp, full_stomach,
                      is_sick, workable_type, task_id, work_state, current_work_amount, required_work_amount,
                      first_seen_at, last_seen_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (instance_id) DO UPDATE SET
                     character_id = EXCLUDED.character_id, pal_id = EXCLUDED.pal_id, is_alpha = EXCLUDED.is_alpha,
-                    owner_player_uid = EXCLUDED.owner_player_uid, base_id = EXCLUDED.base_id, level = EXCLUDED.level,
+                    owner_player_uid = EXCLUDED.owner_player_uid, base_id = EXCLUDED.base_id,
+                    storage_location = EXCLUDED.storage_location, container_id = EXCLUDED.container_id,
+                    gender = EXCLUDED.gender, favorite_index = EXCLUDED.favorite_index,
+                    passive_skill_ids = EXCLUDED.passive_skill_ids, is_present = TRUE, level = EXCLUDED.level,
                     exp = EXCLUDED.exp, full_stomach = EXCLUDED.full_stomach, is_sick = EXCLUDED.is_sick,
                     workable_type = EXCLUDED.workable_type, task_id = EXCLUDED.task_id,
                     work_state = EXCLUDED.work_state, current_work_amount = EXCLUDED.current_work_amount,
                     required_work_amount = EXCLUDED.required_work_amount, last_seen_at = EXCLUDED.last_seen_at
                 WHERE tools_palworld.pal_instance.last_seen_at <= EXCLUDED.last_seen_at
                 """;
-        jdbcTemplate.update(sql,
-                pal.getInstanceId(), pal.getCharacterId(), palId, pal.isAlpha(), pal.getOwnerPlayerUid(), pal.getBaseId(),
-                pal.getLevel(), pal.getExp(), pal.getFullStomach(), pal.getIsSick(), pal.getWorkableType(), pal.getTaskId(),
-                pal.getWorkState(), pal.getCurrentWorkAmount(), pal.getRequiredWorkAmount(), extractedAt, extractedAt);
+        jdbcTemplate.update(connection -> {
+            var preparedStatement = connection.prepareStatement(sql);
+            try {
+                preparedStatement.setObject(1, pal.getInstanceId());
+                preparedStatement.setString(2, pal.getCharacterId());
+                preparedStatement.setObject(3, palId);
+                preparedStatement.setBoolean(4, pal.isAlpha());
+                preparedStatement.setObject(5, pal.getOwnerPlayerUid());
+                preparedStatement.setObject(6, pal.getBaseId());
+                preparedStatement.setString(7, pal.getStorageLocation());
+                preparedStatement.setObject(8, pal.getContainerId());
+                preparedStatement.setString(9, pal.getGender());
+                preparedStatement.setObject(10, pal.getFavoriteIndex());
+                Array passiveSkillIds = connection.createArrayOf("text", pal.getPassiveSkillIds().toArray(String[]::new));
+                preparedStatement.setArray(11, passiveSkillIds);
+                preparedStatement.setBoolean(12, true);
+                preparedStatement.setObject(13, pal.getLevel());
+                preparedStatement.setObject(14, pal.getExp());
+                preparedStatement.setBigDecimal(15, pal.getFullStomach());
+                preparedStatement.setObject(16, pal.getIsSick());
+                preparedStatement.setString(17, pal.getWorkableType());
+                preparedStatement.setString(18, pal.getTaskId());
+                preparedStatement.setObject(19, pal.getWorkState());
+                preparedStatement.setBigDecimal(20, pal.getCurrentWorkAmount());
+                preparedStatement.setBigDecimal(21, pal.getRequiredWorkAmount());
+                preparedStatement.setTimestamp(22, extractedAt);
+                preparedStatement.setTimestamp(23, extractedAt);
+            } catch (SQLException e) {
+                throw new IllegalStateException("Unable to bind Palworld server Pal instance", e);
+            }
+            return preparedStatement;
+        });
     }
 
     private void insertSnapshot(PalInstanceSyncData pal, Timestamp extractedAt) {
+        if (pal.getBaseId() == null) return;
         final String sql = """
                 INSERT INTO tools_palworld.pal_instance_snapshot
                     (instance_id, captured_at, base_id, level, exp, full_stomach, is_sick, workable_type, task_id,
