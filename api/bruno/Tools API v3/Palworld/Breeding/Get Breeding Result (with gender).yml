@@ -1,0 +1,15 @@
+info:
+  name: Get Breeding Result (with gender)
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{apiUrl}}/palworld/breeding/result?parentA=1&parentB=2&genderA=Male&genderB=Female"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

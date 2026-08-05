@@ -114,6 +114,8 @@ public class PalworldLocalPalDataProvider implements PalDataProvider {
                 decimalOrNull(pal.path("captureRateCorrect")),
                 decimalOrNull(pal.path("maleProbability")),
                 intOrNull(pal.path("combiRank")),
+                intOrNull(pal.path("combiDuplicatePriority")),
+                pal.path("ignoreCombi").asBoolean(false),
                 intOrNull(pal.path("price")),
                 bestWorkSuitabilityLabel(bestWorkSuitabilityPakCategory),
                 resolveImageUrl(tribe, palImageFileNameByTribeUpper),

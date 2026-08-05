@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import fr.huiitre.tools.modules.palworld.sync.application.ports.BreedingExceptionDataProvider;
+import fr.huiitre.tools.modules.palworld.sync.application.ports.BreedingExceptionSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.ElementDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.ElementSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PalDataProvider;
@@ -17,12 +19,14 @@ import fr.huiitre.tools.modules.palworld.sync.application.ports.WorkPrioritySync
 import fr.huiitre.tools.modules.palworld.sync.application.ports.WorkSuitabilityDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.WorkSuitabilitySyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalAssetsReader;
+import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalBreedingExceptionDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalElementDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalLanguageDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalPalDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalSkillDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalWorkPriorityDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalWorkSuitabilityDataProvider;
+import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresBreedingExceptionSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresElementSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresPalSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresSkillSyncRepository;
@@ -96,5 +100,15 @@ public class PalworldSyncConfig {
     @Bean
     public PalSyncRepository palSyncRepository(JdbcTemplate jdbcTemplate) {
         return new PostgresPalSyncRepository(jdbcTemplate);
+    }
+
+    @Bean
+    public BreedingExceptionDataProvider breedingExceptionDataProvider(PalworldLocalAssetsReader assetsReader) {
+        return new PalworldLocalBreedingExceptionDataProvider(assetsReader);
+    }
+
+    @Bean
+    public BreedingExceptionSyncRepository breedingExceptionSyncRepository(JdbcTemplate jdbcTemplate) {
+        return new PostgresBreedingExceptionSyncRepository(jdbcTemplate);
     }
 }
