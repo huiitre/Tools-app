@@ -49,10 +49,21 @@ export interface BreedingPathStep {
 export interface BreedingPathNode {
   species: BreedingSpeciesRef
   owned: boolean
+  gender: 'Male' | 'Female' | null
+  storageLocation: 'base' | 'palbox' | 'party' | 'dimensional_storage' | null
+  passiveSkillIds: string[]
   step: BreedingPathStep | null
 }
 
 export interface BreedingPathResult {
   reachable: boolean
   root: BreedingPathNode | null
+  routes: BreedingPathRoute[]
+}
+
+export interface BreedingPathRoute {
+  id: string
+  root: BreedingPathNode
+  breeds: number
+  passiveCount: number
 }

@@ -8,6 +8,7 @@
 - **GLOBAL** : `./dev.sh` (API + Web) ou `./dev.sh --electron`
 
 ## Architecture Rules
+- **Règle transversale** : respecter les patterns, composants et conventions déjà présents dans le monorepo. Ne pas introduire de variante locale ou de comportement maison lorsqu'un équivalent existe. Le code doit rester cohérent, maintenable, évolutif et organisé par responsabilité ; demander une clarification avant de choisir une architecture incertaine.
 - **API (Java)** :
     - JDBC pur (`JdbcTemplate`). JAMAIS de Hibernate/JPA.
     - Chaque Use Case est une classe @Service unique.

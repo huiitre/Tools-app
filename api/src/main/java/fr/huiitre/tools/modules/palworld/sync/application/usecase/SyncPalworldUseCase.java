@@ -24,6 +24,7 @@ public class SyncPalworldUseCase implements SecuredUseCase {
     private final SyncWorkSuitabilitiesUseCase syncWorkSuitabilitiesUseCase;
     private final SyncWorkPrioritiesUseCase syncWorkPrioritiesUseCase;
     private final SyncSkillsUseCase syncSkillsUseCase;
+    private final SyncPassiveSkillsUseCase syncPassiveSkillsUseCase;
     private final SyncPalsUseCase syncPalsUseCase;
     private final SyncBreedingExceptionsUseCase syncBreedingExceptionsUseCase;
 
@@ -32,12 +33,14 @@ public class SyncPalworldUseCase implements SecuredUseCase {
             SyncWorkSuitabilitiesUseCase syncWorkSuitabilitiesUseCase,
             SyncWorkPrioritiesUseCase syncWorkPrioritiesUseCase,
             SyncSkillsUseCase syncSkillsUseCase,
+            SyncPassiveSkillsUseCase syncPassiveSkillsUseCase,
             SyncPalsUseCase syncPalsUseCase,
             SyncBreedingExceptionsUseCase syncBreedingExceptionsUseCase) {
         this.syncElementsUseCase = syncElementsUseCase;
         this.syncWorkSuitabilitiesUseCase = syncWorkSuitabilitiesUseCase;
         this.syncWorkPrioritiesUseCase = syncWorkPrioritiesUseCase;
         this.syncSkillsUseCase = syncSkillsUseCase;
+        this.syncPassiveSkillsUseCase = syncPassiveSkillsUseCase;
         this.syncPalsUseCase = syncPalsUseCase;
         this.syncBreedingExceptionsUseCase = syncBreedingExceptionsUseCase;
     }
@@ -60,6 +63,7 @@ public class SyncPalworldUseCase implements SecuredUseCase {
         // brut EPalElementType (ex: "Earth"), différent de element.code ("Ground") et de element.name
         // (texte traduit) — cf. elements.json[].palElementType.
         SkillSyncResult skillsCreateOrUpdate = syncSkillsUseCase.syncCreateOrUpdate(elements.idByPalElementType());
+        PalworldSyncReport passiveSkills = syncPassiveSkillsUseCase.execute();
         PalworldSyncReport pals = syncPalsUseCase.execute(
                 elements.idByPalElementType(),
                 workSuitabilities.idBySlug(),
@@ -78,6 +82,7 @@ public class SyncPalworldUseCase implements SecuredUseCase {
         BreedingExceptionSyncReport breedingExceptions = syncBreedingExceptionsUseCase.execute();
 
         return new PalworldGlobalSyncReport(
-                elements.report(), workSuitabilities.report(), workPriorities.report(), skills.report(), pals, breedingExceptions);
+                elements.report(), workSuitabilities.report(), workPriorities.report(), skills.report(), passiveSkills, pals,
+                breedingExceptions);
     }
 }

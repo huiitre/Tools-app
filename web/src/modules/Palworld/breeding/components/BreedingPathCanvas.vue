@@ -3,9 +3,15 @@ import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 const props = withDefaults(defineProps<{
   resetKey?: string | number | null
+  alternativeRoutesCount?: number
 }>(), {
   resetKey: null,
+  alternativeRoutesCount: 0,
 })
+
+const emit = defineEmits<{
+  showAlternatives: []
+}>()
 
 const viewport = ref<HTMLElement | null>(null)
 const canvas = ref<HTMLElement | null>(null)
@@ -122,6 +128,13 @@ onUnmounted(() => {
     @pointerup="stopDrag"
     @pointercancel="stopDrag"
   >
+    <div v-if="alternativeRoutesCount > 0" class="path-canvas-alternatives" @pointerdown.stop>
+      <button type="button" @click="emit('showAlternatives')">
+        <i class="mdi mdi-source-branch" />
+        {{ alternativeRoutesCount }} route{{ alternativeRoutesCount > 1 ? 's' : '' }} alternative{{ alternativeRoutesCount > 1 ? 's' : '' }}
+      </button>
+    </div>
+
     <div class="path-canvas-controls" @pointerdown.stop>
       <button type="button" title="Zoom arrière" @click="zoom(scale / 1.2)"><i class="mdi mdi-minus" /></button>
       <button type="button" title="Recentrer l'arbre" @click="resetView"><i class="mdi mdi-crosshairs-gps" /></button>
@@ -140,6 +153,9 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .path-canvas { position: relative; width: 100%; height: min(72dvh, 760px); overflow: hidden; border: 1px solid var(--pico-card-border-color); border-radius: var(--pico-border-radius); cursor: grab; touch-action: none; user-select: none; }
 .path-canvas.dragging { cursor: grabbing; }
+.path-canvas-alternatives { position: absolute; z-index: 2; top: .75rem; left: .75rem; }
+.path-canvas-alternatives button { width: auto; min-height: 2rem; margin: 0; padding: .35rem .6rem; border-color: var(--pico-card-border-color); background: var(--pico-card-background-color); color: var(--pico-color); box-shadow: var(--pico-card-box-shadow); font-size: .7rem; }
+.path-canvas-alternatives button:hover { border-color: var(--pico-primary); color: var(--pico-primary); }
 .path-canvas-controls { position: absolute; z-index: 2; top: .75rem; right: .75rem; display: flex; overflow: hidden; border: 1px solid var(--pico-card-border-color); border-radius: var(--pico-border-radius); background: var(--pico-card-background-color); box-shadow: var(--pico-card-box-shadow); }
 .path-canvas-controls button { display: grid; place-items: center; width: 2rem; height: 2rem; margin: 0; padding: 0; border: 0; border-right: 1px solid var(--pico-card-border-color); border-radius: 0; background: transparent; color: var(--pico-color); }
 .path-canvas-controls button:last-child { border-right: 0; }
