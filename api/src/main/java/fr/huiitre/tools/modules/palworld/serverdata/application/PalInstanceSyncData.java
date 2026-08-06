@@ -15,6 +15,17 @@ public class PalInstanceSyncData {
     private final String gender;
     private final Integer favoriteIndex;
     private final List<String> passiveSkillIds;
+    private final Integer rank;
+    private final Integer ivHp;
+    private final Integer ivAttack;
+    private final Integer ivDefense;
+    private final BigDecimal currentHp;
+    private final Integer baseHp;
+    private final Integer baseMeleeAttack;
+    private final Integer baseShotAttack;
+    private final Integer baseDefense;
+    private final Integer baseSupport;
+    private final Integer baseCraftSpeed;
     private final Integer level;
     private final Integer exp;
     private final BigDecimal fullStomach;
@@ -27,7 +38,9 @@ public class PalInstanceSyncData {
 
     public PalInstanceSyncData(UUID instanceId, String characterId, UUID ownerPlayerUid, UUID baseId,
             String storageLocation, UUID containerId, String gender, Integer favoriteIndex, List<String> passiveSkillIds,
-            Integer level, Integer exp, BigDecimal fullStomach, Boolean isSick, String workableType, String taskId,
+            Integer rank, Integer ivHp, Integer ivAttack, Integer ivDefense, BigDecimal currentHp,
+            Integer baseHp, Integer baseMeleeAttack, Integer baseShotAttack, Integer baseDefense, Integer baseSupport,
+            Integer baseCraftSpeed, Integer level, Integer exp, BigDecimal fullStomach, Boolean isSick, String workableType, String taskId,
             Integer workState, BigDecimal currentWorkAmount, BigDecimal requiredWorkAmount) {
         this.instanceId = instanceId;
         this.characterId = characterId;
@@ -38,6 +51,10 @@ public class PalInstanceSyncData {
         this.gender = gender;
         this.favoriteIndex = favoriteIndex;
         this.passiveSkillIds = passiveSkillIds;
+        this.rank = rank; this.ivHp = ivHp; this.ivAttack = ivAttack; this.ivDefense = ivDefense;
+        this.currentHp = currentHp; this.baseHp = baseHp; this.baseMeleeAttack = baseMeleeAttack;
+        this.baseShotAttack = baseShotAttack; this.baseDefense = baseDefense; this.baseSupport = baseSupport;
+        this.baseCraftSpeed = baseCraftSpeed;
         this.level = level;
         this.exp = exp;
         this.fullStomach = fullStomach;
@@ -58,6 +75,17 @@ public class PalInstanceSyncData {
     public String getGender() { return gender; }
     public Integer getFavoriteIndex() { return favoriteIndex; }
     public List<String> getPassiveSkillIds() { return passiveSkillIds; }
+    public Integer getRank() { return rank; }
+    public Integer getIvHp() { return ivHp; }
+    public Integer getIvAttack() { return ivAttack; }
+    public Integer getIvDefense() { return ivDefense; }
+    public BigDecimal getCurrentHp() { return currentHp; }
+    public Integer getBaseHp() { return baseHp; }
+    public Integer getBaseMeleeAttack() { return baseMeleeAttack; }
+    public Integer getBaseShotAttack() { return baseShotAttack; }
+    public Integer getBaseDefense() { return baseDefense; }
+    public Integer getBaseSupport() { return baseSupport; }
+    public Integer getBaseCraftSpeed() { return baseCraftSpeed; }
     public Integer getLevel() { return level; }
     public Integer getExp() { return exp; }
     public BigDecimal getFullStomach() { return fullStomach; }

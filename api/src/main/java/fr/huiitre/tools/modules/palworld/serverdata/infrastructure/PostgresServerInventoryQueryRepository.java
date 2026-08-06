@@ -31,7 +31,9 @@ public class PostgresServerInventoryQueryRepository implements ServerInventoryQu
 
         List<ServerPalInventoryView> pals = jdbcTemplate.query("""
                 SELECT instance_id, pal_id, owner_player_uid, base_id, storage_location, container_id, gender,
-                       favorite_index, passive_skill_ids, last_seen_at
+                       favorite_index, passive_skill_ids, rank, iv_hp, iv_attack, iv_defense, current_hp,
+                       base_hp, base_melee_attack, base_shot_attack, base_defense, base_support, base_craft_speed,
+                       level, last_seen_at
                 FROM tools_palworld.pal_instance
                 WHERE is_present = TRUE AND pal_id IS NOT NULL
                 ORDER BY pal_id, instance_id
@@ -45,6 +47,13 @@ public class PostgresServerInventoryQueryRepository implements ServerInventoryQu
                 rs.getString("gender"),
                 (Integer) rs.getObject("favorite_index"),
                 stringList(rs.getArray("passive_skill_ids")),
+                (Integer) rs.getObject("rank"), (Integer) rs.getObject("iv_hp"),
+                (Integer) rs.getObject("iv_attack"), (Integer) rs.getObject("iv_defense"),
+                rs.getBigDecimal("current_hp"), (Integer) rs.getObject("base_hp"),
+                (Integer) rs.getObject("base_melee_attack"), (Integer) rs.getObject("base_shot_attack"),
+                (Integer) rs.getObject("base_defense"), (Integer) rs.getObject("base_support"),
+                (Integer) rs.getObject("base_craft_speed"),
+                (Integer) rs.getObject("level"),
                 rs.getObject("last_seen_at", OffsetDateTime.class)));
 
         return new ServerDataInventoryView(lastSyncedAt, guildQueryRepository.findAllWithMembersAndBases(), pals);

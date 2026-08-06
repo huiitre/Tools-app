@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { usePaldexStore } from '../../paldex/paldex.store'
+import { usePalworldServerDataStore } from '../../server/serverData.store'
 import { paldexLabel } from '../../paldex/utils/paldexLabel'
 import type { PalworldElementSummary, PalworldPalListItem } from '../../paldex/types/paldex.types'
 
@@ -34,6 +35,7 @@ function handleClick(pal: PalworldPalListItem) {
 }
 
 const store = usePaldexStore()
+const serverDataStore = usePalworldServerDataStore()
 
 type SortKey = 'paldex' | 'name'
 
@@ -188,6 +190,7 @@ const visiblePals = computed(() => {
             :class="selectedIds.has(pal.id) ? 'mdi-check-circle' : 'mdi-circle-outline'"
           />
           <span class="pal-index">{{ paldexLabel(pal) }}</span>
+          <span v-if="serverDataStore.selectedPalCounts.get(pal.id)" class="server-pal-count">{{ serverDataStore.selectedPalCounts.get(pal.id) }}</span>
           <img v-if="pal.imageUrl" :src="pal.imageUrl" :alt="pal.name" width="84" height="84" loading="lazy">
           <i v-else class="mdi mdi-help pal-card-no-image" />
           <span class="pal-name">{{ pal.name }}</span>
@@ -440,6 +443,23 @@ const visiblePals = computed(() => {
   font-size: 0.74rem;
   color: var(--pico-muted-color);
   font-weight: 600;
+}
+
+.server-pal-count {
+  position: absolute;
+  top: .45rem;
+  right: .45rem;
+  display: grid;
+  place-items: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 .25rem;
+  border: 1px solid var(--pico-primary);
+  border-radius: 999px;
+  background: var(--pico-card-background-color);
+  color: var(--pico-primary);
+  font-size: .65rem;
+  font-weight: 700;
 }
 
 .pal-name {

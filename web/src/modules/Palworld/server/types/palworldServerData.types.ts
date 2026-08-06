@@ -63,6 +63,18 @@ export interface PalworldServerPalInventory {
   gender: 'male' | 'female' | null
   favoriteIndex: number | null
   passiveSkillIds: string[]
+  rank: number
+  ivHp: number | null
+  ivAttack: number | null
+  ivDefense: number | null
+  currentHp: number | null
+  baseHp: number | null
+  baseMeleeAttack: number | null
+  baseShotAttack: number | null
+  baseDefense: number | null
+  baseSupport: number | null
+  baseCraftSpeed: number | null
+  level: number | null
   lastSeenAt: string
 }
 

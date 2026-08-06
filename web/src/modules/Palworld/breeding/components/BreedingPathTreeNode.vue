@@ -4,6 +4,7 @@ import type { PalworldPalListItem } from '../../paldex/types/paldex.types'
 import type { PalworldPassiveSkill } from '../../passives/types/passiveSkills.types'
 import type { BreedingPathNode } from '../types/breeding.types'
 import { computed } from 'vue'
+import { usePalworldServerDataStore } from '../../server/serverData.store'
 
 const props = defineProps<{
   node: BreedingPathNode
@@ -12,6 +13,7 @@ const props = defineProps<{
   showGenders: boolean
   isRoot?: boolean
 }>()
+const serverDataStore = usePalworldServerDataStore()
 
 const passiveSkillById = computed(() => new Map(props.passiveSkills.map(passiveSkill => [passiveSkill.id, passiveSkill])))
 const nodePassives = computed(() => props.node.passiveSkillIds
@@ -33,6 +35,7 @@ const storageLocationLabel = computed(() => {
 <template>
   <div class="path-node">
     <div class="path-node-card" :class="{ owned: props.node.owned }">
+      <span v-if="serverDataStore.selectedPalCounts.get(props.node.species.id)" class="server-pal-count">{{ serverDataStore.selectedPalCounts.get(props.node.species.id) }}</span>
       <i v-if="props.isRoot" class="mdi mdi-crown path-node-crown" />
       <BreedingPalChip
         :pal="props.resolvePal(props.node.species.id)"
@@ -115,6 +118,24 @@ $half-branch-gap: .45rem;
     background: color-mix(in srgb, #22c55e 12%, var(--pico-card-background-color));
     border-color: #22c55e;
   }
+}
+
+.server-pal-count {
+  position: absolute;
+  top: .35rem;
+  right: .35rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 .2rem;
+  border: 1px solid var(--pico-primary);
+  border-radius: 999px;
+  background: var(--pico-card-background-color);
+  color: var(--pico-primary);
+  font-size: .6rem;
+  font-weight: 800;
 }
 
 .path-node-crown {

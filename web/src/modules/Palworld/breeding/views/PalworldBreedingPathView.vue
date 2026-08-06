@@ -408,6 +408,7 @@ onMounted(async () => {
               :class="{ selected: ownedIds.has(pal.id) }"
               @click="toggleOwned(pal)"
             >
+              <span v-if="serverDataStore.selectedPalCounts.get(pal.id)" class="server-pal-count">{{ serverDataStore.selectedPalCounts.get(pal.id) }}</span>
               <img :src="pal.imageUrl ?? ''" :alt="pal.name" loading="lazy">
               <span class="pal-name">
                 <strong>{{ pal.name }}</strong>
@@ -559,7 +560,8 @@ onMounted(async () => {
 .element-filters img { width: 14px; height: 14px; object-fit: contain; }
 .owned-pal-list, .target-pal-list { min-height: 0; overflow: auto; }
 .owned-pal-list { display: flex; flex: 1; flex-direction: column; gap: .35rem; padding-right: .15rem; overscroll-behavior: contain; }
-.owned-pal-list > button { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 18px; gap: .4rem; align-items: center; min-height: 46px; margin: 0; padding: .3rem .4rem; border: 1px solid var(--pico-card-border-color); background: var(--pico-card-background-color); color: var(--pico-color); text-align: left; font-size: .68rem; }
+.owned-pal-list > button { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 18px; gap: .4rem; align-items: center; min-height: 46px; margin: 0; padding: .3rem .4rem; border: 1px solid var(--pico-card-border-color); background: var(--pico-card-background-color); color: var(--pico-color); text-align: left; font-size: .68rem; }
+.owned-pal-list .server-pal-count { position: absolute; top: .2rem; left: .2rem; z-index: 1; display: grid; place-items: center; min-width: 1rem; height: 1rem; padding: 0 .15rem; border: 1px solid var(--pico-primary); border-radius: 999px; background: var(--pico-card-background-color); color: var(--pico-primary); font-size: .55rem; font-weight: 800; }
 .owned-pal-list > button.selected { border-color: var(--pico-primary); background: color-mix(in srgb, var(--pico-primary-background) 18%, var(--pico-card-background-color)); }
 .owned-pal-list > button > img { width: 34px; height: 34px; object-fit: contain; }
 .owned-pal-list > button > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
