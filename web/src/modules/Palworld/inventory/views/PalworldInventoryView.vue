@@ -203,8 +203,8 @@ const visiblePals = computed(() => [...inventoryPals.value].filter(matchesFilter
 function storageLabel(location: PalworldPalStorageLocation) {
   return { base: 'En base', palbox: 'Palbox', dimensional_storage: 'Boîte dimensionnelle', party: 'Équipe' }[location]
 }
-// Le snapshot stocke l'index de favori à partir de 0 ; l'UI du jeu l'affiche de 1 à 4 étoiles.
-function favoriteLevel(index: number | null) { return index === null ? 0 : Math.min(index + 1, 3) }
+// favorite_index est le niveau du cadenas : 0 et null signifient « aucun cadenas ».
+function favoriteLevel(index: number | null) { return index === null || index <= 0 ? 0 : Math.min(index, 3) }
 function ivClass(value: number | null) {
   if (value === null) return 'iv-empty'
   if (value >= 100) return 'iv-perfect'
@@ -301,7 +301,7 @@ function clearFilters() {
       <section v-if="visiblePals.length" class="inventory-list">
         <article v-for="pal in visiblePals" :key="pal.instanceId" class="inventory-card">
           <div class="pal-top-meta"><span v-if="pal.level !== null" class="pal-level">Niv. {{ pal.level }}</span><span v-if="pal.rank > 0" class="condensation-rank" :title="`Condensation ${pal.rank}`"><i v-for="star in pal.rank" :key="star" class="mdi mdi-star" /></span></div>
-          <span v-if="pal.favoriteIndex !== null" class="favorite-lock" :title="`Favori ${favoriteLevel(pal.favoriteIndex)}`"><span class="favorite-lock-shape"><b>{{ favoriteLevel(pal.favoriteIndex) }}</b></span></span>
+          <span v-if="pal.favoriteIndex !== null && pal.favoriteIndex > 0" class="favorite-lock" :title="`Favori ${favoriteLevel(pal.favoriteIndex)}`"><span class="favorite-lock-shape"><b>{{ favoriteLevel(pal.favoriteIndex) }}</b></span></span>
           <img v-if="pal.catalog.imageUrl" :src="pal.catalog.imageUrl" :alt="pal.catalog.name" width="56" height="56" loading="lazy">
           <div class="inventory-card__identity"><small class="pal-index">#{{ pal.catalog.paldexIndex ?? '—' }}</small><strong>{{ pal.catalog.name }}</strong><small><i class="mdi" :class="pal.gender === 'male' ? 'mdi-gender-male gender-male' : pal.gender === 'female' ? 'mdi-gender-female gender-female' : 'mdi-help'" />{{ pal.ownerName ?? 'Propriétaire inconnu' }}</small><span class="pal-types"><span v-for="element in pal.catalog.elements" :key="element.id" class="element-icon-crop" :title="element.name" :style="element.iconUrl ? { backgroundImage: `url(${element.iconUrl})` } : {}" /></span></div>
           <div class="inventory-card__passives"><span v-for="passiveId in pal.passiveSkillIds" :key="passiveId" class="passive-option" :class="`rank-${passiveById.get(passiveId)?.rank ?? 0}`"><span>{{ passiveName(passiveId) }}</span><img v-if="passiveRankIconUrl(passiveId)" :src="passiveRankIconUrl(passiveId)" alt=""><i v-else class="mdi mdi-chevron-double-up" /></span></div>

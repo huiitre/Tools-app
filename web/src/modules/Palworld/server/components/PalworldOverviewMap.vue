@@ -69,6 +69,7 @@ const baseMarkers = computed<MapFrameMarker[]>(() =>
 )
 
 const enlarged = ref(false)
+
 </script>
 
 <template>
@@ -95,13 +96,16 @@ const enlarged = ref(false)
               {{ MAP_LABELS[mapId] }}
               <span class="overview-map-count">{{ playerMarkers.length }} joueur{{ playerMarkers.length > 1 ? 's' : '' }}</span>
             </span>
-            <i class="mdi mdi-close overview-map-overlay-close" @click="enlarged = false" />
+            <button type="button" class="overview-map-overlay-close" title="Fermer" @click="enlarged = false">
+              <i class="mdi mdi-close" />
+            </button>
           </div>
           <PalworldMapFrame
             :image-src="MAP_IMAGES[mapId]"
             :image-alt="MAP_LABELS[mapId]"
             :players="playerMarkers"
             :bases="baseMarkers"
+            interactive
           />
         </div>
       </div>
@@ -138,55 +142,53 @@ const enlarged = ref(false)
   cursor: pointer;
   transition: opacity 0.15s ease;
 
-  &:hover {
-    opacity: 0.85;
-  }
+  &:hover { opacity: 0.85; }
 }
 
 .overview-map-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
   z-index: 1100;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.78);
 }
 
 .overview-map-overlay-content {
-  background: var(--pico-card-background-color);
+  width: min(96vw, 1500px);
+  max-height: 96vh;
+  overflow: hidden;
+  padding: 1rem;
   border: 1px solid var(--pico-card-border-color);
   border-radius: var(--pico-border-radius);
+  background: var(--pico-card-background-color);
   box-shadow: var(--pico-card-box-shadow);
-  width: 100%;
-  max-width: 900px;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 1rem;
 }
 
 .overview-map-overlay-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-weight: 700;
   margin-bottom: 0.75rem;
+  font-weight: 700;
 }
 
 .overview-map-overlay-close {
-  cursor: pointer;
+  width: 2.2rem;
+  height: 2.2rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--pico-muted-color);
-  font-size: 1.2rem;
-
-  &:hover {
-    color: var(--pico-color);
-  }
 }
 
+.overview-map-overlay-close:hover { color: var(--pico-color); }
+
 @media (max-width: 640px) {
-  .overview-map-overlay {
-    padding: 0.5rem;
-  }
+  .overview-map-overlay { padding: 0.35rem; }
+  .overview-map-overlay-content { width: 99vw; padding: 0.5rem; }
 }
 </style>
