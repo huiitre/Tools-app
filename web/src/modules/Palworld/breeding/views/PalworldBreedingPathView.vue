@@ -108,6 +108,14 @@ const ownedPalInputs = computed<BreedingOwnedPal[]>(() => source.value === 'serv
     }])
   : [...manualOwnedIds.value].map(speciesId => ({ speciesId, passiveSkillIds: [], gender: null, storageLocation: null })))
 
+// Le refresh périodique de serverDataStore (cf. Palworld.vue) recrée un nouveau tableau à
+// chaque tick même quand le contenu est identique. On compare une signature stable plutôt
+// que la référence du tableau pour ne pas invalider un résultat déjà calculé pour rien.
+const ownedPalInputsSignature = computed(() => ownedPalInputs.value
+  .map(pal => `${pal.speciesId}:${pal.gender ?? ''}:${pal.storageLocation ?? ''}:${[...pal.passiveSkillIds].sort().join('+')}`)
+  .sort()
+  .join('|'))
+
 const availablePassiveIds = computed(() => [...new Set(serverOwnedPals.value
   .flatMap(pal => pal.passiveSkillIds))])
 
@@ -252,7 +260,7 @@ async function computePath() {
 }
 
 watch(
-  [() => breedingStore.selectedPalId, ownedPalInputs, selectedPassiveIds, excludeBasePals, prioritizeTargetSpecies, breedingRules],
+  [() => breedingStore.selectedPalId, ownedPalInputsSignature, selectedPassiveIds, excludeBasePals, prioritizeTargetSpecies, breedingRules],
   invalidatePath,
 )
 watch(source, source => localStorage.setItem(OWNED_PALS_SOURCE_STORAGE_KEY, source))
