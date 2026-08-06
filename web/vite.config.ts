@@ -53,7 +53,10 @@ export default defineConfig({
           '**/themes/**',
           '**/*worker*.js',
           '**/ts.worker*.js',
-          '**/editor.worker*.js'
+          '**/editor.worker*.js',
+          // Cartes Palworld en haute résolution (>2 Mo) : mises en cache à la demande
+          // via la règle runtimeCaching "images-cache" ci-dessous, pas au precache.
+          '**/palworld_map*.png'
         ],
 
         // 6. Runtime : thèmes = NETWORK ONLY (OBLIGATOIRE)
