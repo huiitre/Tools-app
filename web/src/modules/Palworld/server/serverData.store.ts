@@ -12,7 +12,9 @@ function selectedGuildIds(inventory: PalworldServerInventory | null, playerIds: 
 }
 
 function selectedPals(inventory: PalworldServerInventory | null, playerIds: string[]): PalworldServerPalInventory[] {
-  if (!inventory || playerIds.length === 0) return []
+  // Aucun joueur sélectionné signifie « tous les Pals du serveur ».
+  if (!inventory) return []
+  if (playerIds.length === 0) return inventory.pals
   const guildIds = selectedGuildIds(inventory, playerIds)
   const baseIds = new Set(inventory.guilds
     .filter(guild => guildIds.has(guild.guildId))

@@ -105,16 +105,23 @@ public class PostgresServerDataRepository implements ServerDataRepository {
         final String sql = """
                 INSERT INTO tools_palworld.pal_instance
                     (instance_id, character_id, pal_id, is_alpha, owner_player_uid, base_id, storage_location, container_id,
-                     gender, favorite_index, passive_skill_ids, is_present, level, exp, full_stomach,
+                     gender, favorite_index, passive_skill_ids, rank, iv_hp, iv_attack, iv_defense, current_hp,
+                     base_hp, base_melee_attack, base_shot_attack, base_defense, base_support, base_craft_speed,
+                     is_present, level, exp, full_stomach,
                      is_sick, workable_type, task_id, work_state, current_work_amount, required_work_amount,
                      first_seen_at, last_seen_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (instance_id) DO UPDATE SET
                     character_id = EXCLUDED.character_id, pal_id = EXCLUDED.pal_id, is_alpha = EXCLUDED.is_alpha,
                     owner_player_uid = EXCLUDED.owner_player_uid, base_id = EXCLUDED.base_id,
                     storage_location = EXCLUDED.storage_location, container_id = EXCLUDED.container_id,
                     gender = EXCLUDED.gender, favorite_index = EXCLUDED.favorite_index,
-                    passive_skill_ids = EXCLUDED.passive_skill_ids, is_present = TRUE, level = EXCLUDED.level,
+                    passive_skill_ids = EXCLUDED.passive_skill_ids, rank = EXCLUDED.rank, iv_hp = EXCLUDED.iv_hp,
+                    iv_attack = EXCLUDED.iv_attack, iv_defense = EXCLUDED.iv_defense, current_hp = EXCLUDED.current_hp,
+                    base_hp = EXCLUDED.base_hp, base_melee_attack = EXCLUDED.base_melee_attack,
+                    base_shot_attack = EXCLUDED.base_shot_attack, base_defense = EXCLUDED.base_defense,
+                    base_support = EXCLUDED.base_support, base_craft_speed = EXCLUDED.base_craft_speed,
+                    is_present = TRUE, level = EXCLUDED.level,
                     exp = EXCLUDED.exp, full_stomach = EXCLUDED.full_stomach, is_sick = EXCLUDED.is_sick,
                     workable_type = EXCLUDED.workable_type, task_id = EXCLUDED.task_id,
                     work_state = EXCLUDED.work_state, current_work_amount = EXCLUDED.current_work_amount,
@@ -136,18 +143,18 @@ public class PostgresServerDataRepository implements ServerDataRepository {
                 preparedStatement.setObject(10, pal.getFavoriteIndex());
                 Array passiveSkillIds = connection.createArrayOf("text", pal.getPassiveSkillIds().toArray(String[]::new));
                 preparedStatement.setArray(11, passiveSkillIds);
-                preparedStatement.setBoolean(12, true);
-                preparedStatement.setObject(13, pal.getLevel());
-                preparedStatement.setObject(14, pal.getExp());
-                preparedStatement.setBigDecimal(15, pal.getFullStomach());
-                preparedStatement.setObject(16, pal.getIsSick());
-                preparedStatement.setString(17, pal.getWorkableType());
-                preparedStatement.setString(18, pal.getTaskId());
-                preparedStatement.setObject(19, pal.getWorkState());
-                preparedStatement.setBigDecimal(20, pal.getCurrentWorkAmount());
-                preparedStatement.setBigDecimal(21, pal.getRequiredWorkAmount());
-                preparedStatement.setTimestamp(22, extractedAt);
-                preparedStatement.setTimestamp(23, extractedAt);
+                preparedStatement.setObject(12, pal.getRank()); preparedStatement.setObject(13, pal.getIvHp());
+                preparedStatement.setObject(14, pal.getIvAttack()); preparedStatement.setObject(15, pal.getIvDefense());
+                preparedStatement.setBigDecimal(16, pal.getCurrentHp());
+                preparedStatement.setObject(17, pal.getBaseHp()); preparedStatement.setObject(18, pal.getBaseMeleeAttack());
+                preparedStatement.setObject(19, pal.getBaseShotAttack()); preparedStatement.setObject(20, pal.getBaseDefense());
+                preparedStatement.setObject(21, pal.getBaseSupport()); preparedStatement.setObject(22, pal.getBaseCraftSpeed());
+                preparedStatement.setBoolean(23, true); preparedStatement.setObject(24, pal.getLevel());
+                preparedStatement.setObject(25, pal.getExp()); preparedStatement.setBigDecimal(26, pal.getFullStomach());
+                preparedStatement.setObject(27, pal.getIsSick()); preparedStatement.setString(28, pal.getWorkableType());
+                preparedStatement.setString(29, pal.getTaskId()); preparedStatement.setObject(30, pal.getWorkState());
+                preparedStatement.setBigDecimal(31, pal.getCurrentWorkAmount()); preparedStatement.setBigDecimal(32, pal.getRequiredWorkAmount());
+                preparedStatement.setTimestamp(33, extractedAt); preparedStatement.setTimestamp(34, extractedAt);
             } catch (SQLException e) {
                 throw new IllegalStateException("Unable to bind Palworld server Pal instance", e);
             }

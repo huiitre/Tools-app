@@ -105,9 +105,14 @@ public class PalworldServerSnapshotFileAdapter implements ServerSnapshotFilePort
 
     @Override
     public void archive(Path file) {
+        // The scheduler and the manual endpoint can observe the same file at
+        // the same time. If the other execution already moved it, archiving is
+        // already complete and must remain idempotent.
+        if (!Files.exists(file)) return;
         try {
             Files.move(file, archiveDirectory.resolve(file.getFileName()), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
+            if (!Files.exists(file) && Files.exists(archiveDirectory.resolve(file.getFileName()))) return;
             throw new IllegalStateException("Unable to archive Palworld server-data snapshot file: " + file, e);
         }
     }
@@ -157,6 +162,15 @@ public class PalworldServerSnapshotFileAdapter implements ServerSnapshotFilePort
                     pal.path("gender").asText(null),
                     parseInt(pal.path("favorite_index")),
                     parseStringList(pal.path("passive_skill_ids")),
+                    parseInt(pal.path("rank")),
+                    parseInt(pal.path("iv_hp")), parseInt(pal.path("iv_attack")), parseInt(pal.path("iv_defense")),
+                    parseDecimal(pal.path("current_hp")),
+                    parseInt(pal.path("base_stats").path("hp")),
+                    parseInt(pal.path("base_stats").path("meleeAttack")),
+                    parseInt(pal.path("base_stats").path("shotAttack")),
+                    parseInt(pal.path("base_stats").path("defense")),
+                    parseInt(pal.path("base_stats").path("support")),
+                    parseInt(pal.path("base_stats").path("craftSpeed")),
                     parseInt(pal.path("level")),
                     parseInt(pal.path("exp")),
                     parseDecimal(pal.path("full_stomach")),

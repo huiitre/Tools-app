@@ -102,7 +102,16 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
 
     @Override
     public void delete(Long id) {
-        jdbcTemplate.update("DELETE FROM tools_palworld.pal WHERE id = ?", id);
+        // A server snapshot may still reference a species that disappeared from
+        // the local catalogue. Keep that catalogue row until its instances are
+        // gone; deleting it would abort the whole synchronization on the FK.
+        jdbcTemplate.update("""
+                DELETE FROM tools_palworld.pal
+                WHERE id = ?
+                  AND NOT EXISTS (
+                      SELECT 1 FROM tools_palworld.pal_instance pi WHERE pi.pal_id = tools_palworld.pal.id
+                  )
+                """, id);
     }
 
     @Override

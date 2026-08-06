@@ -1,5 +1,6 @@
 package fr.huiitre.tools.modules.palworld.sync.application.usecase;
 
+import java.nio.file.NoSuchFileException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +42,18 @@ public class SyncPassiveSkillsUseCase implements SecuredUseCase {
     }
 
     public PalworldSyncReport execute() {
-        List<PassiveSkillSyncData> external = dataProvider.fetchDisplayable();
+        final List<PassiveSkillSyncData> external;
+        try {
+            external = dataProvider.fetchDisplayable();
+        } catch (IllegalStateException exception) {
+            // The passive catalog is an optional local asset.  A missing catalog must
+            // not make the complete Palworld synchronization fail (and must not
+            // delete the catalog already stored in the database).
+            if (causedByMissingFile(exception)) {
+                return new PalworldSyncReport(0, 0, 0);
+            }
+            throw exception;
+        }
         Set<String> currentIds = new HashSet<>(syncRepository.findAllIds());
         Set<String> externalIds = new HashSet<>();
         int created = 0;
@@ -63,5 +75,14 @@ public class SyncPassiveSkillsUseCase implements SecuredUseCase {
         }
 
         return new PalworldSyncReport(created, updated, deleted);
+    }
+
+    private boolean causedByMissingFile(Throwable exception) {
+        Throwable current = exception;
+        while (current != null) {
+            if (current instanceof NoSuchFileException) return true;
+            current = current.getCause();
+        }
+        return false;
     }
 }

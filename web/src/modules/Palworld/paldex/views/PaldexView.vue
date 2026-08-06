@@ -19,6 +19,7 @@ const STORAGE_KEY_SORT = 'palworld.paldex.sort'
 const SORT_OPTIONS: { id: PaldexSortKey; label: string }[] = [
   { id: 'paldex', label: 'Paldex' },
   { id: 'name', label: 'Nom' },
+  { id: 'ownedCount', label: 'Exemplaires possédés' },
   { id: 'hp', label: 'PV' },
   { id: 'attack', label: 'Attaque' },
   { id: 'defense', label: 'Défense' },
@@ -88,6 +89,7 @@ function matchesWorkSuitabilities(pal: PalworldPalListItem) {
 function sortValue(pal: PalworldPalListItem): number | string {
   switch (sortKey.value) {
     case 'name': return pal.name.toLowerCase()
+    case 'ownedCount': return serverDataStore.selectedPalCounts.get(pal.id) ?? 0
     case 'hp': return pal.baseHp ?? -1
     case 'attack': return pal.baseAttack ?? -1
     case 'defense': return pal.baseDefense ?? -1

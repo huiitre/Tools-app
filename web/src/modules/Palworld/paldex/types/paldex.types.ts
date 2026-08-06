@@ -60,4 +60,4 @@ export interface PalworldPalListItem {
   partnerSkill: PalworldPartnerSkillSummary | null
 }
 
-export type PaldexSortKey = 'paldex' | 'name' | 'hp' | 'attack' | 'defense' | 'workSpeed'
+export type PaldexSortKey = 'paldex' | 'name' | 'ownedCount' | 'hp' | 'attack' | 'defense' | 'workSpeed'

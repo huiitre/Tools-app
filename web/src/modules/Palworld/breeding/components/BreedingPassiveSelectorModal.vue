@@ -7,6 +7,7 @@ const props = defineProps<{
   passiveSkills: PalworldPassiveSkill[]
   availablePassiveIds: string[]
   modelValue: string[]
+  maxSelections?: number
 }>()
 
 const emit = defineEmits<{
@@ -16,6 +17,7 @@ const emit = defineEmits<{
 
 const query = ref('')
 const pendingIds = ref<string[]>([])
+const selectionLimit = computed(() => props.maxSelections ?? 4)
 
 const availablePassives = computed(() => {
   const availableIds = new Set(props.availablePassiveIds)
@@ -31,7 +33,7 @@ function togglePassive(passiveId: string) {
     pendingIds.value = pendingIds.value.filter(id => id !== passiveId)
     return
   }
-  if (pendingIds.value.length === 4) return
+  if (selectionLimit.value > 0 && pendingIds.value.length === selectionLimit.value) return
   pendingIds.value = [...pendingIds.value, passiveId]
 }
 
@@ -54,10 +56,10 @@ watch(() => props.open, isOpen => {
           <header class="passive-modal__header">
             <div>
               <strong>Choisir les passifs</strong>
-              <small>Sélectionne jusqu’à quatre passifs présents sur tes Pals.</small>
+              <small>{{ selectionLimit > 0 ? `Sélectionne jusqu’à ${selectionLimit} passifs présents sur tes Pals.` : 'Sélectionne les passifs présents sur tes Pals.' }}</small>
             </div>
             <div class="passive-modal__actions">
-              <span>{{ pendingIds.length }}/4</span>
+              <span>{{ selectionLimit > 0 ? `${pendingIds.length}/${selectionLimit}` : pendingIds.length }}</span>
               <button type="button" aria-label="Fermer" @click="emit('close')">
                 <i class="mdi mdi-close" />
               </button>
@@ -82,7 +84,7 @@ watch(() => props.open, isOpen => {
               class="passive-option"
               :class="[
                 `rank-${passiveSkill.rank}`,
-                { selected: pendingIds.includes(passiveSkill.id), disabled: !pendingIds.includes(passiveSkill.id) && pendingIds.length === 4 },
+                { selected: pendingIds.includes(passiveSkill.id), disabled: selectionLimit > 0 && !pendingIds.includes(passiveSkill.id) && pendingIds.length === selectionLimit },
               ]"
               :title="passiveSkill.description ?? passiveSkill.name"
               @click="togglePassive(passiveSkill.id)"
