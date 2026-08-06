@@ -344,6 +344,12 @@ Reproduit `palworld.gg/fr/breeding-path` :
 - Une liste "Pals que je possède" — **pour l'instant sélection manuelle côté front** (pas de source serveur). Le brancher plus tard sur les Pals réellement possédés (`pal_instance` via `modules/palworld/server-data` côté API) est un TODO explicite de l'utilisateur, pas à faire maintenant — `pal_instance` n'a même pas encore de colonne `gender` (cf. mémoire `palworld-breeding-engine`).
 - Calcule un chemin d'élevage depuis les Pals possédés vers la cible. **Aucun endpoint API dédié n'existe pour ça** — soit ça se calcule côté front en enchaînant des appels à `/breeding/result`/`/breeding/parents`, soit ça nécessite un nouvel endpoint API (à évaluer avec l'utilisateur, ne pas décider seul si c'est gros).
 
+### TODO Path Finder — suivi demandé le 2026-08-06
+
+- Ajouter une étoile sur la route principale pour la distinguer rapidement des routes alternatives.
+- Rafraîchir le front avec les dernières données serveur des Pals.
+- Lors d'un changement d'utilisateur, réinitialiser les sélections dépendantes et retirer automatiquement les passifs indisponibles pour le nouvel utilisateur.
+
 ### Vue 4 — Arbre d'élevage
 
 Visualisation en arbre des combinaisons menant à (ou partant de) un Pal. Pas de détail UI fourni par l'utilisateur au-delà du nom — à clarifier avec lui avant de coder cette vue (poser la question plutôt que deviner).

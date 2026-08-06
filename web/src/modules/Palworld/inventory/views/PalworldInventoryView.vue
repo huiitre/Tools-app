@@ -7,7 +7,7 @@ import BreedingPassiveSelectorModal from '../../breeding/components/BreedingPass
 import type { PalworldPalListItem, PalworldWorkSuitabilitySummary } from '../../paldex/types/paldex.types'
 import type { PalworldServerPalInventory, PalworldPalStorageLocation } from '../../server/types/palworldServerData.types'
 
-type SortKey = 'name' | 'paldex' | 'hp' | 'workSpeed'
+type SortKey = 'name' | 'paldex' | 'hp' | 'level' | 'workSpeed'
 type IvSortKey = 'hp' | 'attack' | 'defense'
 interface LocationOption { key: string; label: string; icon: string }
 
@@ -42,6 +42,7 @@ const snapshotWorkKeyBySlug: Record<string, string> = {
   Handiwork: 'Handcraft', Gathering: 'Collection', Lumbering: 'Deforest', Mining: 'Mining',
   Medicine_Production: 'ProductMedicine', Cooling: 'Cool', Transporting: 'Transport', Farming: 'MonsterFarm',
 }
+const workSuitabilityOrder = ['EmitFlame', 'Watering', 'Seeding', 'GenerateElectricity', 'Handcraft', 'Collection', 'Deforest', 'Mining', 'OilExtraction', 'ProductMedicine', 'Cool', 'Transport', 'MonsterFarm']
 
 const normalizedQuery = computed(() => searchQuery.value.trim().toLocaleLowerCase())
 const catalogById = computed(() => new Map(paldexStore.pals.map(pal => [pal.id, pal])))
@@ -158,11 +159,12 @@ function sortValue(pal: InventoryPal): string | number {
   switch (sortKey.value) {
     case 'paldex': return pal.catalog.paldexIndex ?? Number.MAX_SAFE_INTEGER
     case 'hp': return pal.currentHp ?? -1
+    case 'level': return pal.level ?? -1
     case 'workSpeed': {
       const levels = pal.catalog.workSuitabilities
         .filter(work => selectedWorkSuitabilityIds.value.has(work.id))
-        .map(work => work.level)
-      return levels.length ? Math.max(...levels) : Math.max(...pal.catalog.workSuitabilities.map(work => work.level), -1)
+        .map(work => workLevel(pal, work))
+      return levels.length ? Math.max(...levels) : Math.max(...pal.catalog.workSuitabilities.map(work => workLevel(pal, work)), -1)
     }
     default: return pal.catalog.name.toLocaleLowerCase()
   }
@@ -213,12 +215,34 @@ function workSnapshotKey(pal: InventoryPal, work: PalworldWorkSuitabilitySummary
   const candidates = [work.slug, snapshotWorkKeyBySlug[work.slug], work.name].filter(Boolean).map(value => value.toLowerCase().replace(/[^a-z0-9]/g, ''))
   return Object.keys(pal.baseWorkSuitability).find(key => candidates.includes(key.toLowerCase().replace(/[^a-z0-9]/g, ''))) ?? work.slug
 }
-function workBaseLevel(pal: InventoryPal, work: PalworldWorkSuitabilitySummary) {
-  return pal.baseWorkSuitability[workSnapshotKey(pal, work)] ?? 0
-}
-function workBonusLevel(pal: InventoryPal, work: PalworldWorkSuitabilitySummary) {
+function workLevel(pal: InventoryPal, work: PalworldWorkSuitabilitySummary) {
   const key = workSnapshotKey(pal, work)
-  return pal.workSuitabilityAddRanks[key] ?? 0
+  return Math.min(10, (pal.baseWorkSuitability[key] ?? work.level) + workCondensationBonus(pal, work) + (pal.workSuitabilityAddRanks[key] ?? 0))
+}
+function workCondensationBonuses(pal: InventoryPal) {
+  const stars = Math.min(Math.max(pal.rank, 0), 4)
+  const works = pal.catalog.workSuitabilities
+    .slice()
+    .sort((left, right) => right.level - left.level
+      || workSuitabilityOrder.indexOf(left.slug) - workSuitabilityOrder.indexOf(right.slug))
+  const bonusById = new Map<number, number>()
+  if (!works.length || !stars) return bonusById
+  const currentById = new Map(works.map(work => [work.id, (pal.baseWorkSuitability[workSnapshotKey(pal, work)] ?? work.level) + (pal.workSuitabilityAddRanks[workSnapshotKey(pal, work)] ?? 0)]))
+  const addPoint = (work: PalworldWorkSuitabilitySummary) => {
+    const current = currentById.get(work.id) ?? work.level
+    if (current >= 10) return
+    currentById.set(work.id, current + 1)
+    bonusById.set(work.id, (bonusById.get(work.id) ?? 0) + 1)
+  }
+  for (let star = 0; star < Math.min(stars, 3); star += 1) addPoint(works[star % works.length])
+  if (stars >= 4) works.forEach(work => addPoint(work))
+  return bonusById
+}
+function workCondensationBonus(pal: InventoryPal, work: PalworldWorkSuitabilitySummary) {
+  return workCondensationBonuses(pal).get(work.id) ?? 0
+}
+function workExceedsBaseLevel(pal: InventoryPal, work: PalworldWorkSuitabilitySummary) {
+  return workLevel(pal, work) > work.level
 }
 function passiveName(id: string) { return passiveById.value.get(id)?.name ?? id }
 function passiveRankIconUrl(id: string) { return passiveById.value.get(id)?.rankIconUrl ?? undefined }
@@ -240,7 +264,7 @@ function clearFilters() {
           <input v-model="searchQuery" type="search" placeholder="Rechercher un Pal…" class="search-input">
           <div class="sort-controls">
             <select v-model="sortKey" class="toolbar-select">
-              <option value="name">Nom</option><option value="paldex">Paldex</option><option value="hp">PV actuels</option><option value="workSpeed">Niveau d’aptitude</option>
+              <option value="name">Nom</option><option value="paldex">Paldex</option><option value="level">Niveau du Pal</option><option value="hp">PV actuels</option><option value="workSpeed">Niveau d’aptitude</option>
             </select>
             <button type="button" class="toolbar-btn" :title="sortDirection === 'asc' ? 'Croissant' : 'Décroissant'" @click="sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'"><i class="mdi" :class="sortDirection === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'" /></button>
             <button type="button" class="toolbar-btn" title="Filtrer les emplacements" @click="openLocationSelector"><i class="mdi mdi-filter-variant" /></button>
@@ -283,7 +307,7 @@ function clearFilters() {
           <div class="inventory-card__passives"><span v-for="passiveId in pal.passiveSkillIds" :key="passiveId" class="passive-option" :class="`rank-${passiveById.get(passiveId)?.rank ?? 0}`"><span>{{ passiveName(passiveId) }}</span><img v-if="passiveRankIconUrl(passiveId)" :src="passiveRankIconUrl(passiveId)" alt=""><i v-else class="mdi mdi-chevron-double-up" /></span></div>
           <aside class="inventory-card__iv" aria-label="IV"><div class="iv-stat"><i class="mdi mdi-heart" /><span :class="ivClass(pal.ivHp)">{{ pal.ivHp ?? '—' }}</span></div><div class="iv-stat"><i class="mdi mdi-sword-cross" /><span :class="ivClass(pal.ivAttack)">{{ pal.ivAttack ?? '—' }}</span></div><div class="iv-stat"><i class="mdi mdi-shield" /><span :class="ivClass(pal.ivDefense)">{{ pal.ivDefense ?? '—' }}</span></div></aside>
           <div class="inventory-card__combat" aria-label="Statistiques actuelles"><div class="combat-stat"><i class="mdi mdi-heart" /><strong>PV</strong><span>{{ pal.currentHp !== null ? Math.round(pal.currentHp) : '—' }}</span></div><div class="combat-stat"><i class="mdi mdi-sword-cross" /><strong>ATK</strong><span>—</span></div><div class="combat-stat"><i class="mdi mdi-shield" /><strong>DEF</strong><span>—</span></div></div>
-          <div v-if="pal.catalog.workSuitabilities.length" class="inventory-card__work"><span v-for="work in pal.catalog.workSuitabilities" :key="work.id" class="work-stat" :title="`${work.name} : ${workBaseLevel(pal, work) + workBonusLevel(pal, work)}`"><img v-if="work.iconUrl" :src="work.iconUrl" :alt="work.name"><span class="work-segments"><i v-for="segment in 10" :key="segment" :class="segment <= workBaseLevel(pal, work) ? 'base' : segment <= workBaseLevel(pal, work) + workBonusLevel(pal, work) ? 'bonus' : ''" /></span><strong>{{ workBaseLevel(pal, work) + workBonusLevel(pal, work) }}</strong></span></div>
+          <div v-if="pal.catalog.workSuitabilities.length" class="inventory-card__work"><span v-for="work in pal.catalog.workSuitabilities" :key="work.id" class="worksuitability" :title="`${work.name} : ${workLevel(pal, work)}`"><img v-if="work.iconUrl" :src="work.iconUrl" :alt="work.name" width="16" height="16" loading="lazy"><span class="worksuitability-level" :class="{ 'work-level--over-max': workExceedsBaseLevel(pal, work) }">{{ workLevel(pal, work) }}</span></span></div>
           <footer class="inventory-card__location"><i class="mdi" :class="pal.storageLocation === 'base' ? 'mdi-home-variant' : pal.storageLocation === 'party' ? 'mdi-account-group' : 'mdi-archive'" /><span>{{ storageLabel(pal.storageLocation) }}</span></footer>
         </article>
       </section>
@@ -323,13 +347,11 @@ function clearFilters() {
 .iv-sort-option i { color: #78dce8; }
 .iv-sort-option.active { border-color: var(--pico-primary); color: var(--pico-primary); }
 .iv-sort-direction { width: 1.8rem; height: 1.8rem; }
-.inventory-card__work { display: flex; flex: 1 0 100%; flex-wrap: wrap; gap: .35rem; padding-top: .05rem; }
-.work-stat { display: inline-flex; align-items: center; gap: .12rem; color: var(--pico-muted-color); font-size: .64rem; font-weight: 700; }
-.work-stat img { width: 15px; height: 15px; object-fit: contain; }
-.work-segments { display: inline-flex; gap: .08rem; }
-.work-segments i { width: .24rem; height: .5rem; border-radius: 1px; background: var(--pico-muted-border-color); }
-.work-segments i.base { background: var(--pico-primary); }
-.work-segments i.bonus { background: #f5df39; }
+.inventory-card__work { display: flex; flex: 1 0 100%; flex-wrap: wrap; justify-content: flex-start; gap: 3px; margin-top: .15rem; }
+.worksuitability { display: inline-flex; align-items: center; gap: 3px; padding: 2px 4px; border-radius: 4px; background: color-mix(in srgb, var(--pico-color) 8%, transparent); }
+.worksuitability img { width: 16px; height: 16px; border-radius: 0; object-fit: contain; }
+.worksuitability-level { color: var(--pico-color); font-size: 10px; font-weight: 700; }
+.work-level--over-max { color: #f0bd3d; }
 .favorite-row > span:not(.filter-separator) { color: var(--pico-muted-color); font-size: .78rem; }
 .favorite-lock-filter { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 1.8rem; height: 1.8rem; padding: 0; margin: 0; border: 0; background: transparent; color: var(--pico-muted-color); font-size: 1.35rem; }
 .favorite-lock-filter b { position: absolute; top: 56%; left: 50%; transform: translate(-50%, -50%); color: var(--pico-background-color); font-size: .82rem; font-weight: 900; font-family: sans-serif; line-height: 1; }
