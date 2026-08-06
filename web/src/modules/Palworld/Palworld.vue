@@ -1,16 +1,34 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 import PalworldNav from '@/modules/Palworld/shared/components/PalworldNav.vue'
 import { usePaldexStore } from '@/modules/Palworld/paldex/paldex.store'
 import { usePalworldServerDataStore } from '@/modules/Palworld/server/serverData.store'
 import { usePassiveSkillsStore } from '@/modules/Palworld/passives/passiveSkills.store'
+import { usePalworldConfigStore } from '@/modules/Palworld/shared/palworldConfig.store'
+
+const serverDataStore = usePalworldServerDataStore()
+const configStore = usePalworldConfigStore()
+let serverDataRefreshInterval: number | undefined
+
+function restartServerDataRefresh() {
+  if (serverDataRefreshInterval) clearInterval(serverDataRefreshInterval)
+  serverDataRefreshInterval = window.setInterval(() => serverDataStore.refresh(), configStore.refreshIntervalSeconds * 1000)
+}
 
 // Catalogue Paldex (pals/éléments/aptitudes) partagé par plusieurs onglets (Paldex, Tierlist) :
 // chargé une fois à l'entrée sur /palworld, gardé en mémoire (comme le cache prix Dofus).
 onMounted(() => {
+  configStore.hydrate()
   usePaldexStore().ensureLoaded()
   usePassiveSkillsStore().ensureLoaded()
-  usePalworldServerDataStore().ensureLoaded()
+  serverDataStore.ensureLoaded()
+  restartServerDataRefresh()
+})
+
+watch(() => configStore.refreshIntervalSeconds, restartServerDataRefresh)
+
+onUnmounted(() => {
+  if (serverDataRefreshInterval) clearInterval(serverDataRefreshInterval)
 })
 </script>
 

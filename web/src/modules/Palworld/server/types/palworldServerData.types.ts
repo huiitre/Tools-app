@@ -7,6 +7,14 @@ export interface PalworldPlayerSummary {
 export interface PalworldBaseSummary {
   baseId: string
   palCount: number
+  positionX: number | null
+  positionY: number | null
+  positionZ: number | null
+  rotationX: number | null
+  rotationY: number | null
+  rotationZ: number | null
+  rotationW: number | null
+  areaRange: number | null
 }
 
 export interface PalworldGuildSummary {

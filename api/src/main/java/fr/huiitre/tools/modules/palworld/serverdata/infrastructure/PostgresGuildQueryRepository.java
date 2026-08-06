@@ -45,16 +45,21 @@ public class PostgresGuildQueryRepository implements GuildQueryRepository {
 
         Map<UUID, List<BaseSummaryView>> basesByGuildId = new LinkedHashMap<>();
         final String basesSql = """
-                SELECT b.guild_id, b.base_id, count(pi.instance_id) AS pal_count
+                SELECT b.guild_id, b.base_id, count(pi.instance_id) AS pal_count,
+                       b.position_x, b.position_y, b.position_z, b.rotation_x, b.rotation_y, b.rotation_z, b.rotation_w,
+                       b.area_range
                 FROM tools_palworld.base b
                 LEFT JOIN tools_palworld.pal_instance pi ON pi.base_id = b.base_id AND pi.is_present = TRUE
                 GROUP BY b.guild_id, b.base_id
                 """;
         jdbcTemplate.query(basesSql, rs -> {
             UUID guildId = rs.getObject("guild_id", UUID.class);
-            basesByGuildId.computeIfAbsent(guildId, id -> new ArrayList<>()).add(new BaseSummaryView(
+                basesByGuildId.computeIfAbsent(guildId, id -> new ArrayList<>()).add(new BaseSummaryView(
                     rs.getObject("base_id", UUID.class),
-                    rs.getInt("pal_count")));
+                    rs.getInt("pal_count"),
+                    (Double) rs.getObject("position_x"), (Double) rs.getObject("position_y"), (Double) rs.getObject("position_z"),
+                    (Double) rs.getObject("rotation_x"), (Double) rs.getObject("rotation_y"), (Double) rs.getObject("rotation_z"),
+                    (Double) rs.getObject("rotation_w"), (Double) rs.getObject("area_range")));
         });
 
         List<GuildSummaryView> result = new ArrayList<>();

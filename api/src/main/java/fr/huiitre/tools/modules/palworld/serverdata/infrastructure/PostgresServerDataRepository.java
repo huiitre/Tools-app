@@ -181,12 +181,19 @@ public class PostgresServerDataRepository implements ServerDataRepository {
 
     private void upsertBase(BaseSyncData base, Timestamp extractedAt) {
         final String sql = """
-                INSERT INTO tools_palworld.base (base_id, guild_id, first_seen_at, last_seen_at)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT (base_id) DO UPDATE SET guild_id = EXCLUDED.guild_id, last_seen_at = EXCLUDED.last_seen_at
+                INSERT INTO tools_palworld.base
+                    (base_id, guild_id, position_x, position_y, position_z, rotation_x, rotation_y, rotation_z, rotation_w,
+                     area_range, first_seen_at, last_seen_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (base_id) DO UPDATE SET guild_id = EXCLUDED.guild_id,
+                    position_x = EXCLUDED.position_x, position_y = EXCLUDED.position_y, position_z = EXCLUDED.position_z,
+                    rotation_x = EXCLUDED.rotation_x, rotation_y = EXCLUDED.rotation_y, rotation_z = EXCLUDED.rotation_z,
+                    rotation_w = EXCLUDED.rotation_w, area_range = EXCLUDED.area_range, last_seen_at = EXCLUDED.last_seen_at
                 WHERE tools_palworld.base.last_seen_at <= EXCLUDED.last_seen_at
                 """;
-        jdbcTemplate.update(sql, base.getBaseId(), base.getGuildId(), extractedAt, extractedAt);
+        jdbcTemplate.update(sql, base.getBaseId(), base.getGuildId(), base.getPositionX(), base.getPositionY(), base.getPositionZ(),
+                base.getRotationX(), base.getRotationY(), base.getRotationZ(), base.getRotationW(), base.getAreaRange(),
+                extractedAt, extractedAt);
     }
 
     private void bindPalInstance(PreparedStatement statement, Connection connection, PalInstanceSyncData pal,

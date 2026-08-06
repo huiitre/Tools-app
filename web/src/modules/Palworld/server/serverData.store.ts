@@ -69,12 +69,20 @@ export const usePalworldServerDataStore = defineStore('palworld-server-data', {
       this.loading = true
       this.error = null
       try {
-        this.inventory = await fetchServerInventory()
-        this.restoreSelectedPlayers()
-      } catch {
-        this.error = 'Impossible de charger les données du serveur Palworld.'
+        await this.refresh()
       } finally {
         this.loading = false
+      }
+    },
+
+    async refresh() {
+      try {
+        this.inventory = await fetchServerInventory()
+        this.restoreSelectedPlayers()
+        this.error = null
+      } catch {
+        // Conserve les dernières données valides lors d'une erreur réseau.
+        if (!this.inventory) this.error = 'Impossible de charger les données du serveur Palworld.'
       }
     },
 

@@ -141,11 +141,20 @@ public class PalworldServerSnapshotFileAdapter implements ServerSnapshotFilePort
     private List<BaseSyncData> parseBases(JsonNode node) {
         List<BaseSyncData> result = new ArrayList<>();
         for (JsonNode base : node) {
+            JsonNode position = objectOrFallback(base.path("position"), base.path("transform").path("translation"));
+            JsonNode rotation = objectOrFallback(base.path("rotation"), base.path("transform").path("rotation"));
             result.add(new BaseSyncData(
                     parseUuid(base.path("base_id").asText(null)),
-                    parseUuid(base.path("guild_id").asText(null))));
+                    parseUuid(base.path("guild_id").asText(null)),
+                    parseDouble(position.path("x")), parseDouble(position.path("y")), parseDouble(position.path("z")),
+                    parseDouble(rotation.path("x")), parseDouble(rotation.path("y")), parseDouble(rotation.path("z")),
+                    parseDouble(rotation.path("w")), parseDouble(base.path("area_range"))));
         }
         return result;
+    }
+
+    private JsonNode objectOrFallback(JsonNode primary, JsonNode fallback) {
+        return primary.isObject() ? primary : fallback;
     }
 
     private List<PalInstanceSyncData> parsePalInstances(JsonNode node) {
@@ -208,6 +217,10 @@ public class PalworldServerSnapshotFileAdapter implements ServerSnapshotFilePort
 
     private Integer parseInt(JsonNode node) {
         return isAbsent(node) ? null : node.asInt();
+    }
+
+    private Double parseDouble(JsonNode node) {
+        return isAbsent(node) ? null : node.asDouble();
     }
 
     private Boolean parseBoolean(JsonNode node) {
