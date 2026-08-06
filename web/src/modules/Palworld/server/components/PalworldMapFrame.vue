@@ -30,13 +30,14 @@ let dragStart = { x: 0, y: 0, offsetX: 0, offsetY: 0 }
 function applyTransform() {
   if (!canvas.value) return
   canvas.value.style.transform = props.interactive
-    ? `translate3d(${Math.round(position.x)}px, ${Math.round(position.y)}px, 0) scale(${scale.value})`
+    ? `translate3d(${Math.round(position.x)}px, ${Math.round(position.y)}px, 0)`
     : ''
 }
 
 function resetView() {
   if (!props.interactive || !frame.value || !canvas.value) return
   scale.value = 1
+  renderCanvas()
   position = {
     x: (frame.value.clientWidth - canvas.value.offsetWidth) / 2,
     y: (frame.value.clientHeight - canvas.value.offsetHeight) / 2,
@@ -54,6 +55,7 @@ function zoom(nextScale: number, originX?: number, originY?: number) {
   const ratio = resolvedScale / previousScale
   position = { x: x - (x - position.x) * ratio, y: y - (y - position.y) * ratio }
   scale.value = resolvedScale
+  renderCanvas()
   applyTransform()
 }
 
@@ -88,15 +90,34 @@ function stopDrag(event: PointerEvent) {
 
 function resizeCanvas() {
   const element = canvas.value
-  if (!element || !image?.naturalWidth || !image.naturalHeight) return
+  if (!element || !frame.value || !image?.naturalWidth || !image.naturalHeight) return
+  if (props.interactive) {
+    scale.value = 1
+    renderCanvas()
+    position = {
+      x: (frame.value.clientWidth - element.offsetWidth) / 2,
+      y: (frame.value.clientHeight - element.offsetHeight) / 2,
+    }
+    applyTransform()
+  } else {
+    renderCanvas()
+  }
+}
+
+function renderCanvas() {
+  const element = canvas.value
+  if (!element || !frame.value || !image?.naturalWidth || !image.naturalHeight) return
+  if (props.interactive) {
+    const baseWidth = Math.min(frame.value.clientWidth, image.naturalWidth)
+    element.style.width = `${baseWidth * scale.value}px`
+  }
   const width = element.clientWidth
   const height = width * image.naturalHeight / image.naturalWidth
   const ratio = window.devicePixelRatio || 1
   element.width = Math.round(width * ratio)
   element.height = Math.round(height * ratio)
   element.style.aspectRatio = `${image.naturalWidth} / ${image.naturalHeight}`
-  if (props.interactive) resetView()
-  else draw()
+  draw()
 }
 
 function draw() {
@@ -108,6 +129,8 @@ function draw() {
   const width = element.width / ratio
   const height = element.height / ratio
   context.setTransform(ratio, 0, 0, ratio, 0, 0)
+  context.imageSmoothingEnabled = true
+  context.imageSmoothingQuality = 'high'
   context.clearRect(0, 0, width, height)
   context.drawImage(image, 0, 0, width, height)
 

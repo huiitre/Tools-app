@@ -64,7 +64,34 @@ const playerRows = computed<PlayerRow[]>(() =>
   })),
 )
 
-const bases = computed(() => gameData.value?.bases ?? [])
+const bases = computed<PalworldBase[]>(() => {
+  const liveBases = gameData.value?.bases ?? []
+  const persistedBases: PalworldBase[] = guilds.value.flatMap(guild => guild.bases
+    .filter(base => base.positionX !== null && base.positionY !== null)
+    .map(base => ({
+      name: `Base ${base.baseId.slice(0, 8)}`,
+      guildId: guild.guildId,
+      guildName: guild.name,
+      locationX: base.positionX as number,
+      locationY: base.positionY as number,
+      locationZ: base.positionZ ?? 0,
+      mapX: Math.round(base.positionX as number),
+      mapY: Math.round(base.positionY as number),
+    })))
+
+  // Le snapshot couvre aussi les guildes hors ligne. Une base live remplace
+  // celle du snapshot lorsqu'elle est à la même position.
+  const merged = [...persistedBases]
+  for (const liveBase of liveBases) {
+    const duplicateIndex = merged.findIndex(base =>
+      base.guildId === liveBase.guildId
+      && Math.abs(base.locationX - liveBase.locationX) < 1
+      && Math.abs(base.locationY - liveBase.locationY) < 1)
+    if (duplicateIndex >= 0) merged.splice(duplicateIndex, 1)
+    merged.push(liveBase)
+  }
+  return merged
+})
 
 const GUILD_COLOR_PALETTE = [
   '#3b82f6', '#f97316', '#22c55e', '#a855f7', '#ef4444',
@@ -474,8 +501,7 @@ async function handleStop() {
       </div>
 
       <div v-if="!loading" class="maps-grid">
-        <PalworldOverviewMap map-id="palpagos" :players="playerRows" :bases="bases" :guild-colors="guildColors" />
-        <PalworldOverviewMap map-id="worldTree" :players="playerRows" :bases="bases" :guild-colors="guildColors" />
+        <PalworldOverviewMap :players="playerRows" :bases="bases" :guilds="guilds" :guild-colors="guildColors" />
       </div>
     </div>
 
@@ -874,7 +900,7 @@ async function handleStop() {
 /* ── Maps ────────────────────────────────────────────────────────── */
 .maps-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 1.25rem;
   padding: 1.25rem;
 }
