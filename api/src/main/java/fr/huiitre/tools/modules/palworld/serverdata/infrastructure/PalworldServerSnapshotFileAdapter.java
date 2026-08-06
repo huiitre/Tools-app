@@ -11,6 +11,8 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -171,6 +173,8 @@ public class PalworldServerSnapshotFileAdapter implements ServerSnapshotFilePort
                     parseInt(pal.path("base_stats").path("defense")),
                     parseInt(pal.path("base_stats").path("support")),
                     parseInt(pal.path("base_stats").path("craftSpeed")),
+                    parseIntMap(pal.path("base_work_suitability")),
+                    parseIntMap(pal.path("work_suitability_add_ranks")),
                     parseInt(pal.path("level")),
                     parseInt(pal.path("exp")),
                     parseDecimal(pal.path("full_stomach")),
@@ -181,6 +185,16 @@ public class PalworldServerSnapshotFileAdapter implements ServerSnapshotFilePort
                     hasWork ? parseDecimal(work.path("current_work_amount")) : null,
                     hasWork ? parseDecimal(work.path("required_work_amount")) : null));
         }
+        return result;
+    }
+
+    private Map<String, Integer> parseIntMap(JsonNode node) {
+        Map<String, Integer> result = new LinkedHashMap<>();
+        if (!node.isObject()) return result;
+        node.fields().forEachRemaining(entry -> {
+            Integer value = parseInt(entry.getValue());
+            if (value != null) result.put(entry.getKey(), value);
+        });
         return result;
     }
 

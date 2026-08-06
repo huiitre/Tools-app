@@ -34,30 +34,44 @@ public class SyncServerDataUseCase {
 
     public ServerDataSyncReport execute() {
         List<PendingSnapshotFile> pendingFiles = filePort.listPendingFiles();
+        log.info("Palworld snapshot import started: {} pending file(s)", pendingFiles.size());
 
         int imported = 0;
         int alreadyImportedButNotMoved = 0;
         int failed = 0;
 
         for (PendingSnapshotFile pending : pendingFiles) {
+            long startedAt = System.nanoTime();
+            log.info("Palworld snapshot import starting: {}", pending.fileName());
             if (serverDataRepository.isFileAlreadyImported(pending.fileName())) {
                 log.warn("Snapshot file {} already imported but still present, moving without reprocessing", pending.fileName());
                 filePort.archive(pending.path());
                 alreadyImportedButNotMoved++;
+                log.info("Palworld snapshot already imported, moved only: {} ({} ms)", pending.fileName(), elapsedMs(startedAt));
                 continue;
             }
 
             try {
                 ServerSnapshotSyncData data = filePort.readAndParse(pending.path());
+                log.info("Palworld snapshot parsed: {} (guilds={}, bases={}, pals={})", pending.fileName(),
+                        data.getGuilds().size(), data.getBases().size(), data.getPalInstances().size());
                 importServerSnapshotFileUseCase.execute(pending.fileName(), data);
+                log.info("Palworld snapshot database import complete: {} ({} ms)", pending.fileName(), elapsedMs(startedAt));
                 filePort.archive(pending.path());
                 imported++;
+                log.info("Palworld snapshot archived: {} ({} ms total)", pending.fileName(), elapsedMs(startedAt));
             } catch (Exception e) {
                 log.error("Failed to import snapshot file {}, leaving it in place for next run", pending.fileName(), e);
                 failed++;
             }
         }
 
+        log.info("Palworld snapshot import finished: imported={}, movedOnly={}, failed={}", imported,
+                alreadyImportedButNotMoved, failed);
         return new ServerDataSyncReport(imported, alreadyImportedButNotMoved, failed);
+    }
+
+    private long elapsedMs(long startedAt) {
+        return (System.nanoTime() - startedAt) / 1_000_000;
     }
 }
