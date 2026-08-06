@@ -2,6 +2,7 @@ package fr.huiitre.tools.modules.palworld.serverdata.application.view;
 
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public record ServerPalInventoryView(
@@ -25,5 +26,7 @@ public record ServerPalInventoryView(
         Integer baseDefense,
         Integer baseSupport,
         Integer baseCraftSpeed,
+        Map<String, Integer> baseWorkSuitability,
+        Map<String, Integer> workSuitabilityAddRanks,
         Integer level,
         OffsetDateTime lastSeenAt) {}

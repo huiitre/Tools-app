@@ -2,6 +2,7 @@ package fr.huiitre.tools.modules.palworld.serverdata.application;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class PalInstanceSyncData {
@@ -26,6 +27,8 @@ public class PalInstanceSyncData {
     private final Integer baseDefense;
     private final Integer baseSupport;
     private final Integer baseCraftSpeed;
+    private final Map<String, Integer> baseWorkSuitability;
+    private final Map<String, Integer> workSuitabilityAddRanks;
     private final Integer level;
     private final Integer exp;
     private final BigDecimal fullStomach;
@@ -40,7 +43,8 @@ public class PalInstanceSyncData {
             String storageLocation, UUID containerId, String gender, Integer favoriteIndex, List<String> passiveSkillIds,
             Integer rank, Integer ivHp, Integer ivAttack, Integer ivDefense, BigDecimal currentHp,
             Integer baseHp, Integer baseMeleeAttack, Integer baseShotAttack, Integer baseDefense, Integer baseSupport,
-            Integer baseCraftSpeed, Integer level, Integer exp, BigDecimal fullStomach, Boolean isSick, String workableType, String taskId,
+            Integer baseCraftSpeed, Map<String, Integer> baseWorkSuitability, Map<String, Integer> workSuitabilityAddRanks,
+            Integer level, Integer exp, BigDecimal fullStomach, Boolean isSick, String workableType, String taskId,
             Integer workState, BigDecimal currentWorkAmount, BigDecimal requiredWorkAmount) {
         this.instanceId = instanceId;
         this.characterId = characterId;
@@ -55,6 +59,8 @@ public class PalInstanceSyncData {
         this.currentHp = currentHp; this.baseHp = baseHp; this.baseMeleeAttack = baseMeleeAttack;
         this.baseShotAttack = baseShotAttack; this.baseDefense = baseDefense; this.baseSupport = baseSupport;
         this.baseCraftSpeed = baseCraftSpeed;
+        this.baseWorkSuitability = baseWorkSuitability;
+        this.workSuitabilityAddRanks = workSuitabilityAddRanks;
         this.level = level;
         this.exp = exp;
         this.fullStomach = fullStomach;
@@ -86,6 +92,8 @@ public class PalInstanceSyncData {
     public Integer getBaseDefense() { return baseDefense; }
     public Integer getBaseSupport() { return baseSupport; }
     public Integer getBaseCraftSpeed() { return baseCraftSpeed; }
+    public Map<String, Integer> getBaseWorkSuitability() { return baseWorkSuitability; }
+    public Map<String, Integer> getWorkSuitabilityAddRanks() { return workSuitabilityAddRanks; }
     public Integer getLevel() { return level; }
     public Integer getExp() { return exp; }
     public BigDecimal getFullStomach() { return fullStomach; }

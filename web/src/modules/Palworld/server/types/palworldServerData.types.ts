@@ -74,6 +74,8 @@ export interface PalworldServerPalInventory {
   baseDefense: number | null
   baseSupport: number | null
   baseCraftSpeed: number | null
+  baseWorkSuitability: Record<string, number>
+  workSuitabilityAddRanks: Record<string, number>
   level: number | null
   lastSeenAt: string
 }

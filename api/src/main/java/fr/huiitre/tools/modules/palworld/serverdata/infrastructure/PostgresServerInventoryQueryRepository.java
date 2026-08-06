@@ -6,8 +6,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import fr.huiitre.tools.modules.palworld.serverdata.application.ports.ServerInventoryQueryRepository;
 import fr.huiitre.tools.modules.palworld.serverdata.application.view.ServerDataInventoryView;
@@ -17,6 +20,7 @@ public class PostgresServerInventoryQueryRepository implements ServerInventoryQu
 
     private final JdbcTemplate jdbcTemplate;
     private final PostgresGuildQueryRepository guildQueryRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public PostgresServerInventoryQueryRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -33,6 +37,7 @@ public class PostgresServerInventoryQueryRepository implements ServerInventoryQu
                 SELECT instance_id, pal_id, owner_player_uid, base_id, storage_location, container_id, gender,
                        favorite_index, passive_skill_ids, rank, iv_hp, iv_attack, iv_defense, current_hp,
                        base_hp, base_melee_attack, base_shot_attack, base_defense, base_support, base_craft_speed,
+                       base_work_suitability, work_suitability_add_ranks,
                        level, last_seen_at
                 FROM tools_palworld.pal_instance
                 WHERE is_present = TRUE AND pal_id IS NOT NULL
@@ -53,10 +58,20 @@ public class PostgresServerInventoryQueryRepository implements ServerInventoryQu
                 (Integer) rs.getObject("base_melee_attack"), (Integer) rs.getObject("base_shot_attack"),
                 (Integer) rs.getObject("base_defense"), (Integer) rs.getObject("base_support"),
                 (Integer) rs.getObject("base_craft_speed"),
+                jsonMap(rs.getString("base_work_suitability")), jsonMap(rs.getString("work_suitability_add_ranks")),
                 (Integer) rs.getObject("level"),
                 rs.getObject("last_seen_at", OffsetDateTime.class)));
 
         return new ServerDataInventoryView(lastSyncedAt, guildQueryRepository.findAllWithMembersAndBases(), pals);
+    }
+
+    private Map<String, Integer> jsonMap(String value) {
+        if (value == null || value.isBlank()) return Map.of();
+        try {
+            return objectMapper.readValue(value, new TypeReference<Map<String, Integer>>() {});
+        } catch (Exception e) {
+            return Map.of();
+        }
     }
 
     private List<String> stringList(Array array) throws SQLException {
