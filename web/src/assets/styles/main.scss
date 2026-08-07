@@ -2,6 +2,16 @@
 // @use "@picocss/pico";
 @import "@picocss/pico/css/pico.colors.css";
 
+// Pico applique son anneau de focus (box-shadow) sur :focus au lieu de :focus-visible pour les
+// boutons/inputs/selects (public/themes/pico*.min.css) : il reste visible après un clic souris
+// jusqu'au prochain focus, alors qu'il ne devrait apparaître qu'à la navigation clavier. !important
+// nécessaire pour gagner sur les box-shadow :focus définis localement dans certains composants
+// (même bug reproduit ailleurs dans le code) sans devoir les corriger un par un.
+*:focus:not(:focus-visible) {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 /* App layout */
 body {
   background-color: var(--pico-background-color);

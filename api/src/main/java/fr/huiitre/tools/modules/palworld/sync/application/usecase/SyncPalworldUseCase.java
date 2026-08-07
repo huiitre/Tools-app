@@ -1,5 +1,6 @@
 package fr.huiitre.tools.modules.palworld.sync.application.usecase;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -10,6 +11,7 @@ import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
 import fr.huiitre.tools.modules.palworld.sync.application.BreedingExceptionSyncReport;
 import fr.huiitre.tools.modules.palworld.sync.application.ElementSyncResult;
+import fr.huiitre.tools.modules.palworld.sync.application.MerchantSyncReport;
 import fr.huiitre.tools.modules.palworld.sync.application.PalworldGlobalSyncReport;
 import fr.huiitre.tools.modules.palworld.sync.application.PalworldSyncReport;
 import fr.huiitre.tools.modules.palworld.sync.application.SkillSyncResult;
@@ -27,6 +29,8 @@ public class SyncPalworldUseCase implements SecuredUseCase {
     private final SyncPassiveSkillsUseCase syncPassiveSkillsUseCase;
     private final SyncPalsUseCase syncPalsUseCase;
     private final SyncBreedingExceptionsUseCase syncBreedingExceptionsUseCase;
+    private final SyncItemsUseCase syncItemsUseCase;
+    private final SyncMerchantsUseCase syncMerchantsUseCase;
 
     public SyncPalworldUseCase(
             SyncElementsUseCase syncElementsUseCase,
@@ -35,7 +39,9 @@ public class SyncPalworldUseCase implements SecuredUseCase {
             SyncSkillsUseCase syncSkillsUseCase,
             SyncPassiveSkillsUseCase syncPassiveSkillsUseCase,
             SyncPalsUseCase syncPalsUseCase,
-            SyncBreedingExceptionsUseCase syncBreedingExceptionsUseCase) {
+            SyncBreedingExceptionsUseCase syncBreedingExceptionsUseCase,
+            SyncItemsUseCase syncItemsUseCase,
+            SyncMerchantsUseCase syncMerchantsUseCase) {
         this.syncElementsUseCase = syncElementsUseCase;
         this.syncWorkSuitabilitiesUseCase = syncWorkSuitabilitiesUseCase;
         this.syncWorkPrioritiesUseCase = syncWorkPrioritiesUseCase;
@@ -43,6 +49,8 @@ public class SyncPalworldUseCase implements SecuredUseCase {
         this.syncPassiveSkillsUseCase = syncPassiveSkillsUseCase;
         this.syncPalsUseCase = syncPalsUseCase;
         this.syncBreedingExceptionsUseCase = syncBreedingExceptionsUseCase;
+        this.syncItemsUseCase = syncItemsUseCase;
+        this.syncMerchantsUseCase = syncMerchantsUseCase;
     }
 
     @Override
@@ -56,6 +64,11 @@ public class SyncPalworldUseCase implements SecuredUseCase {
     }
 
     public PalworldGlobalSyncReport execute() {
+        // Catalogue complet en tout premier : les drops de Pals (syncPalsUseCase, plus bas) et les offres
+        // marchands (syncMerchantsUseCase, plus bas) résolvent leurs FK contre ce catalogue déjà peuplé,
+        // ils ne créent/dégradent plus jamais un item eux-mêmes.
+        Map<String, Long> itemIdBySlugUpper = syncItemsUseCase.execute();
+
         ElementSyncResult elements = syncElementsUseCase.execute();
         WorkSuitabilitySyncResult workSuitabilities = syncWorkSuitabilitiesUseCase.execute();
         WorkPrioritySyncResult workPriorities = syncWorkPrioritiesUseCase.execute(workSuitabilities.idBySlug());
@@ -81,8 +94,10 @@ public class SyncPalworldUseCase implements SecuredUseCase {
         // pour les nouvelles espèces).
         BreedingExceptionSyncReport breedingExceptions = syncBreedingExceptionsUseCase.execute();
 
+        MerchantSyncReport merchants = syncMerchantsUseCase.execute(itemIdBySlugUpper);
+
         return new PalworldGlobalSyncReport(
                 elements.report(), workSuitabilities.report(), workPriorities.report(), skills.report(), passiveSkills, pals,
-                breedingExceptions);
+                breedingExceptions, merchants);
     }
 }

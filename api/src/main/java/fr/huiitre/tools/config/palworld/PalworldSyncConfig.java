@@ -9,10 +9,14 @@ import fr.huiitre.tools.modules.palworld.sync.application.ports.BreedingExceptio
 import fr.huiitre.tools.modules.palworld.sync.application.ports.BreedingExceptionSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.ElementDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.ElementSyncRepository;
+import fr.huiitre.tools.modules.palworld.sync.application.ports.MerchantDataProvider;
+import fr.huiitre.tools.modules.palworld.sync.application.ports.MerchantSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PalDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PassiveSkillDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PassiveSkillSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PalSyncRepository;
+import fr.huiitre.tools.modules.palworld.sync.application.ports.ItemDataProvider;
+import fr.huiitre.tools.modules.palworld.sync.application.ports.ItemSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.PalworldLanguageDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.SkillDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.application.ports.SkillSyncRepository;
@@ -24,14 +28,18 @@ import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalAssets
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalBreedingExceptionDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalElementDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalLanguageDataProvider;
+import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalMerchantDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalPalDataProvider;
+import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalItemDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalPassiveSkillDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalSkillDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalWorkPriorityDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PalworldLocalWorkSuitabilityDataProvider;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresBreedingExceptionSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresElementSyncRepository;
+import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresMerchantSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresPalSyncRepository;
+import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresItemSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresPassiveSkillSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresSkillSyncRepository;
 import fr.huiitre.tools.modules.palworld.sync.infrastructure.PostgresWorkPrioritySyncRepository;
@@ -127,5 +135,31 @@ public class PalworldSyncConfig {
     @Bean
     public BreedingExceptionSyncRepository breedingExceptionSyncRepository(JdbcTemplate jdbcTemplate) {
         return new PostgresBreedingExceptionSyncRepository(jdbcTemplate);
+    }
+
+    @Bean
+    public ItemDataProvider palworldItemDataProvider(
+            PalworldLocalAssetsReader assetsReader,
+            PalworldLanguageDataProvider languageDataProvider,
+            @Value("${app.assets.base-url}") String assetsBaseUrl) {
+        return new PalworldLocalItemDataProvider(assetsReader, languageDataProvider, assetsBaseUrl);
+    }
+
+    @Bean
+    public ItemSyncRepository palworldItemSyncRepository(JdbcTemplate jdbcTemplate) {
+        return new PostgresItemSyncRepository(jdbcTemplate);
+    }
+
+    @Bean
+    public MerchantDataProvider merchantDataProvider(
+            PalworldLocalAssetsReader assetsReader,
+            PalworldLanguageDataProvider languageDataProvider,
+            @Value("${app.assets.base-url}") String assetsBaseUrl) {
+        return new PalworldLocalMerchantDataProvider(assetsReader, languageDataProvider, assetsBaseUrl);
+    }
+
+    @Bean
+    public MerchantSyncRepository merchantSyncRepository(JdbcTemplate jdbcTemplate) {
+        return new PostgresMerchantSyncRepository(jdbcTemplate);
     }
 }

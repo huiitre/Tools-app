@@ -369,3 +369,144 @@ Visualisation en arbre des combinaisons menant à (ou partant de) un Pal. Pas de
 - Batch : `markAsRead([ids])` et `remove([ids])` gèrent le mode global si tableau vide.
 - OS Push : Déclenche une notif système si l'onglet n'a pas le focus.
 - UI : Affichage complet des messages (multi-lignes) avec support des sauts de ligne (white-space: pre-wrap).
+
+## Module Palworld — Marchands (Shop) — COMPLÈTE (2026-08-07)
+
+### Objectif
+
+Page marchands : liste des marchands à gauche (portrait + nom), clic → offres au centre, quantité + ajout au panier, panier multi-marchands persisté en localStorage (pas de DB — presets nommés type "j'ai besoin de matériaux de pal"), aide au choix du marchand le moins cher pour un item donné.
+
+### Source des données (spec finale, différente de la version explorée le 06/08)
+
+L'extracteur produit deux fichiers plats déjà résolus (pas de jointure brute à faire) dans
+`/data/docker/tools/tools_assets/tools_palworld/palworld/` :
+- `shop_items.json` (267 entrées) : `id` (StaticItemId, clé de jointure), `nameStringId` (→ `strings.json`),
+  `icon` (chemin relatif ou `null` sur 88/267 — équipements/cartes de compétence sans icône dans le jeu, pas
+  un bug), `price` (référence hors contexte marchand), `maxStackCount`.
+- `merchants.json` (25 entrées) : `id` (externalId stable), `code`, `nameStringId` (`null` sur 22/25 — vendeurs
+  génériques `male_trader_v04`→`v25` sans nom individuel réel dans le jeu, vérifié), `portrait`, `restockMinute`
+  (`null` pour `bounty_trader`), `currencyItemId` (`Money` pour les 22 génériques ; `BattleTicket`/`DogCoin`/
+  `BountyProof_1` pour les 3 marchands nommés — ces 3 devises n'ont **aucune** entrée dans `shop_items.json`),
+  `offers[]` (`itemId`, `price` déjà résolu — peut différer du prix de référence, 4/267 items concernés —,
+  `quantityPerPurchase`, `productType`: `"Normal"` | `"OnlyPurchaseOne"`, `stock` toujours à `0` donc ignoré).
+
+Vérification empirique complète faite avant codage (comptes, jointures, cas `egg`/`Egg`, prix variables,
+devises) — cf. conversation du 2026-08-07. Un seul écart trouvé dans le spec initial : `img/item/` contient
+313 fichiers réellement, pas 225 (sans impact, les 267 icônes référencées sont toutes vérifiées présentes).
+
+### Backend (Java)
+
+- **DB** : `database/sql/V2.63.0__palworld_shop.sql` — réutilise `tools_palworld.item` existant (déjà alimenté
+  par les drops de Pals, même espace d'identifiants `StaticItemId`) en lui ajoutant `price`/`max_stack_count`,
+  plutôt qu'une table d'items parallèle. Nouvelles tables `tools_palworld.merchant` (`external_id` UNIQUE,
+  `name` nullable, `currency_item_id` VARCHAR sans FK car 2/3 devises spéciales absentes de `item`) et
+  `tools_palworld.merchant_offer` (`price`, `quantity_per_purchase`, `product_type` CHECK `NORMAL`/`ONLY_PURCHASE_ONE`,
+  UNIQUE `(merchant_id, item_id)`).
+
+- **Catalogue complet d'items — refonte architecturale du 2026-08-07 (retour utilisateur négatif sur la V1)**.
+  La toute première version ne synchronisait que les 267 items vendus par un marchand (`shop_items.json`),
+  laissant `tools_palworld.item` alimenté uniquement de façon incidentielle par les drops de Pals — qui,
+  eux, n'ont **jamais résolu le nom via `strings.json`** (`PalworldLocalPalDataProvider.drops()` stockait le
+  slug brut comme nom). Résultat concret repéré par l'utilisateur : des minerais bien réels (`IronOre`,
+  `WorldTreeOre`) totalement absents, et d'autres (`Coal`, `ManganeseOre`, `SkyIslandOre`, `Sulfur`) affichés
+  avec leur slug brut ("Coal") alors que la vraie traduction FR existait ("Charbon"). Consigne explicite de
+  refonte : **`SyncItemsUseCase` synchronise TOUT le catalogue en premier** (source de vérité unique sur
+  `name`/`icon_url`/`price`/`max_stack_count`), et les autres sync (drops, offres marchands) ne font plus
+  que résoudre un lien vers ce catalogue déjà peuplé — jamais créer ni dégrader un item eux-mêmes.
+  - `SyncItemsUseCase` (`modules/palworld/sync/`, tout premier appel dans `SyncPalworldUseCase.execute()`,
+    avant même les éléments) : lit **`item_data.json` en entier** (2466 lignes brutes du jeu, pas
+    `shop_items.json` qui n'était qu'un sous-ensemble pré-filtré par l'extracteur) via
+    `PalworldLocalItemDataProvider`. Résout le nom via `languageDataProvider.getString("ITEM_NAME_" + slug)`
+    (comportement standard du provider si absent : `"[missing-string:...]"`, jamais masqué — ex. `IronOre`
+    n'a réellement aucune traduction FR dans les données du jeu, c'est transparent, pas une régression) et
+    l'icône via `assetsReader.preferredImageFileNameByBaseName("item")` (même pattern de résolution
+    case-insensitive que les images de Pals, PAS le champ `Icon.AssetPathName` brut d'`item_icon_data.json`
+    qui pointe vers une texture-atlas moteur non exploitable telle quelle — seuls les fichiers réellement
+    rippés dans `img/item/` sont utilisés, ~311/2466 en ont un). Aucun filtre appliqué sur les 2466 lignes
+    (pas de flag fiable pour distinguer "vrai item" d'entrée technique sans deviner) : tout est synchronisé
+    tel quel, upsert uniquement (jamais de suppression, un item disparu d'un extract ne doit pas casser les
+    FK `pal_drop`/`merchant_offer` existantes). Retourne `Map<String, Long> itemIdBySlugUpper` (clé
+    MAJUSCULE — au moins un cas de casse connu, offre marchand `"egg"` vs catalogue `"Egg"`, résolu par
+    lookup insensible à la casse plutôt qu'une normalisation risquée des données sources, même pattern que
+    `palIdByTribeUpper` ailleurs dans ce module).
+  - `PostgresPalSyncRepository.findOrCreateItem` (drops de Pals) : changé en `INSERT ... ON CONFLICT (slug)
+    DO NOTHING RETURNING id` + `SELECT id WHERE slug = ?` en repli — ne touche plus jamais `name`/`icon_url`
+    d'un item déjà présent (donc jamais de régression du catalogue par un drop), l'insert ne sert qu'au cas
+    résiduel (théorique) d'un slug de drop absent d'`item_data.json`.
+  - `SyncMerchantsUseCase` : résout `offers[].itemId` contre `itemIdBySlugUpper` (lookup `.toUpperCase()`),
+    ne crée plus jamais d'item lui-même.
+  - Tables/fichiers supprimés dans cette refonte : `ShopItemSyncData`, `ShopItemDataProvider`/`Repository`,
+    `PalworldLocalShopItemDataProvider`, `PostgresShopItemSyncRepository`, `SyncShopItemsUseCase` — tous
+    remplacés par les équivalents génériques `Item*` ci-dessus, `shop_items.json` n'est plus lu du tout.
+  - `SyncMerchantsUseCase` (upsert merchant + `deleteOffers`/réinsertion complète par marchand + suppression
+    des marchands disparus de la source) tourne après. `PalworldLocalMerchantDataProvider` résout les noms via
+    `PalworldLanguageDataProvider` (strings.json) et les URLs d'assets via `assetsBaseUrl`.
+  - **Vérifié en conditions réelles (sync complet exécuté directement sur `tools_dev`, 2026-08-07)** :
+    2466/2466 items upsertés, 311 avec icône, 1843 avec nom résolu (623 sans traduction dans le jeu lui-même,
+    transparent). `IronOre` présent avec nom non résolu (vraie lacune jeu), `WorldTreeOre` présent
+    ("Paloxite"), `Coal`/`ManganeseOre`/`SkyIslandOre`/`Sulfur` avec leur vraie traduction FR (plus de slug
+    brut). 25 marchands / 326 offres re-synchronisés, **0 skip** (confirme le fix de casse `egg`/`Egg`).
+    Pas de nouvelle migration SQL nécessaire (schéma déjà en place depuis V2.63.0) — sync à relancer sur
+    QA/prod via `POST /palworld/sync` (Bruno).
+
+- **Catalog** (lecture) : `GET /palworld/shop/merchants` (READ_ONLY) → `List<MerchantView>` avec `offers[]`
+  imbriquées (1 requête groupée anti-N+1, pattern `PostgresPalCatalogRepository`, inclut `itemMaxStackCount`
+  par offre pour le slider d'achat côté front). `GetMerchantsUseCase` résout le libellé de devise : pour les
+  3 devises spéciales, un libellé français est **codé en dur en priorité, avant même de regarder
+  `tools_palworld.item`** (`BattleTicket`→"Ticket de combat", `DogCoin`→"Médaille de chien",
+  `BountyProof_1`→"Preuve de prime") — nécessaire car `DogCoin` existe par ailleurs dans le catalogue complet
+  (drop de Pal réel), mais un nom de devise de marchand n'a rien à voir avec le nom d'affichage de l'item.
+
+### Frontend (Vue 3)
+
+`web/src/modules/Palworld/shop/` — pattern standard (`fetch/`, `types/`, `views/`, `components/`,
+`shop.routes.ts` ajouté à `palworld.routes.ts`) :
+- `shop.store.ts` (Pinia, `useShopStore`) : catalogue en lecture seule, `ensureLoaded()` fetch une fois,
+  getter `merchantsSellingItem(itemSlug)` (triée par prix croissant, sert à l'indicateur "moins cher
+  ailleurs"), favoris marchands (`favoriteMerchantIds`, `toggleFavorite`/`hydrateFavorites`, localStorage clé
+  `palworld.shop.favoriteMerchants` — indépendant du panier).
+- `shopCart.store.ts` (Pinia, `useShopCartStore`) : **100% localStorage, aucune DB** — `current: ShopCartLine[]`
+  (`{ merchantId, itemSlug, quantity }`) + `presets: Record<string, ShopCartLine[]>`, clé `palworld.shopCart`,
+  hydratation/persist manuelle (pattern `palworldConfig.store.ts`). Les prix/noms ne sont **jamais** stockés
+  dans le panier — toujours résolus en live depuis `shop.store` au rendu, pour que charger un preset ancien
+  reflète le prix catalogue actuel (estimation de coût à jour), avec gestion du cas "item plus vendu par ce
+  marchand" (ligne marquée indisponible plutôt que crash).
+- `MerchantList.vue` : portrait + nom (fallback "Marchand ambulant #NN" via le suffixe numérique de
+  `externalId` pour les 22 sans nom), étoile favori à gauche (n'intercepte pas le clic de sélection, favoris
+  triés en premier), devise du marchand affichée en tout petit en bas à droite de la ligne
+  (`pointer-events: none`), barre de recherche fixe en haut (ne scrolle pas avec la liste) qui grise
+  (opacity + grayscale) les marchands ne vendant pas l'objet recherché + compteur "X / N marchands". Recherche
+  normalisée (`normalizeSearchText`) : ligatures `œ`/`æ` → `oe`/`ae` (non décomposées par `normalize('NFD')`,
+  contrairement aux accents) + accents ignorés, pour que "oeuf" trouve "Œuf".
+- `MerchantOffers.vue` : grille compacte façon jeu (technique `gap:1px` + fond couleur bordure = séparateurs
+  fins façon tableau, pas des cartes flottantes), clic sur un item → `ItemPurchaseModal.vue` (icône, nom,
+  contrôle quantité «« ‹ valeur zero-paddée › »», slider 0→`itemMaxStackCount` (ou 1 si `ONLY_PURCHASE_ONE`),
+  prix total, bouton ajout panier). Badge "unique" et indicateur "moins cher ailleurs" en overlay sur la carte.
+- `ShopCartPanel.vue` : lignes éditables, total groupé par devise, sauvegarde/chargement/suppression de presets.
+- Tous les nombres (prix, totaux, bornes de slider) formatés via `@/utils/formatNumber` (`toLocaleString('fr-FR')`,
+  espaces en milliers) — utilitaire déjà existant côté Dofus, réutilisé tel quel.
+- Layout 3 colonnes à hauteur bornée (scroll interne par panneau, pas de scroll de page) : chaîne CSS
+  `height:100%`/`min-height:0`/`overflow:hidden` reprise du pattern qui marche déjà dans
+  `PalworldBreedingPathView.vue` (Path Finder) — un `max-height: calc(100vh - Xrem)` approximatif avait été
+  essayé en premier et débordait légèrement, corrigé par retour utilisateur.
+- `vue-tsc --noEmit` passe sans erreur sur tout le module.
+
+### Fix transverse (pas spécifique au shop, découvert pendant ce module)
+
+PicoCSS applique son anneau de focus (`box-shadow`) sur `:focus` au lieu de `:focus-visible` pour les
+boutons/inputs/selects (`public/themes/pico*.min.css`, framework chargé en `<link>` runtime, pas compilé
+depuis les sources Sass) : il restait visible après un clic souris jusqu'au prochain focus, sur tout le site
+(pas que le shop). Corrigé globalement dans `web/src/assets/styles/main.scss` :
+`*:focus:not(:focus-visible) { box-shadow: none !important; outline: none !important; }` — `!important`
+nécessaire pour gagner sur des `box-shadow:focus` locaux à certains composants (même bug reproduit ailleurs,
+ex. `WorkshopCreateBar.vue`) sans avoir à les corriger un par un. Ne touche pas la navigation clavier
+(`:focus-visible` non affecté).
+
+### Pas fait / hors scope
+
+- Pas de test dans le vrai navigateur authentifié par l'agent (pas de credentials/navigateur côté agent) —
+  vérifications faites en base + requêtes SQL directes + exécution directe du code de sync hors HTTP.
+  L'utilisateur teste lui-même dans son navigateur (serveurs dev déjà lancés) et donne son retour au fil de
+  l'eau — plusieurs itérations déjà faites sur ce retour (scroll, grille, devise, focus, recherche, catalogue).
+- Pas de géolocalisation des marchands (abandonné, cf. recherche du 06/08 : position hors DataTable,
+  mécanisme spawner non percé).

@@ -7,4 +7,5 @@ public record PalworldGlobalSyncReport(
         PalworldSyncReport skills,
         PalworldSyncReport passiveSkills,
         PalworldSyncReport pals,
-        BreedingExceptionSyncReport breedingExceptions) {}
+        BreedingExceptionSyncReport breedingExceptions,
+        MerchantSyncReport merchants) {}
