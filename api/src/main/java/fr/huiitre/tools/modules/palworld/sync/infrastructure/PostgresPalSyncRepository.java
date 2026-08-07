@@ -126,15 +126,21 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
         jdbcTemplate.update(sql, palId, slug, sourceUrl, rawPayloadJson, Timestamp.from(fetchedAt.toInstant()));
     }
 
+    // Le catalogue complet (SyncItemsUseCase) tourne avant la sync des Pals et couvre déjà la quasi-totalité
+    // des slugs de drops : DO NOTHING + lookup pour ne jamais écraser un name/icon_url du catalogue par la
+    // valeur brute (non traduite) fournie ici. L'insert ne sert qu'au cas résiduel d'un slug de drop absent
+    // du catalogue (item_data.json), pour ne pas faire échouer la FK pal_drop.item_id.
     @Override
     public Long findOrCreateItem(String slug, String name, String iconUrl) {
-        final String sql = """
+        final String insertSql = """
                 INSERT INTO tools_palworld.item (slug, name, icon_url)
                 VALUES (?, ?, ?)
-                ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, icon_url = EXCLUDED.icon_url
+                ON CONFLICT (slug) DO NOTHING
                 RETURNING id
                 """;
-        return jdbcTemplate.queryForObject(sql, Long.class, slug, name, iconUrl);
+        List<Long> inserted = jdbcTemplate.query(insertSql, (rs, rowNum) -> rs.getLong("id"), slug, name, iconUrl);
+        if (!inserted.isEmpty()) return inserted.get(0);
+        return jdbcTemplate.queryForObject("SELECT id FROM tools_palworld.item WHERE slug = ?", Long.class, slug);
     }
 
     @Override
