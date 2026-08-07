@@ -54,6 +54,7 @@ export interface PalworldPalListItem {
   combiRank: number | null
   combiDuplicatePriority: number | null
   ignoreCombi: boolean
+  price: number | null
   elements: PalworldElementSummary[]
   workSuitabilities: PalworldWorkSuitabilitySummary[]
   passiveSkills: PalworldPassiveSkillSummary[]
