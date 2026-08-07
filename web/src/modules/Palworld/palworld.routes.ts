@@ -3,7 +3,7 @@ import { tierlistRoutes } from '@/modules/Palworld/tierlist/tierlist.routes'
 import { paldexRoutes } from '@/modules/Palworld/paldex/paldex.routes'
 import { breedingRoutes } from '@/modules/Palworld/breeding/breeding.routes'
 import { inventoryRoutes } from '@/modules/Palworld/inventory/inventory.routes'
-import { itemsRoutes } from '@/modules/Palworld/items/items.routes'
+import { catalogRoutes } from '@/modules/Palworld/catalog/catalog.routes'
 import { shopRoutes } from '@/modules/Palworld/shop/shop.routes'
 
 export const routes = [
@@ -19,7 +19,7 @@ export const routes = [
       ...tierlistRoutes,
       ...paldexRoutes,
       ...breedingRoutes,
-      ...itemsRoutes,
+      ...catalogRoutes,
       ...shopRoutes,
     ],
   },

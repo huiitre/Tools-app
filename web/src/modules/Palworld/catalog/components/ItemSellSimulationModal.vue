@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { formatNumber } from '@/utils/formatNumber'
-import type { ItemCatalogEntry } from '../types/items.types'
 
 const SLIDER_MAX = 9999
 
 const props = defineProps<{
-  item: ItemCatalogEntry
+  name: string
+  iconUrl: string | null
+  unitSellPrice: number
 }>()
 
 const emit = defineEmits<{
@@ -15,10 +16,7 @@ const emit = defineEmits<{
 
 const quantity = ref(1)
 
-// Règle donnée par l'utilisateur : 10% du prix d'achat, pour l'instant (pas de donnée réelle de vente
-// dans les assets extraits).
-const unitSellPrice = computed(() => Math.floor((props.item.price ?? 0) * 0.1))
-const totalSellPrice = computed(() => unitSellPrice.value * quantity.value)
+const totalSellPrice = computed(() => props.unitSellPrice * quantity.value)
 
 function setQuantity(value: number) {
   quantity.value = Math.max(0, Math.round(value))
@@ -36,9 +34,9 @@ function onQuantityInput(event: Event) {
         <button type="button" class="close-btn" @click="emit('close')"><i class="mdi mdi-close" /></button>
 
         <div class="item-preview">
-          <img v-if="item.iconUrl" :src="item.iconUrl" :alt="item.name" width="96" height="96">
+          <img v-if="iconUrl" :src="iconUrl" :alt="name" width="96" height="96">
           <span v-else class="icon-placeholder"><i class="mdi mdi-help-box-outline" /></span>
-          <h3 class="item-name">{{ item.name }}</h3>
+          <h3 class="item-name">{{ name }}</h3>
           <span class="badge-simulation">Simulation de vente</span>
         </div>
 
@@ -69,7 +67,7 @@ function onQuantityInput(event: Event) {
         </div>
 
         <div class="total-row">
-          <span>Vente totale (10% du prix d'achat)</span>
+          <span>Vente totale</span>
           <span class="total-price">{{ formatNumber(totalSellPrice) }}</span>
         </div>
       </div>

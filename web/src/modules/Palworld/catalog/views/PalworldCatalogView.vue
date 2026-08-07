@@ -3,9 +3,20 @@ import { computed, onMounted, ref } from 'vue'
 import { formatNumber } from '@/utils/formatNumber'
 import { normalizeSearchText } from '@/utils/searchNormalize'
 import { useItemsStore } from '../items.store'
+import { usePaldexStore } from '../../paldex/paldex.store'
 import { categoryLabel } from '../utils/categoryLabel'
 import ItemSellSimulationModal from '../components/ItemSellSimulationModal.vue'
-import type { ItemCatalogEntry } from '../types/items.types'
+
+interface CatalogEntry {
+  key: string
+  kind: 'item' | 'pal'
+  name: string
+  iconUrl: string | null
+  category: string
+  buyPrice: number | null
+  sellPrice: number | null
+  soldByMerchant: boolean
+}
 
 type SortKey = 'category' | 'name' | 'price'
 
@@ -15,46 +26,71 @@ const SORT_OPTIONS: { id: SortKey; label: string }[] = [
   { id: 'price', label: 'Prix' },
 ]
 
-const store = useItemsStore()
+const itemsStore = useItemsStore()
+const paldexStore = usePaldexStore()
 const searchQuery = ref('')
 const selectedCategory = ref<string | null>(null)
 const sortKey = ref<SortKey>('category')
 const sortDir = ref<'asc' | 'desc'>('asc')
+const selectedEntry = ref<CatalogEntry | null>(null)
 
 const normalizedQuery = computed(() => normalizeSearchText(searchQuery.value.trim()))
+
+// Fusion items (achat + vente estimée 10%) et Pals (vente uniquement, pal.price = déjà un prix de vente
+// réel côté jeu, pas d'achat en or) dans un seul catalogue parcourable/triable.
+const allEntries = computed<CatalogEntry[]>(() => [
+  ...itemsStore.items.map((item): CatalogEntry => ({
+    key: `item:${item.id}`,
+    kind: 'item',
+    name: item.name,
+    iconUrl: item.iconUrl,
+    category: item.category ?? 'Autre',
+    buyPrice: item.price,
+    sellPrice: item.price !== null ? Math.floor(item.price * 0.1) : null,
+    soldByMerchant: item.soldByMerchant,
+  })),
+  ...paldexStore.pals.map((pal): CatalogEntry => ({
+    key: `pal:${pal.id}`,
+    kind: 'pal',
+    name: pal.name,
+    iconUrl: pal.imageUrl,
+    category: 'Pals',
+    buyPrice: null,
+    sellPrice: pal.price,
+    soldByMerchant: false,
+  })),
+])
 
 function toggleSortDir() {
   sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
 }
 
-function sortValue(item: ItemCatalogEntry): number | string {
+function sortValue(entry: CatalogEntry): number | string {
   switch (sortKey.value) {
-    case 'name': return item.name.toLowerCase()
-    case 'price': return item.price ?? -1
-    default: return (item.category ?? 'zzz').toLowerCase() + '|' + item.name.toLowerCase()
+    case 'name': return entry.name.toLowerCase()
+    case 'price': return entry.sellPrice ?? entry.buyPrice ?? -1
+    default: return entry.category.toLowerCase() + '|' + entry.name.toLowerCase()
   }
 }
 
 const availableCategories = computed(() => {
   const byCategory = new Map<string, number>()
-  for (const item of store.items) {
-    const key = item.category ?? 'Autre'
-    byCategory.set(key, (byCategory.get(key) ?? 0) + 1)
+  for (const entry of allEntries.value) {
+    byCategory.set(entry.category, (byCategory.get(entry.category) ?? 0) + 1)
   }
   return [...byCategory.entries()].sort((a, b) => b[1] - a[1])
 })
 
-function matchesSearch(item: ItemCatalogEntry): boolean {
-  return !normalizedQuery.value || normalizeSearchText(item.name).includes(normalizedQuery.value)
+function matchesSearch(entry: CatalogEntry): boolean {
+  return !normalizedQuery.value || normalizeSearchText(entry.name).includes(normalizedQuery.value)
 }
 
-function matchesCategory(item: ItemCatalogEntry): boolean {
-  if (!selectedCategory.value) return true
-  return (item.category ?? 'Autre') === selectedCategory.value
+function matchesCategory(entry: CatalogEntry): boolean {
+  return !selectedCategory.value || entry.category === selectedCategory.value
 }
 
-const visibleItems = computed(() => {
-  const filtered = store.items.filter(item => matchesSearch(item) && matchesCategory(item))
+const visibleEntries = computed(() => {
+  const filtered = allEntries.value.filter(entry => matchesSearch(entry) && matchesCategory(entry))
   const sorted = [...filtered].sort((a, b) => {
     const va = sortValue(a)
     const vb = sortValue(b)
@@ -68,16 +104,9 @@ function toggleCategory(category: string) {
   selectedCategory.value = selectedCategory.value === category ? null : category
 }
 
-// Règle donnée par l'utilisateur (pas dans les données extraites, aucun champ "SellPrice" n'existe) :
-// le prix de vente à un marchand vaut 10% du prix d'achat, pour les items en or uniquement.
-function sellPrice(item: ItemCatalogEntry): number {
-  return Math.floor((item.price ?? 0) * 0.1)
-}
-
-const selectedItem = ref<ItemCatalogEntry | null>(null)
-
 onMounted(() => {
-  store.ensureLoaded()
+  itemsStore.ensureLoaded()
+  paldexStore.ensureLoaded()
 })
 </script>
 
@@ -88,7 +117,7 @@ onMounted(() => {
         <input
           v-model="searchQuery"
           type="search"
-          placeholder="Rechercher un objet..."
+          placeholder="Rechercher un objet ou un Pal..."
           class="search-input"
         >
 
@@ -108,7 +137,7 @@ onMounted(() => {
         </div>
 
         <span class="items-count">
-          <strong>{{ visibleItems.length }}</strong> / {{ store.items.length }} objets
+          <strong>{{ visibleEntries.length }}</strong> / {{ allEntries.length }}
         </span>
       </div>
 
@@ -131,51 +160,59 @@ onMounted(() => {
       </nav>
     </div>
 
-    <div v-if="store.error" class="error-banner">
+    <div v-if="itemsStore.error || paldexStore.error" class="error-banner">
       <i class="mdi mdi-alert-circle-outline" />
-      {{ store.error }}
+      {{ itemsStore.error || paldexStore.error }}
     </div>
 
-    <div v-else-if="store.loading" class="status">
+    <div v-else-if="itemsStore.loading || paldexStore.loading" class="status">
       <span class="spinner" />
-      Chargement des objets…
+      Chargement du catalogue…
     </div>
 
     <template v-else>
       <div class="item-grid">
-        <div v-for="item in visibleItems" :key="item.id" class="item-card">
-          <span v-if="item.soldByMerchant" class="badge-merchant" title="Vendu par un marchand">
+        <div v-for="entry in visibleEntries" :key="entry.key" class="item-card">
+          <span v-if="entry.soldByMerchant" class="badge-merchant" title="Vendu par un marchand">
             <i class="mdi mdi-store" />
           </span>
 
           <button
             type="button"
             class="item-btn"
-            @click="selectedItem = item"
+            @click="selectedEntry = entry"
           >
-            <img v-if="item.iconUrl" :src="item.iconUrl" :alt="item.name" width="56" height="56" loading="lazy">
+            <img v-if="entry.iconUrl" :src="entry.iconUrl" :alt="entry.name" width="56" height="56" loading="lazy">
             <span v-else class="icon-placeholder"><i class="mdi mdi-help-box-outline" /></span>
 
-            <span class="item-name">{{ item.name }}</span>
+            <span class="item-name">{{ entry.name }}</span>
 
-            <span v-if="item.price !== null" class="item-prices">
-              <span class="price-buy" title="Prix d'achat">{{ formatNumber(item.price) }}</span>
-              <span class="price-sell" title="Prix de vente estimé (10% du prix d'achat)">
+            <span class="item-prices">
+              <span class="price-buy" :title="entry.buyPrice !== null ? `Prix d'achat` : `Prix d'achat non renseigné`">
+                {{ entry.buyPrice !== null ? formatNumber(entry.buyPrice) : '0' }}
+              </span>
+              <span
+                v-if="entry.sellPrice !== null"
+                class="price-sell"
+                :title="entry.kind === 'pal' ? 'Prix de vente' : `Prix de vente estimé (10% du prix d'achat)`"
+              >
                 <i class="mdi mdi-cash-minus" />
-                {{ formatNumber(sellPrice(item)) }}
+                {{ formatNumber(entry.sellPrice) }}
               </span>
             </span>
           </button>
         </div>
       </div>
 
-      <p v-if="visibleItems.length === 0" class="empty">Aucun objet ne correspond à la recherche.</p>
+      <p v-if="visibleEntries.length === 0" class="empty">Rien ne correspond à la recherche.</p>
     </template>
 
     <ItemSellSimulationModal
-      v-if="selectedItem"
-      :item="selectedItem"
-      @close="selectedItem = null"
+      v-if="selectedEntry"
+      :name="selectedEntry.name"
+      :icon-url="selectedEntry.iconUrl"
+      :unit-sell-price="selectedEntry.sellPrice ?? 0"
+      @close="selectedEntry = null"
     />
   </div>
 </template>
