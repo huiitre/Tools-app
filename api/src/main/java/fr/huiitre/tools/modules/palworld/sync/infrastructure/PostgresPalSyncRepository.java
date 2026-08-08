@@ -129,7 +129,7 @@ public class PostgresPalSyncRepository implements PalSyncRepository {
     // Le catalogue complet (SyncItemsUseCase) tourne avant la sync des Pals et couvre déjà la quasi-totalité
     // des slugs de drops : DO NOTHING + lookup pour ne jamais écraser un name/icon_url du catalogue par la
     // valeur brute (non traduite) fournie ici. L'insert ne sert qu'au cas résiduel d'un slug de drop absent
-    // du catalogue (item_data.json), pour ne pas faire échouer la FK pal_drop.item_id.
+    // du catalogue (items.json), pour ne pas faire échouer la FK pal_drop.item_id.
     @Override
     public Long findOrCreateItem(String slug, String name, String iconUrl) {
         final String insertSql = """

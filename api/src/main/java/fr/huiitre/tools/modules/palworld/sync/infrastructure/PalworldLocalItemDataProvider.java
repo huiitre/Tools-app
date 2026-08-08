@@ -27,15 +27,15 @@ public class PalworldLocalItemDataProvider implements ItemDataProvider {
         this.assetsBaseUrl = assetsBaseUrl;
     }
 
-    // Source de vérité complète du catalogue (item_data.json, ~2466 lignes brutes du jeu), contrairement à
-    // shop_items.json qui n'est qu'un sous-ensemble pré-filtré par l'extracteur pour les 267 items vendus.
+    // Source de vérité complète du catalogue (items.json, ~2466 lignes brutes du jeu), contrairement à
+    // merchants.json qui n'est qu'un sous-ensemble pré-filtré par l'extracteur pour les items vendus.
     // Ne rien filtrer ici (pas de flag fiable pour distinguer "vrai item" de ligne technique sans le deviner) :
     // toutes les lignes sont synchronisées telles quelles, name/icon restent transparents (via getString/null)
     // quand la donnée n'existe pas côté jeu plutôt que d'inventer une valeur.
     @Override
     public List<ItemSyncData> fetchAll() {
         try {
-            JsonNode root = objectMapper.readTree(assetsReader.readFile("item_data.json"));
+            JsonNode root = objectMapper.readTree(assetsReader.readFile("items.json"));
             JsonNode rows = root.isArray() ? root.get(0).path("Rows") : root.path("Rows");
 
             // Mêmes réserves de casse que pour les images de Pals (cf. PalworldLocalPalDataProvider) :
@@ -71,7 +71,7 @@ public class PalworldLocalItemDataProvider implements ItemDataProvider {
     }
 
     // Le nom de fichier d'icône ne correspond pas toujours au slug de la ligne (23 cas sur 2466, vérifié) :
-    // item_data.json fournit un champ IconName dédié, parfois différent (ex: variantes d'un même modèle
+    // items.json fournit un champ IconName dédié, parfois différent (ex: variantes d'un même modèle
     // visuel). On essaie le slug d'abord (cas très majoritaire), IconName en repli.
     private String resolveIconUrl(String slug, String iconName, Map<String, String> itemImageFileNameBySlugUpper) {
         String fileName = itemImageFileNameBySlugUpper.get(slug.toUpperCase());
