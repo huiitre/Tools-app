@@ -41,7 +41,7 @@ public class SyncItemsUseCase implements SecuredUseCase {
         return RoleCode.TECH;
     }
 
-    // Catalogue complet et autoritaire (item_data.json, ~2466 items) : source de vérité unique pour
+    // Catalogue complet et autoritaire (items.json, ~2466 items) : source de vérité unique pour
     // name/icon_url/price/max_stack_count. Doit tourner en tout premier dans SyncPalworldUseCase — les drops
     // de Pals (PostgresPalSyncRepository.findOrCreateItem) et les offres marchands (SyncMerchantsUseCase) ne
     // font ensuite que résoudre un lien vers ce catalogue déjà peuplé, jamais créer/dégrader un item eux-mêmes.
