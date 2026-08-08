@@ -25,11 +25,11 @@ public class PalworldLocalItemDataProvider implements ItemDataProvider {
     }
 
     // Source de vérité complète du catalogue (items.json, ~2466 items, array plat déjà résolu par l'extracteur :
-    // id/nameStringId/icon/price/maxStackCount — plus l'ancien format "Rows" bruts du datatable). Ne rien filtrer
-    // ici (pas de flag fiable pour distinguer "vrai item" de ligne technique sans le deviner) : toutes les
-    // entrées sont synchronisées telles quelles, icon reste transparent (null) quand la donnée n'existe pas côté
-    // jeu. Pas de champ catégorie côté extracteur depuis ce format : ItemSyncData.category() reste null pour
-    // tous les items.
+    // id/nameStringId/icon/price/maxStackCount/category — plus l'ancien format "Rows" bruts du datatable).
+    // category est déjà dépréfixée côté extracteur (EPalItemTypeA:: retiré), aucun traitement à faire ici.
+    // Ne rien filtrer (pas de flag fiable pour distinguer "vrai item" de ligne technique sans le deviner) :
+    // toutes les entrées sont synchronisées telles quelles, icon reste transparent (null) quand la donnée
+    // n'existe pas côté jeu.
     @Override
     public List<ItemSyncData> fetchAll() {
         try {
@@ -49,7 +49,7 @@ public class PalworldLocalItemDataProvider implements ItemDataProvider {
                         icon != null ? assetsBaseUrl + "/tools_palworld/palworld/" + icon : null,
                         intOrNull(item.path("price")),
                         intOrNull(item.path("maxStackCount")),
-                        null));
+                        item.path("category").asText(null)));
             }
             return result;
         } catch (Exception e) {
