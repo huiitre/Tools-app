@@ -26,10 +26,6 @@ export interface BreedingOwnedPal {
   storageLocation: 'base' | 'palbox' | 'party' | 'dimensional_storage' | null
 }
 
-export interface BreedingPathOptions {
-  prioritizeTargetSpecies?: boolean
-}
-
 export interface BreedingPathPalDefinition {
   id: number
   tribe: string
@@ -109,7 +105,6 @@ export class BreedingPathEngine {
     target: number,
     owned: Set<number> | BreedingOwnedPal[],
     requiredPassiveIds: string[] = [],
-    options: BreedingPathOptions = {},
     onProgress?: (progress: BreedingPathProgress) => void,
   ): BreedingPathResult {
     // Le catalogue et les Pals possédés viennent de deux sources distinctes : on ignore ici toute
@@ -130,7 +125,7 @@ export class BreedingPathEngine {
       return this.computeBySpecies(target, new Set(ownedPals.map(pal => pal.speciesId)), onProgress)
     }
 
-    return this.computeWithPassives(target, ownedPals, uniqueRequiredPassiveIds, options, onProgress)
+    return this.computeWithPassives(target, ownedPals, uniqueRequiredPassiveIds, onProgress)
   }
 
   private computeDirectTargetRoutes(
@@ -160,25 +155,9 @@ export class BreedingPathEngine {
       }
     }
 
-    const ownedTargetInstance = ownedBySpecies.get(target)?.[0]
-    if (ownedTargetInstance) {
-      const targetPal = this.pals.get(target)!
-      const ownedTarget = nodeFromOwned(ownedTargetInstance)
-      const root: BreedingPathNode = {
-        species: { id: targetPal.id, tribe: targetPal.tribe, name: targetPal.name, combiRank: targetPal.combiRank },
-        owned: false,
-        gender: null,
-        storageLocation: null,
-        passiveSkillIds: [],
-        step: { parentA: ownedTarget, parentB: ownedTarget, parentAGender: null, parentBGender: null, rule: 'formula' },
-      }
-      return {
-        reachable: true,
-        root,
-        routes: [{ id: `owned-target:${target}`, root, breeds: 1, passiveCount: 0 }],
-      }
-    }
-
+    // Posséder la cible n'interrompt pas la recherche : on cherche toujours un couple, puisque
+    // demander un calcul signifie vouloir en élever d'autres. Les Pals possédés de l'espèce
+    // cible deviennent simplement des parents candidats comme les autres.
     const directCandidates: { pair: Pair; parentA: BreedingOwnedPal; parentB: BreedingOwnedPal }[] = []
     for (const pair of this.pairsByChild.get(target) ?? []) {
       for (const parentA of ownedBySpecies.get(pair.parentAPalId) ?? []) {
@@ -190,8 +169,11 @@ export class BreedingPathEngine {
     }
     if (directCandidates.length === 0) return null
 
-    // Pas de tri par `prioritizeTargetSpecies` ici : un couple cible + cible suppose de posséder
-    // la cible, cas déjà traité par le retour anticipé ci-dessus.
+    // À égalité, un couple formé de deux Pals de l'espèce cible déjà possédés passe devant :
+    // croiser X avec X garantit un X, là où un couple par formule dépend des rangs.
+    const usesTargetPair = (pair: Pair) => pair.parentAPalId === target && pair.parentBPalId === target
+    directCandidates.sort((left, right) => Number(usesTargetPair(right.pair)) - Number(usesTargetPair(left.pair)))
+
     const seenSpeciesPairs = new Set<string>()
     const distinctDirectCandidates = directCandidates.filter(({ pair }) => {
       const signature = key(pair.parentAPalId, pair.parentBPalId)
@@ -244,19 +226,8 @@ export class BreedingPathEngine {
       }
     }
 
-    if (owned.has(target)) {
-      const ownedTarget = node(target)
-      const root = {
-        ...node(target, false),
-        step: { parentA: ownedTarget, parentB: ownedTarget, parentAGender: null, parentBGender: null, rule: 'formula' as const },
-      }
-      return {
-        reachable: true,
-        root,
-        routes: [{ id: `owned-target:${target}`, root, breeds: 1, passiveCount: 0 }],
-      }
-    }
-
+    // Posséder la cible n'interrompt pas la recherche : elle devient un parent candidat parmi
+    // les autres. Si aucun couple n'existe, le repli en fin de méthode la renvoie seule.
     const score = new Map<number, Score>()
     const from = new Map<number, Pair>()
     const targetPairs = new Map<string, { pair: Pair; score: Score }>()
@@ -314,8 +285,15 @@ export class BreedingPathEngine {
       }
     }
 
+    // Moins d'étapes d'abord ; à égalité, un couple de deux Pals de l'espèce cible déjà
+    // possédés passe devant, croiser X avec X garantissant un X.
+    const usesOwnedTargetPair = (pair: Pair) => pair.parentAPalId === target
+      && pair.parentBPalId === target
+      && owned.has(target)
     const derivedRoutes = [...targetPairs.values()]
-      .sort((left, right) => left.score.breeds - right.score.breeds || left.score.depth - right.score.depth)
+      .sort((left, right) => left.score.breeds - right.score.breeds
+        || Number(usesOwnedTargetPair(right.pair)) - Number(usesOwnedTargetPair(left.pair))
+        || left.score.depth - right.score.depth)
       .slice(0, 5)
       .map(({ pair, score: routeScore }) => {
         const root = {
@@ -349,7 +327,6 @@ export class BreedingPathEngine {
     target: number,
     ownedPals: BreedingOwnedPal[],
     requiredPassiveIds: string[],
-    options: BreedingPathOptions,
     onProgress?: (progress: BreedingPathProgress) => void,
   ): BreedingPathResult {
     const passiveBitById = new Map(requiredPassiveIds.map((id, index) => [id, 1 << index]))
@@ -482,20 +459,11 @@ export class BreedingPathEngine {
     const targetCandidates = [...(statesBySpecies.get(target) ?? [])]
     if (targetCandidates.length === 0) return { reachable: false, root: null, routes: [] }
 
+    // Ce classement ne sert qu'au repli « aucun couple trouvé » plus bas : le maximum de passifs
+    // d'abord, puis le moins d'étapes.
     targetCandidates.sort((left, right) => {
       const passiveCountDifference = bitCount(stateMask(right)) - bitCount(stateMask(left))
       if (passiveCountDifference !== 0) return passiveCountDifference
-      // À couverture de passifs égale, un Pal déjà possédé bat toute route d'élevage : il est
-      // disponible immédiatement. Ce départage passe avant `prioritizeTargetSpecies`, sinon un
-      // croisement cible+cible masquerait le Pal que l'utilisateur a déjà en main.
-      const leftIsOwned = !fromByState.has(left)
-      const rightIsOwned = !fromByState.has(right)
-      if (leftIsOwned !== rightIsOwned) return leftIsOwned ? -1 : 1
-      if (options.prioritizeTargetSpecies) {
-        const leftUsesOwnedTargetPair = this.usesOwnedTargetPair(left, target, fromByState)
-        const rightUsesOwnedTargetPair = this.usesOwnedTargetPair(right, target, fromByState)
-        if (leftUsesOwnedTargetPair !== rightUsesOwnedTargetPair) return leftUsesOwnedTargetPair ? -1 : 1
-      }
       const leftScore = scoreByState.get(left)!
       const rightScore = scoreByState.get(right)!
       return leftScore.breeds - rightScore.breeds || leftScore.depth - rightScore.depth
@@ -542,40 +510,10 @@ export class BreedingPathEngine {
       }
     }
 
-    // `targetCandidates` est trié passifs décroissants puis Pal possédé d'abord : si la tête de
-    // liste est un Pal possédé, aucune route d'élevage ne fait mieux en couverture de passifs.
-    // Inutile de proposer un croisement pour reproduire un Pal déjà en sa possession.
-    const selectedState = targetCandidates[0]
-    const passiveCoverage = stateMask(selectedState)
-    if (!fromByState.has(selectedState)) {
-      const passiveSkillIds = passiveSkillIdsForState(selectedState)
-      const gender = stateGender(selectedState)
-      const storageLocation = stateStorageLocation(selectedState)
-      const ownedTarget = node(target, true, gender, storageLocation, passiveSkillIds)
-      const root = {
-        ...node(target, false, gender, storageLocation, passiveSkillIds),
-        step: { parentA: ownedTarget, parentB: ownedTarget, parentAGender: null, parentBGender: null, rule: 'formula' as const },
-      }
-      return {
-        reachable: true,
-        root,
-        routes: [{
-          id: `owned-target:${selectedState}`,
-          root,
-          breeds: 1,
-          passiveCount: bitCount(passiveCoverage),
-        }],
-      }
-    }
-
+    // Posséder la cible n'interrompt pas la recherche : les Pals possédés de l'espèce cible sont
+    // des parents candidats, et le repli ci-dessous ne les renvoie seuls qu'à défaut de couple.
     const derivedRoutes = [...targetDerivations.values()]
-      .sort((left, right) => this.compareTargetDerivations(
-        left,
-        right,
-        target,
-        options.prioritizeTargetSpecies,
-        fromByState,
-      ))
+      .sort((left, right) => this.compareTargetDerivations(left, right, target, fromByState))
       .slice(0, 5)
       .map(derivation => ({
         id: `${derivation.state}:${derivation.parentAState}:${derivation.parentBState}`,
@@ -623,18 +561,6 @@ export class BreedingPathEngine {
     return respectGenders ? ['Male', 'Female'] : [null]
   }
 
-  private usesOwnedTargetPair(
-    state: string,
-    target: number,
-    fromByState: Map<string, { pair: Pair; parentAState: string; parentBState: string }>,
-  ) {
-    const from = fromByState.get(state)
-    return from?.pair.parentAPalId === target
-      && from.pair.parentBPalId === target
-      && !fromByState.has(from.parentAState)
-      && !fromByState.has(from.parentBState)
-  }
-
   private distinctTargetStates(
     states: string[],
     fromByState: Map<string, { pair: Pair; parentAState: string; parentBState: string }>,
@@ -651,21 +577,23 @@ export class BreedingPathEngine {
     })
   }
 
+  /**
+   * Le maximum de passifs transmis prime : une route qui perd le passif recherché n'a aucun
+   * intérêt, même en moins d'étapes. Vient ensuite le nombre d'étapes, puis — à égalité stricte —
+   * un couple formé de deux Pals de l'espèce cible déjà possédés, croiser X avec X garantissant
+   * un X là où un couple par formule dépend des rangs.
+   */
   private compareTargetDerivations(
     left: TargetDerivation,
     right: TargetDerivation,
     target: number,
-    prioritizeTargetSpecies: boolean | undefined,
     fromByState: Map<string, { pair: Pair; parentAState: string; parentBState: string }>,
   ) {
-    const passiveCountDifference = right.passiveCount - left.passiveCount
-    if (passiveCountDifference !== 0) return passiveCountDifference
-    if (prioritizeTargetSpecies) {
-      const leftUsesOwnedTargetPair = this.derivationUsesOwnedTargetPair(left, target, fromByState)
-      const rightUsesOwnedTargetPair = this.derivationUsesOwnedTargetPair(right, target, fromByState)
-      if (leftUsesOwnedTargetPair !== rightUsesOwnedTargetPair) return leftUsesOwnedTargetPair ? -1 : 1
-    }
-    return left.score.breeds - right.score.breeds || left.score.depth - right.score.depth
+    return right.passiveCount - left.passiveCount
+      || left.score.breeds - right.score.breeds
+      || Number(this.derivationUsesOwnedTargetPair(right, target, fromByState))
+        - Number(this.derivationUsesOwnedTargetPair(left, target, fromByState))
+      || left.score.depth - right.score.depth
   }
 
   private derivationUsesOwnedTargetPair(

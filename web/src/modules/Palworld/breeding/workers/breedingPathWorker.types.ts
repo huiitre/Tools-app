@@ -1,6 +1,5 @@
 import type {
   BreedingOwnedPal,
-  BreedingPathOptions,
   BreedingPathPalDefinition,
   BreedingRuleData,
 } from '../services/BreedingPathEngine'
@@ -11,5 +10,4 @@ export interface BreedingPathWorkerInput {
   targetId: number
   ownedPals: BreedingOwnedPal[]
   passiveSkillIds: string[]
-  options: BreedingPathOptions
 }
