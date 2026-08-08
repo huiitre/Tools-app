@@ -3,7 +3,20 @@ import type { BreedingPathNode, BreedingPathResult, BreedingPathRoute } from '..
 export interface BreedingRuleData { parentAPalId: number; parentAGender: 'Male' | 'Female' | null; parentBPalId: number; parentBGender: 'Male' | 'Female' | null; childPalId: number }
 type Pair = BreedingRuleData & { rule: 'exception' | 'formula' }
 type Score = { breeds: number; depth: number }
-type TargetDerivation = { state: string; pair: Pair; parentAState: string; parentBState: string; score: Score }
+type TargetDerivation = {
+  state: string
+  pair: Pair
+  parentAState: string
+  parentBState: string
+  score: Score
+  passiveCount: number
+}
+type DecodedState = {
+  speciesId: number
+  gender: BreedingOwnedPal['gender']
+  mask: number
+  storageLocation: BreedingOwnedPal['storageLocation']
+}
 const key = (a: number, b: number) => a < b ? `${a}:${b}` : `${b}:${a}`
 
 export interface BreedingOwnedPal {
@@ -99,13 +112,17 @@ export class BreedingPathEngine {
     options: BreedingPathOptions = {},
     onProgress?: (progress: BreedingPathProgress) => void,
   ): BreedingPathResult {
-    const ownedPals = owned instanceof Set
+    // Le catalogue et les Pals possédés viennent de deux sources distinctes : on ignore ici toute
+    // espèce inconnue plutôt que de laisser la construction des nœuds échouer plus loin.
+    if (!this.pals.has(target)) return { reachable: false, root: null, routes: [] }
+    const ownedPals = (owned instanceof Set
       ? [...owned].map(speciesId => ({ speciesId, passiveSkillIds: [], gender: null, storageLocation: null }))
       : owned
+    ).filter(ownedPal => this.pals.has(ownedPal.speciesId))
     const uniqueRequiredPassiveIds = [...new Set(requiredPassiveIds)]
 
     if (uniqueRequiredPassiveIds.length === 0 && ownedPals.some(pal => pal.gender !== null)) {
-      const directRoutes = this.computeDirectTargetRoutes(target, ownedPals, options)
+      const directRoutes = this.computeDirectTargetRoutes(target, ownedPals)
       if (directRoutes !== null) return directRoutes
     }
 
@@ -119,7 +136,6 @@ export class BreedingPathEngine {
   private computeDirectTargetRoutes(
     target: number,
     ownedPals: BreedingOwnedPal[],
-    options: BreedingPathOptions,
   ): BreedingPathResult | null {
     const ownedBySpecies = new Map<number, BreedingOwnedPal[]>()
     for (const ownedPal of ownedPals) {
@@ -130,6 +146,37 @@ export class BreedingPathEngine {
         candidates.push(ownedPal)
       }
       ownedBySpecies.set(ownedPal.speciesId, candidates)
+    }
+
+    const nodeFromOwned = (ownedPal: BreedingOwnedPal): BreedingPathNode => {
+      const pal = this.pals.get(ownedPal.speciesId)!
+      return {
+        species: { id: pal.id, tribe: pal.tribe, name: pal.name, combiRank: pal.combiRank },
+        owned: true,
+        gender: ownedPal.gender,
+        storageLocation: ownedPal.storageLocation,
+        passiveSkillIds: [],
+        step: null,
+      }
+    }
+
+    const ownedTargetInstance = ownedBySpecies.get(target)?.[0]
+    if (ownedTargetInstance) {
+      const targetPal = this.pals.get(target)!
+      const ownedTarget = nodeFromOwned(ownedTargetInstance)
+      const root: BreedingPathNode = {
+        species: { id: targetPal.id, tribe: targetPal.tribe, name: targetPal.name, combiRank: targetPal.combiRank },
+        owned: false,
+        gender: null,
+        storageLocation: null,
+        passiveSkillIds: [],
+        step: { parentA: ownedTarget, parentB: ownedTarget, parentAGender: null, parentBGender: null, rule: 'formula' },
+      }
+      return {
+        reachable: true,
+        root,
+        routes: [{ id: `owned-target:${target}`, root, breeds: 1, passiveCount: 0 }],
+      }
     }
 
     const directCandidates: { pair: Pair; parentA: BreedingOwnedPal; parentB: BreedingOwnedPal }[] = []
@@ -143,25 +190,17 @@ export class BreedingPathEngine {
     }
     if (directCandidates.length === 0) return null
 
-    directCandidates.sort((left, right) => {
-      if (!options.prioritizeTargetSpecies) return 0
-      const leftUsesTargetPair = left.pair.parentAPalId === target && left.pair.parentBPalId === target
-      const rightUsesTargetPair = right.pair.parentAPalId === target && right.pair.parentBPalId === target
-      return leftUsesTargetPair === rightUsesTargetPair ? 0 : leftUsesTargetPair ? -1 : 1
+    // Pas de tri par `prioritizeTargetSpecies` ici : un couple cible + cible suppose de posséder
+    // la cible, cas déjà traité par le retour anticipé ci-dessus.
+    const seenSpeciesPairs = new Set<string>()
+    const distinctDirectCandidates = directCandidates.filter(({ pair }) => {
+      const signature = key(pair.parentAPalId, pair.parentBPalId)
+      if (seenSpeciesPairs.has(signature)) return false
+      seenSpeciesPairs.add(signature)
+      return true
     })
 
-    const nodeFromOwned = (ownedPal: BreedingOwnedPal): BreedingPathNode => {
-      const pal = this.pals.get(ownedPal.speciesId)!
-      return {
-        species: { id: pal.id, tribe: pal.tribe, name: pal.name, combiRank: pal.combiRank },
-        owned: true,
-        gender: ownedPal.gender,
-        storageLocation: ownedPal.storageLocation,
-        passiveSkillIds: [],
-        step: null,
-      }
-    }
-    const routes = directCandidates.slice(0, 5).map(({ pair, parentA, parentB }) => {
+    const routes = distinctDirectCandidates.slice(0, 5).map(({ pair, parentA, parentB }) => {
       const targetPal = this.pals.get(target)!
       const root: BreedingPathNode = {
         species: { id: targetPal.id, tribe: targetPal.tribe, name: targetPal.name, combiRank: targetPal.combiRank },
@@ -314,7 +353,6 @@ export class BreedingPathEngine {
     onProgress?: (progress: BreedingPathProgress) => void,
   ): BreedingPathResult {
     const passiveBitById = new Map(requiredPassiveIds.map((id, index) => [id, 1 << index]))
-    const allPassivesMask = (1 << requiredPassiveIds.length) - 1
     const respectGenders = ownedPals.some(pal => pal.gender !== null)
     const scoreByState = new Map<string, Score>()
     const fromByState = new Map<string, { pair: Pair; parentAState: string; parentBState: string }>()
@@ -323,26 +361,26 @@ export class BreedingPathEngine {
     const queue: string[] = []
     let exploredStates = 0
 
+    // Les états sont décodés une seule fois à la création : la boucle d'exploration lit des
+    // champs déjà typés au lieu de re-parser la clé (split + Number) à chaque transition.
+    const decodedByState = new Map<string, DecodedState>()
     const stateKey = (
       speciesId: number,
       gender: BreedingOwnedPal['gender'],
       passiveMask: number,
       storageLocation: BreedingOwnedPal['storageLocation'],
-    ) => `${speciesId}:${gender ?? 'Unknown'}:${passiveMask}:${storageLocation ?? 'Generated'}`
-    const stateParts = (state: string) => state.split(':')
-    const stateSpeciesId = (state: string) => Number(stateParts(state)[0])
-    const stateGender = (state: string): BreedingOwnedPal['gender'] => {
-      const gender = stateParts(state)[1]
-      return gender === 'Male' || gender === 'Female' ? gender : null
+    ) => {
+      const state = `${speciesId}:${gender ?? 'Unknown'}:${passiveMask}:${storageLocation ?? 'Generated'}`
+      if (!decodedByState.has(state)) {
+        decodedByState.set(state, { speciesId, gender, mask: passiveMask, storageLocation })
+      }
+      return state
     }
-    const stateMask = (state: string) => Number(stateParts(state)[2])
-    const stateStorageLocation = (state: string): BreedingOwnedPal['storageLocation'] => {
-      const storageLocation = stateParts(state)[3]
-      return storageLocation === 'base' || storageLocation === 'palbox' || storageLocation === 'party'
-        || storageLocation === 'dimensional_storage'
-        ? storageLocation
-        : null
-    }
+    const decode = (state: string) => decodedByState.get(state)!
+    const stateSpeciesId = (state: string) => decode(state).speciesId
+    const stateGender = (state: string) => decode(state).gender
+    const stateMask = (state: string) => decode(state).mask
+    const stateStorageLocation = (state: string) => decode(state).storageLocation
     const isBetter = (next: Score, current: Score | undefined) => !current
       || next.breeds < current.breeds
       || (next.breeds === current.breeds && next.depth < current.depth)
@@ -375,63 +413,84 @@ export class BreedingPathEngine {
       addState(ownedPal.speciesId, ownedPal.gender, passiveMask, ownedPal.storageLocation, { breeds: 0, depth: 0 })
     }
 
-    while (queue.length) {
-      const currentState = queue.shift()!
+    // Curseur de lecture plutôt que queue.shift() : shift() décale tout le tableau (O(n)) à
+    // chaque état dépilé, ce qui devient dominant sur des dizaines de milliers d'états.
+    const childGenderOptions = this.childGenders(respectGenders)
+    let queueHead = 0
+    while (queueHead < queue.length) {
+      const currentState = queue[queueHead++]
       exploredStates += 1
       if (exploredStates % 250 === 0) {
         onProgress?.({ stage: 'exploring', exploredStates, candidateRoutes: targetDerivations.size })
       }
-      const currentSpeciesId = stateSpeciesId(currentState)
+      const current = decode(currentState)
+      const currentSpeciesId = current.speciesId
       const currentScore = scoreByState.get(currentState)!
 
       for (const pair of this.pairsByParent.get(currentSpeciesId) ?? []) {
-        const otherSpeciesId = pair.parentAPalId === currentSpeciesId ? pair.parentBPalId : pair.parentAPalId
-        for (const otherState of statesBySpecies.get(otherSpeciesId) ?? []) {
-          const otherScore = scoreByState.get(otherState)!
-          const currentIsParentA = pair.parentAPalId === currentSpeciesId
-          const currentIsParentB = pair.parentBPalId === currentSpeciesId
+        // Pour un auto-croisement (X + X = Y) les deux côtés matchent l'espèce courante :
+        // on doit garder otherState comme second parent, sinon le couple se réduit au même
+        // individu et devient toujours invalide (même genre).
+        const currentIsParentA = pair.parentAPalId === currentSpeciesId
+        const otherSpeciesId = currentIsParentA ? pair.parentBPalId : pair.parentAPalId
+        const otherStates = statesBySpecies.get(otherSpeciesId)
+        if (!otherStates) continue
+        const isTargetChild = pair.childPalId === target
+
+        for (const otherState of otherStates) {
+          const other = decode(otherState)
           const parentAState = currentIsParentA ? currentState : otherState
-          const parentBState = currentIsParentB ? currentState : otherState
-          if (!this.canBreed(pair, stateGender(parentAState), stateGender(parentBState), respectGenders)) continue
+          const parentBState = currentIsParentA ? otherState : currentState
+          const parentAGender = currentIsParentA ? current.gender : other.gender
+          const parentBGender = currentIsParentA ? other.gender : current.gender
+          if (!this.canBreed(pair, parentAGender, parentBGender, respectGenders)) continue
+
+          const otherScore = scoreByState.get(otherState)!
           const nextScore = {
             breeds: currentScore.breeds + otherScore.breeds + 1,
             depth: Math.max(currentScore.depth, otherScore.depth) + 1,
           }
-          for (const childGender of this.childGenders(respectGenders)) {
-            const childMask = stateMask(parentAState) | stateMask(parentBState)
-            const childState = stateKey(pair.childPalId, childGender, childMask, null)
-            if (pair.childPalId === target) {
-              const signature = [parentAState, parentBState].sort().join('|')
-              const currentDerivation = targetDerivations.get(signature)
-              if (!currentDerivation || isBetter(nextScore, currentDerivation.score)) {
-                targetDerivations.set(signature, { state: childState, pair, parentAState, parentBState, score: nextScore })
-              }
+          const childMask = current.mask | other.mask
+
+          if (isTargetChild) {
+            const signature = key(current.speciesId, other.speciesId)
+            const currentDerivation = targetDerivations.get(signature)
+            const nextPassiveCount = bitCount(childMask)
+            const isPreferredDerivation = !currentDerivation
+              || nextPassiveCount > currentDerivation.passiveCount
+              || nextPassiveCount === currentDerivation.passiveCount && isBetter(nextScore, currentDerivation.score)
+            if (isPreferredDerivation) {
+              targetDerivations.set(signature, {
+                state: stateKey(pair.childPalId, childGenderOptions[0], childMask, null),
+                pair,
+                parentAState,
+                parentBState,
+                score: nextScore,
+                passiveCount: nextPassiveCount,
+              })
             }
-            addState(
-              pair.childPalId,
-              childGender,
-              childMask,
-              null,
-              nextScore,
-              { pair, parentAState, parentBState },
-            )
+          }
+
+          for (const childGender of childGenderOptions) {
+            addState(pair.childPalId, childGender, childMask, null, nextScore, { pair, parentAState, parentBState })
           }
         }
       }
     }
 
     onProgress?.({ stage: 'building-routes', exploredStates, candidateRoutes: targetDerivations.size })
-    const targetStates = [...(statesBySpecies.get(target) ?? [])]
-    if (targetStates.length === 0) return { reachable: false, root: null, routes: [] }
-
-    const targetStatesProducedByBreeding = targetStates.filter(state => fromByState.has(state))
-    const targetCandidates = targetStatesProducedByBreeding.length > 0
-      ? targetStatesProducedByBreeding
-      : targetStates
+    const targetCandidates = [...(statesBySpecies.get(target) ?? [])]
+    if (targetCandidates.length === 0) return { reachable: false, root: null, routes: [] }
 
     targetCandidates.sort((left, right) => {
       const passiveCountDifference = bitCount(stateMask(right)) - bitCount(stateMask(left))
       if (passiveCountDifference !== 0) return passiveCountDifference
+      // À couverture de passifs égale, un Pal déjà possédé bat toute route d'élevage : il est
+      // disponible immédiatement. Ce départage passe avant `prioritizeTargetSpecies`, sinon un
+      // croisement cible+cible masquerait le Pal que l'utilisateur a déjà en main.
+      const leftIsOwned = !fromByState.has(left)
+      const rightIsOwned = !fromByState.has(right)
+      if (leftIsOwned !== rightIsOwned) return leftIsOwned ? -1 : 1
       if (options.prioritizeTargetSpecies) {
         const leftUsesOwnedTargetPair = this.usesOwnedTargetPair(left, target, fromByState)
         const rightUsesOwnedTargetPair = this.usesOwnedTargetPair(right, target, fromByState)
@@ -442,7 +501,7 @@ export class BreedingPathEngine {
       return leftScore.breeds - rightScore.breeds || leftScore.depth - rightScore.depth
     })
 
-    const passiveSkillIdsForState = (state: string) => requiredPassiveIds.filter((id, index) =>
+    const passiveSkillIdsForState = (state: string) => requiredPassiveIds.filter((_, index) =>
       (stateMask(state) & (1 << index)) !== 0)
 
     const node = (
@@ -483,13 +542,18 @@ export class BreedingPathEngine {
       }
     }
 
+    // `targetCandidates` est trié passifs décroissants puis Pal possédé d'abord : si la tête de
+    // liste est un Pal possédé, aucune route d'élevage ne fait mieux en couverture de passifs.
+    // Inutile de proposer un croisement pour reproduire un Pal déjà en sa possession.
     const selectedState = targetCandidates[0]
     const passiveCoverage = stateMask(selectedState)
-    if (!respectGenders && passiveCoverage === allPassivesMask && !fromByState.has(selectedState)) {
+    if (!fromByState.has(selectedState)) {
       const passiveSkillIds = passiveSkillIdsForState(selectedState)
-      const ownedTarget = node(target, true, null, null, passiveSkillIds)
+      const gender = stateGender(selectedState)
+      const storageLocation = stateStorageLocation(selectedState)
+      const ownedTarget = node(target, true, gender, storageLocation, passiveSkillIds)
       const root = {
-        ...node(target, false, null, null, passiveSkillIds),
+        ...node(target, false, gender, storageLocation, passiveSkillIds),
         step: { parentA: ownedTarget, parentB: ownedTarget, parentAGender: null, parentBGender: null, rule: 'formula' as const },
       }
       return {
@@ -505,17 +569,9 @@ export class BreedingPathEngine {
     }
 
     const derivedRoutes = [...targetDerivations.values()]
-      .sort((left, right) => this.compareTargetCandidates(
-        left.state,
-        right.state,
-        left.score,
-        right.score,
-        left.pair,
-        right.pair,
-        left.parentAState,
-        left.parentBState,
-        right.parentAState,
-        right.parentBState,
+      .sort((left, right) => this.compareTargetDerivations(
+        left,
+        right,
         target,
         options.prioritizeTargetSpecies,
         fromByState,
@@ -534,7 +590,7 @@ export class BreedingPathEngine {
           },
         },
         breeds: derivation.score.breeds,
-        passiveCount: bitCount(stateMask(derivation.state)),
+        passiveCount: derivation.passiveCount,
       } satisfies BreedingPathRoute))
 
     const routes = derivedRoutes.length > 0
@@ -595,35 +651,32 @@ export class BreedingPathEngine {
     })
   }
 
-  private compareTargetCandidates(
-    leftState: string,
-    rightState: string,
-    leftScore: Score,
-    rightScore: Score,
-    leftPair: Pair,
-    rightPair: Pair,
-    leftParentAState: string,
-    leftParentBState: string,
-    rightParentAState: string,
-    rightParentBState: string,
+  private compareTargetDerivations(
+    left: TargetDerivation,
+    right: TargetDerivation,
     target: number,
     prioritizeTargetSpecies: boolean | undefined,
     fromByState: Map<string, { pair: Pair; parentAState: string; parentBState: string }>,
   ) {
-    const passiveCountDifference = bitCount(Number(rightState.split(':')[2])) - bitCount(Number(leftState.split(':')[2]))
+    const passiveCountDifference = right.passiveCount - left.passiveCount
     if (passiveCountDifference !== 0) return passiveCountDifference
     if (prioritizeTargetSpecies) {
-      const leftUsesOwnedTargetPair = leftPair.parentAPalId === target
-        && leftPair.parentBPalId === target
-        && !fromByState.has(leftParentAState)
-        && !fromByState.has(leftParentBState)
-      const rightUsesOwnedTargetPair = rightPair.parentAPalId === target
-        && rightPair.parentBPalId === target
-        && !fromByState.has(rightParentAState)
-        && !fromByState.has(rightParentBState)
+      const leftUsesOwnedTargetPair = this.derivationUsesOwnedTargetPair(left, target, fromByState)
+      const rightUsesOwnedTargetPair = this.derivationUsesOwnedTargetPair(right, target, fromByState)
       if (leftUsesOwnedTargetPair !== rightUsesOwnedTargetPair) return leftUsesOwnedTargetPair ? -1 : 1
     }
-    return leftScore.breeds - rightScore.breeds || leftScore.depth - rightScore.depth
+    return left.score.breeds - right.score.breeds || left.score.depth - right.score.depth
+  }
+
+  private derivationUsesOwnedTargetPair(
+    derivation: TargetDerivation,
+    target: number,
+    fromByState: Map<string, { pair: Pair; parentAState: string; parentBState: string }>,
+  ) {
+    return derivation.pair.parentAPalId === target
+      && derivation.pair.parentBPalId === target
+      && !fromByState.has(derivation.parentAState)
+      && !fromByState.has(derivation.parentBState)
   }
 }
 

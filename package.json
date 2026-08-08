@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "api:build": "cd api && mvn clean package && cd ..",
-    "web:build": "cd web && npm run build && cd ..",
+    "web:build": "cd web && npm run test && npm run build && cd ..",
     "electron:build": "cd web && npm run electron:build && cd ..",
     "web:dev": "npm run dev --prefix web",
     "web:dev:qa": "npm run dev:qa --prefix web",
