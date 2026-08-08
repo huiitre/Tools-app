@@ -33,7 +33,6 @@ worker.onmessage = (event: MessageEvent<StartMessage>) => {
       input.targetId,
       input.ownedPals,
       input.passiveSkillIds,
-      input.options,
       progress => worker.postMessage({
         type: 'progress',
         requestId,

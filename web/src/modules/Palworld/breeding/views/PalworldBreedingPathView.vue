@@ -39,7 +39,6 @@ const passiveSelectorOpen = ref(false)
 const alternativesOpen = ref(false)
 const selectedRouteId = ref<string | null>(null)
 const excludeBasePals = ref(false)
-const prioritizeTargetSpecies = ref(true)
 
 const result = ref<BreedingPathResult | null>(null)
 const error = ref<string | null>(null)
@@ -211,9 +210,8 @@ function restoreServerOptions() {
     const options: unknown = JSON.parse(storedOptions)
     if (!options || typeof options !== 'object') return
     const serverOptions = options as Record<string, unknown>
-    const { excludeBasePals: storedExcludeBasePals, prioritizeTargetSpecies: storedPrioritizeTargetSpecies } = serverOptions
+    const { excludeBasePals: storedExcludeBasePals } = serverOptions
     if (typeof storedExcludeBasePals === 'boolean') excludeBasePals.value = storedExcludeBasePals
-    if (typeof storedPrioritizeTargetSpecies === 'boolean') prioritizeTargetSpecies.value = storedPrioritizeTargetSpecies
   } catch {
     localStorage.removeItem(SERVER_OPTIONS_STORAGE_KEY)
   }
@@ -246,7 +244,6 @@ async function computePath() {
         passiveSkillIds: [...ownedPal.passiveSkillIds],
       })),
       passiveSkillIds: [...selectedPassiveIds.value],
-      options: { prioritizeTargetSpecies: prioritizeTargetSpecies.value },
     })
     if (workerResult === null) return
     result.value = workerResult
@@ -260,14 +257,13 @@ async function computePath() {
 }
 
 watch(
-  [() => breedingStore.selectedPalId, ownedPalInputsSignature, selectedPassiveIds, excludeBasePals, prioritizeTargetSpecies, breedingRules],
+  [() => breedingStore.selectedPalId, ownedPalInputsSignature, selectedPassiveIds, excludeBasePals, breedingRules],
   invalidatePath,
 )
 watch(source, source => localStorage.setItem(OWNED_PALS_SOURCE_STORAGE_KEY, source))
-watch([excludeBasePals, prioritizeTargetSpecies], () => {
+watch(excludeBasePals, () => {
   localStorage.setItem(SERVER_OPTIONS_STORAGE_KEY, JSON.stringify({
     excludeBasePals: excludeBasePals.value,
-    prioritizeTargetSpecies: prioritizeTargetSpecies.value,
   }))
 })
 watch(source, source => {
@@ -349,10 +345,6 @@ onMounted(async () => {
             <label>
               <input v-model="excludeBasePals" type="checkbox">
               Ignorer les Pals en Base
-            </label>
-            <label>
-              <input v-model="prioritizeTargetSpecies" type="checkbox">
-              Prioriser le Pal cible
             </label>
           </div>
 
