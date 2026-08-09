@@ -37,6 +37,7 @@ const passiveSelectorOpen = ref(false)
 const sortKey = ref<SortKey>('name')
 const sortDirection = ref<'asc' | 'desc'>('asc')
 const ivSortDirection = ref<'asc' | 'desc'>('desc')
+const ivSortOnAverage = ref(false)
 const snapshotWorkKeyBySlug: Record<string, string> = {
   Kindling: 'EmitFlame', Watering: 'Watering', Planting: 'Seeding', Generating_Electricity: 'GenerateElectricity',
   Handiwork: 'Handcraft', Gathering: 'Collection', Lumbering: 'Deforest', Mining: 'Mining',
@@ -169,6 +170,11 @@ function sortValue(pal: InventoryPal): string | number {
     default: return pal.catalog.name.toLocaleLowerCase()
   }
 }
+// Mode « moyenne » : la moyenne des IV cochées prime, puis la plus faible départage — un Pal équilibré
+// passe devant un Pal qui n'a qu'une seule stat très haute (ce que fait le mode par défaut, basé sur max).
+const ivSortCriteria = computed<Array<'perfect' | 'max' | 'average' | 'min'>>(
+  () => ivSortOnAverage.value ? ['average', 'min', 'max'] : ['perfect', 'max', 'average', 'min'],
+)
 const visiblePals = computed(() => [...inventoryPals.value].filter(matchesFilters).sort((a, b) => {
   const favoriteOrder = [...selectedFavoriteLevels.value].sort((left, right) => left - right)
   if (favoriteOrder.length) {
@@ -182,7 +188,7 @@ const visiblePals = computed(() => [...inventoryPals.value].filter(matchesFilter
     const keys = ['hp', 'attack', 'defense'] as IvSortKey[]
     const values = (pal: InventoryPal) => keys
       .filter(key => selectedIvSortKeys.value.has(key))
-      .map(key => key === 'hp' ? pal.ivHp ?? -1 : key === 'attack' ? pal.ivAttack ?? -1 : pal.ivDefense ?? -1)
+      .map(key => ivValue(key === 'hp' ? pal.ivHp : key === 'attack' ? pal.ivAttack : pal.ivDefense))
     const aValues = values(a); const bValues = values(b)
     const score = (ivValues: number[]) => ({
       perfect: ivValues.filter(value => value >= 100).length,
@@ -191,7 +197,7 @@ const visiblePals = computed(() => [...inventoryPals.value].filter(matchesFilter
       min: Math.min(...ivValues),
     })
     const aScore = score(aValues); const bScore = score(bValues)
-    for (const key of ['perfect', 'max', 'average', 'min'] as const) {
+    for (const key of ivSortCriteria.value) {
       const comparison = aScore[key] < bScore[key] ? -1 : aScore[key] > bScore[key] ? 1 : 0
       if (comparison !== 0) return ivSortDirection.value === 'asc' ? comparison : -comparison
     }
@@ -205,8 +211,9 @@ function storageLabel(location: PalworldPalStorageLocation) {
 }
 // favorite_index est le niveau du cadenas : 0 et null signifient « aucun cadenas ».
 function favoriteLevel(index: number | null) { return index === null || index <= 0 ? 0 : Math.min(index, 3) }
-function ivClass(value: number | null) {
-  if (value === null) return 'iv-empty'
+// Un IV absent du snapshot vaut 0 dans le jeu, pas « inconnu ».
+function ivValue(value: number | null) { return value ?? 0 }
+function ivClass(value: number) {
   if (value >= 100) return 'iv-perfect'
   if (value > 70) return 'iv-high'
   return 'iv-normal'
@@ -250,7 +257,7 @@ function clearFilters() {
   searchQuery.value = ''
   selectedElementIds.value = new Set(); selectedWorkSuitabilityIds.value = new Set(); selectedPassiveIds.value = new Set()
   selectedFavoriteLevels.value = new Set(); selectedLocationKeys.value = new Set(locationOptions.value.map(option => option.key)); requireAllPassives.value = false
-  selectedRanks.value = new Set(); selectedIvSortKeys.value = new Set(); ivSortDirection.value = 'desc'
+  selectedRanks.value = new Set(); selectedIvSortKeys.value = new Set(); ivSortDirection.value = 'desc'; ivSortOnAverage.value = false
 }
 </script>
 
@@ -289,6 +296,7 @@ function clearFilters() {
           <button type="button" class="iv-sort-option" :class="{ active: selectedIvSortKeys.has('attack') }" title="Trier par IV attaque" @click="toggleIvSort('attack')"><i class="mdi mdi-sword-cross" /> ATK</button>
           <button type="button" class="iv-sort-option" :class="{ active: selectedIvSortKeys.has('defense') }" title="Trier par IV défense" @click="toggleIvSort('defense')"><i class="mdi mdi-shield" /> DEF</button>
           <button v-if="selectedIvSortKeys.size" type="button" class="toolbar-btn iv-sort-direction" :title="ivSortDirection === 'asc' ? 'IV croissants' : 'IV décroissants'" @click="ivSortDirection = ivSortDirection === 'asc' ? 'desc' : 'asc'"><i class="mdi" :class="ivSortDirection === 'asc' ? 'mdi-sort-ascending' : 'mdi-sort-descending'" /></button>
+          <label v-if="selectedIvSortKeys.size > 1" class="iv-sort-average" title="Trier sur la moyenne des IV cochées plutôt que sur la meilleure"><input v-model="ivSortOnAverage" type="checkbox">Moyenne</label>
         </div>
         <div class="passive-filter">
           <button type="button" class="element-tab" @click="passiveSelectorOpen = true"><i class="mdi mdi-tune-variant" />{{ selectedPassiveIds.size ? 'Modifier les passifs' : 'Filtrer par passifs' }}</button>
@@ -305,7 +313,7 @@ function clearFilters() {
           <img v-if="pal.catalog.imageUrl" :src="pal.catalog.imageUrl" :alt="pal.catalog.name" width="56" height="56" loading="lazy">
           <div class="inventory-card__identity"><small class="pal-index">#{{ pal.catalog.paldexIndex ?? '—' }}</small><strong>{{ pal.catalog.name }}</strong><small><i class="mdi" :class="pal.gender === 'male' ? 'mdi-gender-male gender-male' : pal.gender === 'female' ? 'mdi-gender-female gender-female' : 'mdi-help'" />{{ pal.ownerName ?? 'Propriétaire inconnu' }}</small><span class="pal-types"><span v-for="element in pal.catalog.elements" :key="element.id" class="element-icon-crop" :title="element.name" :style="element.iconUrl ? { backgroundImage: `url(${element.iconUrl})` } : {}" /></span></div>
           <div class="inventory-card__passives"><span v-for="passiveId in pal.passiveSkillIds" :key="passiveId" class="passive-option" :class="`rank-${passiveById.get(passiveId)?.rank ?? 0}`"><span>{{ passiveName(passiveId) }}</span><img v-if="passiveRankIconUrl(passiveId)" :src="passiveRankIconUrl(passiveId)" alt=""><i v-else class="mdi mdi-chevron-double-up" /></span></div>
-          <aside class="inventory-card__iv" aria-label="IV"><div class="iv-stat"><i class="mdi mdi-heart" /><span :class="ivClass(pal.ivHp)">{{ pal.ivHp ?? '—' }}</span></div><div class="iv-stat"><i class="mdi mdi-sword-cross" /><span :class="ivClass(pal.ivAttack)">{{ pal.ivAttack ?? '—' }}</span></div><div class="iv-stat"><i class="mdi mdi-shield" /><span :class="ivClass(pal.ivDefense)">{{ pal.ivDefense ?? '—' }}</span></div></aside>
+          <aside class="inventory-card__iv" aria-label="IV"><div class="iv-stat"><i class="mdi mdi-heart" /><span :class="ivClass(ivValue(pal.ivHp))">{{ ivValue(pal.ivHp) }}</span></div><div class="iv-stat"><i class="mdi mdi-sword-cross" /><span :class="ivClass(ivValue(pal.ivAttack))">{{ ivValue(pal.ivAttack) }}</span></div><div class="iv-stat"><i class="mdi mdi-shield" /><span :class="ivClass(ivValue(pal.ivDefense))">{{ ivValue(pal.ivDefense) }}</span></div></aside>
           <div class="inventory-card__combat" aria-label="Statistiques actuelles"><div class="combat-stat"><i class="mdi mdi-heart" /><strong>PV</strong><span>{{ pal.currentHp !== null ? Math.round(pal.currentHp) : '—' }}</span></div><div class="combat-stat"><i class="mdi mdi-sword-cross" /><strong>ATK</strong><span>—</span></div><div class="combat-stat"><i class="mdi mdi-shield" /><strong>DEF</strong><span>—</span></div></div>
           <div v-if="pal.catalog.workSuitabilities.length" class="inventory-card__work"><span v-for="work in pal.catalog.workSuitabilities" :key="work.id" class="worksuitability" :title="`${work.name} : ${workLevel(pal, work)}`"><img v-if="work.iconUrl" :src="work.iconUrl" :alt="work.name" width="16" height="16" loading="lazy"><span class="worksuitability-level" :class="{ 'work-level--over-max': workExceedsBaseLevel(pal, work) }">{{ workLevel(pal, work) }}</span></span></div>
           <footer class="inventory-card__location"><i class="mdi" :class="pal.storageLocation === 'base' ? 'mdi-home-variant' : pal.storageLocation === 'party' ? 'mdi-account-group' : 'mdi-archive'" /><span>{{ storageLabel(pal.storageLocation) }}</span></footer>
@@ -347,6 +355,8 @@ function clearFilters() {
 .iv-sort-option i { color: #78dce8; }
 .iv-sort-option.active { border-color: var(--pico-primary); color: var(--pico-primary); }
 .iv-sort-direction { width: 1.8rem; height: 1.8rem; }
+.iv-sort-average { display: inline-flex; align-items: center; gap: .3rem; margin: 0 0 0 .4rem; color: var(--pico-muted-color); font-size: .68rem; font-weight: 700; cursor: pointer; }
+.iv-sort-average input[type='checkbox'] { appearance: auto; inline-size: .9rem; block-size: .9rem; min-inline-size: .9rem; margin: 0; accent-color: var(--pico-primary); opacity: 1; }
 .inventory-card__work { display: flex; flex: 1 0 100%; flex-wrap: wrap; justify-content: flex-start; gap: 3px; margin-top: .15rem; }
 .worksuitability { display: inline-flex; align-items: center; gap: 3px; padding: 2px 4px; border-radius: 4px; background: color-mix(in srgb, var(--pico-color) 8%, transparent); }
 .worksuitability img { width: 16px; height: 16px; border-radius: 0; object-fit: contain; }
@@ -389,7 +399,6 @@ function clearFilters() {
 .iv-normal { color: var(--pico-color); }
 .iv-high { color: #55d879; font-weight: 800; }
 .iv-perfect { color: #f0bd3d; font-weight: 900; }
-.iv-empty { color: var(--pico-muted-color); }
 .current-hp { margin-top: .15rem; color: var(--pico-muted-color); font-size: .58rem; white-space: nowrap; }
 @media (max-width: 640px) { .inventory { padding: 1rem; }.pal-count { margin-left: 0; }.filter-separator { display: none; } }
 </style>
