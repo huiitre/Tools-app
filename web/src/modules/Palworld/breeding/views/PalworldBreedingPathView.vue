@@ -14,7 +14,7 @@ import { useWorkerTask } from '@/composables/useWorkerTask'
 import type { BreedingPathWorkerInput } from '../workers/breedingPathWorker.types'
 import type { PalworldElementSummary, PalworldPalListItem } from '../../paldex/types/paldex.types'
 import type { PalworldPalStorageLocation } from '../../server/types/palworldServerData.types'
-import type { BreedingPathResult, BreedingPathRoute } from '../types/breeding.types'
+import type { BreedingPathNode, BreedingPathResult, BreedingPathRoute } from '../types/breeding.types'
 import { usePassiveSkillsStore } from '../../passives/passiveSkills.store'
 
 type OwnedPalsSource = 'manual' | 'server'
@@ -107,13 +107,37 @@ const ownedPalInputs = computed<BreedingOwnedPal[]>(() => source.value === 'serv
     }])
   : [...manualOwnedIds.value].map(speciesId => ({ speciesId, passiveSkillIds: [], gender: null, storageLocation: null })))
 
-// Le refresh périodique de serverDataStore (cf. Palworld.vue) recrée un nouveau tableau à
-// chaque tick même quand le contenu est identique. On compare une signature stable plutôt
-// que la référence du tableau pour ne pas invalider un résultat déjà calculé pour rien.
-const ownedPalInputsSignature = computed(() => ownedPalInputs.value
-  .map(pal => `${pal.speciesId}:${pal.gender ?? ''}:${pal.storageLocation ?? ''}:${[...pal.passiveSkillIds].sort().join('+')}`)
+function ownedPalKey(pal: BreedingOwnedPal) {
+  return `${pal.speciesId}:${pal.gender ?? ''}:${pal.storageLocation ?? ''}:${[...pal.passiveSkillIds].sort().join('+')}`
+}
+
+function collectOwnedSpeciesIds(node: BreedingPathNode, speciesIds: Set<number>) {
+  if (node.owned) speciesIds.add(node.species.id)
+  if (!node.step) return
+  collectOwnedSpeciesIds(node.step.parentA, speciesIds)
+  collectOwnedSpeciesIds(node.step.parentB, speciesIds)
+}
+
+const routeOwnedSpeciesIds = computed(() => {
+  const speciesIds = new Set<number>()
+  for (const route of routes.value) collectOwnedSpeciesIds(route.root, speciesIds)
+  return speciesIds
+})
+
+// Chaque import de snapshot serveur peut faire bouger n'importe quel Pal (capturé, relâché, déplacé
+// entre palbox/base/équipe), et le refresh périodique de serverDataStore (cf. Palworld.vue) recrée de
+// toute façon un nouveau tableau à chaque tick. On ne surveille donc que les espèces réellement
+// utilisées par les routes affichées, via une signature de contenu : un Pal sans rapport avec l'arbre
+// ne doit pas le marquer comme périmé.
+const routeOwnedSignature = computed(() => ownedPalInputs.value
+  .filter(pal => routeOwnedSpeciesIds.value.has(pal.speciesId))
+  .map(ownedPalKey)
   .sort()
   .join('|'))
+
+const computedRouteOwnedSignature = ref<string | null>(null)
+const pathStale = computed(() => computedRouteOwnedSignature.value !== null
+  && computedRouteOwnedSignature.value !== routeOwnedSignature.value)
 
 const availablePassiveIds = computed(() => [...new Set(serverOwnedPals.value
   .flatMap(pal => pal.passiveSkillIds))])
@@ -220,6 +244,7 @@ function restoreServerOptions() {
 function invalidatePath() {
   workerTask.cancel()
   result.value = null
+  computedRouteOwnedSignature.value = null
   selectedRouteId.value = null
   alternativesOpen.value = false
   error.value = null
@@ -233,6 +258,7 @@ async function computePath() {
   }
 
   result.value = null
+  computedRouteOwnedSignature.value = null
   error.value = null
   try {
     const workerResult = await workerTask.run({
@@ -248,16 +274,20 @@ async function computePath() {
     if (workerResult === null) return
     result.value = workerResult
     selectedRouteId.value = result.value.routes[0]?.id ?? null
+    computedRouteOwnedSignature.value = routeOwnedSignature.value
     alternativesOpen.value = false
   } catch {
     result.value = null
+    computedRouteOwnedSignature.value = null
     selectedRouteId.value = null
     error.value = 'Impossible de calculer le chemin.'
   }
 }
 
+// Les Pals possédés ne sont volontairement pas dans cette liste : ils bougent tout seuls au fil des
+// imports de snapshot et ne doivent que marquer l'arbre comme périmé (cf. pathStale), pas le détruire.
 watch(
-  [() => breedingStore.selectedPalId, ownedPalInputsSignature, selectedPassiveIds, excludeBasePals, breedingRules],
+  [() => breedingStore.selectedPalId, selectedPassiveIds, excludeBasePals, breedingRules],
   invalidatePath,
 )
 watch(source, source => localStorage.setItem(OWNED_PALS_SOURCE_STORAGE_KEY, source))
@@ -458,6 +488,14 @@ onMounted(async () => {
           :alternative-routes-count="alternativeRoutesCount"
           @show-alternatives="alternativesOpen = true"
         >
+          <template #banner>
+            <div v-if="pathStale" class="path-stale-banner">
+              <i class="mdi mdi-alert-outline" />
+              <span>Tes Pals ont changé depuis ce calcul.</span>
+              <button type="button" :disabled="!canCalculate || loading" @click="computePath">Recalculer</button>
+            </div>
+          </template>
+
           <BreedingPathTreeNode
             :node="displayedRoute.root"
             :resolve-pal="resolvePal"
@@ -582,6 +620,11 @@ onMounted(async () => {
 .path-result :deep(.path-node-card .breeding-chip-avatar img) { image-rendering: auto; }
 .path-tree-wrap { width: 100%; height: 100%; }
 .path-result :deep(.path-tree-wrap.path-canvas) { height: 100%; }
+.path-stale-banner { display: flex; align-items: center; gap: .5rem; padding: .35rem .4rem .35rem .6rem; border: 1px solid #f0bd3d; border-radius: var(--pico-border-radius); background: var(--pico-card-background-color); box-shadow: var(--pico-card-box-shadow); color: var(--pico-color); font-size: .72rem; }
+.path-stale-banner i { color: #f0bd3d; font-size: 1rem; }
+.path-stale-banner i, .path-stale-banner button { flex-shrink: 0; }
+.path-stale-banner button { width: auto; min-height: 1.7rem; white-space: nowrap; padding: .2rem .6rem; margin: 0; border-color: #f0bd3d; background: transparent; color: #f0bd3d; font-size: .7rem; font-weight: 700; }
+.path-stale-banner button:hover:not(:disabled) { background: #f0bd3d; color: #111111; }
 .empty-state, .status, .empty { display: flex; flex-direction: column; align-items: center; gap: .5rem; color: var(--pico-muted-color); text-align: center; }
 .empty-state .mdi, .empty .mdi { font-size: 3rem; color: var(--pico-primary); }
 .empty-state strong, .empty strong { color: var(--pico-color); font-size: 1.05rem; }

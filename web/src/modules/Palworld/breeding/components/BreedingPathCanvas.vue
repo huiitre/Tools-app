@@ -128,6 +128,10 @@ onUnmounted(() => {
     @pointerup="stopDrag"
     @pointercancel="stopDrag"
   >
+    <div class="path-canvas-banner" @pointerdown.stop>
+      <slot name="banner" />
+    </div>
+
     <div v-if="alternativeRoutesCount > 0" class="path-canvas-alternatives" @pointerdown.stop>
       <button type="button" @click="emit('showAlternatives')">
         <i class="mdi mdi-source-branch" />
@@ -153,6 +157,8 @@ onUnmounted(() => {
 <style lang="scss" scoped>
 .path-canvas { position: relative; width: 100%; height: min(72dvh, 760px); overflow: hidden; border: 1px solid var(--pico-card-border-color); border-radius: var(--pico-border-radius); cursor: grab; touch-action: none; user-select: none; }
 .path-canvas.dragging { cursor: grabbing; }
+.path-canvas-banner { position: absolute; z-index: 3; top: .75rem; left: 50%; display: flex; justify-content: center; max-width: min(560px, calc(100% - 16rem)); transform: translateX(-50%); pointer-events: none; }
+.path-canvas-banner > * { pointer-events: auto; }
 .path-canvas-alternatives { position: absolute; z-index: 2; top: .75rem; left: .75rem; }
 .path-canvas-alternatives button { width: auto; min-height: 2rem; margin: 0; padding: .35rem .6rem; border-color: var(--pico-card-border-color); background: var(--pico-card-background-color); color: var(--pico-color); box-shadow: var(--pico-card-box-shadow); font-size: .7rem; }
 .path-canvas-alternatives button:hover { border-color: var(--pico-primary); color: var(--pico-primary); }
