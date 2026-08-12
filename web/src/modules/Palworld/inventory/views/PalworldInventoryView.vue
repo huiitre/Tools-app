@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { usePaldexStore } from '../../paldex/paldex.store'
 import { usePassiveSkillsStore } from '../../passives/passiveSkills.store'
 import { usePalworldServerDataStore } from '../../server/serverData.store'
@@ -206,6 +206,51 @@ const visiblePals = computed(() => [...inventoryPals.value].filter(matchesFilter
   const comparison = va < vb ? -1 : va > vb ? 1 : 0
   return sortDirection.value === 'asc' ? comparison : -comparison
 }))
+
+// Rendu progressif : jusqu'à ~2000 Pals possédés, chaque carte porte beaucoup de
+// markup (IV, passifs, aptitudes calculées) — tout monter d'un coup fait ramer le
+// scroll et les changements de filtre. Même pattern que ValorantSkinCatalog.vue /
+// PaldexView.vue : on affiche par lots, un IntersectionObserver charge la suite.
+const INVENTORY_PAGE_SIZE = 60
+const inventoryLimit = ref(INVENTORY_PAGE_SIZE)
+const inventorySentinel = ref<HTMLElement | null>(null)
+let inventoryObserver: IntersectionObserver | null = null
+
+const displayedPals = computed(() => visiblePals.value.slice(0, inventoryLimit.value))
+const hasMoreInventoryPals = computed(() => inventoryLimit.value < visiblePals.value.length)
+
+function initInventoryObserver() {
+  if (inventoryObserver) inventoryObserver.disconnect()
+
+  inventoryObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && hasMoreInventoryPals.value) {
+      inventoryLimit.value += INVENTORY_PAGE_SIZE
+    }
+  }, { rootMargin: '400px' })
+
+  if (inventorySentinel.value) inventoryObserver.observe(inventorySentinel.value)
+}
+
+// visiblePals change de référence à chaque filtre/tri/sélection joueur : on
+// réinitialise la limite dessus plutôt que de lister chaque ref individuellement.
+watch(visiblePals, () => { inventoryLimit.value = INVENTORY_PAGE_SIZE })
+
+async function trySetupInventoryObserver() {
+  if (serverDataStore.loading || paldexStore.loading || !inventoryPals.value.length) return
+  await nextTick()
+  initInventoryObserver()
+}
+
+watch(() => serverDataStore.loading || paldexStore.loading, trySetupInventoryObserver)
+
+onMounted(() => {
+  trySetupInventoryObserver()
+})
+
+onUnmounted(() => {
+  if (inventoryObserver) inventoryObserver.disconnect()
+})
+
 function storageLabel(location: PalworldPalStorageLocation) {
   return { base: 'En base', palbox: 'Palbox', dimensional_storage: 'Boîte dimensionnelle', party: 'Équipe' }[location]
 }
@@ -307,7 +352,7 @@ function clearFilters() {
       </header>
 
       <section v-if="visiblePals.length" class="inventory-list">
-        <article v-for="pal in visiblePals" :key="pal.instanceId" class="inventory-card">
+        <article v-for="pal in displayedPals" :key="pal.instanceId" class="inventory-card">
           <div class="pal-top-meta"><span v-if="pal.level !== null" class="pal-level">Niv. {{ pal.level }}</span><span v-if="pal.rank > 0" class="condensation-rank" :title="`Condensation ${pal.rank}`"><i v-for="star in pal.rank" :key="star" class="mdi mdi-star" /></span></div>
           <span v-if="pal.favoriteIndex !== null && pal.favoriteIndex > 0" class="favorite-lock" :title="`Favori ${favoriteLevel(pal.favoriteIndex)}`"><span class="favorite-lock-shape"><b>{{ favoriteLevel(pal.favoriteIndex) }}</b></span></span>
           <img v-if="pal.catalog.imageUrl" :src="pal.catalog.imageUrl" :alt="pal.catalog.name" width="56" height="56" loading="lazy">
@@ -319,6 +364,9 @@ function clearFilters() {
           <footer class="inventory-card__location"><i class="mdi" :class="pal.storageLocation === 'base' ? 'mdi-home-variant' : pal.storageLocation === 'party' ? 'mdi-account-group' : 'mdi-archive'" /><span>{{ storageLabel(pal.storageLocation) }}</span></footer>
         </article>
       </section>
+      <div v-if="visiblePals.length" ref="inventorySentinel" class="sentinel">
+        <div v-if="hasMoreInventoryPals" class="spinner" />
+      </div>
       <p v-else class="empty">Aucun Pal ne correspond à la recherche.</p>
       <BreedingPassiveSelectorModal :open="passiveSelectorOpen" :passive-skills="passiveSkillsStore.passiveSkills" :available-passive-ids="[...availablePassiveIds]" :model-value="[...selectedPassiveIds]" :max-selections="0" @apply="applyPassiveSelection" @close="passiveSelectorOpen = false" />
       <Teleport to="body"><div v-if="locationSelectorOpen" class="location-modal-backdrop" @mousedown.self="locationSelectorOpen = false"><section class="location-modal" role="dialog" aria-modal="true"><header><strong>Emplacements</strong><button type="button" @click="locationSelectorOpen = false"><i class="mdi mdi-close" /></button></header><div class="location-modal__list"><button v-for="option in locationOptions" :key="option.key" type="button" :class="{ selected: pendingLocationKeys.has(option.key) }" @click="togglePendingLocation(option.key)"><i class="mdi" :class="option.icon" /><span>{{ option.label }}</span><i class="mdi" :class="pendingLocationKeys.has(option.key) ? 'mdi-check-circle' : 'mdi-circle-outline'" /></button></div><footer><button type="button" @click="applyLocationSelection">Valider</button></footer></section></div></Teleport>
@@ -400,5 +448,6 @@ function clearFilters() {
 .iv-high { color: #55d879; font-weight: 800; }
 .iv-perfect { color: #f0bd3d; font-weight: 900; }
 .current-hp { margin-top: .15rem; color: var(--pico-muted-color); font-size: .58rem; white-space: nowrap; }
+.sentinel { display: flex; justify-content: center; align-items: center; min-height: 60px; }
 @media (max-width: 640px) { .inventory { padding: 1rem; }.pal-count { margin-left: 0; }.filter-separator { display: none; } }
 </style>
