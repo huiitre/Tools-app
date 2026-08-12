@@ -53,6 +53,8 @@ Production  → appsettings.Production.json
 
 `appsettings.json` contient actuellement `Application:Version = 0.1.0`. Au build Docker, les arguments `APPLICATION_VERSION` et `GIT_SHA` alimentent respectivement les variables d'environnement `Application__Version` et `Application__GitSha`, sans modifier le code. `/version` permet donc d'identifier précisément l'image exécutée.
 
+Pour rester cohérent avec les Compose existants, l'application accepte aussi les variables `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME` et `DB_PASSWORD`. Lorsqu'elles sont toutes présentes, `Program.cs` construit la chaîne PostgreSQL avec `NpgsqlConnectionStringBuilder`. La forme ASP.NET Core standard `ConnectionStrings__Postgres` reste acceptée comme alternative, notamment pour le développement local.
+
 Le `Dockerfile` est multi-stage : le SDK .NET compile et publie l'application, tandis que l'image finale n'embarque que le runtime ASP.NET Core et les fichiers publiés. Elle écoute en interne sur le port `8080` et s'exécute avec l'utilisateur non-root fourni par l'image officielle. Le Compose QA/Production définira l'environnement et les secrets ; il reste à créer.
 
 Validation effectuée le 12 août 2026 :
@@ -66,7 +68,7 @@ docker build \
 
 L'image a démarré avec `ASPNETCORE_ENVIRONMENT=QA` et une chaîne PostgreSQL factice, suffisante pour les routes sans accès à la base. `GET /version` a retourné `{"version":"0.1.0","gitSha":"test-sha","environment":"QA"}` et `GET /health` a retourné `{"status":"ok"}`. Le conteneur de test éphémère a ensuite été arrêté.
 
-En QA et Production, la chaîne PostgreSQL devra être fournie par Docker/secrets via `ConnectionStrings__Postgres`; sans elle, le démarrage échoue volontairement avec `Connection string Postgres manquante`.
+En QA et Production, le Compose fournit `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME` et `DB_PASSWORD`, comme les services Java existants. Sans ces cinq variables (ou l'alternative `ConnectionStrings__Postgres`), le démarrage échoue volontairement avec `Connection string Postgres manquante`.
 
 ## DI, DDD et PostgreSQL
 
@@ -161,7 +163,7 @@ Le thème ANSI Serilog est activé en Development. Avec `dotnet watch`, ne pas f
 ## Suite recommandée
 
 1. Exécuter manuellement le workflow QA une première fois afin de publier `huiitre/tools_api_core:qa` en version de bootstrap `0.1.0` et de valider les secrets Docker Hub.
-2. Créer le Compose QA sur le NAS, avec healthcheck et Watchtower limité à `tools-api-core-qa`.
+2. Créer le Compose QA directement sur le NAS, avec Watchtower limité à `tools_api_core_qa`.
 3. Vérifier la chaîne complète, puis ajouter la route reverse proxy QA de diagnostic.
 4. Reprendre ensuite la gestion centralisée des erreurs JSON et l'exercice de rollback dans `Users`.
 

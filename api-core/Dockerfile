@@ -14,6 +14,10 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0
 
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 ARG APPLICATION_VERSION=0.1.0
 ARG GIT_SHA=unknown
 
