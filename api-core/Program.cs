@@ -31,6 +31,7 @@ app.MapGet("/health", () => new { status = "ok" });
 
 app.MapGet("/version", () => new
 {
+    service = "api-core",
     version = applicationVersion,
     gitSha,
     environment = app.Environment.EnvironmentName
