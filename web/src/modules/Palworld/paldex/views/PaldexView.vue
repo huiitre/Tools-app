@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { usePaldexStore } from '../paldex.store'
 import { usePalworldServerDataStore } from '../../server/serverData.store'
 import { paldexLabel } from '../utils/paldexLabel'
@@ -114,33 +114,6 @@ const visiblePals = computed(() => {
   return sorted
 })
 
-// Rendu progressif : tous les Pals sont déjà en mémoire (store.pals), mais les
-// monter tous d'un coup (PalContextTrigger + tooltip par carte) est ce qui coûte
-// cher, pas la donnée elle-même. Même pattern que ValorantSkinCatalog.vue.
-const PAGE_SIZE = 60
-const limit = ref(PAGE_SIZE)
-const sentinel = ref<HTMLElement | null>(null)
-let observer: IntersectionObserver | null = null
-
-const displayedPals = computed(() => visiblePals.value.slice(0, limit.value))
-const hasMore = computed(() => limit.value < visiblePals.value.length)
-
-function initObserver() {
-  if (observer) observer.disconnect()
-
-  observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting && hasMore.value) {
-      limit.value += PAGE_SIZE
-    }
-  }, { rootMargin: '400px' })
-
-  if (sentinel.value) observer.observe(sentinel.value)
-}
-
-watch([searchQuery, selectedElementIds, selectedWorkSuitabilityIds, sortKey, sortDir], () => {
-  limit.value = PAGE_SIZE
-})
-
 function hydrateSort() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_SORT)
@@ -157,21 +130,8 @@ watch([sortKey, sortDir], () => {
   localStorage.setItem(STORAGE_KEY_SORT, JSON.stringify({ sortKey: sortKey.value, sortDir: sortDir.value }))
 })
 
-async function trySetupObserver() {
-  if (store.loading || !store.pals.length) return
-  await nextTick()
-  initObserver()
-}
-
-watch(() => store.loading, trySetupObserver)
-
 onMounted(() => {
   hydrateSort()
-  trySetupObserver()
-})
-
-onUnmounted(() => {
-  if (observer) observer.disconnect()
 })
 
 // Chargement du catalogue Paldex géré au niveau parent (Palworld.vue), partagé avec la Tierlist.
@@ -263,7 +223,7 @@ onUnmounted(() => {
 
     <template v-else>
       <div class="pal-grid">
-        <PalContextTrigger v-for="pal in displayedPals" :key="pal.id" :pal="pal">
+        <PalContextTrigger v-for="pal in visiblePals" :key="pal.id" :pal="pal">
           <div class="pal-card">
             <span v-if="serverDataStore.selectedPalCounts.get(pal.id)" class="server-pal-count">{{ serverDataStore.selectedPalCounts.get(pal.id) }}</span>
             <span class="pal-index">{{ paldexLabel(pal) }}</span>
@@ -286,10 +246,6 @@ onUnmounted(() => {
             </span>
           </div>
         </PalContextTrigger>
-      </div>
-
-      <div ref="sentinel" class="sentinel">
-        <div v-if="hasMore" class="spinner" />
       </div>
 
       <p v-if="visiblePals.length === 0" class="empty">Aucun Pal ne correspond à la recherche.</p>
@@ -503,13 +459,6 @@ onUnmounted(() => {
   text-align: center;
   color: var(--pico-muted-color);
   padding: 2rem 0;
-}
-
-.sentinel {
-  min-height: 60px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 /* ── Pal grid ────────────────────────────────────────────────────── */
