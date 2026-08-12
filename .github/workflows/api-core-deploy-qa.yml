@@ -1,0 +1,112 @@
+name: Deploy API Core QA
+
+on:
+  push:
+    branches:
+      - qa
+    paths:
+      - 'api-core/**'
+      - '.github/workflows/api-core-deploy-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-core-qa-deploy
+  cancel-in-progress: false
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Determine application version
+        id: version
+        env:
+          IMAGE: huiitre/tools_api_core
+        run: |
+          set -euo pipefail
+
+          git_sha="${GITHUB_SHA::7}"
+          previous_version=""
+          previous_sha=""
+
+          if docker pull "$IMAGE:qa"; then
+            previous_version="$(docker image inspect "$IMAGE:qa" --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')"
+            previous_sha="$(docker image inspect "$IMAGE:qa" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')"
+          fi
+
+          if [[ -z "$previous_version" && -z "$previous_sha" ]]; then
+            version="0.1.0"
+            echo "No previous QA image found; bootstrapping version $version."
+          elif [[ ! "$previous_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || ! git cat-file -e "${previous_sha}^{commit}" 2>/dev/null; then
+            echo "The previous QA image does not contain a usable version and revision." >&2
+            exit 1
+          else
+            major="${previous_version%%.*}"
+            remainder="${previous_version#*.}"
+            minor="${remainder%%.*}"
+            patch="${remainder#*.}"
+
+            bump="none"
+            breaking_pattern='^[[:alnum:]_-]+(\([^)]*\))?!:'
+            feature_pattern='^feat(\([^)]*\))?:'
+            fix_pattern='^fix(\([^)]*\))?:'
+
+            while IFS= read -r subject; do
+              if [[ "$subject" =~ $breaking_pattern ]]; then
+                bump="major"
+                break
+              fi
+
+              if [[ "$subject" =~ $feature_pattern ]]; then
+                bump="minor"
+              elif [[ "$subject" =~ $fix_pattern && "$bump" == "none" ]]; then
+                bump="patch"
+              fi
+            done < <(git log --format=%s "${previous_sha}..${GITHUB_SHA}")
+
+            if [[ "$bump" != "major" ]] && git log --format=%B "${previous_sha}..${GITHUB_SHA}" | grep --quiet '^BREAKING CHANGE:'; then
+              bump="major"
+            fi
+
+            case "$bump" in
+              major) version="$((major + 1)).0.0" ;;
+              minor) version="$major.$((minor + 1)).0" ;;
+              patch) version="$major.$minor.$((patch + 1))" ;;
+              none) version="$previous_version" ;;
+            esac
+
+            echo "Version bump: $bump ($previous_version -> $version)."
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "git_sha=$git_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api-core
+          file: ./api-core/Dockerfile
+          push: true
+          build-args: |
+            APPLICATION_VERSION=${{ steps.version.outputs.version }}
+            GIT_SHA=${{ steps.version.outputs.git_sha }}
+          tags: |
+            huiitre/tools_api_core:qa
+            huiitre/tools_api_core:sha-${{ steps.version.outputs.git_sha }}
