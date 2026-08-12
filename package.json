@@ -3,13 +3,20 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "api:dev": "cd api && SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run",
     "api:build": "cd api && mvn clean package && cd ..",
-    "web:build": "cd web && npm run test && npm run build && cd ..",
-    "electron:build": "cd web && npm run electron:build && cd ..",
+    "core:dev": "cd api-core && DOTNET_WATCH_RESTART_ON_RUDE_EDIT=1 dotnet watch run",
+    "core:build": "cd api-core && dotnet build && cd ..",
+    "core:test": "cd api-core && dotnet test && cd ..",
+    "core:clean": "cd api-core && dotnet clean && cd ..",
+    "core:restore": "cd api-core && dotnet restore && cd ..",
+    "core:format": "cd api-core && dotnet format && cd ..",
+    "core:check": "cd api-core && dotnet build && dotnet test && cd ..",
     "web:dev": "npm run dev --prefix web",
     "web:dev:qa": "npm run dev:qa --prefix web",
-    "api:dev": "cd api && SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run",
+    "web:build": "cd web && npm run test && npm run build && cd ..",
     "electron:watch": "cd web && npm run electron:watch",
+    "electron:build": "cd web && npm run electron:build && cd ..",
     "electron:build:qa": "cd web && npm run electron:build:qa"
   }
 }

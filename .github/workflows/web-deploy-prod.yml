@@ -38,7 +38,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           NPM_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          npx semantic-release
+          npx semantic-release \
+            --extends semantic-release-monorepo \
+            --tag-format 'v${version}'
           echo "released=true" >> $GITHUB_OUTPUT
 
       - name: Get version
