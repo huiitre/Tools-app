@@ -1,0 +1,8 @@
+info:
+  name: Diagnostics
+  type: folder
+  seq: 1
+
+request:
+  auth:
+    type: none

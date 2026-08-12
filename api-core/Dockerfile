@@ -34,4 +34,7 @@ USER $APP_UID
 
 EXPOSE 8080
 
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl --fail --silent http://localhost:8080/health/live || exit 1
+
 ENTRYPOINT ["dotnet", "Tools.ApiCore.dll"]
