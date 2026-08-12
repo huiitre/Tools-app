@@ -2,6 +2,10 @@
 
 Les releases sont générées automatiquement à chaque push sur `master` via `semantic-release`.
 
+Dans ce monorepo, Semantic Release ne prend en compte que les commits ayant
+modifié `web/`. Un `feat:` ou `fix:` qui ne touche que `api/`, `api-core/` ou
+`database/` ne modifie donc ni la version Web/Electron, ni ses notes de release.
+
 ## Convention de commits
 
 | Préfixe | Exemple | Impact |
