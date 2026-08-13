@@ -2,4 +2,4 @@ name: Tools API Core QA
 color: "#C77A0F"
 variables:
   - name: apiCoreUrl
-    value: http://localhost:8080
+    value: https://qa.api.tools.huiitre.fr/api/core

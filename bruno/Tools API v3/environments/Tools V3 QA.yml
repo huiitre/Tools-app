@@ -1,0 +1,13 @@
+name: Tools V3 QA
+color: "#C77A0F"
+variables:
+  - name: apiUrl
+    value: https://qa.api.tools.huiitre.fr/api/v3
+  - name: GAME_VERSION_ID
+    value: ""
+  - name: GAME_SERVER_ID
+    value: ""
+  - secret: true
+    name: admin
+  - name: token
+    value: eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJ0b29scy1hcGkiLCJzdWIiOiIyIiwiaXNBY3RpdmUiOnRydWUsInRva2VuVHlwZSI6IkFDQ0VTUyIsInVzZXJUeXBlIjoiSFVNQU4iLCJpYXQiOjE3ODY2MDU5NjIsImV4cCI6MTc4NjYwNjU2Mn0.6itKYME_jKihc56Kz2FYd3xIQTX2G8J716PoUx96NLxknUXfuazTVdgyYC5rbeQb3IzBVDyANQtZXfvSTDS4ew
