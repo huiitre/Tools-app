@@ -6,6 +6,5 @@ public interface ITransactionManager
 public interface ITransaction : IAsyncDisposable
 {
     Task CommitAsync();
-
     Task RollbackAsync();
 }

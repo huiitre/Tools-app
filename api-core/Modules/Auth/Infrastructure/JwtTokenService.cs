@@ -51,15 +51,38 @@ public sealed class JwtTokenService(
             tokenExpiresAt);
     }
 
+    public AccessTokenData ReadAccessToken(string token)
+    {
+        try
+        {
+            var principal = Validate(token);
+            if (principal.FindFirstValue("tokenType") != "ACCESS"
+                || principal.FindFirstValue("isActive") != "true"
+                || !long.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub), out var userId))
+            {
+                throw ApplicationException.Unauthorized("INVALID_ACCESS_TOKEN", "Session invalide ou expirée.");
+            }
+
+            return new AccessTokenData(userId);
+        }
+        catch (SecurityTokenException exception)
+        {
+            logger.LogDebug(exception, "Access JWT rejeté : {Reason}", exception.Message);
+            throw ApplicationException.Unauthorized("INVALID_ACCESS_TOKEN", "Session invalide ou expirée.");
+        }
+        catch (ArgumentException exception)
+        {
+            logger.LogDebug(exception, "Access JWT illisible : {Reason}", exception.Message);
+            throw ApplicationException.Unauthorized("INVALID_ACCESS_TOKEN", "Session invalide ou expirée.");
+        }
+    }
+
     public RefreshTokenData ReadRefreshToken(string token)
     {
         try
         {
-            // Désactive le renommage automatique des claims .NET : on veut lire le "sub" JWT standard.
-            var tokenHandler = new JwtSecurityTokenHandler { MapInboundClaims = false };
-
             // Vérifie signature, issuer, durée de vie et algorithme avant toute lecture de claim.
-            var principal = tokenHandler.ValidateToken(token, ValidationParameters(), out var validatedToken);
+            var principal = Validate(token, out var validatedToken);
             if (principal.FindFirstValue("tokenType") != "REFRESH"
                 || !long.TryParse(principal.FindFirstValue(JwtRegisteredClaimNames.Sub), out var userId)
                 || validatedToken is not JwtSecurityToken jwtToken)
@@ -80,6 +103,15 @@ public sealed class JwtTokenService(
             logger.LogDebug(exception, "Refresh JWT illisible : {Reason}", exception.Message);
             throw ApplicationException.Unauthorized("INVALID_REFRESH_TOKEN", "Session invalide ou expirée.");
         }
+    }
+
+    private System.Security.Claims.ClaimsPrincipal Validate(string token) => Validate(token, out _);
+
+    private System.Security.Claims.ClaimsPrincipal Validate(string token, out SecurityToken validatedToken)
+    {
+        // Désactive le renommage automatique des claims .NET : on veut lire le "sub" JWT standard.
+        var tokenHandler = new JwtSecurityTokenHandler { MapInboundClaims = false };
+        return tokenHandler.ValidateToken(token, ValidationParameters(), out validatedToken);
     }
 
     private string Write(long userId, IEnumerable<Claim> claims, DateTimeOffset expiresAt)

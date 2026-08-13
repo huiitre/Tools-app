@@ -1,0 +1,39 @@
+// Service applicatif partagé par tous les flux Google : retrouve ou crée le compte Tools associé.
+public sealed class GoogleIdentityAuthenticationService(
+    IGoogleAuthRepository googleAuthRepository,
+    ITransactionManager transactionManager)
+{
+    public async Task<AuthUser> AuthenticateAsync(GoogleIdentity identity, CancellationToken cancellationToken)
+    {
+        // La recherche, l'éventuelle mise à jour d'avatar et la création sont cohérentes dans une transaction.
+        await using var transaction = await transactionManager.BeginAsync();
+        var existingUser = await googleAuthRepository.FindByGoogleProviderIdAsync(identity.ProviderUserId, cancellationToken);
+        if (existingUser is not null)
+        {
+            if (!existingUser.IsActive)
+            {
+                throw ApplicationException.Unauthorized("USER_DISABLED", "Utilisateur désactivé.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(identity.PictureUrl))
+            {
+                await googleAuthRepository.UpdateGoogleAvatarAsync(existingUser.Id, identity.PictureUrl, cancellationToken);
+            }
+
+            await transaction.CommitAsync();
+            return existingUser;
+        }
+
+        if (await googleAuthRepository.ExistsByEmailAsync(identity.Email, cancellationToken))
+        {
+            throw ApplicationException.Conflict(
+                "GOOGLE_EMAIL_ALREADY_REGISTERED",
+                "Un compte existe déjà avec cette adresse email.");
+        }
+
+        // Création de l'utilisateur, de son provider Google et de son rôle USER : une seule transaction.
+        var user = await googleAuthRepository.CreateGoogleUserAsync(identity, cancellationToken);
+        await transaction.CommitAsync();
+        return user;
+    }
+}

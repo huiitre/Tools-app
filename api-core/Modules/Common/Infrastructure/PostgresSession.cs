@@ -1,6 +1,6 @@
 using Npgsql;
 
-public class PostgresSession
+public sealed class PostgresSession
 {
     public NpgsqlConnection? Connection { get; private set; }
     public NpgsqlTransaction? Transaction { get; private set; }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 
 [ApiController]
@@ -7,7 +8,11 @@ using System.ComponentModel.DataAnnotations;
 public sealed class AuthController(
     LoginUseCase loginUseCase,
     RefreshSessionUseCase refreshSessionUseCase,
+    CreateElectronSessionUseCase createElectronSessionUseCase,
+    GetGoogleAuthorizationUrlUseCase getGoogleAuthorizationUrlUseCase,
+    CompleteGoogleOAuthLoginUseCase completeGoogleOAuthLoginUseCase,
     RefreshTokenCookieManager refreshTokenCookieManager,
+    IOptions<GoogleOAuthOptions> googleOAuthOptions,
     ILogger<AuthController> logger) : ControllerBase
 {
     [HttpPost("login")]
@@ -49,6 +54,42 @@ public sealed class AuthController(
         refreshTokenCookieManager.Clear(Response);
         return NoContent();
     }
+
+    [HttpPost("electron/session")]
+    public async Task<IActionResult> CreateElectronSession(CancellationToken cancellationToken)
+    {
+        // Electron appelle cette route avec l'access token reçu par le deep link tools://auth?token=... .
+        var authorization = Request.Headers.Authorization.ToString();
+        if (!authorization.StartsWith("Bearer ", StringComparison.Ordinal))
+        {
+            throw ApplicationException.Unauthorized("INVALID_ACCESS_TOKEN", "Session invalide ou expirée.");
+        }
+
+        var refreshToken = await createElectronSessionUseCase.Execute(authorization["Bearer ".Length..], cancellationToken);
+        refreshTokenCookieManager.Set(Response, refreshToken.Value, refreshToken.ExpiresAt);
+        return NoContent();
+    }
+
+    [HttpGet("google/url")]
+    public ActionResult<GoogleAuthorizationUrlResponse> GetGoogleAuthorizationUrl(
+        [FromQuery] string source = "web") =>
+        Ok(new GoogleAuthorizationUrlResponse(getGoogleAuthorizationUrlUseCase.Execute(source)));
+
+    [HttpGet("callback/google")]
+    public async Task<IActionResult> CompleteGoogleOAuthLogin(
+        [FromQuery, Required] string code,
+        [FromQuery, Required] string state,
+        CancellationToken cancellationToken)
+    {
+        var result = await completeGoogleOAuthLoginUseCase.Execute(code, state, cancellationToken);
+        refreshTokenCookieManager.Set(Response, result.Session.RefreshToken, result.Session.RefreshTokenExpiresAt);
+
+        // Compatibilité temporaire avec le front actuel : il lit l'access token dans query.token.
+        var redirectUrl = result.Source == "electron"
+            ? $"tools://auth?token={Uri.EscapeDataString(result.Session.AccessToken)}"
+            : $"{googleOAuthOptions.Value.FrontendBaseUrl}/auth/callback?token={Uri.EscapeDataString(result.Session.AccessToken)}";
+        return Redirect(redirectUrl);
+    }
 }
 
 // DTO entrant : ASP.NET applique ces règles avant d'appeler Login.
@@ -56,3 +97,4 @@ public sealed record LoginRequest([Required, EmailAddress] string Email, [Requir
 
 // DTO sortant : seul l'access token est exposé au client.
 public sealed record LoginResponse(string AccessToken, string TokenType = "Bearer");
+public sealed record GoogleAuthorizationUrlResponse(string Url);

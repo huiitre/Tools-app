@@ -40,13 +40,27 @@ var connectionString = BuildPostgresConnectionString(builder.Configuration)
 
 builder.Services.AddSingleton(NpgsqlDataSource.Create(connectionString));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<GoogleOAuthOptions>(builder.Configuration.GetSection(GoogleOAuthOptions.SectionName));
+builder.Services.AddCors(options => options.AddPolicy("ToolsFrontend", policy => policy
+    .WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()));
+builder.Services.AddHttpClient<IGoogleOAuthClient, GoogleOAuthClient>(client => client.BaseAddress = new Uri("https://oauth2.googleapis.com/"));
 builder.Services.AddScoped<IAuthRepository, PostgresAuthRepository>();
+builder.Services.AddScoped<IGoogleAuthRepository, PostgresGoogleAuthRepository>();
 builder.Services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
 builder.Services.AddSingleton<ITokenService, JwtTokenService>();
+builder.Services.AddSingleton<IGoogleIdentityVerifier, GoogleOidcTokenVerifier>();
+builder.Services.AddSingleton<IGoogleOAuthStateStore, GoogleOAuthStateStore>();
 builder.Services.AddSingleton<RefreshTokenCookieManager>();
 builder.Services.AddScoped<AuthSessionService>();
+builder.Services.AddScoped<GoogleIdentityAuthenticationService>();
 builder.Services.AddScoped<LoginUseCase>();
 builder.Services.AddScoped<RefreshSessionUseCase>();
+builder.Services.AddScoped<CreateElectronSessionUseCase>();
+builder.Services.AddScoped<GetGoogleAuthorizationUrlUseCase>();
+builder.Services.AddScoped<CompleteGoogleOAuthLoginUseCase>();
 builder.Services.AddScoped<PostgresSession>();
 builder.Services.AddScoped<ITransactionManager, PostgresTransactionManager>();
 builder.Services.AddScoped<IUserRepository, PostgresUserRepository>();
@@ -59,6 +73,7 @@ var app = builder.Build();
 app.UseMiddleware<RequestIdMiddleware>();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseCors("ToolsFrontend");
 
 var applicationVersion = builder.Configuration["Application:Version"]
     ?? "unknown";
