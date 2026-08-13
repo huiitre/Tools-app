@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
+using System.Text.Json;
 
 public sealed class ApiExceptionHandler(
     ApiProblemDetailsFactory problemDetailsFactory,
@@ -67,7 +68,12 @@ public sealed class ApiExceptionHandler(
 
         httpContext.Response.StatusCode = status;
         httpContext.Response.ContentType = "application/problem+json";
-        await httpContext.Response.WriteAsJsonAsync(problem, cancellationToken);
+        httpContext.Response.Headers["X-Request-Id"] = httpContext.TraceIdentifier;
+        await JsonSerializer.SerializeAsync(
+            httpContext.Response.Body,
+            problem,
+            new JsonSerializerOptions(JsonSerializerDefaults.Web),
+            cancellationToken);
 
         return true;
     }

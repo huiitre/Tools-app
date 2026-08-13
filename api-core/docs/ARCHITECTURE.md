@@ -138,6 +138,16 @@ La validation automatique des contrôleurs (`[ApiController]`) utilise la même 
 
 Quand JWT sera ajouté, les réponses 401 et 403 du middleware de sécurité devront utiliser cette même fabrique. Il est interdit d'écrire un second format JSON dans les callbacks d'authentification ou d'autorisation.
 
+### Tests d'intégration du contrat HTTP
+
+Les tests HTTP sont dans `api-core/tests/Tools.ApiCore.IntegrationTests`. Ils démarrent API Core en mémoire avec l'environnement `Testing`, sans ouvrir de port ni appeler PostgreSQL. Les endpoints `/_tests/errors/{kind}` sont mappés uniquement dans cet environnement et ne sont donc pas exposés en Development, QA ou Production.
+
+Ils vérifient le contrat partagé pour 400, 404, 409 et 500, ainsi que la propagation ou génération de `X-Request-Id`. Ils doivent être complétés lorsqu'un nouveau `code` ou un nouveau comportement HTTP est introduit.
+
+```bash
+dotnet test api-core/tests/Tools.ApiCore.IntegrationTests/Tools.ApiCore.IntegrationTests.csproj
+```
+
 ## Organisation du dépôt
 
 La décision actuelle est de conserver le monorepo. Le bénéfice pratique est de

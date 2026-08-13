@@ -68,6 +68,11 @@ app.MapGet("/version", () => new
 
 app.MapControllers();
 
+if (app.Environment.IsEnvironment("Testing"))
+{
+    MapErrorContractTestingEndpoints(app);
+}
+
 app.Run();
 
 static string? BuildPostgresConnectionString(IConfiguration configuration)
@@ -104,4 +109,37 @@ static string? BuildPostgresConnectionString(IConfiguration configuration)
         Username = username,
         Password = password
     }.ConnectionString;
+}
+
+static void MapErrorContractTestingEndpoints(WebApplication app)
+{
+    app.MapGet("/_tests/errors/{kind}", (string kind) =>
+    {
+        throw kind switch
+        {
+            "validation" => ApplicationException.Validation(
+                "TEST_VALIDATION_ERROR",
+                "Erreur de validation de test."),
+            "not-found" => ApplicationException.NotFound(
+                "TEST_NOT_FOUND_ERROR",
+                "Ressource de test introuvable."),
+            "conflict" => ApplicationException.Conflict(
+                "TEST_CONFLICT_ERROR",
+                "Conflit de test."),
+            "forbidden" => ApplicationException.Forbidden(
+                "TEST_FORBIDDEN_ERROR",
+                "Accès refusé pour le test."),
+            "unavailable" => ApplicationException.Unavailable(
+                "TEST_UNAVAILABLE_ERROR",
+                "Dépendance indisponible pour le test."),
+            "internal" => throw new InvalidOperationException("Erreur technique de test."),
+            _ => throw ApplicationException.Validation(
+                "TEST_UNKNOWN_ERROR_KIND",
+                "Type d'erreur de test inconnu.")
+        };
+    });
+}
+
+public partial class Program
+{
 }
