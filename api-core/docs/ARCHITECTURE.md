@@ -132,8 +132,9 @@ leurs images déployées et, à terme, par une version calculée automatiquement
 ### Principe retenu pour API Core
 
 Le Web/Electron conserve ses tags Git et ses GitHub Releases publics. `api-core`
-n'en crée aucun : son numéro SemVer est calculé par le workflow QA à partir des
-Conventional Commits depuis le SHA du dernier déploiement QA :
+n'en crée aucun : son numéro SemVer est calculé par les workflows QA et
+Production à partir de tous les Conventional Commits qui modifient `api-core/`,
+dans leur ordre chronologique :
 
 ```text
 fix:   → patch
@@ -141,10 +142,11 @@ feat:  → minor
 feat!: ou BREAKING CHANGE: → major
 ```
 
-La dernière image QA porte deux labels OCI : sa version et le SHA court du
-commit source. Elle constitue donc le point de départ du calcul suivant, sans
-modifier l'historique Git ni publier de GitHub Release. Le premier déploiement
-utilise `0.1.0` comme version de bootstrap.
+Chaque `feat:` incrémente immédiatement le minor, chaque `fix:` le patch et
+chaque rupture le major. Ainsi, un merge vers `master` qui contient dix
+`feat:` Core produit la même version que les dix déploiements QA successifs.
+Les labels OCI de l'image identifient la version calculée et le SHA source,
+sans modifier l'historique Git ni publier de GitHub Release.
 
 Les images QA publiées sont :
 
