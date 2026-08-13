@@ -63,7 +63,8 @@ public sealed class JwtTokenService(
                 throw ApplicationException.Unauthorized("INVALID_ACCESS_TOKEN", "Session invalide ou expirée.");
             }
 
-            return new AccessTokenData(userId);
+            // Le claim "roles" est un tableau JSON, déplié en un claim par valeur à la lecture.
+            return new AccessTokenData(userId, principal.FindAll("roles").Select(claim => claim.Value).ToArray());
         }
         catch (SecurityTokenException exception)
         {

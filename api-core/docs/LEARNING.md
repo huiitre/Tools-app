@@ -348,19 +348,54 @@ tentative de sécurisation par le pipeline HTTP (`AddJwtBearer`, `[Authorize]`,
 policy d'autorisation) a été annulée : elle ne correspondait pas à
 l'architecture du monorepo.
 
+### Système de droits sur les use cases
+
+Le contrôle des droits est porté par les use cases, jamais par les routes, comme
+dans l'API Java. Le module `Modules/Security` a été créé pour cela, et
+`SendMailUseCase` est le premier use case restreint (`ADMIN` minimum).
+
+Le fonctionnement, la hiérarchie des rôles et les différences assumées avec le
+Java sont documentés dans `docs/SECURITY.md`. Le point de conception principal :
+`Execute` appartient à la classe de base `SecuredUseCase` et n'est pas virtuelle,
+donc le contrôle ne peut être ni contourné ni oublié par une classe dérivée.
+Un marquage par interface, lui, se serait oublié en silence.
+
+Deux comportements Java n'ont volontairement pas été reproduits : l'aspect Java
+laisse passer un appel sans utilisateur identifié (Spring Security bloque en
+amont, ce que le Core n'a pas), et son `LIMIT 1` sans tri rend le rôle retenu
+non déterministe pour un utilisateur qui en cumule plusieurs.
+
+Les rôles sont lus dans le claim `roles` de l'access token, sans aucune requête
+lors de l'autorisation. Une première version relisait la base à chaque exécution ;
+elle a été abandonnée au profit de la performance, la fenêtre de révocation de
+10 minutes étant assumée. Le port `IUserRoleProvider` et son adaptateur Postgres
+ont donc été supprimés.
+
+Si la révocation immédiate devient nécessaire, la réponse sera une denylist
+partagée et non un retour au SQL par appel : un cache de rôles avec TTL ne
+supprimerait pas la fenêtre, il la déplacerait.
+
+La bascule n'a touché que la lecture : l'émission reste identique, donc un token
+produit par l'API Java reste lisible par le Core et inversement.
+
 ### Point d'arrêt exact
 
-Le module Mail Core est fonctionnel et validé de bout en bout en local, mais
-toujours non commité, et la route n'a aucune restriction d'accès. Le Compose QA
-n'a pas encore reçu les variables SMTP, et aucun code Java n'a été modifié.
+Le module Mail est fonctionnel et sa route est désormais restreinte au rôle
+`ADMIN`. Le Compose QA n'a pas encore reçu les variables SMTP, et aucun code
+Java n'a été modifié.
 
-`dotnet test` : 7 tests réussis.
+`dotnet test` : 18 tests réussis. Vérifié sur l'instance locale : `401` sans
+token et avec un token invalide, `/health` et `/version` toujours ouverts.
+
+Les droits par module ne sont pas encore portés : seul le rôle global est lu.
+Le claim `modules` étant déjà présent dans le token, ce portage ne demandera
+aucun accès base non plus.
 
 ### Suite recommandée
 
-1. Porter le système de sécurité des use cases de l'API Java dans le Core, et restreindre `SendMailUseCase` aux rôles d'administration.
+1. Porter les droits par module (`tools_core.user_module_role`) dans `SecuredUseCase`, sur le modèle de `requiredModule()` côté Java.
 2. Ajouter les variables SMTP au Compose QA et rejouer l'envoi depuis l'environnement QA.
-3. Migrer le recovery password dans Core : le use case injectera directement `MailService`, sans passer par la route HTTP.
+3. Migrer le recovery password dans Core : le use case injectera directement `MailService`, sans passer par le use case sécurisé.
 
 ## Règle de travail
 

@@ -7,7 +7,8 @@ http:
   method: POST
   url: "{{apiCoreUrl}}/mail"
   auth:
-    type: none
+    type: bearer
+    token: "{{authToken}}"
   body:
     type: json
     data: |-

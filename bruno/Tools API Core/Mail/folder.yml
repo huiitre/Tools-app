@@ -5,4 +5,5 @@ info:
 
 request:
   auth:
-    type: none
+    type: bearer
+    token: "{{authToken}}"

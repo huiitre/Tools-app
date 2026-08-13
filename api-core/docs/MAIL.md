@@ -42,9 +42,9 @@ POST /mail
 
 Les pièces jointes sont toujours envoyées en Base64 : aucun appelant ne transmet donc jamais un chemin de fichier qui ne serait pas accessible depuis le conteneur Core.
 
-La route n’a pour l’instant aucune restriction d’accès. Le blocage se fera au niveau du use case, comme côté Java, et reste à implémenter.
+`SendMailUseCase` exige le rôle `ADMIN` ou supérieur. Le contrôle est porté par le use case, pas par la route : voir `docs/SECURITY.md`.
 
-Les use cases internes du Core n’utilisent jamais cette route : ils injectent `MailService` directement.
+Les use cases internes du Core n’utilisent jamais ce use case : ils injectent `MailService` directement et ne passent donc par aucun contrôle de rôle.
 
 Les requêtes Bruno correspondantes sont dans `bruno/Tools API Core/Mail/`.
 

@@ -11,7 +11,8 @@ public interface ITokenService
 public sealed record IssuedToken(string Value, DateTimeOffset ExpiresAt);
 
 // Données fiables extraites d'un access token déjà vérifié.
-public sealed record AccessTokenData(long UserId);
+// Les rôles sont ceux gravés à l'émission : ils font autorité tant que le token est valide.
+public sealed record AccessTokenData(long UserId, IReadOnlyList<string> Roles);
 
 // Données fiables extraites d'un refresh token déjà vérifié.
 public sealed record RefreshTokenData(long UserId, DateTimeOffset ExpiresAt);

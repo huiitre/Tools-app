@@ -2,6 +2,6 @@ name: Admin
 color: "#CE4F3B"
 variables:
   - name: authEmail
-    value: yanisdeluca69@gmail.com
+    value: admin@huiitre.fr
   - secret: true
     name: authPassword
