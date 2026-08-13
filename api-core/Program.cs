@@ -19,6 +19,8 @@ builder.Services.AddScoped<PostgresSession>();
 builder.Services.AddScoped<ITransactionManager, PostgresTransactionManager>();
 builder.Services.AddScoped<IUserRepository, PostgresUserRepository>();
 builder.Services.AddScoped<ListUsersUseCase>();
+builder.Services.AddScoped<IHealthRepository, PostgresHealthRepository>();
+builder.Services.AddScoped<CheckReadinessUseCase>();
 
 var app = builder.Build();
 
@@ -27,10 +29,10 @@ var applicationVersion = builder.Configuration["Application:Version"]
 var gitSha = builder.Configuration["Application:GitSha"]
     ?? "unknown";
 
-app.MapGet("/health", () => new { status = "ok" });
-
 app.MapGet("/version", () => new
 {
+    service = "api-core",
+    runtime = ".NET",
     version = applicationVersion,
     gitSha,
     environment = app.Environment.EnvironmentName
