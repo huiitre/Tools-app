@@ -17,10 +17,8 @@ config:
 request:
   auth:
     type: bearer
-    token: "{{token}}"
+    token: "{{authToken}}"
   variables:
-    - name: apiUrl
-      value: http://localhost:8083/api/v3/
     - name: moduleId
       value: ""
     - name: userId

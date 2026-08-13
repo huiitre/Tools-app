@@ -1,5 +1,0 @@
-name: Tools API Core Production
-color: "#CE4F3B"
-variables:
-  - name: apiCoreUrl
-    value: https://api.tools.huiitre.fr/api/core

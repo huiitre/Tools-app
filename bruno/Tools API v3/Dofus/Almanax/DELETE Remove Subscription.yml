@@ -8,7 +8,7 @@ http:
   url: "{{apiUrl}}/dofus/almanax/subscriptions/1"
   headers:
     - name: Authorization
-      value: Bearer {{token}}
+      value: Bearer {{authToken}}
   auth: inherit
 
 settings:

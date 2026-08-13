@@ -39,6 +39,14 @@ var connectionString = BuildPostgresConnectionString(builder.Configuration)
 	?? throw new InvalidOperationException("Connection string Postgres manquante");
 
 builder.Services.AddSingleton(NpgsqlDataSource.Create(connectionString));
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.AddScoped<IAuthRepository, PostgresAuthRepository>();
+builder.Services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
+builder.Services.AddSingleton<ITokenService, JwtTokenService>();
+builder.Services.AddSingleton<RefreshTokenCookieManager>();
+builder.Services.AddScoped<AuthSessionService>();
+builder.Services.AddScoped<LoginUseCase>();
+builder.Services.AddScoped<RefreshSessionUseCase>();
 builder.Services.AddScoped<PostgresSession>();
 builder.Services.AddScoped<ITransactionManager, PostgresTransactionManager>();
 builder.Services.AddScoped<IUserRepository, PostgresUserRepository>();

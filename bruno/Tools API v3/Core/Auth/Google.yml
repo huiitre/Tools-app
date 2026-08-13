@@ -19,8 +19,7 @@ runtime:
     - type: after-response
       code: |-
         const json = res.getBody();
-        console.log(json);
-        bru.setVar('token', json.accessToken);
+        bru.setGlobalEnvVar('authToken', json.accessToken);
 
 settings:
   encodeUrl: true

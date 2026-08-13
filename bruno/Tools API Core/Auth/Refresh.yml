@@ -1,11 +1,13 @@
 info:
   name: Refresh
   type: http
-  seq: 3
+  seq: 2
 
 http:
   method: POST
-  url: "{{apiUrl}}/auth/refresh"
+  url: "{{apiCoreUrl}}/auth/refresh"
+  auth:
+    type: none
 
 runtime:
   scripts:

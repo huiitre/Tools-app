@@ -1,18 +1,18 @@
 info:
-  name: Refresh
+  name: Logout
   type: http
   seq: 3
 
 http:
   method: POST
-  url: "{{apiUrl}}/auth/refresh"
+  url: "{{apiCoreUrl}}/auth/logout"
+  auth:
+    type: none
 
 runtime:
   scripts:
     - type: after-response
-      code: |-
-        const json = res.getBody();
-        bru.setGlobalEnvVar('authToken', json.accessToken);
+      code: bru.setGlobalEnvVar('authToken', '');
 
 settings:
   encodeUrl: true

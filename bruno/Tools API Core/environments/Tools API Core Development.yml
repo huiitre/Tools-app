@@ -1,5 +1,0 @@
-name: Tools API Core Development
-color: "#2E8A54"
-variables:
-  - name: apiCoreUrl
-    value: http://localhost:5090

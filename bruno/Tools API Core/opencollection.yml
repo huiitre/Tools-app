@@ -6,9 +6,6 @@ info:
 request:
   auth:
     type: none
-  variables:
-    - name: apiCoreUrl
-      value: http://localhost:5090
 
 bundled: false
 extensions:

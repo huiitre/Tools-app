@@ -11,7 +11,7 @@ http:
 runtime:
   scripts:
     - type: after-response
-      code: bru.deleteVar('token');
+      code: bru.setGlobalEnvVar('authToken', '');
 
 settings:
   encodeUrl: true
