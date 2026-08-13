@@ -20,7 +20,7 @@ runtime:
       code: |-
         const json = res.getBody();
         console.log(json);
-        bru.setEnvVar('token', json.accessToken);
+        bru.setEnvVar('token', json.accessToken, { persist: false });
 
 settings:
   encodeUrl: true

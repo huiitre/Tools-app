@@ -2,4 +2,4 @@ name: Tools API Core Production
 color: "#CE4F3B"
 variables:
   - name: apiCoreUrl
-    value: http://localhost:8080
+    value: https://api.tools.huiitre.fr/api/core

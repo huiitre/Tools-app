@@ -9,5 +9,3 @@ variables:
     value: ""
   - secret: true
     name: admin
-  - name: token
-    value: eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0b29scy1hcGkiLCJzdWIiOiIyIiwidXNlclR5cGUiOiJIVU1BTiIsInRva2VuVHlwZSI6IkFDQ0VTUyIsImlzQWN0aXZlIjp0cnVlLCJpYXQiOjE3ODYxNTMyNDIsImV4cCI6MTc4NjE1Mzg0Mn0.Vc18Iq6thXvw59_VLq_oy4_JXRE0ryi6v3CACn4g2BE
