@@ -3,10 +3,7 @@ color: "#2E8A54"
 variables:
   - name: apiCoreUrl
     value: http://localhost:5090
-    description: ""
   - name: apiUrl
     value: http://localhost:8083/api/v3
-    description: ""
-  - name: authToken
-    value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblR5cGUiOiJBQ0NFU1MiLCJpc0FjdGl2ZSI6dHJ1ZSwidXNlclR5cGUiOiJIVU1BTiIsInJvbGVzIjpbIkFETUlOIl0sIm1vZHVsZXMiOnsidG9kb2xpc3QiOiJSRUFEX09OTFkiLCJlbGl0ZV9kYW5nZXJvdXMiOiJVU0VSIiwiZG9mdXMiOiJVU0VSIiwicGFsd29ybGQiOiJBRE1JTiIsImNvZGVuYW1lIjoiQURNSU4iLCJyaW90IjoiQURNSU4iLCJ0ZW10ZW0iOiJBRE1JTiJ9LCJzdWIiOiI0MCIsIm5iZiI6MTc4NjYyOTgwMywiZXhwIjoxNzg2NjMwNDAzLCJpc3MiOiJ0b29scy1hcGkifQ.l5U4yNJ0RwFu6RpsIpgW3IytDDRrDMgvAFfDRmnXAO0
-    description: ""
+  - secret: true
+    name: authToken
