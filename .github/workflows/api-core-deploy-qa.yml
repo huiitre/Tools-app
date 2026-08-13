@@ -35,65 +35,35 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Determine application version
+      - name: Calculate application version from API Core commits
         id: version
-        env:
-          IMAGE: huiitre/tools_api_core
         run: |
           set -euo pipefail
 
           git_sha="${GITHUB_SHA::7}"
-          previous_version=""
-          previous_sha=""
+          version="0.0.0"
+          breaking_pattern='^[[:alnum:]_-]+(\([^)]*\))?!:'
+          feature_pattern='^feat(\([^)]*\))?:'
+          fix_pattern='^fix(\([^)]*\))?:'
 
-          if docker pull "$IMAGE:qa"; then
-            previous_version="$(docker image inspect "$IMAGE:qa" --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')"
-            previous_sha="$(docker image inspect "$IMAGE:qa" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')"
-          fi
-
-          if [[ -z "$previous_version" && -z "$previous_sha" ]]; then
-            version="0.1.0"
-            echo "No previous QA image found; bootstrapping version $version."
-          elif [[ ! "$previous_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || ! git cat-file -e "${previous_sha}^{commit}" 2>/dev/null; then
-            echo "The previous QA image does not contain a usable version and revision." >&2
-            exit 1
-          else
-            major="${previous_version%%.*}"
-            remainder="${previous_version#*.}"
+          while IFS= read -r commit; do
+            subject="$(git log --format=%s -n 1 "$commit")"
+            message="$(git log --format=%B -n 1 "$commit")"
+            major="${version%%.*}"
+            remainder="${version#*.}"
             minor="${remainder%%.*}"
             patch="${remainder#*.}"
 
-            bump="none"
-            breaking_pattern='^[[:alnum:]_-]+(\([^)]*\))?!:'
-            feature_pattern='^feat(\([^)]*\))?:'
-            fix_pattern='^fix(\([^)]*\))?:'
-
-            while IFS= read -r subject; do
-              if [[ "$subject" =~ $breaking_pattern ]]; then
-                bump="major"
-                break
-              fi
-
-              if [[ "$subject" =~ $feature_pattern ]]; then
-                bump="minor"
-              elif [[ "$subject" =~ $fix_pattern && "$bump" == "none" ]]; then
-                bump="patch"
-              fi
-            done < <(git log --format=%s "${previous_sha}..${GITHUB_SHA}")
-
-            if [[ "$bump" != "major" ]] && git log --format=%B "${previous_sha}..${GITHUB_SHA}" | grep --quiet '^BREAKING CHANGE:'; then
-              bump="major"
+            if [[ "$subject" =~ $breaking_pattern ]] || grep --quiet '^BREAKING CHANGE:' <<< "$message"; then
+              version="$((major + 1)).0.0"
+            elif [[ "$subject" =~ $feature_pattern ]]; then
+              version="$major.$((minor + 1)).0"
+            elif [[ "$subject" =~ $fix_pattern ]]; then
+              version="$major.$minor.$((patch + 1))"
             fi
+          done < <(git log --reverse --format=%H "$GITHUB_SHA" -- api-core)
 
-            case "$bump" in
-              major) version="$((major + 1)).0.0" ;;
-              minor) version="$major.$((minor + 1)).0" ;;
-              patch) version="$major.$minor.$((patch + 1))" ;;
-              none) version="$previous_version" ;;
-            esac
-
-            echo "Version bump: $bump ($previous_version -> $version)."
-          fi
+          echo "Calculated API Core version: $version."
 
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "git_sha=$git_sha" >> "$GITHUB_OUTPUT"

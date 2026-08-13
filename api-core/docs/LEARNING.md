@@ -180,12 +180,12 @@ joignable ; c'est le résultat attendu du check.
 
 ## Déploiement Production
 
-Le workflow `.github/workflows/api-core-deploy-prod.yml` se déclenche sur
-`master` pour les changements de `api-core/**`. Il publie
-`huiitre/tools_api_core:latest` pour Watchtower et
-`huiitre/tools_api_core:sha-<SHA>` pour identifier ou restaurer une image
-précise. Sa version est calculée indépendamment à partir de l'image Production
-`latest` précédente, comme le workflow QA le fait à partir de `qa`.
+Les workflows QA et Production calculent la même version à partir de tous les
+commits conventionnels qui modifient `api-core/`, dans leur ordre
+chronologique. Ils publient respectivement `huiitre/tools_api_core:qa` et
+`huiitre/tools_api_core:latest` pour Watchtower, ainsi qu'un tag
+`sha-<SHA>` pour identifier ou restaurer une image précise. Cette règle rend
+la version identique après un merge QA vers `master`.
 
 ## Ce qui a été comparé à Java / EasyMobile
 
