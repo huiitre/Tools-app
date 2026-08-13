@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
 builder.Host.UseSerilog((context, services, loggerConfiguration) => loggerConfiguration
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services)
@@ -41,6 +43,7 @@ var connectionString = BuildPostgresConnectionString(builder.Configuration)
 builder.Services.AddSingleton(NpgsqlDataSource.Create(connectionString));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.Configure<GoogleOAuthOptions>(builder.Configuration.GetSection(GoogleOAuthOptions.SectionName));
+builder.Services.Configure<SmtpMailOptions>(builder.Configuration.GetSection(SmtpMailOptions.SectionName));
 builder.Services.AddCors(options => options.AddPolicy("ToolsFrontend", policy => policy
     .WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
     .AllowAnyHeader()
@@ -54,6 +57,9 @@ builder.Services.AddSingleton<ITokenService, JwtTokenService>();
 builder.Services.AddSingleton<IGoogleIdentityVerifier, GoogleOidcTokenVerifier>();
 builder.Services.AddSingleton<IGoogleOAuthStateStore, GoogleOAuthStateStore>();
 builder.Services.AddSingleton<RefreshTokenCookieManager>();
+builder.Services.AddSingleton<IMailSender, SmtpMailSender>();
+builder.Services.AddScoped<MailService>();
+builder.Services.AddScoped<SendMailUseCase>();
 builder.Services.AddScoped<AuthSessionService>();
 builder.Services.AddScoped<GoogleIdentityAuthenticationService>();
 builder.Services.AddScoped<LoginUseCase>();

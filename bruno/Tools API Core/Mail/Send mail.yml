@@ -1,0 +1,24 @@
+info:
+  name: Send mail
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiCoreUrl}}/mail"
+  auth:
+    type: none
+  body:
+    type: json
+    data: |-
+      {
+        "to": ["{{authEmail}}"],
+        "subject": "Test API Core",
+        "text": "Envoi de test depuis Bruno via l'API Core."
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

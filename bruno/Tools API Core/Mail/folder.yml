@@ -1,0 +1,8 @@
+info:
+  name: Mail
+  type: folder
+  seq: 3
+
+request:
+  auth:
+    type: none

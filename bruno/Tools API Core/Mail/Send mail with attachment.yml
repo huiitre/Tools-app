@@ -1,0 +1,31 @@
+info:
+  name: Send mail with attachment
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiCoreUrl}}/mail"
+  auth:
+    type: none
+  body:
+    type: json
+    data: |-
+      {
+        "to": ["{{authEmail}}"],
+        "subject": "Test API Core - pièce jointe",
+        "text": "Le rapport est en pièce jointe.",
+        "attachments": [
+          {
+            "fileName": "rapport.txt",
+            "contentType": "text/plain",
+            "contentBase64": "Q29udGVudSBkZSB0ZXN0IGVudm95w6kgZGVwdWlzIEJydW5vLg=="
+          }
+        ]
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

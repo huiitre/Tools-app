@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
+using System.Net.Mail;
 using System.Text.Json;
 
 public sealed class ApiExceptionHandler(
@@ -37,6 +38,12 @@ public sealed class ApiExceptionHandler(
                 "DEPENDENCY_UNAVAILABLE",
                 "Service Unavailable",
                 "Une dépendance nécessaire est indisponible.",
+                true),
+            SmtpException => (
+                StatusCodes.Status503ServiceUnavailable,
+                "MAIL_DELIVERY_UNAVAILABLE",
+                "Service Unavailable",
+                "Le service d’envoi d’emails est momentanément indisponible.",
                 true),
             _ => (
                 StatusCodes.Status500InternalServerError,

@@ -5,5 +5,5 @@ variables:
     value: http://localhost:5090
   - name: apiUrl
     value: http://localhost:8083/api/v3
-  - secret: true
-    name: authToken
+  - name: authToken
+    value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblR5cGUiOiJBQ0NFU1MiLCJpc0FjdGl2ZSI6dHJ1ZSwidXNlclR5cGUiOiJIVU1BTiIsInJvbGVzIjpbIk9XTkVSIl0sIm1vZHVsZXMiOnsicGFsd29ybGQiOiJBRE1JTiIsInJpb3QiOiJBRE1JTiIsImRvZnVzIjoiQURNSU4ifSwic3ViIjoiMSIsIm5iZiI6MTc4NjYzODg3OCwiZXhwIjoxNzg2NjM5NDc4LCJpc3MiOiJ0b29scy1hcGkifQ.JR7SKqNypf0lKLTrbbatHJ5AwNKzNV7YF6B9sPo0xYE
