@@ -1,5 +1,6 @@
 using Npgsql;
 using Serilog;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +9,30 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) => loggerConfig
     .ReadFrom.Services(services)
     .Enrich.FromLogContext());
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var problemDetailsFactory = context.HttpContext.RequestServices
+                .GetRequiredService<ApiProblemDetailsFactory>();
+
+            return new BadRequestObjectResult(
+                problemDetailsFactory.CreateValidation(context.HttpContext, context.ModelState));
+        };
+    });
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = context =>
+    {
+        var problemDetailsFactory = context.HttpContext.RequestServices
+            .GetRequiredService<ApiProblemDetailsFactory>();
+
+        problemDetailsFactory.Enrich(context.ProblemDetails, context.HttpContext);
+    };
+});
+builder.Services.AddSingleton<ApiProblemDetailsFactory>();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 
 var connectionString = BuildPostgresConnectionString(builder.Configuration)
     ?? builder.Configuration.GetConnectionString("Postgres")
@@ -23,6 +47,10 @@ builder.Services.AddScoped<IHealthRepository, PostgresHealthRepository>();
 builder.Services.AddScoped<CheckReadinessUseCase>();
 
 var app = builder.Build();
+
+app.UseMiddleware<RequestIdMiddleware>();
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 var applicationVersion = builder.Configuration["Application:Version"]
     ?? "unknown";

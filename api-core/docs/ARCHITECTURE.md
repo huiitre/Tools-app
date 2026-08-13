@@ -106,6 +106,38 @@ L’implémentation actuelle des notifications est déjà proche de ce modèle :
 - Le reverse proxy garde une origin publique unique et route par capacité, sans exposer le backend réel.
 - Les appels internes propagent un `X-Request-Id`, journalisé par les deux services.
 
+## Contrat d'erreur HTTP
+
+API Core utilise `application/problem+json` et le format standard `ProblemDetails` pour toutes les erreurs HTTP. Les contrôleurs et les use cases ne construisent jamais de JSON d'erreur manuellement.
+
+```json
+{
+  "title": "Not Found",
+  "status": 404,
+  "message": "Utilisateur introuvable.",
+  "instance": "/users/42",
+  "code": "USER_NOT_FOUND",
+  "requestId": "a1b2c3"
+}
+```
+
+`code` est le contrat stable consommable par le frontend. `message` est un message public ; aucune cause technique, requête SQL, secret ou stack trace ne doit y être exposé. `requestId` correspond au header `X-Request-Id`, accepté lorsqu'il est valide ou généré par API Core, puis ajouté à la réponse et aux logs.
+
+Les erreurs applicatives utilisent l'unique `ApplicationException` et ne connaissent pas HTTP. Elle porte un `ErrorKind`, un `code` et un message public. Le handler global mappe ce type vers HTTP :
+
+| ErrorKind | Statut |
+|---|---:|
+| Validation | 400 |
+| NotFound | 404 |
+| Conflict | 409 |
+| Unauthorized | 401 |
+| Forbidden | 403 |
+| Unavailable | 503 |
+
+La validation automatique des contrôleurs (`[ApiController]`) utilise la même fabrique et renvoie `VALIDATION_FAILED`. Les corps JSON mal formés renvoient `INVALID_REQUEST_BODY`. Les exceptions techniques inconnues renvoient `INTERNAL_ERROR` avec un 500 ; les dépendances indisponibles, notamment PostgreSQL, renvoient `DEPENDENCY_UNAVAILABLE` avec un 503.
+
+Quand JWT sera ajouté, les réponses 401 et 403 du middleware de sécurité devront utiliser cette même fabrique. Il est interdit d'écrire un second format JSON dans les callbacks d'authentification ou d'autorisation.
+
 ## Organisation du dépôt
 
 La décision actuelle est de conserver le monorepo. Le bénéfice pratique est de
