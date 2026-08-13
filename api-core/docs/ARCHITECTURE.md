@@ -300,9 +300,18 @@ health/version/déploiement
 → authentification et émission JWT
 → validation locale des JWT C# par Java
 → migration frontend de l’authentification
+→ migration des flux mot de passe et e-mail
 → rôles et droits de module dans les claims
 → SignalR / realtime
 → mail
 ```
 
 Chaque tranche doit pouvoir être testée en QA sans retirer prématurément le comportement Java existant.
+
+### À faire lors de la migration des flux mot de passe
+
+Reproduire le nettoyage existant des demandes de réinitialisation : un
+`BackgroundService` Core exécute toutes les 30 minutes la suppression des lignes
+expirées de `tools_core.user_password_reset`. Chaque environnement possède sa
+propre base : le conteneur QA nettoie `tools_qa` et le conteneur Production sa
+base de production ; ils sont donc totalement indépendants.
