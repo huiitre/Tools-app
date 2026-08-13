@@ -153,6 +153,31 @@ Chaque environnement vit dans son propre conteneur, donc le chemin reste le mêm
 
 Le thème ANSI Serilog est activé en Development. Avec `dotnet watch`, ne pas forcer `applyThemeToRedirectedOutput=true` : `dotnet watch` capture la sortie pour détecter l'URL et les codes ANSI corrompent alors le lien ouvert.
 
+## Diagnostics de santé
+
+Le module `Modules/Health` porte les routes HTTP de diagnostic dans
+`Api/HealthController.cs`. `Program.cs` reste le *composition root* : il
+relie le port `IHealthRepository` à son adapter `PostgresHealthRepository`,
+sans définir les routes du module.
+
+```text
+GET /health        → compatibilité, { "status": "ok" }
+GET /health/live   → processus ASP.NET Core vivant, sans dépendance externe
+GET /health/ready  → PostgreSQL accessible ; retourne 503 sinon
+```
+
+`/health/ready` suit le flux `HealthController` →
+`CheckReadinessUseCase` → `IHealthRepository` →
+`PostgresHealthRepository`. Cet adapter ouvre une connexion issue du
+`NpgsqlDataSource` partagé et exécute `SELECT 1` avec Dapper. Le `HEALTHCHECK`
+Docker appelle exclusivement `/health/live` : une base indisponible ne doit pas
+provoquer le redémarrage du processus sain.
+
+Validation du 13 août 2026 : `dotnet build --no-restore` réussit sans
+avertissement ni erreur. L'API Development répond `200` à `/health` et
+`/health/live`. `/health/ready` répond `503` tant que PostgreSQL n'est pas
+joignable ; c'est le résultat attendu du check.
+
 ## Ce qui a été comparé à Java / EasyMobile
 
 - `IUserRepository` dans le use case : DIP ; l'enregistrement `AddScoped<IUserRepository, PostgresUserRepository>()` : DI.

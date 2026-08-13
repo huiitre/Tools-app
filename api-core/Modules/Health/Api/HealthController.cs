@@ -4,12 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 [Route("health")]
 public class HealthController : ControllerBase
 {
+    private readonly CheckReadinessUseCase checkReadinessUseCase;
     private readonly ILogger<HealthController> logger;
 
     public HealthController(
-        ILogger<HealthController> logger
-    )
+        CheckReadinessUseCase checkReadinessUseCase,
+        ILogger<HealthController> logger)
     {
+        this.checkReadinessUseCase = checkReadinessUseCase;
         this.logger = logger;
     }
 
@@ -19,9 +21,22 @@ public class HealthController : ControllerBase
         return Ok(new { status = "ok" });
     }
 
-    [Route("live")]
+    [HttpGet("live")]
     public IActionResult Live()
     {
-        return
+        logger.LogDebug("Vérification de liveness demandée.");
+
+        return Ok(new { status = "healthy" });
+    }
+
+    [HttpGet("ready")]
+    public async Task<IActionResult> Ready(CancellationToken cancellationToken)
+    {
+        logger.LogDebug("Vérification de readiness demandée.");
+
+        var isReady = await checkReadinessUseCase.Execute(cancellationToken);
+        var response = new { status = isReady ? "healthy" : "unhealthy" };
+
+        return isReady ? Ok(response) : StatusCode(StatusCodes.Status503ServiceUnavailable, response);
     }
 }

@@ -1,0 +1,4 @@
+  - ExecuteScalarAsync<T> → une valeur unique (SELECT 1, COUNT(*), RETURNING id)
+  - QueryAsync<T> → plusieurs lignes mappées
+  - QuerySingleAsync<T> → une ligne mappée
+  - ExecuteAsync → nombre de lignes modifiées (INSERT, UPDATE, DELETE)

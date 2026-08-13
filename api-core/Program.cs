@@ -1,7 +1,5 @@
 using Npgsql;
 using Serilog;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,8 +19,8 @@ builder.Services.AddScoped<PostgresSession>();
 builder.Services.AddScoped<ITransactionManager, PostgresTransactionManager>();
 builder.Services.AddScoped<IUserRepository, PostgresUserRepository>();
 builder.Services.AddScoped<ListUsersUseCase>();
-builder.Services.AddHealthChecks()
-    .AddCheck<PostgresHealthCheck>("postgres", tags: ["ready"]);
+builder.Services.AddScoped<IHealthRepository, PostgresHealthRepository>();
+builder.Services.AddScoped<CheckReadinessUseCase>();
 
 var app = builder.Build();
 
@@ -30,20 +28,6 @@ var applicationVersion = builder.Configuration["Application:Version"]
     ?? "unknown";
 var gitSha = builder.Configuration["Application:GitSha"]
     ?? "unknown";
-
-app.MapGet("/health", () => new { status = "ok" });
-
-app.MapHealthChecks("/health/live", new HealthCheckOptions
-{
-    Predicate = _ => false,
-    ResponseWriter = WriteHealthCheckResponse
-});
-
-app.MapHealthChecks("/health/ready", new HealthCheckOptions
-{
-    Predicate = healthCheck => healthCheck.Tags.Contains("ready"),
-    ResponseWriter = WriteHealthCheckResponse
-});
 
 app.MapGet("/version", () => new
 {
@@ -92,12 +76,4 @@ static string? BuildPostgresConnectionString(IConfiguration configuration)
         Username = username,
         Password = password
     }.ConnectionString;
-}
-
-static Task WriteHealthCheckResponse(HttpContext context, HealthReport report)
-{
-    return context.Response.WriteAsJsonAsync(new
-    {
-        status = report.Status.ToString().ToLowerInvariant()
-    });
 }
