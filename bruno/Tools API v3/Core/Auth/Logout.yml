@@ -11,7 +11,7 @@ http:
 runtime:
   scripts:
     - type: after-response
-      code: bru.setEnvVar('token', null, { persist: false });
+      code: bru.deleteVar('token');
 
 settings:
   encodeUrl: true

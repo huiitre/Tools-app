@@ -12,7 +12,7 @@ runtime:
     - type: after-response
       code: |-
         const json = res.getBody();
-        bru.setEnvVar('token', json.accessToken, { persist: false });
+        bru.setVar('token', json.accessToken);
 
 settings:
   encodeUrl: true
