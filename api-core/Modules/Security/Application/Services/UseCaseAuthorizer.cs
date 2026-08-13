@@ -7,7 +7,8 @@ public sealed class UseCaseAuthorizer(
     ICurrentUserProvider currentUserProvider,
     ILogger<UseCaseAuthorizer> logger)
 {
-    public void EnsureAtLeast(RoleCode requiredRole)
+    // Retourne l'appelant validé : le use case y accède sans avoir à le résoudre lui-même.
+    public CurrentUser EnsureAtLeast(RoleCode requiredRole)
     {
         var currentUser = currentUserProvider.Current;
         if (currentUser is null)
@@ -31,5 +32,7 @@ public sealed class UseCaseAuthorizer(
                 "INSUFFICIENT_ROLE",
                 "Vous n’avez pas les droits nécessaires pour cette action.");
         }
+
+        return currentUser;
     }
 }

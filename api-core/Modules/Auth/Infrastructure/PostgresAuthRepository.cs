@@ -33,6 +33,13 @@ public sealed class PostgresAuthRepository(NpgsqlDataSource dataSource) : IAuthR
         return await connection.QuerySingleOrDefaultAsync<AuthUser>(new CommandDefinition(sql, new { UserId = userId }, cancellationToken: cancellationToken));
     }
 
+    public async Task<AuthUser?> FindByEmailAsync(string email, CancellationToken cancellationToken)
+    {
+        const string sql = "SELECT id AS Id, email AS Email, is_active AS IsActive, user_type AS UserType FROM tools_core.users WHERE email = @Email";
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        return await connection.QuerySingleOrDefaultAsync<AuthUser>(new CommandDefinition(sql, new { Email = email }, cancellationToken: cancellationToken));
+    }
+
     public async Task<IReadOnlyList<string>> FindGlobalRolesAsync(long userId, CancellationToken cancellationToken)
     {
         // Seuls les rôles encore actifs sont mis dans le token.

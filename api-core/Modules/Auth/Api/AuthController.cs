@@ -11,6 +11,8 @@ public sealed class AuthController(
     CreateElectronSessionUseCase createElectronSessionUseCase,
     GetGoogleAuthorizationUrlUseCase getGoogleAuthorizationUrlUseCase,
     CompleteGoogleOAuthLoginUseCase completeGoogleOAuthLoginUseCase,
+    RequestPasswordResetUseCase requestPasswordResetUseCase,
+    ResetPasswordUseCase resetPasswordUseCase,
     RefreshTokenCookieManager refreshTokenCookieManager,
     IOptions<GoogleOAuthOptions> googleOAuthOptions,
     ILogger<AuthController> logger) : ControllerBase
@@ -90,6 +92,27 @@ public sealed class AuthController(
             : $"{googleOAuthOptions.Value.FrontendBaseUrl}/auth/callback?token={Uri.EscapeDataString(result.Session.AccessToken)}";
         return Redirect(redirectUrl);
     }
+
+    [HttpPost("password/reset-request")]
+    public async Task<IActionResult> RequestPasswordReset(
+        PasswordResetRequest request,
+        CancellationToken cancellationToken)
+    {
+        await requestPasswordResetUseCase.Execute(request.Email, cancellationToken);
+
+        // Réponse volontairement identique dans tous les cas : elle ne dit jamais
+        // si un compte existe, ni s'il dispose d'un mot de passe.
+        return Ok(new PasswordResetRequestResponse(
+            "RESET_REQUESTED",
+            "Si un compte correspondant existe, un email a été envoyé."));
+    }
+
+    [HttpPost("password/reset")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        await resetPasswordUseCase.Execute(request.Token, request.Password, cancellationToken);
+        return NoContent();
+    }
 }
 
 // DTO entrant : ASP.NET applique ces règles avant d'appeler Login.
@@ -98,3 +121,7 @@ public sealed record LoginRequest([Required, EmailAddress] string Email, [Requir
 // DTO sortant : seul l'access token est exposé au client.
 public sealed record LoginResponse(string AccessToken, string TokenType = "Bearer");
 public sealed record GoogleAuthorizationUrlResponse(string Url);
+
+public sealed record PasswordResetRequest([Required, EmailAddress] string Email);
+public sealed record PasswordResetRequestResponse(string Status, string Message);
+public sealed record ResetPasswordRequest([Required] string Token, [Required] string Password);

@@ -7,6 +7,6 @@ public sealed class SendMailUseCase(UseCaseAuthorizer authorizer, MailService ma
 {
     protected override RoleCode RequiredRole => RoleCode.Tech;
 
-    protected override Task Handle(SendMailCommand command, CancellationToken cancellationToken) =>
+    protected override Task Handle(SendMailCommand command, CurrentUser currentUser, CancellationToken cancellationToken) =>
         mailService.Send(command, cancellationToken);
 }

@@ -44,6 +44,8 @@ builder.Services.AddSingleton(NpgsqlDataSource.Create(connectionString));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.Configure<GoogleOAuthOptions>(builder.Configuration.GetSection(GoogleOAuthOptions.SectionName));
 builder.Services.Configure<SmtpMailOptions>(builder.Configuration.GetSection(SmtpMailOptions.SectionName));
+builder.Services.Configure<AppOptions>(builder.Configuration.GetSection(AppOptions.SectionName));
+builder.Services.Configure<PasswordResetOptions>(builder.Configuration.GetSection(PasswordResetOptions.SectionName));
 builder.Services.AddCors(options => options.AddPolicy("ToolsFrontend", policy => policy
     .WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
     .AllowAnyHeader()
@@ -63,6 +65,18 @@ builder.Services.AddScoped<SendMailUseCase>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserProvider, HttpCurrentUserProvider>();
 builder.Services.AddScoped<UseCaseAuthorizer>();
+builder.Services.AddScoped<IPasswordResetRepository, PostgresPasswordResetRepository>();
+builder.Services.AddScoped<IUserCredentialsRepository, PostgresUserCredentialsRepository>();
+builder.Services.AddScoped<IUserAuthProviderRepository, PostgresUserAuthProviderRepository>();
+builder.Services.AddScoped<RequestPasswordResetUseCase>();
+builder.Services.AddScoped<ResetPasswordUseCase>();
+builder.Services.AddScoped<SetUserPasswordUseCase>();
+
+// Le nettoyage planifié n'a pas lieu d'être dans les tests d'intégration.
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddHostedService<PasswordResetCleanupService>();
+}
 builder.Services.AddScoped<AuthSessionService>();
 builder.Services.AddScoped<GoogleIdentityAuthenticationService>();
 builder.Services.AddScoped<LoginUseCase>();

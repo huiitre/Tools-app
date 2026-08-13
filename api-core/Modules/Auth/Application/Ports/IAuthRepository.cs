@@ -7,6 +7,9 @@ public interface IAuthRepository
     // Recharge l'utilisateur lors d'un refresh pour détecter une désactivation entre-temps.
     Task<AuthUser?> FindByIdAsync(long userId, CancellationToken cancellationToken);
 
+    // Point d'entrée d'une demande de réinitialisation, où seul l'email est connu.
+    Task<AuthUser?> FindByEmailAsync(string email, CancellationToken cancellationToken);
+
     // Ces deux lectures alimentent les claims d'autorisation de l'access token.
     Task<IReadOnlyList<string>> FindGlobalRolesAsync(long userId, CancellationToken cancellationToken);
     Task<IReadOnlyDictionary<string, string>> FindModuleRolesAsync(long userId, CancellationToken cancellationToken);

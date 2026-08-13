@@ -26,15 +26,32 @@ public sealed class ApiCoreWebApplicationFactory : WebApplicationFactory<Program
             services.RemoveAll<IMailSender>();
             services.AddSingleton<RecordingMailSender>();
             services.AddSingleton<IMailSender>(provider => provider.GetRequiredService<RecordingMailSender>());
+
+            // Les flux de mot de passe sont testés sans PostgreSQL.
+            services.AddSingleton<InMemoryAuthStore>();
+            services.RemoveAll<IAuthRepository>();
+            services.AddScoped<IAuthRepository, InMemoryAuthRepository>();
+            services.RemoveAll<IUserAuthProviderRepository>();
+            services.AddScoped<IUserAuthProviderRepository, InMemoryUserAuthProviderRepository>();
+            services.RemoveAll<IUserCredentialsRepository>();
+            services.AddScoped<IUserCredentialsRepository, InMemoryUserCredentialsRepository>();
+            services.RemoveAll<IPasswordResetRepository>();
+            services.AddScoped<IPasswordResetRepository, InMemoryPasswordResetRepository>();
+            services.RemoveAll<ITransactionManager>();
+            services.AddScoped<ITransactionManager, NoOpTransactionManager>();
         });
     }
 
+    public InMemoryAuthStore Store => Services.GetRequiredService<InMemoryAuthStore>();
+
     // Le token est produit par le vrai ITokenService : émission et lecture des rôles
     // sont donc testées ensemble, exactement comme en production.
-    public HttpClient CreateClientWithRoles(params string[] roles)
+    public HttpClient CreateClientWithRoles(params string[] roles) => CreateClientForUser(1, roles);
+
+    public HttpClient CreateClientForUser(long userId, params string[] roles)
     {
         var token = Services.GetRequiredService<ITokenService>().CreateAccessToken(
-            new AuthUser(1, "admin@example.com", true, "HUMAN"),
+            new AuthUser(userId, "admin@example.com", true, "HUMAN"),
             roles,
             new Dictionary<string, string>());
 
@@ -54,4 +71,6 @@ public sealed class RecordingMailSender : IMailSender
         LastCommand = command;
         return Task.CompletedTask;
     }
+
+    public void Clear() => LastCommand = null;
 }

@@ -378,24 +378,56 @@ supprimerait pas la fenêtre, il la déplacerait.
 La bascule n'a touché que la lecture : l'émission reste identique, donc un token
 produit par l'API Java reste lisible par le Core et inversement.
 
+### Mot de passe : réinitialisation et changement
+
+Les trois flux Java ont été portés dans le module `Auth` : demande de
+réinitialisation, validation du lien, et définition du mot de passe depuis les
+options. Le détail est dans `docs/PASSWORD.md`.
+
+Le point qui comptait : `SetUserPasswordUseCase` crée la ligne `user_credentials`
+**et** le provider `PASSWORD` lorsqu'un compte n'en a pas encore — c'est ainsi
+qu'un compte Google obtient un mot de passe, et donc l'accès à « mot de passe
+oublié ». Il est en `RoleCode.ReadOnly` : tout utilisateur authentifié peut agir
+sur son propre compte, l'identifiant venant du jeton et jamais de la requête.
+
+`SecuredUseCase` passe désormais l'appelant validé à `Handle`, ce qui évite à un
+use case de résoudre lui-même son utilisateur ou de manipuler une valeur nulle.
+
+Aucune migration SQL : `user_password_reset` existait déjà depuis `V2.14.0`.
+
+Piège rencontré : sur un record positionnel, les attributs de validation doivent
+cibler le **paramètre** (`[Required]` ou `[param: Required]`), jamais la
+propriété. `[property: Required]` compile mais fait échouer la liaison de modèle
+avec une `InvalidOperationException`, donc un `500` sur la route.
+
 ### Point d'arrêt exact
 
-Le module Mail est fonctionnel et sa route est désormais restreinte au rôle
-`ADMIN`. Le Compose QA n'a pas encore reçu les variables SMTP, et aucun code
-Java n'a été modifié.
+Le module Mail est fonctionnel et sa route est restreinte au rôle `TECH`. Les
+flux de mot de passe sont opérationnels et validés contre la base `tools_dev`.
 
-`dotnet test` : 18 tests réussis. Vérifié sur l'instance locale : `401` sans
-token et avec un token invalide, `/health` et `/version` toujours ouverts.
+Le Compose QA n'a toujours pas reçu les variables SMTP : tant que c'est le cas,
+`POST /auth/password/reset-request` y créera le jeton puis échouera à l'envoi
+avec `503 MAIL_NOT_CONFIGURED`. Cela rend aussi l'énumération de comptes
+possible, un compte existant répondant `503` là où un email inconnu répond
+`200`. Aucun code Java n'a été modifié.
+
+`dotnet test` : 29 tests réussis. Vérifié sur l'instance locale contre la vraie
+base : `RESET_REQUESTED` pour un email inconnu, `400
+INVALID_PASSWORD_RESET_TOKEN` pour un jeton bidon, `401` sur
+`PATCH /users/password` sans token.
 
 Les droits par module ne sont pas encore portés : seul le rôle global est lu.
 Le claim `modules` étant déjà présent dans le token, ce portage ne demandera
 aucun accès base non plus.
 
+Le front appelle encore l'API Java pour ces trois routes : la bascule côté web
+n'a pas été faite.
+
 ### Suite recommandée
 
-1. Porter les droits par module (`tools_core.user_module_role`) dans `SecuredUseCase`, sur le modèle de `requiredModule()` côté Java.
+1. Porter les droits par module (`tools_core.user_module_role`) dans `SecuredUseCase`, en lisant le claim `modules` du token.
 2. Ajouter les variables SMTP au Compose QA et rejouer l'envoi depuis l'environnement QA.
-3. Migrer le recovery password dans Core : le use case injectera directement `MailService`, sans passer par le use case sécurisé.
+3. Basculer le front sur les routes mot de passe du Core, puis retirer les flux correspondants côté Java.
 
 ## Règle de travail
 

@@ -4,6 +4,9 @@
 // n'est pas virtuelle, une classe dérivée ne peut donc ni l'outrepasser ni oublier
 // d'appeler l'autorisation. Un use case sécurisé ne peut pas exister sans son contrôle.
 //
+// L'appelant validé est passé à `Handle` : le use case dispose de son identité sans
+// avoir à la résoudre lui-même, et sans jamais manipuler une valeur nulle.
+//
 // Ces use cases ne doivent pas être appelés hors d'une requête authentifiée : depuis
 // une tâche de fond, aucun utilisateur n'est identifié et l'exécution est refusée.
 public abstract class SecuredUseCase<TCommand>(UseCaseAuthorizer authorizer)
@@ -12,11 +15,11 @@ public abstract class SecuredUseCase<TCommand>(UseCaseAuthorizer authorizer)
 
     public Task Execute(TCommand command, CancellationToken cancellationToken)
     {
-        authorizer.EnsureAtLeast(RequiredRole);
-        return Handle(command, cancellationToken);
+        var currentUser = authorizer.EnsureAtLeast(RequiredRole);
+        return Handle(command, currentUser, cancellationToken);
     }
 
-    protected abstract Task Handle(TCommand command, CancellationToken cancellationToken);
+    protected abstract Task Handle(TCommand command, CurrentUser currentUser, CancellationToken cancellationToken);
 }
 
 // Variante pour les use cases qui retournent un résultat.
@@ -26,9 +29,9 @@ public abstract class SecuredUseCase<TCommand, TResult>(UseCaseAuthorizer author
 
     public Task<TResult> Execute(TCommand command, CancellationToken cancellationToken)
     {
-        authorizer.EnsureAtLeast(RequiredRole);
-        return Handle(command, cancellationToken);
+        var currentUser = authorizer.EnsureAtLeast(RequiredRole);
+        return Handle(command, currentUser, cancellationToken);
     }
 
-    protected abstract Task<TResult> Handle(TCommand command, CancellationToken cancellationToken);
+    protected abstract Task<TResult> Handle(TCommand command, CurrentUser currentUser, CancellationToken cancellationToken);
 }
