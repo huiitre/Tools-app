@@ -1,0 +1,16 @@
+using Tools.ApiCore.Modules.Auth.Application.Ports;
+using Tools.ApiCore.Modules.Auth.Application.Ports.Google;
+
+namespace Tools.ApiCore.Modules.Auth.Application.Usecases.Google;
+
+// Cas d'usage utilisateur : démarrer une connexion Google dans le navigateur ou Electron.
+public sealed class GetGoogleAuthorizationUrlUseCase(
+    IGoogleOAuthStateStore stateStore,
+    IGoogleOAuthClient googleOAuthClient)
+{
+    public string Execute(string source)
+    {
+        var state = stateStore.Create(source);
+        return googleOAuthClient.BuildAuthorizationUrl(state);
+    }
+}

@@ -1,3 +1,7 @@
+using Tools.ApiCore.Modules.Users.Domain;
+
+namespace Tools.ApiCore.Modules.Users.Application;
+
 public interface IUserRepository
 {
     Task<IReadOnlyList<User>> GetAllAsync();

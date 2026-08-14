@@ -1,6 +1,42 @@
+using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Serilog;
-using Microsoft.AspNetCore.Mvc;
+using Tools.ApiCore.Modules.Auth.Api;
+using Tools.ApiCore.Modules.Auth.Application.Ports.Google;
+using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+using Tools.ApiCore.Modules.Auth.Application.Ports;
+using Tools.ApiCore.Modules.Auth.Application.Services;
+using Tools.ApiCore.Modules.Auth.Application.Usecases.Google;
+using Tools.ApiCore.Modules.Auth.Application.Usecases.Password;
+using Tools.ApiCore.Modules.Auth.Application.Usecases.Session;
+using Tools.ApiCore.Modules.Auth.Application;
+using Tools.ApiCore.Modules.Auth.Domain;
+using Tools.ApiCore.Modules.Auth.Infrastructure.Google;
+using Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
+using Tools.ApiCore.Modules.Auth.Infrastructure.Password;
+using Tools.ApiCore.Modules.Auth.Infrastructure.Persistence;
+using Tools.ApiCore.Modules.Common.Api.Errors;
+using Tools.ApiCore.Modules.Common.Application.Exceptions;
+using Tools.ApiCore.Modules.Common.Application.Ports;
+using Tools.ApiCore.Modules.Common.Infrastructure;
+using Tools.ApiCore.Modules.Health.Api;
+using Tools.ApiCore.Modules.Health.Application;
+using Tools.ApiCore.Modules.Health.Infrastructure;
+using Tools.ApiCore.Modules.Mail.Api;
+using Tools.ApiCore.Modules.Mail.Application.Ports;
+using Tools.ApiCore.Modules.Mail.Application.Services;
+using Tools.ApiCore.Modules.Mail.Application.Usecases;
+using Tools.ApiCore.Modules.Mail.Application;
+using Tools.ApiCore.Modules.Mail.Infrastructure;
+using Tools.ApiCore.Modules.Security.Application.Ports;
+using Tools.ApiCore.Modules.Security.Application.Services;
+using Tools.ApiCore.Modules.Security.Application.Usecases;
+using Tools.ApiCore.Modules.Security.Domain;
+using Tools.ApiCore.Modules.Security.Infrastructure;
+using Tools.ApiCore.Modules.Users.Api;
+using Tools.ApiCore.Modules.Users.Application;
+using Tools.ApiCore.Modules.Users.Domain;
+using Tools.ApiCore.Modules.Users.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +98,7 @@ builder.Services.AddSingleton<RefreshTokenCookieManager>();
 builder.Services.AddSingleton<IMailSender, SmtpMailSender>();
 builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<SendMailUseCase>();
+builder.Services.AddCoreJwtAuthentication();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserProvider, HttpCurrentUserProvider>();
 builder.Services.AddScoped<UseCaseAuthorizer>();
@@ -98,11 +135,33 @@ app.UseExceptionHandler();
 app.UseStatusCodePages();
 app.UseCors("ToolsFrontend");
 
+// L'ordre n'est pas négociable : l'authentification identifie l'appelant, l'autorisation
+// décide ensuite si la route lui est ouverte.
+app.UseAuthentication();
+
+// La FallbackPolicy s'applique aussi aux requêtes qui n'ont atteint aucun endpoint : sans
+// cette garde, une URL inconnue répondrait 401 au lieu de 404. Le front traite les 401 comme
+// une session expirée et tenterait un refresh sur une simple faute de frappe.
+app.Use(async (context, next) =>
+{
+    if (context.GetEndpoint() is null)
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    await next();
+});
+
+app.UseAuthorization();
+
 var applicationVersion = builder.Configuration["Application:Version"]
     ?? "unknown";
 var gitSha = builder.Configuration["Application:GitSha"]
     ?? "unknown";
 
+// Interrogée par le healthcheck du conteneur et par Watchtower, qui ne présentent aucun
+// jeton : elle doit rester anonyme malgré l'authentification exigée par défaut.
 app.MapGet("/version", () => new
 {
     service = "api-core",
@@ -110,13 +169,18 @@ app.MapGet("/version", () => new
     version = applicationVersion,
     gitSha,
     environment = app.Environment.EnvironmentName
-});
+}).AllowAnonymous();
 
 app.MapControllers();
 
 if (app.Environment.IsEnvironment("Testing"))
 {
     MapErrorContractTestingEndpoints(app);
+
+    // Route témoin de l'authentification par défaut : elle ne déclare aucune sécurité et
+    // n'appelle aucun use case sécurisé. Elle doit malgré tout être refusée sans jeton,
+    // sans quoi une route ajoutée par distraction serait ouverte au monde entier.
+    app.MapGet("/_tests/unsecured", () => Results.Ok(new { reached = true }));
 }
 
 app.Run();
@@ -163,27 +227,27 @@ static void MapErrorContractTestingEndpoints(WebApplication app)
     {
         throw kind switch
         {
-            "validation" => ApplicationException.Validation(
+            "validation" => AppException.Validation(
                 "TEST_VALIDATION_ERROR",
                 "Erreur de validation de test."),
-            "not-found" => ApplicationException.NotFound(
+            "not-found" => AppException.NotFound(
                 "TEST_NOT_FOUND_ERROR",
                 "Ressource de test introuvable."),
-            "conflict" => ApplicationException.Conflict(
+            "conflict" => AppException.Conflict(
                 "TEST_CONFLICT_ERROR",
                 "Conflit de test."),
-            "forbidden" => ApplicationException.Forbidden(
+            "forbidden" => AppException.Forbidden(
                 "TEST_FORBIDDEN_ERROR",
                 "Accès refusé pour le test."),
-            "unavailable" => ApplicationException.Unavailable(
+            "unavailable" => AppException.Unavailable(
                 "TEST_UNAVAILABLE_ERROR",
                 "Dépendance indisponible pour le test."),
             "internal" => throw new InvalidOperationException("Erreur technique de test."),
-            _ => throw ApplicationException.Validation(
+            _ => throw AppException.Validation(
                 "TEST_UNKNOWN_ERROR_KIND",
                 "Type d'erreur de test inconnu.")
         };
-    });
+    }).AllowAnonymous(); // Ces endpoints vérifient le contrat d'erreur, pas l'authentification.
 }
 
 public partial class Program

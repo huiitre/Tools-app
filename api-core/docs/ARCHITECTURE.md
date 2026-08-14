@@ -123,7 +123,7 @@ API Core utilise `application/problem+json` et le format standard `ProblemDetail
 
 `code` est le contrat stable consommable par le frontend. `message` est un message public ; aucune cause technique, requête SQL, secret ou stack trace ne doit y être exposé. `requestId` correspond au header `X-Request-Id`, accepté lorsqu'il est valide ou généré par API Core, puis ajouté à la réponse et aux logs.
 
-Les erreurs applicatives utilisent l'unique `ApplicationException` et ne connaissent pas HTTP. Elle porte un `ErrorKind`, un `code` et un message public. Le handler global mappe ce type vers HTTP :
+Les erreurs applicatives utilisent l'unique `AppException` et ne connaissent pas HTTP. Elle porte un `ErrorKind`, un `code` et un message public. Le handler global mappe ce type vers HTTP :
 
 | ErrorKind | Statut |
 |---|---:|
@@ -136,7 +136,7 @@ Les erreurs applicatives utilisent l'unique `ApplicationException` et ne connais
 
 La validation automatique des contrôleurs (`[ApiController]`) utilise la même fabrique et renvoie `VALIDATION_FAILED`. Les corps JSON mal formés renvoient `INVALID_REQUEST_BODY`. Les exceptions techniques inconnues renvoient `INTERNAL_ERROR` avec un 500 ; les dépendances indisponibles, notamment PostgreSQL, renvoient `DEPENDENCY_UNAVAILABLE` avec un 503.
 
-Quand JWT sera ajouté, les réponses 401 et 403 du middleware de sécurité devront utiliser cette même fabrique. Il est interdit d'écrire un second format JSON dans les callbacks d'authentification ou d'autorisation.
+Les réponses 401 et 403 du middleware d'authentification passent par cette même fabrique, via les callbacks `OnChallenge` et `OnForbidden` de `JwtBearerEvents`. Il est interdit d'écrire un second format JSON d'erreur ailleurs.
 
 ### Tests d'intégration du contrat HTTP
 
@@ -147,6 +147,141 @@ Ils vérifient le contrat partagé pour 400, 404, 409 et 500, ainsi que la propa
 ```bash
 dotnet test api-core/tests/Tools.ApiCore.IntegrationTests/Tools.ApiCore.IntegrationTests.csproj
 ```
+
+## Namespaces et organisation du code
+
+Chaque fichier déclare un **file-scoped namespace** dérivé de son chemin :
+
+```csharp
+// Modules/Auth/Application/Usecases/LoginUseCase.cs
+namespace Tools.ApiCore.Modules.Auth.Application.Usecases;
+```
+
+`Program.cs` fait exception : un fichier à top-level statements ne peut pas déclarer de
+namespace. Il reste dans le namespace global et importe explicitement les namespaces des
+modules — c'est la racine de composition, elle câble tout, donc elle voit tout.
+
+Les `using` entre modules sont **explicites**, jamais globaux. C'est la raison d'être des
+namespaces ici : rendre le couplage inter-modules lisible en tête de fichier. Un
+`using Tools.ApiCore.Modules.Mail.Application;` dans un fichier du module Auth signale
+immédiatement une dépendance entre modules, qu'on peut alors questionner. Un
+`GlobalUsings.cs` qui importerait les modules annulerait ce bénéfice ; il est réservé, le
+cas échéant, aux namespaces techniques externes.
+
+Ce choix rend aussi les règles de couches **vérifiables par la machine** : une bibliothèque
+de tests d'architecture (NetArchTest par exemple) peut désigner « les types de
+`…Auth.Domain` » et interdire leurs dépendances. Sans namespaces, ces règles ne sont que
+des conventions écrites, invérifiables — les dossiers ne compilent pas.
+
+### Découper un dossier Infrastructure
+
+Quand l'infrastructure d'un module dépasse la dizaine de fichiers, elle se découpe en
+sous-dossiers. Exemple du module Auth :
+
+```text
+Modules/Auth/Infrastructure/
+  Google/       client OAuth, options, store d'état, vérification OIDC
+  Jwt/          émission, validation, options, paramètres cryptographiques, cookie de refresh
+  Password/     hachage, options de réinitialisation, nettoyage planifié
+  Persistence/  les adaptateurs PostgreSQL des ports du module
+```
+
+Le critère est **la raison de changer**, pas la nature technique. On regroupe ce qui évolue
+ensemble : `Google/` bouge quand Google change son API, `Persistence/` quand le schéma SQL
+change, `Jwt/` quand la politique de jetons change.
+
+C'est pourquoi il n'y a **pas** de dossier `Scheduler/`, contrairement à l'API Java.
+Regrouper les tâches de fond par leur mécanisme de déclenchement séparerait
+`PasswordResetCleanupService` de `PasswordResetOptions`, alors que la durée de rétention, la
+table purgée et la raison d'être du service viennent toutes du flux de réinitialisation :
+une seule évolution imposerait de toucher deux dossiers. Et le problème s'aggrave à mesure
+qu'on ajoute des tâches planifiées sans rapport entre elles — un tel dossier devient le
+tout-venant de ce qu'on ne sait pas classer.
+
+Le nom décrit la responsabilité quand elle survit au choix technique : `Persistence/` plutôt
+que `Postgres/`, pour qu'un changement d'implémentation ne rende pas le dossier menteur.
+
+Une classe publique reste **un fichier portant son nom** — les dossiers ne dispensent pas de
+cette règle.
+
+### Découper les use cases et les ports
+
+Même principe côté Application, avec un découpage par **méthode d'identification** qui
+répond en miroir à celui de l'Infrastructure :
+
+```text
+Modules/Auth/Application/
+  Ports/
+    IAuthRepository.cs        transverse : lu par les trois flux
+    Google/                   client OAuth, vérification d'identité, store d'état, comptes Google
+    Password/                 hachage, jetons de réinitialisation, credentials, providers
+  Usecases/
+    Google/                   URL d'autorisation, callback
+    Password/                 login, demande de réinitialisation, réinitialisation, définition
+    Session/                  renouvellement, session Electron
+```
+
+`LoginUseCase` est dans `Password/` et non dans `Session/` : il délègue toute la création de
+session à `AuthSessionService`, et ce qui lui reste en propre est la vérification d'un couple
+email / mot de passe. `Session/` ne garde que ce qui gère la durée de vie d'une session
+**quelle que soit** la méthode d'identification initiale.
+
+Un port consommé par plusieurs flux reste à la racine de `Ports/`. `IAuthRepository` est lu
+par le login, le renouvellement, la session Electron et les flux de mot de passe : le ranger
+sous l'un d'eux laisserait croire à une appartenance qui n'existe pas. Le rangement doit
+décrire les dépendances réelles, pas les suggérer.
+
+### Nommage des exceptions
+
+L'exception applicative s'appelle `AppException`. Elle s'est d'abord appelée
+`ApplicationException`, ce qui entrait en collision avec `System.ApplicationException` de
+la BCL : sans namespace la nôtre masquait silencieusement celle de .NET, et l'introduction
+des namespaces a transformé ce masquage en ambiguïté de compilation. Le préfixe `App`
+s'aligne sur `AppOptions` et la section de configuration `App:`.
+
+`BusinessException` a été écarté — la classe porte aussi `ErrorKind.Unavailable`, qui n'est
+pas métier — et `DomainException` également, puisqu'elle vit dans `Common/Application`.
+
+Règle générale : ne jamais donner à un type le nom d'un type courant de la BCL.
+
+## Tests
+
+Deux projets distincts, séparés par **nature de test** et non par dossier — les tests
+d'intégration ont leurs propres dépendances, sont plus lents, et la CI doit pouvoir lancer
+les unitaires sans eux.
+
+```text
+tests/
+  Tools.ApiCore.IntegrationTests/
+    Fixtures/    ApiCoreWebApplicationFactory
+    Fakes/       doubles mémoire des ports, une classe par fichier
+    Modules/     miroir des modules du code source
+      Auth/      AuthenticationTests, PasswordTests
+      Common/    ErrorContractTests
+      Mail/      MailControllerTests
+      Security/  AuthorizationTests
+  Tools.ApiCore.UnitTests/
+```
+
+Les tests d'intégration démarrent l'application en mémoire, sans port ni PostgreSQL, et
+sont organisés **par module**, pas en miroir fichier par fichier : ils ne testent pas une
+classe mais un comportement traversant controller, use case et repository. Les tests
+unitaires, eux, suivront le miroir strict du code source.
+
+Une règle transverse se teste une seule fois, dans le module qui la porte, en utilisant une
+route quelconque comme support :
+
+- `AuthenticationTests` (module Auth) — absence de jeton, jeton illisible, falsifié, expiré,
+  refresh token présenté comme access token, compte désactivé, et les cas qui doivent
+  continuer de passer.
+- `AuthorizationTests` (module Security) — règles de `UseCaseAuthorizer` : aucun rôle, code
+  de rôle inconnu, cumul de rôles.
+
+Ce qu'un module teste chez lui, c'est ce qui lui appartient : `MailControllerTests` vérifie
+que `SendMailUseCase` exige `TECH`, pas que l'authentification fonctionne.
+
+Toute suite de tests de refus doit comporter un **cas positif**. Sans lui, une route cassée
+qui refuse tout le monde laisserait la suite verte.
 
 ## Organisation du dépôt
 

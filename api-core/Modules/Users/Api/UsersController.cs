@@ -1,5 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using Tools.ApiCore.Modules.Auth.Application.Usecases;
+using Tools.ApiCore.Modules.Users.Application;
+using Tools.ApiCore.Modules.Auth.Application.Usecases.Password;
+
+namespace Tools.ApiCore.Modules.Users.Api;
 
 [ApiController]
 [Route("users")]

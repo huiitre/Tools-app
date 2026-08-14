@@ -1,5 +1,7 @@
 using Serilog.Context;
 
+namespace Tools.ApiCore.Modules.Common.Api.Errors;
+
 public sealed class RequestIdMiddleware(RequestDelegate next)
 {
     private const string HeaderName = "X-Request-Id";

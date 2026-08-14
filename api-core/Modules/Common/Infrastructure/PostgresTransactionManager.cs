@@ -1,4 +1,7 @@
 using Npgsql;
+using Tools.ApiCore.Modules.Common.Application.Ports;
+
+namespace Tools.ApiCore.Modules.Common.Infrastructure;
 
 public sealed class PostgresTransactionManager(
     NpgsqlDataSource dataSource,

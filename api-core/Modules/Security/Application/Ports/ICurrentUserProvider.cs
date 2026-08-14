@@ -1,3 +1,7 @@
+using Tools.ApiCore.Modules.Security.Domain;
+
+namespace Tools.ApiCore.Modules.Security.Application.Ports;
+
 // Port d'identification de l'appelant : l'Application ignore d'où vient l'identité
 // (en-tête HTTP, token, autre) et ne connaît que son identifiant et ses rôles.
 public interface ICurrentUserProvider

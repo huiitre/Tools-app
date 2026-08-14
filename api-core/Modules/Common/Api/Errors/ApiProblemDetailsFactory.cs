@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
+namespace Tools.ApiCore.Modules.Common.Api.Errors;
+
 public sealed class ApiProblemDetailsFactory
 {
     public ProblemDetails Create(

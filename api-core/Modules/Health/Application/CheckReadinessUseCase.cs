@@ -1,3 +1,5 @@
+namespace Tools.ApiCore.Modules.Health.Application;
+
 public class CheckReadinessUseCase
 {
     private readonly IHealthRepository healthRepository;

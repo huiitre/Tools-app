@@ -1,3 +1,11 @@
+using Tools.ApiCore.Modules.Auth.Application.Ports;
+using Tools.ApiCore.Modules.Auth.Domain;
+using Tools.ApiCore.Modules.Common.Application.Ports;
+using Tools.ApiCore.Modules.Common.Application.Exceptions;
+using Tools.ApiCore.Modules.Auth.Application.Ports.Google;
+
+namespace Tools.ApiCore.Modules.Auth.Application.Services;
+
 // Service applicatif partagé par tous les flux Google : retrouve ou crée le compte Tools associé.
 public sealed class GoogleIdentityAuthenticationService(
     IGoogleAuthRepository googleAuthRepository,
@@ -12,7 +20,7 @@ public sealed class GoogleIdentityAuthenticationService(
         {
             if (!existingUser.IsActive)
             {
-                throw ApplicationException.Unauthorized("USER_DISABLED", "Utilisateur désactivé.");
+                throw AppException.Unauthorized("USER_DISABLED", "Utilisateur désactivé.");
             }
 
             if (!string.IsNullOrWhiteSpace(identity.PictureUrl))
@@ -26,7 +34,7 @@ public sealed class GoogleIdentityAuthenticationService(
 
         if (await googleAuthRepository.ExistsByEmailAsync(identity.Email, cancellationToken))
         {
-            throw ApplicationException.Conflict(
+            throw AppException.Conflict(
                 "GOOGLE_EMAIL_ALREADY_REGISTERED",
                 "Un compte existe déjà avec cette adresse email.");
         }

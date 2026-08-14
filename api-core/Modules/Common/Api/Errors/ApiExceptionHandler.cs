@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using System.Net.Mail;
 using System.Text.Json;
+using Tools.ApiCore.Modules.Common.Application.Exceptions;
+
+namespace Tools.ApiCore.Modules.Common.Api.Errors;
 
 public sealed class ApiExceptionHandler(
     ApiProblemDetailsFactory problemDetailsFactory,
@@ -20,7 +23,7 @@ public sealed class ApiExceptionHandler(
 
         var (status, code, title, detail, isTechnical) = exception switch
         {
-            ApplicationException applicationException => MapApplicationException(applicationException),
+            AppException applicationException => MapApplicationException(applicationException),
             BadHttpRequestException => (
                 StatusCodes.Status400BadRequest,
                 "INVALID_REQUEST_BODY",
@@ -86,7 +89,7 @@ public sealed class ApiExceptionHandler(
     }
 
     private static (int Status, string Code, string Title, string Detail, bool IsTechnical)
-        MapApplicationException(ApplicationException exception) => exception.Kind switch
+        MapApplicationException(AppException exception) => exception.Kind switch
         {
             ErrorKind.Validation => (
                 StatusCodes.Status400BadRequest,

@@ -1,0 +1,16 @@
+using Tools.ApiCore.Modules.Auth.Application.Ports;
+using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+
+namespace Tools.ApiCore.IntegrationTests.Fakes;
+
+public sealed class InMemoryUserAuthProviderRepository(InMemoryAuthStore store) : IUserAuthProviderRepository
+{
+    public Task<bool> ExistsAsync(long userId, string provider, CancellationToken cancellationToken) =>
+        Task.FromResult(store.Providers.Contains((userId, provider)));
+
+    public Task InsertAsync(long userId, string provider, string providerUserId, string? providerEmail, CancellationToken cancellationToken)
+    {
+        store.Providers.Add((userId, provider));
+        return Task.CompletedTask;
+    }
+}

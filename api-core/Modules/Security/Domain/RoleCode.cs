@@ -1,3 +1,5 @@
+namespace Tools.ApiCore.Modules.Security.Domain;
+
 // Rôles globaux de tools_core.role, ordonnés du moins au plus permissif.
 // La valeur de l'énumération porte le niveau hiérarchique : une comparaison suffit,
 // il n'y a pas de table de niveaux à maintenir en parallèle de l'énumération.

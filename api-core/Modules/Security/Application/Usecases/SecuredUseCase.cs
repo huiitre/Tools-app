@@ -1,3 +1,9 @@
+using Tools.ApiCore.Modules.Security.Application.Ports;
+using Tools.ApiCore.Modules.Security.Application.Services;
+using Tools.ApiCore.Modules.Security.Domain;
+
+namespace Tools.ApiCore.Modules.Security.Application.Usecases;
+
 // Use case dont l'exécution exige un rôle minimum.
 //
 // Le contrôle est porté par la classe de base plutôt que par un marquage : `Execute`

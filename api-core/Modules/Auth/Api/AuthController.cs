@@ -1,6 +1,16 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
+using Tools.ApiCore.Modules.Auth.Application.Usecases;
+using Tools.ApiCore.Modules.Common.Application.Exceptions;
+using Tools.ApiCore.Modules.Auth.Infrastructure.Google;
+using Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
+using Tools.ApiCore.Modules.Auth.Application.Usecases.Google;
+using Tools.ApiCore.Modules.Auth.Application.Usecases.Password;
+using Tools.ApiCore.Modules.Auth.Application.Usecases.Session;
+
+namespace Tools.ApiCore.Modules.Auth.Api;
 
 [ApiController]
 [Route("auth")]
@@ -17,6 +27,7 @@ public sealed class AuthController(
     IOptions<GoogleOAuthOptions> googleOAuthOptions,
     ILogger<AuthController> logger) : ControllerBase
 {
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request, CancellationToken cancellationToken)
     {
@@ -30,6 +41,7 @@ public sealed class AuthController(
         return Ok(new LoginResponse(session.AccessToken));
     }
 
+    [AllowAnonymous]
     [HttpPost("refresh")]
     public async Task<ActionResult<LoginResponse>> Refresh(CancellationToken cancellationToken)
     {
@@ -37,7 +49,7 @@ public sealed class AuthController(
         if (!refreshTokenCookieManager.TryGet(Request, out var refreshToken))
         {
             logger.LogDebug("Refresh refusé : cookie refresh_token absent.");
-            throw ApplicationException.Unauthorized("INVALID_REFRESH_TOKEN", "Session invalide ou expirée.");
+            throw AppException.Unauthorized("INVALID_REFRESH_TOKEN", "Session invalide ou expirée.");
         }
 
         logger.LogDebug("Refresh demandé avec un cookie refresh_token.");
@@ -49,6 +61,7 @@ public sealed class AuthController(
         return Ok(new LoginResponse(session.AccessToken));
     }
 
+    [AllowAnonymous]
     [HttpPost("logout")]
     public IActionResult Logout()
     {
@@ -64,7 +77,7 @@ public sealed class AuthController(
         var authorization = Request.Headers.Authorization.ToString();
         if (!authorization.StartsWith("Bearer ", StringComparison.Ordinal))
         {
-            throw ApplicationException.Unauthorized("INVALID_ACCESS_TOKEN", "Session invalide ou expirée.");
+            throw AppException.Unauthorized("INVALID_ACCESS_TOKEN", "Session invalide ou expirée.");
         }
 
         var refreshToken = await createElectronSessionUseCase.Execute(authorization["Bearer ".Length..], cancellationToken);
@@ -72,11 +85,13 @@ public sealed class AuthController(
         return NoContent();
     }
 
+    [AllowAnonymous]
     [HttpGet("google/url")]
     public ActionResult<GoogleAuthorizationUrlResponse> GetGoogleAuthorizationUrl(
         [FromQuery] string source = "web") =>
         Ok(new GoogleAuthorizationUrlResponse(getGoogleAuthorizationUrlUseCase.Execute(source)));
 
+    [AllowAnonymous]
     [HttpGet("callback/google")]
     public async Task<IActionResult> CompleteGoogleOAuthLogin(
         [FromQuery, Required] string code,
@@ -93,6 +108,7 @@ public sealed class AuthController(
         return Redirect(redirectUrl);
     }
 
+    [AllowAnonymous]
     [HttpPost("password/reset-request")]
     public async Task<IActionResult> RequestPasswordReset(
         PasswordResetRequest request,
@@ -107,6 +123,7 @@ public sealed class AuthController(
             "Si un compte correspondant existe, un email a été envoyé."));
     }
 
+    [AllowAnonymous]
     [HttpPost("password/reset")]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken cancellationToken)
     {

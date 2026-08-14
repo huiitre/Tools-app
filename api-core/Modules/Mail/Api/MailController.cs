@@ -1,5 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using Tools.ApiCore.Modules.Mail.Application.Usecases;
+using Tools.ApiCore.Modules.Mail.Application;
+using Tools.ApiCore.Modules.Common.Application.Exceptions;
+
+namespace Tools.ApiCore.Modules.Mail.Api;
 
 [ApiController]
 [Route("mail")]
@@ -27,7 +32,7 @@ public sealed class MailController(SendMailUseCase sendMailUseCase) : Controller
         }
         catch (FormatException)
         {
-            throw ApplicationException.Validation(
+            throw AppException.Validation(
                 "INVALID_MAIL_ATTACHMENT_CONTENT",
                 "Le contenu d’une pièce jointe doit être encodé en Base64 valide.");
         }

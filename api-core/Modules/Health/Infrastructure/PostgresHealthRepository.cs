@@ -1,5 +1,8 @@
 using Dapper;
 using Npgsql;
+using Tools.ApiCore.Modules.Health.Application;
+
+namespace Tools.ApiCore.Modules.Health.Infrastructure;
 
 public class PostgresHealthRepository : IHealthRepository
 {

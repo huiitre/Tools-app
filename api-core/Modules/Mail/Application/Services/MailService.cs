@@ -1,4 +1,8 @@
 using System.Net.Mail;
+using Tools.ApiCore.Modules.Mail.Application.Ports;
+using Tools.ApiCore.Modules.Common.Application.Exceptions;
+
+namespace Tools.ApiCore.Modules.Mail.Application.Services;
 
 public sealed class MailService(IMailSender mailSender)
 {
@@ -14,17 +18,17 @@ public sealed class MailService(IMailSender mailSender)
     {
         if (command.To.Count == 0 || command.To.Any(address => !IsEmail(address)))
         {
-            throw ApplicationException.Validation("INVALID_MAIL_RECIPIENT", "Au moins une adresse email est invalide.");
+            throw AppException.Validation("INVALID_MAIL_RECIPIENT", "Au moins une adresse email est invalide.");
         }
 
         if (string.IsNullOrWhiteSpace(command.Subject))
         {
-            throw ApplicationException.Validation("INVALID_MAIL_SUBJECT", "Le sujet de l’email est obligatoire.");
+            throw AppException.Validation("INVALID_MAIL_SUBJECT", "Le sujet de l’email est obligatoire.");
         }
 
         if (string.IsNullOrWhiteSpace(command.Text) && string.IsNullOrWhiteSpace(command.Html))
         {
-            throw ApplicationException.Validation("MISSING_MAIL_BODY", "Un contenu texte ou HTML est obligatoire.");
+            throw AppException.Validation("MISSING_MAIL_BODY", "Un contenu texte ou HTML est obligatoire.");
         }
     }
 

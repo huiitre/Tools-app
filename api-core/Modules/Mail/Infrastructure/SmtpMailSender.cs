@@ -1,6 +1,11 @@
 using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Mail;
+using Tools.ApiCore.Modules.Mail.Application;
+using Tools.ApiCore.Modules.Mail.Application.Ports;
+using Tools.ApiCore.Modules.Common.Application.Exceptions;
+
+namespace Tools.ApiCore.Modules.Mail.Infrastructure;
 
 public sealed class SmtpMailSender(
     IOptions<SmtpMailOptions> options,
@@ -14,7 +19,7 @@ public sealed class SmtpMailSender(
             || string.IsNullOrWhiteSpace(configuration.Password)
             || string.IsNullOrWhiteSpace(configuration.FromAddress))
         {
-            throw ApplicationException.Unavailable("MAIL_NOT_CONFIGURED", "Le service d’envoi d’emails n’est pas configuré.");
+            throw AppException.Unavailable("MAIL_NOT_CONFIGURED", "Le service d’envoi d’emails n’est pas configuré.");
         }
 
         using var email = new System.Net.Mail.MailMessage

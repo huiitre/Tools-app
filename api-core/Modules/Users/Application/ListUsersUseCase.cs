@@ -1,3 +1,8 @@
+using Tools.ApiCore.Modules.Common.Application.Ports;
+using Tools.ApiCore.Modules.Users.Domain;
+
+namespace Tools.ApiCore.Modules.Users.Application;
+
 public class ListUsersUseCase
 {
 

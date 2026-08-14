@@ -1,5 +1,10 @@
 using Dapper;
 using Npgsql;
+using Tools.ApiCore.Modules.Common.Infrastructure;
+using Tools.ApiCore.Modules.Users.Application;
+using Tools.ApiCore.Modules.Users.Domain;
+
+namespace Tools.ApiCore.Modules.Users.Infrastructure;
 
 public class PostgresUserRepository : IUserRepository
 {

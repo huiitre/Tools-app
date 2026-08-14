@@ -1,7 +1,13 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Tools.ApiCore.Modules.Health.Application;
+
+namespace Tools.ApiCore.Modules.Health.Api;
 
 [ApiController]
 [Route("health")]
+// Sondes appelées par le healthcheck du conteneur et par Watchtower, sans jeton.
+[AllowAnonymous]
 public class HealthController : ControllerBase
 {
     private readonly CheckReadinessUseCase checkReadinessUseCase;

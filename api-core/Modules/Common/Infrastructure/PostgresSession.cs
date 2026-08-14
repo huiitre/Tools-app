@@ -1,5 +1,7 @@
 using Npgsql;
 
+namespace Tools.ApiCore.Modules.Common.Infrastructure;
+
 public sealed class PostgresSession
 {
     public NpgsqlConnection? Connection { get; private set; }
