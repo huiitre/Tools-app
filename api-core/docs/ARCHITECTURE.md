@@ -811,6 +811,42 @@ de recharger la liste côté frontend. À trancher séparément.
 écran : ils n'ont pas été repris. `GET /modules/users/{userId}` non plus — le profil renvoyé
 par `/users/me` porte déjà les modules de l'appelant.
 
+## Déploiement en production — deux pièges rencontrés
+
+La mise en production du 15/08/2026 a livré d'un coup l'authentification, l'administration et la
+bascule du frontend. Deux incidents, tous deux d'ordre opérationnel et non applicatif.
+
+**Un `JWT_SECRET` désaligné entre les deux APIs boucle sur la déconnexion.** Le secret avait été
+changé sur le Core mais pas répercuté sur l'API Java du même environnement. Le symptôme est
+trompeur : la connexion **réussit**, `/users/me` répond 200, puis l'écran renvoie « Votre session
+a expiré » en boucle. L'enchaînement est le suivant — une route métier Java répond 401 parce
+qu'elle refuse la signature, l'intercepteur du front renouvelle le jeton auprès du Core avec
+succès, rejoue la requête, se prend un second 401, constate que `_retry` vaut déjà `true` et
+déconnecte l'utilisateur.
+
+Le diagnostic tient en une comparaison :
+
+```bash
+docker exec <core> env | grep JWT_SECRET
+docker exec <java> env | grep JWT_SECRET
+```
+
+Tant que le module core vit dans les deux APIs, **le secret se change sur les deux à la fois**,
+avec `docker compose up -d --force-recreate` — un `restart` conserve l'environnement existant.
+
+**Une migration non appliquée ne se voit pas au démarrage.** `V2.65.0` (colonne
+`email_verified_at`) n'était pas passée en production. L'application démarre pourtant sans
+broncher : seul `EmailVerificationCleanupService` échoue, toutes les trente minutes, avec un
+`42703: column u.email_verified_at does not exist`. Le login n'y touche pas — mais l'inscription
+et la confirmation d'adresse sont hors service, sans que rien ne l'annonce.
+
+À retenir pour les prochaines tranches : **appliquer les migrations avant de déployer le Core**,
+sans compter sur le workflow, puisque les trois pipelines (`database/**`, `api-core/**`,
+`web/**`) se déclenchent en parallèle sur le même merge et qu'aucun n'attend les autres. Le
+risque symétrique existe côté frontend : si l'image web arrive avant celle du Core, le front
+appelle des routes qui n'existent pas encore et plus personne ne peut se connecter. Neutraliser
+Watchtower sur le conteneur web le temps que le Core soit à jour évite cette fenêtre.
+
 ### Points restés en suspens
 
 - **`ValidateOnStart()` sur les options JWT** — l'application démarre aujourd'hui avec une

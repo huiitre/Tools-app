@@ -104,7 +104,13 @@ public class PostgresServerDataRepository implements ServerDataRepository {
 
         long missingStartedAt = System.nanoTime();
         markMissingPalsAsNotPresent(extractedAt);
-        log.info("Palworld import metrics file={} phase=mark-missing durationMs={}", fileName, elapsedMs(missingStartedAt));
+        // Après les upserts ci-dessus : les entités du snapshot portent désormais extractedAt,
+        // celles qui gardent une date antérieure ont disparu du serveur.
+        int missingBases = markMissingBasesAsNotPresent(extractedAt);
+        int missingGuilds = markMissingGuildsAsNotPresent(extractedAt);
+        int missingPlayers = markMissingPlayersAsNotPresent(extractedAt);
+        log.info("Palworld import metrics file={} phase=mark-missing bases={} guilds={} players={} durationMs={}",
+                fileName, missingBases, missingGuilds, missingPlayers, elapsedMs(missingStartedAt));
 
         long palsStartedAt = System.nanoTime();
         batchUpsertPalInstances(data.getPalInstances(), palIdByTribeUpper, extractedAt);
@@ -152,6 +158,32 @@ public class PostgresServerDataRepository implements ServerDataRepository {
                 """, extractedAt);
     }
 
+    // Marquées et non supprimées : pal_instance_snapshot référence base_id pour tout l'historique
+    // des pals, y compris ceux qui vivent aujourd'hui dans une autre base.
+    private int markMissingBasesAsNotPresent(Timestamp extractedAt) {
+        return jdbcTemplate.update("""
+                UPDATE tools_palworld.base
+                SET is_present = FALSE
+                WHERE is_present = TRUE AND last_seen_at < ?
+                """, extractedAt);
+    }
+
+    private int markMissingGuildsAsNotPresent(Timestamp extractedAt) {
+        return jdbcTemplate.update("""
+                UPDATE tools_palworld.guild
+                SET is_present = FALSE
+                WHERE is_present = TRUE AND last_seen_at < ?
+                """, extractedAt);
+    }
+
+    private int markMissingPlayersAsNotPresent(Timestamp extractedAt) {
+        return jdbcTemplate.update("""
+                UPDATE tools_palworld.player
+                SET is_present = FALSE
+                WHERE is_present = TRUE AND last_seen_at < ?
+                """, extractedAt);
+    }
+
     private Long resolvePalId(PalInstanceSyncData pal, Map<String, Long> palIdByTribeUpper) {
         String characterId = pal.characterIdWithoutBossPrefix();
         return characterId != null ? palIdByTribeUpper.get(characterId.toUpperCase()) : null;
@@ -161,7 +193,8 @@ public class PostgresServerDataRepository implements ServerDataRepository {
         final String sql = """
                 INSERT INTO tools_palworld.guild (guild_id, name, first_seen_at, last_seen_at)
                 VALUES (?, ?, ?, ?)
-                ON CONFLICT (guild_id) DO UPDATE SET name = EXCLUDED.name, last_seen_at = EXCLUDED.last_seen_at
+                ON CONFLICT (guild_id) DO UPDATE SET name = EXCLUDED.name, last_seen_at = EXCLUDED.last_seen_at,
+                    is_present = TRUE
                 WHERE tools_palworld.guild.last_seen_at <= EXCLUDED.last_seen_at
                 """;
         jdbcTemplate.update(sql, guild.getGuildId(), guild.getName(), extractedAt, extractedAt);
@@ -172,7 +205,8 @@ public class PostgresServerDataRepository implements ServerDataRepository {
                 INSERT INTO tools_palworld.player (player_uid, name, guild_id, last_online_real_time, first_seen_at, last_seen_at)
                 VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT (player_uid) DO UPDATE SET name = EXCLUDED.name, guild_id = EXCLUDED.guild_id,
-                    last_online_real_time = EXCLUDED.last_online_real_time, last_seen_at = EXCLUDED.last_seen_at
+                    last_online_real_time = EXCLUDED.last_online_real_time, last_seen_at = EXCLUDED.last_seen_at,
+                    is_present = TRUE
                 WHERE tools_palworld.player.last_seen_at <= EXCLUDED.last_seen_at
                 """;
         jdbcTemplate.update(sql, player.getPlayerUid(), player.getName(), guildId, player.getLastOnlineRealTime(),
@@ -188,7 +222,8 @@ public class PostgresServerDataRepository implements ServerDataRepository {
                 ON CONFLICT (base_id) DO UPDATE SET guild_id = EXCLUDED.guild_id,
                     position_x = EXCLUDED.position_x, position_y = EXCLUDED.position_y, position_z = EXCLUDED.position_z,
                     rotation_x = EXCLUDED.rotation_x, rotation_y = EXCLUDED.rotation_y, rotation_z = EXCLUDED.rotation_z,
-                    rotation_w = EXCLUDED.rotation_w, area_range = EXCLUDED.area_range, last_seen_at = EXCLUDED.last_seen_at
+                    rotation_w = EXCLUDED.rotation_w, area_range = EXCLUDED.area_range, last_seen_at = EXCLUDED.last_seen_at,
+                    is_present = TRUE
                 WHERE tools_palworld.base.last_seen_at <= EXCLUDED.last_seen_at
                 """;
         jdbcTemplate.update(sql, base.getBaseId(), base.getGuildId(), base.getPositionX(), base.getPositionY(), base.getPositionZ(),

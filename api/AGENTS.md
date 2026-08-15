@@ -310,6 +310,38 @@ UserAdminView : classe simple, roles = List<Long> (IDs), avatarUrl via LEFT JOIN
 ModuleUserView : classe simple, une ligne par user, RowMapper simple (pas de N+1, 1 role par user par module).
 UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + role WHERE module_id = ?
 
+9a. Module Palworld — Présence des bases, guildes et joueurs (2026-08-15)
+
+  Problème corrigé : l'import n'a jamais signalé les entités disparues du snapshot. Seuls les
+  pals disposaient d'un `is_present` (`markMissingPalsAsNotPresent`) ; une base détruite en jeu,
+  une guilde dissoute ou un personnage supprimé restaient affichés indéfiniment sur la carte et
+  dans la liste latérale. Vérifié sur les snapshots réels : l'extracteur ne renvoie que ce qui
+  existe (9 bases disparues entre le 26/07 et le 15/08), le trou était bien à l'import.
+
+  Migration : `V2.66.0__palworld_presence_flags.sql` — colonne `is_present BOOLEAN NOT NULL
+  DEFAULT TRUE` sur `base`, `guild` et `player`, index partiels, et reprise de l'existant.
+
+  **Marquer et non supprimer** : `pal_instance_snapshot.base_id` référence les bases pour tout
+  l'historique des pals, y compris ceux qui vivent aujourd'hui ailleurs. Une suppression
+  effacerait leur passé sans rien changer à l'écran. Supprimer les pals d'une base disparue
+  serait également faux — ils ont le plus souvent été déplacés, et l'upsert les repositionne
+  seul (leur `instance_id` est la clé primaire, aucun doublon possible).
+
+  Import (`PostgresServerDataRepository.importSnapshot`) : `markMissingBasesAsNotPresent`,
+  `markMissingGuildsAsNotPresent` et `markMissingPlayersAsNotPresent` sont appelées **après**
+  les upserts — les entités du snapshot portent alors `extractedAt`, celles qui gardent une date
+  antérieure ont disparu. Les trois upserts remettent `is_present = TRUE` afin qu'une entité qui
+  réapparaît redevienne visible.
+
+  Reprise de l'existant : le repère est `MAX(extracted_at)` du journal d'imports, jamais `now()`.
+  Si aucun snapshot n'arrive pendant plusieurs jours (serveur éteint, extracteur arrêté), la
+  carte conserve le dernier état connu au lieu de se vider. `COALESCE` couvre la base neuve, sans
+  aucun import.
+
+  Lectures (`PostgresGuildQueryRepository`) : les trois requêtes filtrent sur `is_present`.
+  `pal_count` était déjà calculé et exposé — le frontend l'affiche désormais dans la colonne des
+  calques et dans l'infobulle des bases.
+
 9b. Module Palworld — Breeding — COMPLÈTE (2026-08-05)
 
   Source de vérité : les 3 champs de breeding sur `pal` (`combi_rank`, `combi_duplicate_priority`, `ignore_combi`,

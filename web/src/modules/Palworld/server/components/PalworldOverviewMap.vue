@@ -87,6 +87,9 @@ const baseMarkers = computed<MapFrameMarker[]>(() =>
     .filter(({ key }) => !hiddenBaseKeys.value.has(key))
     .map(({ base, key, resolution, guildPlayerNames }) => {
       const tooltipLines = [base.guildName, base.name, `Position : ${base.mapX}, ${base.mapY}`]
+      if (base.palCount != null) {
+        tooltipLines.push(`Pals : ${base.palCount}`)
+      }
       if (guildPlayerNames.length) {
         tooltipLines.push(`Joueurs : ${guildPlayerNames.join(', ')}`)
       }
@@ -114,12 +117,18 @@ const playerLayerItems = computed<MapLayerItem[]>(() =>
 const baseLayerItems = computed<MapLayerItem[]>(() =>
   [...mapBases.value]
     .sort((a, b) => b.guildPlayerNames.length - a.guildPlayerNames.length)
-    .map(({ base, key, guildPlayerNames }) => ({
-      key,
-      label: base.guildName,
-      sublabel: `${guildPlayerNames.length} joueur${guildPlayerNames.length > 1 ? 's' : ''}`,
-      children: guildPlayerNames,
-    })),
+    .map(({ base, key, guildPlayerNames }) => {
+      const parts = [`${guildPlayerNames.length} joueur${guildPlayerNames.length > 1 ? 's' : ''}`]
+      if (base.palCount != null) {
+        parts.push(`${base.palCount} pal${base.palCount > 1 ? 's' : ''}`)
+      }
+      return {
+        key,
+        label: base.guildName,
+        sublabel: parts.join(' · '),
+        children: guildPlayerNames,
+      }
+    }),
 )
 
 const activeMapLabel = computed(() => MAP_LABELS[activeMap.value])

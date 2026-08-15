@@ -67,6 +67,9 @@ export interface PalworldBase {
   locationZ: number
   mapX: number
   mapY: number
+  // Renseigné depuis le snapshot serveur (GET /palworld/guilds). Les bases remontées en direct
+  // par le jeu ne le portent pas : il est alors repris de la base persistée qu'elles remplacent.
+  palCount?: number | null
 }
 
 export interface PalworldBasePal {
