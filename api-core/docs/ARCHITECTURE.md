@@ -473,6 +473,30 @@ Créer un container `tools-api-core-qa` avec :
 
 Ne pas dérouter l’authentification ou les routes existantes à cette étape.
 
+### Ajouter une variable d'environnement à un conteneur existant
+
+Watchtower met à jour l'image en **réutilisant la configuration du conteneur existant**. Une
+variable ajoutée au `docker-compose.yml` n'entre donc jamais dans un conteneur déjà créé, même
+après plusieurs mises à jour d'image. Il faut le recréer explicitement :
+
+```bash
+docker compose up -d --force-recreate
+docker exec <conteneur> env | grep <VARIABLE>
+```
+
+Le symptôme observé pour `JWT_SECRET` : `500 INTERNAL_ERROR` sur **toutes** les routes, y
+compris `/health`, avec « JWT_SECRET doit contenir au moins 32 octets UTF-8 » — la variable
+valant `""`. Le healthcheck échouant toutes les 30 secondes, les logs se remplissent vite.
+
+Deux conséquences à retenir :
+
+- **Les routes anonymes ne contournent pas le middleware d'authentification.** Il s'exécute
+  sur chaque requête et construit les options JWT ; une configuration invalide casse donc
+  aussi `/health` et `/version`.
+- **Les options sont construites paresseusement**, à la première requête. L'application
+  démarre « saine » avec une configuration inutilisable. Ajouter `ValidateOnStart()` ferait
+  échouer le démarrage, ce qui serait plus lisible en exploitation.
+
 ### Phase 4 — test de la chaîne complète
 
 Modifier volontairement la valeur de `/version`, puis vérifier :
@@ -498,18 +522,65 @@ Elle permet de vérifier la chaîne proxy + container sans introduire de route f
 Ordre recommandé :
 
 ```text
-health/version/déploiement
-→ configuration, logs et correlation-id
-→ PostgreSQL et schéma Core séparé
-→ utilisateurs
-→ authentification et émission JWT
-→ validation locale des JWT C# par Java
-→ migration frontend de l’authentification
-→ migration des flux mot de passe et e-mail
-→ rôles et droits de module dans les claims
-→ SignalR / realtime
-→ mail
+[x] health / version / déploiement
+[x] configuration, logs et correlation-id
+[x] PostgreSQL et schéma Core séparé
+[x] mail (gateway générique)
+[x] authentification, émission JWT et middleware de validation
+[x] flux mot de passe (réinitialisation, définition)
+[x] inscription et confirmation d'adresse
+[x] profil utilisateur (/users/me)
+[ ] migration frontend de l'authentification   ← prochaine étape
+[ ] rôles et droits de module dans les claims
+[ ] SignalR / realtime
 ```
+
+La validation locale des JWT par Java n'a pas lieu d'être pour l'instant : les deux APIs
+partagent le même `JWT_SECRET`, le même issuer et le même choix d'algorithme HMAC, donc un
+jeton émis par le Core est déjà accepté par Java. La question se reposera le jour où le Core
+passera à une paire de clés asymétrique.
+
+## Prochaine étape — bascule du frontend
+
+L'API Core est déployée et fonctionnelle en QA (`https://qa.api.tools.huiitre.fr/api/core`).
+Tout ce qui suit se passe dans `web/`, et reste réversible en repointant le client sur Java.
+
+**1. Un client HTTP vers api-core**, à côté de `clientV3`, avec `withCredentials: true` — le
+cookie `refresh_token` est posé sur un autre sous-domaine que le front. Le CORS QA autorise
+déjà `https://qa.tools.huiitre.fr` avec `AllowCredentials`. C'est le point le plus susceptible
+de coincer : le comportement du cookie cross-domaine depuis un navigateur n'a jamais été
+exercé.
+
+**2. Les URLs à corriger** dans `web/src/modules/Auth/fetch/auth.fetch.ts` :
+
+| Aujourd'hui (Java) | Sur le Core |
+|---|---|
+| `/user/me` | `/users/me` |
+| `/user/password` | `/auth/password` |
+| `/auth/google` | à supprimer — `useFetchLoginWithGoogle` n'est appelé nulle part |
+
+Les autres routes gardent le même chemin : `login`, `refresh`, `logout`, `register`,
+`verify-email`, `password/reset`, `password/reset-request`, `google/url`, `electron/session`.
+
+**3. Le contrat de `/users/me` est identique à celui de Java** — `id`, `email`, `name`,
+`userType`, `active`, `avatarUrl`, `roles[]`, `modules[]` avec leurs rôles imbriqués. Le store
+`auth.store.ts` n'a donc rien à changer. Le sur-fetch connu (`roles[].id`, `name`,
+`description` transmis alors que seuls `code` et `active` sont lus) est conservé
+volontairement : on ne modifie pas la forme des données pendant une bascule, sinon un bug
+devient impossible à attribuer.
+
+**4. Ordre suggéré** : basculer d'abord `login` + `/users/me` + `refresh` et vérifier qu'une
+session tient au rechargement de page, puis le reste.
+
+### Points restés en suspens
+
+- **`ValidateOnStart()` sur les options JWT** — l'application démarre aujourd'hui avec une
+  configuration invalide et n'échoue qu'à la première requête. Proposé, non fait.
+- **`UseForwardedHeaders`** — nécessaire si la limitation de débit revient un jour
+  (voir `REGISTRATION.md`).
+- **`Modules/Users/Domain/User.cs`** est orphelin depuis la suppression du bac à sable de
+  création : plus aucun appelant.
+- **`docs/LEARNING.md`** mentionne encore `PATCH /users/password`, devenu `/auth/password`.
 
 Chaque tranche doit pouvoir être testée en QA sans retirer prématurément le comportement Java existant.
 
