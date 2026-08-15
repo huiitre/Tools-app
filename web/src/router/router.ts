@@ -8,8 +8,7 @@ import TermsOfService from '@/modules/Legal/TermsOfService.vue';
 
 import NotFound from '@/components/NotFound.vue';
 import { useAuthStore } from '@/modules/Auth/auth.store';
-import { useFetchMe } from '@/modules/Auth/fetch/auth.fetch';
-import { clientInit } from '@/services/axiosInstance';
+import { refreshSession } from '@/services/axiosInstance';
 
 import { useUIStore } from '@/stores/ui.store';
 
@@ -91,11 +90,15 @@ router.beforeEach(async (to) => {
     try {
       ui.setLoading(true);
 
-      const { data } = await clientInit.post('/auth/refresh');
-      auth.setToken(data.accessToken);
+      //* Même chemin que le refresh en cours de session : refresh puis /me.
+      await refreshSession();
 
-      const me = await useFetchMe();
-      auth.setUser(me.data);
+      //* Le /me est tolérant à l'échec côté refreshSession pour ne pas casser une
+      //* session valide. Au démarrage il n'y a pas de profil à conserver : sans lui,
+      //* la session n'est pas exploitable et on repart déconnecté.
+      if (!auth.user) {
+        auth.logout();
+      }
     } catch {
       auth.logout();
     } finally {

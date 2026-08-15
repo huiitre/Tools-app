@@ -194,12 +194,240 @@ la version identique après un merge QA vers `master`.
 - EasyMobile/Inversify a des contraintes d'ordre seulement lorsqu'un `container.get(...)` est exécuté pendant le bootstrap ; les `bind(...)` seuls ne construisent pas les objets.
 - Le pipeline HTTP et les middlewares sont le prochain grand sujet : il accueillera ensuite CORS, gestion globale des erreurs, JWT et autorisation.
 
-## Suite recommandée
+## Module Mail — état de reprise du 13 août 2026
 
-1. Exécuter manuellement le workflow QA une première fois afin de publier `huiitre/tools_api_core:qa` en version de bootstrap `0.1.0` et de valider les secrets Docker Hub.
-2. Créer le Compose QA directement sur le NAS, avec Watchtower limité à `tools_api_core_qa`.
-3. Vérifier la chaîne complète, puis ajouter la route reverse proxy QA de diagnostic.
-4. Reprendre ensuite la gestion centralisée des erreurs JSON et l'exercice de rollback dans `Users`.
+### But
+
+L'API Core devient l'unique propriétaire de l'envoi SMTP. L'API Java ne devra
+plus avoir de dépendance SMTP : elle appellera l'endpoint Core pour demander un
+envoi. API Core utilisera directement le même service lors de la migration de
+la récupération de mot de passe.
+
+### Audit Java réalisé
+
+Deux implémentations Java SMTP existent encore et n'ont pas été modifiées :
+
+- `modules/core/auth/infrastructure/mail/AuthMailSenderService` envoie les
+  mails de vérification d'email et de réinitialisation de mot de passe ;
+- `modules/core/mail/infrastructure/MailSenderService` supporte le texte et
+  les pièces jointes vers la liste `MAIL_TO`, mais n'a actuellement aucun
+  consommateur effectif.
+
+La configuration Java actuelle est OVH SMTP : `ssl0.ovh.net:587`, authentifiée,
+avec STARTTLS et les variables `MAIL_USERNAME` / `MAIL_PASSWORD`.
+
+Les règles des flux auth Java actuels sont : un token sécurisé de 32 octets,
+encodé Base64 URL, valable 30 minutes ; une seule demande active par utilisateur ;
+la vérification d'email a un délai de renvoi de 5 minutes. La demande de reset
+répond toujours avec succès, y compris si le compte n'existe pas ou n'a pas le
+provider `PASSWORD`.
+
+### Architecture Core retenue
+
+Il n'y a pas de dossier `Domain` : envoyer un mail n'a pas de règle métier
+propre. Le module suit strictement :
+
+```text
+MailController
+  → SendMailUseCase
+    → MailService
+      → IMailSender
+        → SmtpMailSender
+```
+
+Fichiers :
+
+```text
+Modules/Mail/
+├── Api/MailController.cs
+├── Application/
+│   ├── SendMailCommand.cs
+│   ├── Ports/IMailSender.cs
+│   ├── Services/MailService.cs
+│   └── Usecases/SendMailUseCase.cs
+└── Infrastructure/SmtpMailSender.cs
+```
+
+- Le contrôleur dépend seulement de `SendMailUseCase`.
+- `SendMailUseCase` est la façade HTTP : il délègue uniquement à `MailService`.
+- Toute la validation réutilisable est dans `MailService`.
+- Les autres use cases doivent injecter directement `MailService`, jamais
+  appeler `SendMailUseCase`.
+- `IMailSender` est le port. `SmtpMailSender` est l'adaptateur actuel ; un
+  `SendmailMailSender` pourra le remplacer ultérieurement sans modifier les
+  use cases ni le service.
+
+### Contrat HTTP actuel
+
+`POST /mail` accepte `to`, `subject`, `text` ou `html`, et optionnellement des
+pièces jointes `{ fileName, contentType, contentBase64 }`. La réponse est
+`204 No Content` lorsque SMTP accepte le message. Les détails et un exemple
+JSON sont dans `docs/MAIL.md`.
+
+Les pièces jointes sont transférées en Base64 : Java ne transmet jamais un
+chemin de fichier qui ne serait pas accessible depuis le conteneur Core.
+
+La route n'a pour l'instant aucune authentification applicative : elle doit
+rester limitée au réseau Docker interne et ne pas être publiée par le reverse
+proxy. Toute future exposition devra définir explicitement son mécanisme
+d'authentification inter-service.
+
+### Configuration Core à fournir au Compose QA
+
+```text
+Mail__Smtp__Host=ssl0.ovh.net
+Mail__Smtp__Port=587
+Mail__Smtp__Username=...
+Mail__Smtp__Password=...
+Mail__Smtp__EnableSsl=true
+Mail__Smtp__FromAddress=admin@huiitre.fr
+Mail__Smtp__FromName=Tools - Huiitre
+```
+
+Les secrets ne sont pas versionnés. Si la configuration SMTP est absente,
+`SmtpMailSender` retourne l'erreur `503 MAIL_NOT_CONFIGURED`.
+
+Les échecs SMTP sont convertis par le handler global en
+`503 MAIL_DELIVERY_UNAVAILABLE`.
+
+### Validation effectuée
+
+```bash
+dotnet test api-core/tests/Tools.ApiCore.IntegrationTests/Tools.ApiCore.IntegrationTests.csproj --no-restore
+```
+
+Résultat final : 7 tests réussis. Les tests remplacent `IMailSender` par un
+expéditeur mémoire et vérifient que `POST /mail` transmet bien le sujet, le
+contenu et une pièce jointe décodée au flux Application.
+
+### Envoi SMTP réel validé en local
+
+Un envoi réel vers `admin@huiitre.fr` a été effectué : réponse `204 No Content`
+et log `SmtpMailSender — Email envoyé recipients=1`. La pièce jointe Base64 est
+passée dans le même appel. Le SMTP OVH accepte donc le message tel que
+`SmtpMailSender` le construit.
+
+Le chemin d'erreur a aussi été vérifié sur une instance sans configuration :
+`POST /mail` renvoie bien `503` avec `code: MAIL_NOT_CONFIGURED` au format
+`application/problem+json` produit par le handler global.
+
+### Configuration locale de développement
+
+`Program.cs` charge désormais `appsettings.Local.json` (optionnel, déjà présent
+dans `api-core/.gitignore`) :
+
+```csharp
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+```
+
+Ce fichier porte la section `Mail:Smtp` avec les identifiants OVH en local. Il
+n'est pas versionné. Les mêmes identifiants existaient déjà côté Java sous les
+variables d'environnement `MAIL_USERNAME` / `MAIL_PASSWORD`.
+
+### Requêtes Bruno
+
+Le dossier `bruno/Tools API Core/Mail/` a été ajouté (seq 3, après Diagnostics
+et Auth), avec `Send mail` et `Send mail with attachment`. Elles suivent le
+format déjà en place : URL `{{apiCoreUrl}}`, `auth: type none`, destinataire
+`{{authEmail}}`, bloc `settings` identique aux autres requêtes.
+
+### Exposition réelle de la route
+
+L'hypothèse écrite plus haut — « route interne au réseau Docker » — est fausse :
+l'API Core est publiée par le reverse proxy, comme le prouve le `RedirectUri`
+Google `https://qa.api.tools.huiitre.fr/api/core/auth/callback/google`, que le
+navigateur doit pouvoir atteindre. `POST /mail` est donc joignable depuis
+l'extérieur et permet aujourd'hui d'envoyer depuis `admin@huiitre.fr` avec
+SPF/DKIM valides. Le CORS n'y change rien : c'est une protection navigateur,
+pas serveur.
+
+Le blocage se fera **au niveau du use case**, comme dans l'API Java où aucune
+route n'est sécurisée et où seuls les use cases le sont. C'est précisément la
+raison pour laquelle les endpoints n'appellent que des use cases. Une première
+tentative de sécurisation par le pipeline HTTP (`AddJwtBearer`, `[Authorize]`,
+policy d'autorisation) a été annulée : elle ne correspondait pas à
+l'architecture du monorepo.
+
+### Système de droits sur les use cases
+
+Le contrôle des droits est porté par les use cases, jamais par les routes, comme
+dans l'API Java. Le module `Modules/Security` a été créé pour cela, et
+`SendMailUseCase` est le premier use case restreint (`ADMIN` minimum).
+
+Le fonctionnement, la hiérarchie des rôles et les différences assumées avec le
+Java sont documentés dans `docs/SECURITY.md`. Le point de conception principal :
+`Execute` appartient à la classe de base `SecuredUseCase` et n'est pas virtuelle,
+donc le contrôle ne peut être ni contourné ni oublié par une classe dérivée.
+Un marquage par interface, lui, se serait oublié en silence.
+
+Deux comportements Java n'ont volontairement pas été reproduits : l'aspect Java
+laisse passer un appel sans utilisateur identifié (Spring Security bloque en
+amont, ce que le Core n'a pas), et son `LIMIT 1` sans tri rend le rôle retenu
+non déterministe pour un utilisateur qui en cumule plusieurs.
+
+Les rôles sont lus dans le claim `roles` de l'access token, sans aucune requête
+lors de l'autorisation. Une première version relisait la base à chaque exécution ;
+elle a été abandonnée au profit de la performance, la fenêtre de révocation de
+10 minutes étant assumée. Le port `IUserRoleProvider` et son adaptateur Postgres
+ont donc été supprimés.
+
+Si la révocation immédiate devient nécessaire, la réponse sera une denylist
+partagée et non un retour au SQL par appel : un cache de rôles avec TTL ne
+supprimerait pas la fenêtre, il la déplacerait.
+
+La bascule n'a touché que la lecture : l'émission reste identique, donc un token
+produit par l'API Java reste lisible par le Core et inversement.
+
+### Mot de passe : réinitialisation et changement
+
+Les trois flux Java ont été portés dans le module `Auth` : demande de
+réinitialisation, validation du lien, et définition du mot de passe depuis les
+options. Le détail est dans `docs/PASSWORD.md`.
+
+Le point qui comptait : `SetUserPasswordUseCase` crée la ligne `user_credentials`
+**et** le provider `PASSWORD` lorsqu'un compte n'en a pas encore — c'est ainsi
+qu'un compte Google obtient un mot de passe, et donc l'accès à « mot de passe
+oublié ». Il est en `RoleCode.ReadOnly` : tout utilisateur authentifié peut agir
+sur son propre compte, l'identifiant venant du jeton et jamais de la requête.
+
+`SecuredUseCase` passe désormais l'appelant validé à `Handle`, ce qui évite à un
+use case de résoudre lui-même son utilisateur ou de manipuler une valeur nulle.
+
+Aucune migration SQL : `user_password_reset` existait déjà depuis `V2.14.0`.
+
+Piège rencontré : sur un record positionnel, les attributs de validation doivent
+cibler le **paramètre** (`[Required]` ou `[param: Required]`), jamais la
+propriété. `[property: Required]` compile mais fait échouer la liaison de modèle
+avec une `InvalidOperationException`, donc un `500` sur la route.
+
+### Point d'arrêt exact
+
+Le module Mail est fonctionnel et sa route est restreinte au rôle `TECH`. Les
+flux de mot de passe sont opérationnels et validés contre la base `tools_dev`.
+
+Le Compose QA n'a toujours pas reçu les variables SMTP : tant que c'est le cas,
+`POST /auth/password/reset-request` y créera le jeton puis échouera à l'envoi
+avec `503 MAIL_NOT_CONFIGURED`. Cela rend aussi l'énumération de comptes
+possible, un compte existant répondant `503` là où un email inconnu répond
+`200`. Aucun code Java n'a été modifié.
+
+`dotnet test` : 29 tests réussis. Vérifié sur l'instance locale contre la vraie
+base : `RESET_REQUESTED` pour un email inconnu, `400
+INVALID_PASSWORD_RESET_TOKEN` pour un jeton bidon, `401` sur
+`PATCH /users/password` sans token.
+
+Les droits par module ne sont pas encore portés : seul le rôle global est lu.
+Le claim `modules` étant déjà présent dans le token, ce portage ne demandera
+aucun accès base non plus.
+
+Le front appelle encore l'API Java pour ces trois routes : la bascule côté web
+n'a pas été faite.
+
+### Suite recommandée
+
+1. Porter les droits par module (`tools_core.user_module_role`) dans `SecuredUseCase`, en lisant le claim `modules` du token.
+2. Ajouter les variables SMTP au Compose QA et rejouer l'envoi depuis l'environnement QA.
+3. Basculer le front sur les routes mot de passe du Core, puis retirer les flux correspondants côté Java.
 
 ## Règle de travail
 

@@ -8,7 +8,7 @@ http:
   url: "{{apiUrl}}/riot/valorant/bundles/58"
   headers:
     - name: Authorization
-      value: Bearer {{token}}
+      value: Bearer {{authToken}}
   auth: inherit
 
 settings:

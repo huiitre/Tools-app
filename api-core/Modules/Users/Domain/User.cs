@@ -1,3 +1,5 @@
+namespace Tools.ApiCore.Modules.Users.Domain;
+
 public class User
 {
     public long? Id { get; }

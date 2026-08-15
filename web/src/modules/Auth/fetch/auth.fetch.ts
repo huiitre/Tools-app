@@ -1,56 +1,56 @@
-import { clientV3 } from '@/services/axiosInstance';
+import { clientCore } from '@/services/axiosInstance';
 import {
   useFetchLoginType,
-  useFetchLoginWithGoogleType,
   PasswordResetPayload,
   PasswordResetRequestPayload,
   useFetchRegisterType,
 } from '../types/auth.types';
 
-export const useFetchLogin = async (credentials: useFetchLoginType) => {
-  return await clientV3.post('/auth/login', { ...credentials });
-};
+/*
+ * Tout ce qui touche à l'identité est servi par l'API Core (/api/core).
+ * Le métier (Dofus, Palworld, Riot…) reste sur clientV3.
+ */
 
-export const useFetchLoginWithGoogle = async (
-  credentials: useFetchLoginWithGoogleType,
-) => {
-  return await clientV3.post('/auth/google', { ...credentials });
+export const useFetchLogin = async (credentials: useFetchLoginType) => {
+  return await clientCore.post('/auth/login', { ...credentials });
 };
 
 export const useFetchGoogleAuthUrl = async (source: 'web' | 'electron') => {
-  return await clientV3.get<{ url: string }>(`/auth/google/url?source=${source}`);
+  return await clientCore.get<{ url: string }>(`/auth/google/url?source=${source}`);
 };
 
 export const useFetchLogout = async () => {
-  return await clientV3.post('/auth/logout');
+  return await clientCore.post('/auth/logout');
 };
 
 export const useFetchMe = async () => {
-  return await clientV3.get('/user/me');
+  return await clientCore.get('/users/me');
 };
 
 export const useFetchPasswordReset = async (payload: PasswordResetPayload) => {
-  return await clientV3.post('/auth/password/reset', payload);
+  return await clientCore.post('/auth/password/reset', payload);
 };
 
 export const useFetchPasswordResetRequest = async (
   payload: PasswordResetRequestPayload,
 ) => {
-  return await clientV3.post('/auth/password/reset-request', payload);
+  return await clientCore.post('/auth/password/reset-request', payload);
 };
 
 export const useFetchRegister = async (credentials: useFetchRegisterType) => {
-  return await clientV3.post('/auth/register', credentials);
+  return await clientCore.post('/auth/register', credentials);
 };
 
 export const useFetchVerifyEmail = async (token: string) => {
-  return await clientV3.post(`/auth/verify-email?token=${token}`);
+  return await clientCore.post(`/auth/verify-email?token=${token}`);
 };
 
+//* Le mot de passe est un moyen d'identification, pas une propriété du profil :
+//* il vit sous /auth et non sous /users (côté Java, c'était PATCH /user/password).
 export const useFetchSetPassword = async (password: string) => {
-  return await clientV3.patch('/user/password', { password });
+  return await clientCore.patch('/auth/password', { password });
 };
 
 export const useFetchElectronSession = async () => {
-  return await clientV3.post('/auth/electron/session');
+  return await clientCore.post('/auth/electron/session');
 };

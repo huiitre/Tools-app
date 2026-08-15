@@ -1,0 +1,34 @@
+using Tools.ApiCore.Modules.Access.Application.Dto;
+using Tools.ApiCore.Modules.Access.Application.Ports;
+using Tools.ApiCore.Modules.Common.Application.Exceptions;
+using Tools.ApiCore.Modules.Security.Application.Ports;
+using Tools.ApiCore.Modules.Security.Application.Services;
+using Tools.ApiCore.Modules.Security.Application.Usecases;
+using Tools.ApiCore.Modules.Security.Domain;
+
+namespace Tools.ApiCore.Modules.Access.Application.Usecases;
+
+// Cas d'usage administrateur : lister les membres d'un module et leur rôle.
+//
+// SecuredQuery ne convient pas : cette lecture prend un paramètre. D'où
+// SecuredUseCase<TCommand, TResult>, malgré la règle « ça lit, c'est une SecuredQuery ».
+public sealed class ListModuleMembersUseCase(
+    UseCaseAuthorizer authorizer,
+    IModuleRepository moduleRepository,
+    IModuleMembershipRepository membershipRepository
+) : SecuredUseCase<long, IReadOnlyList<ModuleMemberDto>>(authorizer)
+{
+    protected override RoleCode RequiredRole => RoleCode.Admin;
+
+    protected override async Task<IReadOnlyList<ModuleMemberDto>> Handle(long moduleId, CurrentUser currentUser)
+    {
+        // Un module inexistant rend 404 plutôt qu'une liste vide, qui laisserait croire à un
+        // module sans membre.
+        if (!await moduleRepository.ExistsAsync(moduleId))
+        {
+            throw AppException.NotFound("MODULE_NOT_FOUND", "Module introuvable.");
+        }
+
+        return await membershipRepository.FindMembersAsync(moduleId);
+    }
+}

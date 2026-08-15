@@ -1,0 +1,7 @@
+name: Admin
+color: "#CE4F3B"
+variables:
+  - name: authEmail
+    value: admin@huiitre.fr
+  - secret: true
+    name: authPassword

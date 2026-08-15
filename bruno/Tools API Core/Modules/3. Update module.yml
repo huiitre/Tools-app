@@ -1,0 +1,32 @@
+info:
+  name: 3. Update module
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{apiCoreUrl}}/modules/1"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+  body:
+    type: json
+    data: |-
+      {
+        "code": "module-test",
+        "name": "Module de test",
+        "description": "Modifié depuis Bruno",
+        "active": true
+      }
+
+docs: |-
+  Modifie un module, activation comprise. Remplacer `1` par l'identifiant renvoyé à la création.
+
+  Réponses : 204, 404 MODULE_NOT_FOUND, 409 MODULE_CODE_ALREADY_EXISTS si le code appartient
+  à un autre module (garder le sien n'est pas un conflit).
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

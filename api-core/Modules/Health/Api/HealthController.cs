@@ -1,7 +1,13 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Tools.ApiCore.Modules.Health.Application;
+
+namespace Tools.ApiCore.Modules.Health.Api;
 
 [ApiController]
 [Route("health")]
+// Sondes appelées par le healthcheck du conteneur et par Watchtower, sans jeton.
+[AllowAnonymous]
 public class HealthController : ControllerBase
 {
     private readonly CheckReadinessUseCase checkReadinessUseCase;
@@ -30,11 +36,11 @@ public class HealthController : ControllerBase
     }
 
     [HttpGet("ready")]
-    public async Task<IActionResult> Ready(CancellationToken cancellationToken)
+    public async Task<IActionResult> Ready()
     {
         logger.LogDebug("Vérification de readiness demandée.");
 
-        var isReady = await checkReadinessUseCase.Execute(cancellationToken);
+        var isReady = await checkReadinessUseCase.Execute();
         var response = new { status = isReady ? "healthy" : "unhealthy" };
 
         return isReady ? Ok(response) : StatusCode(StatusCodes.Status503ServiceUnavailable, response);

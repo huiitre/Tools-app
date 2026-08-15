@@ -1,5 +1,8 @@
 using Dapper;
 using Npgsql;
+using Tools.ApiCore.Modules.Health.Application;
+
+namespace Tools.ApiCore.Modules.Health.Infrastructure;
 
 public class PostgresHealthRepository : IHealthRepository
 {
@@ -14,13 +17,13 @@ public class PostgresHealthRepository : IHealthRepository
         this.logger = logger;
     }
 
-    public async Task<bool> IsReadyAsync(CancellationToken cancellationToken)
+    public async Task<bool> IsReadyAsync()
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var connection = await dataSource.OpenConnectionAsync();
             await connection.ExecuteScalarAsync<int>(
-                new CommandDefinition("SELECT 1", cancellationToken: cancellationToken));
+                new CommandDefinition("SELECT 1"));
 
             return true;
         }

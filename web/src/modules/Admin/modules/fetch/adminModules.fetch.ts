@@ -1,45 +1,49 @@
-import { clientV3 } from '@/services/axiosInstance'
+//* Administration servie par l'API Core. Les chemins sont identiques à ceux de l'API Java.
+//*
+//* `updateModule` envoie le module **complet** : côté Core c'est un vrai PUT, un champ absent
+//* serait écrasé et l'appel refusé sans `code` ni `name`.
+import { clientCore } from '@/services/axiosInstance'
 import type { AdminModule, ModuleUser, CreateModulePayload, UpdateModulePayload } from '../types/adminModules.types'
 import type { AdminRole, AdminUser } from '../../users/types/adminUsers.types'
 
 export async function fetchModules(): Promise<AdminModule[]> {
-  const { data } = await clientV3.get<AdminModule[]>('/modules')
+  const { data } = await clientCore.get<AdminModule[]>('/modules')
   return data
 }
 
 export async function createModule(payload: CreateModulePayload): Promise<AdminModule> {
-  const { data } = await clientV3.post<AdminModule>('/modules', payload)
+  const { data } = await clientCore.post<AdminModule>('/modules', payload)
   return data
 }
 
 export async function updateModule(moduleId: number, payload: UpdateModulePayload): Promise<AdminModule> {
-  const { data } = await clientV3.put<AdminModule>(`/modules/${moduleId}`, payload)
+  const { data } = await clientCore.put<AdminModule>(`/modules/${moduleId}`, payload)
   return data
 }
 
 export async function fetchModuleUsers(moduleId: number): Promise<ModuleUser[]> {
-  const { data } = await clientV3.get<ModuleUser[]>(`/modules/${moduleId}/users`)
+  const { data } = await clientCore.get<ModuleUser[]>(`/modules/${moduleId}/users`)
   return data
 }
 
 export async function fetchRoles(): Promise<AdminRole[]> {
-  const { data } = await clientV3.get<AdminRole[]>('/roles')
+  const { data } = await clientCore.get<AdminRole[]>('/roles')
   return data
 }
 
 export async function addUserToModule(moduleId: number, userId: string): Promise<void> {
-  await clientV3.post(`/modules/${moduleId}/users/${userId}`)
+  await clientCore.post(`/modules/${moduleId}/users/${userId}`)
 }
 
 export async function updateUserModuleRole(moduleId: number, userId: string, roleId: number): Promise<void> {
-  await clientV3.put(`/modules/${moduleId}/users/${userId}/role`, { roleId })
+  await clientCore.put(`/modules/${moduleId}/users/${userId}/role`, { roleId })
 }
 
 export async function removeUserFromModule(moduleId: number, userId: string): Promise<void> {
-  await clientV3.delete(`/modules/${moduleId}/users/${userId}`)
+  await clientCore.delete(`/modules/${moduleId}/users/${userId}`)
 }
 
 export async function fetchAllUsers(): Promise<AdminUser[]> {
-  const { data } = await clientV3.get<AdminUser[]>('/users')
+  const { data } = await clientCore.get<AdminUser[]>('/users')
   return data
 }

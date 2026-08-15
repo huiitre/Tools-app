@@ -1,0 +1,27 @@
+info:
+  name: Stats
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiCoreUrl}}/admin/stats"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+docs: |-
+  Indicateurs du tableau de bord : `totalUsers`, `activeUsers`, `newUsersThisWeek` et la
+  répartition `usersPerModule`.
+
+  Rôle minimum : ADMIN.
+
+  Chaque entrée de `usersPerModule` porte `moduleCode`, `moduleName` et `userCount` — pas
+  `moduleId`, que le type TypeScript du frontend déclare pourtant. Le contrat de l'API Java est
+  reproduit tel quel.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

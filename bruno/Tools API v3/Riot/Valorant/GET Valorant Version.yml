@@ -8,7 +8,7 @@ http:
   url: "{{apiUrl}}/riot/valorant/version"
   headers:
     - name: Authorization
-      value: Bearer {{token}}
+      value: Bearer {{authToken}}
   auth: inherit
 
 settings:

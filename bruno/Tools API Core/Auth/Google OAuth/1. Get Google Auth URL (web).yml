@@ -1,0 +1,16 @@
+info:
+  name: 1. Get Google Auth URL (web)
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiCoreUrl}}/auth/google/url?source=web"
+  auth:
+    type: none
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

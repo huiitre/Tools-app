@@ -1,0 +1,26 @@
+info:
+  name: 4. List module members
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{apiCoreUrl}}/modules/1/users"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+docs: |-
+  Membres d'un module et rôle qu'ils y détiennent.
+
+  Si la table contient plusieurs rôles pour une même paire (utilisateur, module) — sa clé
+  primaire l'autorise — c'est le **plus permissif** qui est renvoyé, et non un rôle arbitraire
+  comme le fait l'API Java.
+
+  Réponses : 200, 404 MODULE_NOT_FOUND.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

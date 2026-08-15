@@ -1,0 +1,12 @@
+name: Tools PROD
+color: "#CE4F3B"
+variables:
+  - name: apiCoreUrl
+    value: https://api.tools.huiitre.fr/api/core
+    description: ""
+  - name: apiUrl
+    value: https://api.tools.huiitre.fr/api/v3
+    description: ""
+  - secret: true
+    name: authToken
+    description: ""

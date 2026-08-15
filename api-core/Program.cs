@@ -1,79 +1,43 @@
-using Npgsql;
-using Serilog;
+using Tools.ApiCore.Composition;
+using Tools.ApiCore.Modules.Access;
+using Tools.ApiCore.Modules.Admin;
+using Tools.ApiCore.Modules.Auth;
+using Tools.ApiCore.Modules.Common;
+using Tools.ApiCore.Modules.Health;
+using Tools.ApiCore.Modules.Mail;
+using Tools.ApiCore.Modules.Security;
+using Tools.ApiCore.Modules.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Host.UseSerilog((context, services, loggerConfiguration) => loggerConfiguration
-    .ReadFrom.Configuration(context.Configuration)
-    .ReadFrom.Services(services)
-    .Enrich.FromLogContext());
+builder.AddCoreHost();
 
-builder.Services.AddControllers();
-
-var connectionString = BuildPostgresConnectionString(builder.Configuration)
-    ?? builder.Configuration.GetConnectionString("Postgres")
-	?? throw new InvalidOperationException("Connection string Postgres manquante");
-
-builder.Services.AddSingleton(NpgsqlDataSource.Create(connectionString));
-builder.Services.AddScoped<PostgresSession>();
-builder.Services.AddScoped<ITransactionManager, PostgresTransactionManager>();
-builder.Services.AddScoped<IUserRepository, PostgresUserRepository>();
-builder.Services.AddScoped<ListUsersUseCase>();
-builder.Services.AddScoped<IHealthRepository, PostgresHealthRepository>();
-builder.Services.AddScoped<CheckReadinessUseCase>();
+// Racine de composition : elle voit tous les modules, et rien d'autre. Chaque module déclare
+// lui-même ses ports, ses use cases et ses options — voir Modules/<Module>/<Module>Module.cs.
+// Common vient en premier : les autres dépendent de son contrat d'erreur et de son accès
+// PostgreSQL, jamais l'inverse.
+builder.AddCommonModule()
+    .AddSecurityModule()
+    .AddAuthModule()
+    .AddMailModule()
+    .AddUsersModule()
+    .AddAccessModule()
+    .AddAdminModule()
+    .AddHealthModule();
 
 var app = builder.Build();
 
-var applicationVersion = builder.Configuration["Application:Version"]
-    ?? "unknown";
-var gitSha = builder.Configuration["Application:GitSha"]
-    ?? "unknown";
+app.UseCorePipeline();
 
-app.MapGet("/version", () => new
-{
-    service = "api-core",
-    runtime = ".NET",
-    version = applicationVersion,
-    gitSha,
-    environment = app.Environment.EnvironmentName
-});
-
+app.MapVersionEndpoint();
 app.MapControllers();
 
-app.Run();
-
-static string? BuildPostgresConnectionString(IConfiguration configuration)
+// Ces endpoints existent pour les tests d'intégration et ne sont donc mappés dans aucun
+// environnement réel — ni Development, ni QA, ni Production.
+if (app.Environment.IsEnvironment("Testing"))
 {
-    var host = configuration["DB_HOST"];
-    var portValue = configuration["DB_PORT"];
-    var database = configuration["DB_NAME"];
-    var username = configuration["DB_USERNAME"];
-    var password = configuration["DB_PASSWORD"];
-
-    var databaseVariables = new[] { host, portValue, database, username, password };
-
-    if (databaseVariables.All(string.IsNullOrWhiteSpace))
-    {
-        return null;
-    }
-
-    if (databaseVariables.Any(string.IsNullOrWhiteSpace))
-    {
-        throw new InvalidOperationException(
-            "Les variables DB_HOST, DB_PORT, DB_NAME, DB_USERNAME et DB_PASSWORD doivent toutes être renseignées.");
-    }
-
-    if (!int.TryParse(portValue, out var port) || port is < 1 or > 65535)
-    {
-        throw new InvalidOperationException("La variable DB_PORT doit contenir un port PostgreSQL valide.");
-    }
-
-    return new NpgsqlConnectionStringBuilder
-    {
-        Host = host,
-        Port = port,
-        Database = database,
-        Username = username,
-        Password = password
-    }.ConnectionString;
+    app.MapErrorContractTestingEndpoints();
+    app.MapUnsecuredTestingEndpoint();
 }
+
+app.Run();

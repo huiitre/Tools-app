@@ -1,0 +1,32 @@
+info:
+  name: 6. Change member role
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: "{{apiCoreUrl}}/modules/1/users/1/role"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+  body:
+    type: json
+    data: |-
+      {
+        "roleId": 2
+      }
+
+docs: |-
+  Change le rôle d'un membre à l'intérieur d'un module. Le rôle **remplace** ce que
+  l'utilisateur détenait sur ce module.
+
+  Exige un accès existant : sans lui, la réponse est 404 USER_MODULE_ROLE_NOT_FOUND — on
+  n'accorde pas un accès par ce chemin détourné. Utiliser `5. Grant access` d'abord.
+
+  Identifiants : 1 READ_ONLY, 2 USER, 3 MODERATOR, 4 ADMIN, 5 TECH, 6 OWNER.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

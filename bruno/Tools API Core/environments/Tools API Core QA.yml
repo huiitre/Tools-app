@@ -1,5 +1,0 @@
-name: Tools API Core QA
-color: "#C77A0F"
-variables:
-  - name: apiCoreUrl
-    value: https://qa.api.tools.huiitre.fr/api/core

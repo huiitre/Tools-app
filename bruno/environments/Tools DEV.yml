@@ -1,0 +1,9 @@
+name: Tools DEV
+color: "#2E8A54"
+variables:
+  - name: apiCoreUrl
+    value: http://localhost:5090
+  - name: apiUrl
+    value: http://localhost:8083/api/v3
+  - name: authToken
+    value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblR5cGUiOiJBQ0NFU1MiLCJpc0FjdGl2ZSI6dHJ1ZSwidXNlclR5cGUiOiJIVU1BTiIsInJvbGVzIjpbIlRFQ0giXSwibW9kdWxlcyI6eyJwYWx3b3JsZCI6IkFETUlOIiwicmlvdCI6IkFETUlOIiwiZG9mdXMiOiJBRE1JTiJ9LCJzdWIiOiIxIiwibmJmIjoxNzg2NzU0MjAxLCJleHAiOjE3ODY3NTQ4MDEsImlzcyI6InRvb2xzLWFwaSJ9.cJk76Bp4M_Z7nCBsVWvz4PDpm3MFD8LOLICjgL9hK54

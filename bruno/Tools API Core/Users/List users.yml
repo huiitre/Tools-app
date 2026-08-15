@@ -1,0 +1,25 @@
+info:
+  name: List users
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{apiCoreUrl}}/users"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+docs: |-
+  Tableau d'administration des utilisateurs.
+
+  Rôle minimum : ADMIN. Attention, ADMIN est *au-dessus* de TECH dans la hiérarchie :
+  un jeton TECH reçoit un 403 INSUFFICIENT_ROLE.
+
+  `roles` ne contient que des identifiants, à résoudre contre GET /roles.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,4 +1,5 @@
-import { clientV3 } from '@/services/axiosInstance'
+//* Administration servie par l'API Core. Les chemins sont identiques à ceux de l'API Java.
+import { clientCore } from '@/services/axiosInstance'
 
 export interface UserPerModule {
   moduleId: string
@@ -14,6 +15,6 @@ export interface AdminStats {
 }
 
 export async function fetchAdminStats(): Promise<AdminStats> {
-  const { data } = await clientV3.get<AdminStats>('/admin/stats')
+  const { data } = await clientCore.get<AdminStats>('/admin/stats')
   return data
 }
