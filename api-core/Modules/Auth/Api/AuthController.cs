@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
+using Tools.ApiCore.Modules.Common.Api.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
@@ -8,6 +10,7 @@ using Tools.ApiCore.Modules.Auth.Infrastructure.Google;
 using Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
 using Tools.ApiCore.Modules.Auth.Application.Usecases.Google;
 using Tools.ApiCore.Modules.Auth.Application.Usecases.Password;
+using Tools.ApiCore.Modules.Auth.Application.Usecases.Registration;
 using Tools.ApiCore.Modules.Auth.Application.Usecases.Session;
 
 namespace Tools.ApiCore.Modules.Auth.Api;
@@ -23,6 +26,9 @@ public sealed class AuthController(
     CompleteGoogleOAuthLoginUseCase completeGoogleOAuthLoginUseCase,
     RequestPasswordResetUseCase requestPasswordResetUseCase,
     ResetPasswordUseCase resetPasswordUseCase,
+    SetUserPasswordUseCase setUserPasswordUseCase,
+    RegisterUserUseCase registerUserUseCase,
+    VerifyEmailUseCase verifyEmailUseCase,
     RefreshTokenCookieManager refreshTokenCookieManager,
     IOptions<GoogleOAuthOptions> googleOAuthOptions,
     ILogger<AuthController> logger) : ControllerBase
@@ -108,6 +114,7 @@ public sealed class AuthController(
     }
 
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitingExtensions.EmailSendingPolicy)]
     [HttpPost("password/reset-request")]
     public async Task<IActionResult> RequestPasswordReset(
         PasswordResetRequest request)
@@ -128,6 +135,37 @@ public sealed class AuthController(
         await resetPasswordUseCase.Execute(request.Token, request.Password);
         return NoContent();
     }
+
+    [AllowAnonymous]
+    [EnableRateLimiting(RateLimitingExtensions.EmailSendingPolicy)]
+    [HttpPost("register")]
+    public async Task<IActionResult> Register(RegisterRequest request)
+    {
+        await registerUserUseCase.Execute(
+            new RegisterUserCommand(request.Name, request.Email, request.Password));
+
+        // Le compte existe mais reste inactif : seule la confirmation ouvrira la connexion.
+        return Ok(new RegisterResponse(
+            "VERIFICATION_SENT",
+            "Un email de confirmation vient de vous être envoyé."));
+    }
+
+    [AllowAnonymous]
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromQuery, Required] string token)
+    {
+        await verifyEmailUseCase.Execute(token);
+        return NoContent();
+    }
+
+    // Définir ou changer son propre mot de passe. L'identité vient du jeton, comme pour
+    // logout : aucun identifiant n'apparaît dans l'URL, personne ne peut viser un autre compte.
+    [HttpPatch("password")]
+    public async Task<IActionResult> SetPassword(SetPasswordRequest request)
+    {
+        await setUserPasswordUseCase.Execute(new SetUserPasswordCommand(request.Password));
+        return NoContent();
+    }
 }
 
 // DTO entrant : ASP.NET applique ces règles avant d'appeler Login.
@@ -140,3 +178,10 @@ public sealed record GoogleAuthorizationUrlResponse(string Url);
 public sealed record PasswordResetRequest([Required, EmailAddress] string Email);
 public sealed record PasswordResetRequestResponse(string Status, string Message);
 public sealed record ResetPasswordRequest([Required] string Token, [Required] string Password);
+public sealed record SetPasswordRequest([Required] string Password);
+
+public sealed record RegisterRequest(
+    [Required] string Name,
+    [Required, EmailAddress] string Email,
+    [Required] string Password);
+public sealed record RegisterResponse(string Status, string Message);

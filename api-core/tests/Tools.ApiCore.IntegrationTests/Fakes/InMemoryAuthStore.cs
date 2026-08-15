@@ -16,12 +16,20 @@ public sealed class InMemoryAuthStore
     // Clé : jeton
     public Dictionary<string, (long UserId, DateTime ExpiresAt)> ResetTokens { get; } = [];
 
+    // Clé : jeton de confirmation d'adresse
+    public Dictionary<string, (long UserId, DateTime ExpiresAt)> VerificationTokens { get; } = [];
+
+    // Inscriptions : identité minimale et état de confirmation.
+    public Dictionary<long, (string Name, string Email, bool IsActive, DateTime? EmailVerifiedAt)> Accounts { get; } = [];
+
     public void Reset()
     {
         Users.Clear();
         Providers.Clear();
         PasswordHashes.Clear();
         ResetTokens.Clear();
+        VerificationTokens.Clear();
+        Accounts.Clear();
     }
 
     public AuthUser AddUser(long id, string email, bool withPasswordProvider)
@@ -33,6 +41,8 @@ public sealed class InMemoryAuthStore
             Providers.Add((id, "PASSWORD"));
             PasswordHashes[id] = "hash-existant";
         }
+
+        Accounts[id] = ("Utilisateur", email, true, DateTime.UtcNow);
 
         return user;
     }

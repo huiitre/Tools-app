@@ -1,0 +1,18 @@
+info:
+  name: 2. Verify email
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiCoreUrl}}/auth/verify-email?token=cLW_h4SLSSZKkf1fFlmmJtHN0JtVuQERJFONAfOgF-k"
+  params:
+    - name: token
+      value: cLW_h4SLSSZKkf1fFlmmJtHN0JtVuQERJFONAfOgF-k
+      type: query
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

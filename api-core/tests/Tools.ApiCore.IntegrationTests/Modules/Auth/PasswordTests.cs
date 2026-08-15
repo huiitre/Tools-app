@@ -139,7 +139,7 @@ public sealed class PasswordTests : IClassFixture<ApiCoreWebApplicationFactory>
         store.AddUser(5, "google@example.com", withPasswordProvider: false);
         var client = factory.CreateClientForUser(5, "READ_ONLY");
 
-        using var response = await client.PatchAsJsonAsync("/users/password", new { password = "mon-mot-de-passe" });
+        using var response = await client.PatchAsJsonAsync("/auth/password", new { password = "mon-mot-de-passe" });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         // Le compte peut désormais se connecter par mot de passe et demander une réinitialisation.
@@ -153,7 +153,7 @@ public sealed class PasswordTests : IClassFixture<ApiCoreWebApplicationFactory>
         store.AddUser(6, "user@example.com", withPasswordProvider: true);
         var client = factory.CreateClientForUser(6, "READ_ONLY");
 
-        using var response = await client.PatchAsJsonAsync("/users/password", new { password = "nouveau" });
+        using var response = await client.PatchAsJsonAsync("/auth/password", new { password = "nouveau" });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         Assert.Single(store.Providers, entry => entry == (6L, "PASSWORD"));

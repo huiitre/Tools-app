@@ -10,11 +10,11 @@ namespace Tools.ApiCore.IntegrationTests.Modules.Security;
 // valent pour tout use case sécurisé, quel que soit le rôle qu'il exige.
 //
 // Les deux routes utilisées ne sont que des supports, choisis pour leurs exigences
-// opposées : `/users/password` demande le plancher READ_ONLY, `/mail` demande TECH. Ce que
+// opposées : `/auth/password` demande le plancher READ_ONLY, `/mail` demande TECH. Ce que
 // chaque use case exige lui est propre et se teste dans son module.
 public sealed class AuthorizationTests : IClassFixture<ApiCoreWebApplicationFactory>
 {
-    private const string LowestRequirementRoute = "/users/password";
+    private const string LowestRequirementRoute = "/auth/password";
     private const string TechnicalRequirementRoute = "/mail";
 
     private static readonly object MailPayload = new

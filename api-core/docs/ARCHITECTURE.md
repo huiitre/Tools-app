@@ -2,7 +2,9 @@
 
 Ce document conserve les décisions prises pour l’extraction progressive du Core historique Java vers `api-core`, une application C# / ASP.NET Core.
 
-> Statut : étude de faisabilité. Aucune migration fonctionnelle n’est engagée.
+> Statut : migration engagée. L’authentification complète (inscription, connexion, Google,
+> session, mot de passe) et le profil utilisateur sont implémentés dans `api-core`. Le
+> frontend appelle encore l’API Java : la bascule reste à faire.
 
 ## Intention
 
@@ -138,6 +140,14 @@ La validation automatique des contrôleurs (`[ApiController]`) utilise la même 
 
 Les réponses 401 et 403 du middleware d'authentification passent par cette même fabrique, via les callbacks `OnChallenge` et `OnForbidden` de `JwtBearerEvents`. Il est interdit d'écrire un second format JSON d'erreur ailleurs.
 
+### Limitation de débit
+
+Les routes anonymes qui déclenchent un envoi d'email — `/auth/register` et
+`/auth/password/reset-request` — sont limitées à 5 requêtes par IP et par fenêtre de
+15 minutes (politique `email-sending`). Le refus emprunte le même contrat d'erreur :
+`429 TOO_MANY_REQUESTS`, produit par `ApiProblemDetailsFactory`. Détail et raisonnement dans
+`REGISTRATION.md`.
+
 ### Tests d'intégration du contrat HTTP
 
 Les tests HTTP sont dans `api-core/tests/Tools.ApiCore.IntegrationTests`. Ils démarrent API Core en mémoire avec l'environnement `Testing`, sans ouvrir de port ni appeler PostgreSQL. Les endpoints `/_tests/errors/{kind}` sont mappés uniquement dans cet environnement et ne sont donc pas exposés en Development, QA ou Production.
@@ -147,6 +157,40 @@ Ils vérifient le contrat partagé pour 400, 404, 409 et 500, ainsi que la propa
 ```bash
 dotnet test api-core/tests/Tools.ApiCore.IntegrationTests/Tools.ApiCore.IntegrationTests.csproj
 ```
+
+## Contrat de routes HTTP
+
+```text
+/auth/*      moyens d'identification : inscription, login, refresh, logout, Google, mot de passe
+/users/me    profil de l'appelant
+/users/{id}  profil d'un utilisateur (administration, à venir)
+/health/*    sondes
+/version     identification du déploiement
+```
+
+**`me` est un identifiant**, pas un préfixe. Il se résout au porteur du jeton et appartient
+donc à la même famille que `/users/{id}` : une seule ressource, un seul préfixe. L'API Java
+sépare `/user` (soi) de `/users` (administration) ; ce découpage crée deux territoires pour
+la même ressource et oblige à trancher, à chaque nouvel endpoint, de quel côté il tombe.
+
+**Le mot de passe vit sous `/auth`, pas sous `/users`.** Ce n'est pas une propriété du
+profil mais un moyen de s'identifier — au même titre qu'un provider Google ou qu'une session.
+Les trois flux sont donc réunis :
+
+```text
+POST  /auth/register
+POST  /auth/verify-email
+POST  /auth/password/reset-request
+POST  /auth/password/reset
+PATCH /auth/password
+```
+
+Le code le disait déjà : `SetUserPasswordUseCase` vit dans `Modules/Auth/Application/Usecases/Password/`.
+L'exposer depuis `UsersController` faisait qu'un module publiait le use case d'un autre.
+
+`PATCH /auth/password` ne porte aucun identifiant, comme `/auth/logout` : l'identité vient
+toujours du jeton. Une URL qui désignerait l'utilisateur ouvrirait la porte à viser le compte
+d'un autre.
 
 ## Namespaces et organisation du code
 

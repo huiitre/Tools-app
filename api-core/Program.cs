@@ -4,10 +4,12 @@ using Serilog;
 using Tools.ApiCore.Modules.Auth.Api;
 using Tools.ApiCore.Modules.Auth.Application.Ports.Google;
 using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+using Tools.ApiCore.Modules.Auth.Application.Ports.Registration;
 using Tools.ApiCore.Modules.Auth.Application.Ports;
 using Tools.ApiCore.Modules.Auth.Application.Services;
 using Tools.ApiCore.Modules.Auth.Application.Usecases.Google;
 using Tools.ApiCore.Modules.Auth.Application.Usecases.Password;
+using Tools.ApiCore.Modules.Auth.Application.Usecases.Registration;
 using Tools.ApiCore.Modules.Auth.Application.Usecases.Session;
 using Tools.ApiCore.Modules.Auth.Application;
 using Tools.ApiCore.Modules.Auth.Domain;
@@ -15,7 +17,9 @@ using Tools.ApiCore.Modules.Auth.Infrastructure.Google;
 using Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
 using Tools.ApiCore.Modules.Auth.Infrastructure.Password;
 using Tools.ApiCore.Modules.Auth.Infrastructure.Persistence;
+using Tools.ApiCore.Modules.Auth.Infrastructure.Registration;
 using Tools.ApiCore.Modules.Common.Api.Errors;
+using Tools.ApiCore.Modules.Common.Api.RateLimiting;
 using Tools.ApiCore.Modules.Common.Application.Exceptions;
 using Tools.ApiCore.Modules.Common.Application.Ports;
 using Tools.ApiCore.Modules.Common.Infrastructure;
@@ -82,6 +86,7 @@ builder.Services.Configure<GoogleOAuthOptions>(builder.Configuration.GetSection(
 builder.Services.Configure<SmtpMailOptions>(builder.Configuration.GetSection(SmtpMailOptions.SectionName));
 builder.Services.Configure<AppOptions>(builder.Configuration.GetSection(AppOptions.SectionName));
 builder.Services.Configure<PasswordResetOptions>(builder.Configuration.GetSection(PasswordResetOptions.SectionName));
+builder.Services.Configure<RegistrationOptions>(builder.Configuration.GetSection(RegistrationOptions.SectionName));
 builder.Services.AddCors(options => options.AddPolicy("ToolsFrontend", policy => policy
     .WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
     .AllowAnyHeader()
@@ -99,6 +104,7 @@ builder.Services.AddSingleton<IMailSender, SmtpMailSender>();
 builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<SendMailUseCase>();
 builder.Services.AddCoreJwtAuthentication();
+builder.Services.AddCoreRateLimiting(builder.Environment);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserProvider, HttpCurrentUserProvider>();
 builder.Services.AddScoped<UseCaseAuthorizer>();
@@ -108,11 +114,16 @@ builder.Services.AddScoped<IUserAuthProviderRepository, PostgresUserAuthProvider
 builder.Services.AddScoped<RequestPasswordResetUseCase>();
 builder.Services.AddScoped<ResetPasswordUseCase>();
 builder.Services.AddScoped<SetUserPasswordUseCase>();
+builder.Services.AddScoped<IRegistrationRepository, PostgresRegistrationRepository>();
+builder.Services.AddScoped<IEmailVerificationRepository, PostgresEmailVerificationRepository>();
+builder.Services.AddScoped<RegisterUserUseCase>();
+builder.Services.AddScoped<VerifyEmailUseCase>();
 
 // Le nettoyage planifié n'a pas lieu d'être dans les tests d'intégration.
 if (!builder.Environment.IsEnvironment("Testing"))
 {
     builder.Services.AddHostedService<PasswordResetCleanupService>();
+    builder.Services.AddHostedService<EmailVerificationCleanupService>();
 }
 builder.Services.AddScoped<AuthSessionService>();
 builder.Services.AddScoped<GoogleIdentityAuthenticationService>();
@@ -137,6 +148,7 @@ app.UseCors("ToolsFrontend");
 
 // L'ordre n'est pas négociable : l'authentification identifie l'appelant, l'autorisation
 // décide ensuite si la route lui est ouverte.
+app.UseRateLimiter();
 app.UseAuthentication();
 
 // La FallbackPolicy s'applique aussi aux requêtes qui n'ont atteint aucun endpoint : sans

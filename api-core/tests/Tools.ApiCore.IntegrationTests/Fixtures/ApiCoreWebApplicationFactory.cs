@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
+using Tools.ApiCore.Modules.Auth.Application.Ports.Registration;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +47,10 @@ public sealed class ApiCoreWebApplicationFactory : WebApplicationFactory<Program
             services.AddScoped<IUserCredentialsRepository, InMemoryUserCredentialsRepository>();
             services.RemoveAll<IPasswordResetRepository>();
             services.AddScoped<IPasswordResetRepository, InMemoryPasswordResetRepository>();
+            services.RemoveAll<IRegistrationRepository>();
+            services.AddScoped<IRegistrationRepository, InMemoryRegistrationRepository>();
+            services.RemoveAll<IEmailVerificationRepository>();
+            services.AddScoped<IEmailVerificationRepository, InMemoryEmailVerificationRepository>();
             services.RemoveAll<ITransactionManager>();
             services.AddScoped<ITransactionManager, NoOpTransactionManager>();
         });

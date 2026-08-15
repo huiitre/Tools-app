@@ -24,7 +24,7 @@ Le jeton fait 32 octets aléatoires encodés en Base64 URL sans remplissage, val
 ## Définir ou changer son mot de passe
 
 ```text
-PATCH /users/password   { "password": "..." }
+PATCH /auth/password   { "password": "..." }
 ```
 
 Réservé à l'utilisateur authentifié, rôle minimum `READ_ONLY` — donc accessible à tous. L'identifiant vient du jeton, jamais de la requête : personne ne peut viser le compte d'un autre.
@@ -60,4 +60,4 @@ Ces deux points sont des choix repris à l'identique de l'existant, pas des oubl
 
 ## Front
 
-Le front appelle encore l'API Java (`clientV3`) sur `/auth/password/reset-request`, `/auth/password/reset` et `/user/password`. Le Core expose les deux premières à l'identique ; la troisième est `/users/password` (pluriel), conformément au routage déjà en place dans le Core.
+Le front appelle encore l'API Java (`clientV3`) sur `/auth/password/reset-request`, `/auth/password/reset` et `/user/password`. Le Core expose les deux premières à l'identique ; la troisième devient `PATCH /auth/password`, le mot de passe relevant de l'identification et non du profil (voir le contrat de routes dans ARCHITECTURE.md).

@@ -18,7 +18,7 @@ using Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
 namespace Tools.ApiCore.IntegrationTests.Modules.Auth;
 
 // Règles d'authentification transverses : elles valent pour toute route protégée, quel
-// que soit le module. `/users/password` ne sert ici que de route protégée témoin — ce
+// que soit le module. `/auth/password` ne sert ici que de route protégée témoin — ce
 // qui est vérifié n'a rien à voir avec le mot de passe.
 //
 // Ces tests existent surtout pour survivre à l'ajout du middleware JwtBearer : ils
@@ -26,7 +26,7 @@ namespace Tools.ApiCore.IntegrationTests.Modules.Auth;
 // du jeton déplacée dans le pipeline ASP.NET.
 public sealed class AuthenticationTests : IClassFixture<ApiCoreWebApplicationFactory>
 {
-    private const string ProtectedRoute = "/users/password";
+    private const string ProtectedRoute = "/auth/password";
 
     private readonly ApiCoreWebApplicationFactory factory;
     private readonly InMemoryAuthStore store;
