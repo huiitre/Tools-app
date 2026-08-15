@@ -10,7 +10,8 @@ public sealed class CompleteGoogleOAuthLoginUseCase(
     IGoogleOAuthClient googleOAuthClient,
     IGoogleIdentityVerifier googleIdentityVerifier,
     GoogleIdentityAuthenticationService googleIdentityAuthenticationService,
-    AuthSessionService authSessionService)
+    AuthSessionService authSessionService,
+    AdminSignupNotifier adminSignupNotifier)
 {
     public async Task<GoogleOAuthLoginResult> Execute(
         string code,
@@ -19,8 +20,16 @@ public sealed class CompleteGoogleOAuthLoginUseCase(
         var source = stateStore.Consume(state);
         var idToken = await googleOAuthClient.ExchangeCodeForIdTokenAsync(code);
         var googleIdentity = await googleIdentityVerifier.VerifyAsync(idToken);
-        var user = await googleIdentityAuthenticationService.AuthenticateAsync(googleIdentity);
-        var session = await authSessionService.Create(user, null);
+        var authentication = await googleIdentityAuthenticationService.AuthenticateAsync(googleIdentity);
+        var session = await authSessionService.Create(authentication.User, null);
+
+        // Google confirme l'adresse lui-même : le compte est actif dès sa création, il n'y a
+        // pas d'étape de confirmation à signaler ensuite comme pour l'inscription classique.
+        if (authentication.AccountCreated)
+        {
+            await adminSignupNotifier.GoogleAccountCreated(authentication.User.Email);
+        }
+
         return new GoogleOAuthLoginResult(source, session);
     }
 }

@@ -45,4 +45,7 @@ public sealed class InMemoryRegistrationRepository(InMemoryAuthStore store) : IR
         store.Users[userId] = new AuthUser(userId, account.Email, true, "HUMAN");
         return Task.CompletedTask;
     }
+
+    public Task<string?> FindEmailByIdAsync(long userId) =>
+        Task.FromResult(store.Accounts.TryGetValue(userId, out var account) ? account.Email : null);
 }

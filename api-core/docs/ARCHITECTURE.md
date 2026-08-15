@@ -811,6 +811,107 @@ de recharger la liste côté frontend. À trancher séparément.
 écran : ils n'ont pas été repris. `GET /modules/users/{userId}` non plus — le profil renvoyé
 par `/users/me` porte déjà les modules de l'appelant.
 
+## Notifications — le socle, avant SignalR
+
+Le Core sait désormais **enregistrer une notification et lui résoudre ses destinataires**. Il
+ne sait pas encore la livrer : les routes de lecture, le marquage lu et le temps réel restent
+servis par l'API Java, et les deux écrivent dans les mêmes tables `tools_core.notifications`
+et `tools_core.user_notifications`.
+
+C'est délibéré. La persistance est la moitié qui ne bougera pas quand SignalR arrivera — le Hub
+poussera ce que ce module aura déjà enregistré. Rien de ce qui est écrit ici n'est à jeter.
+
+**Conséquence à connaître** : une notification créée par le Core n'est pas poussée. Le
+destinataire la découvre au prochain chargement de page, le frontend n'ayant aucun polling —
+seulement un chargement au démarrage puis le flux SSE/WebSocket de Java, qui ignore tout de ce
+que le Core vient d'écrire.
+
+### Ciblage
+
+Deux critères, repris à l'identique de l'API Java :
+
+```csharp
+SendNotificationCommand.ForUser(userId, ...)        un destinataire
+SendNotificationCommand.ForMinRole(RoleCode.Admin, ...)   ADMIN et au-dessus
+```
+
+`ForMinRole` s'appuie sur `RoleCodes.CodesAtOrAbove`, construit depuis la même table que
+`Parse` : les deux sens ne peuvent pas diverger. Les variantes `global()` et `module()` de Java
+n'ont pas été portées — elles n'ont aucun appelant là-bas.
+
+**Deux exclusions, vérifiées contre le comportement Java plutôt que supposées** : les comptes
+**TECH** ne reçoivent jamais rien, y compris lorsqu'ils cumulent TECH et ADMIN ; les comptes
+désactivés non plus (`findAllIdsByRoleCodes` filtre déjà sur `is_active`).
+
+### Signalement des inscriptions
+
+`AdminSignupNotifier` (module Auth) prévient les administrateurs dans trois cas :
+
+| Flux | Message |
+|---|---|
+| `RegisterUserUseCase` | Nouvelle inscription — adresse pas encore confirmée |
+| `VerifyEmailUseCase` | Inscription confirmée — le compte est actif |
+| `CompleteGoogleOAuthLoginUseCase` | Nouvelle inscription via Google |
+
+Trois précautions :
+
+- **Seule une création est signalée.** Une inscription reprise avant confirmation ne crée aucun
+  compte ; l'annoncer brouillerait la lecture. Google distingue de même la première connexion
+  des suivantes, via `GoogleAuthenticationResult.AccountCreated`.
+- **Google n'a pas d'étape de confirmation** : l'adresse est garantie par le provider, le compte
+  naît actif. Il n'y a donc qu'une notification, pas deux.
+- **Un échec de notification ne fait jamais échouer une inscription.** Quand on arrive là, le
+  compte est créé et l'email parti ; l'erreur est journalisée puis absorbée. C'est une
+  information pour les administrateurs, pas une étape du flux.
+
+### Le contrat Java → Core, quand le realtime migrera
+
+Les deux producteurs métier — `AlmanaxSubscriptionNotifier` et `ValorantWatchlistNotifier` —
+restent en Java par conception. Ils devront publier vers le Core par **appel HTTP interne**, sur
+le réseau Docker et non par le reverse proxy public, après commit et sans faire échouer la
+commande métier si l'appel rate.
+
+Reste à trancher leur authentification : le Core exige un jeton sur toutes ses routes
+(`FallbackPolicy`). Soit un compte de service, soit une route `/internal/*` non exposée par le
+proxy et protégée par un secret d'en-tête — la seconde évite d'inventer un utilisateur qui
+n'existe pas.
+
+## Déploiement en production — deux pièges rencontrés
+
+La mise en production du 15/08/2026 a livré d'un coup l'authentification, l'administration et la
+bascule du frontend. Deux incidents, tous deux d'ordre opérationnel et non applicatif.
+
+**Un `JWT_SECRET` désaligné entre les deux APIs boucle sur la déconnexion.** Le secret avait été
+changé sur le Core mais pas répercuté sur l'API Java du même environnement. Le symptôme est
+trompeur : la connexion **réussit**, `/users/me` répond 200, puis l'écran renvoie « Votre session
+a expiré » en boucle. L'enchaînement est le suivant — une route métier Java répond 401 parce
+qu'elle refuse la signature, l'intercepteur du front renouvelle le jeton auprès du Core avec
+succès, rejoue la requête, se prend un second 401, constate que `_retry` vaut déjà `true` et
+déconnecte l'utilisateur.
+
+Le diagnostic tient en une comparaison :
+
+```bash
+docker exec <core> env | grep JWT_SECRET
+docker exec <java> env | grep JWT_SECRET
+```
+
+Tant que le module core vit dans les deux APIs, **le secret se change sur les deux à la fois**,
+avec `docker compose up -d --force-recreate` — un `restart` conserve l'environnement existant.
+
+**Une migration non appliquée ne se voit pas au démarrage.** `V2.65.0` (colonne
+`email_verified_at`) n'était pas passée en production. L'application démarre pourtant sans
+broncher : seul `EmailVerificationCleanupService` échoue, toutes les trente minutes, avec un
+`42703: column u.email_verified_at does not exist`. Le login n'y touche pas — mais l'inscription
+et la confirmation d'adresse sont hors service, sans que rien ne l'annonce.
+
+À retenir pour les prochaines tranches : **appliquer les migrations avant de déployer le Core**,
+sans compter sur le workflow, puisque les trois pipelines (`database/**`, `api-core/**`,
+`web/**`) se déclenchent en parallèle sur le même merge et qu'aucun n'attend les autres. Le
+risque symétrique existe côté frontend : si l'image web arrive avant celle du Core, le front
+appelle des routes qui n'existent pas encore et plus personne ne peut se connecter. Neutraliser
+Watchtower sur le conteneur web le temps que le Core soit à jour évite cette fenêtre.
+
 ### Points restés en suspens
 
 - **`ValidateOnStart()` sur les options JWT** — l'application démarre aujourd'hui avec une

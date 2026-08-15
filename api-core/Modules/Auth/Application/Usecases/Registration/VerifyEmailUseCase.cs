@@ -1,4 +1,5 @@
 using Tools.ApiCore.Modules.Auth.Application.Ports.Registration;
+using Tools.ApiCore.Modules.Auth.Application.Services;
 using Tools.ApiCore.Modules.Common.Application.Exceptions;
 using Tools.ApiCore.Modules.Common.Application.Ports;
 
@@ -12,6 +13,7 @@ public sealed class VerifyEmailUseCase(
     IEmailVerificationRepository emailVerificationRepository,
     IRegistrationRepository registrationRepository,
     ITransactionManager transactionManager,
+    AdminSignupNotifier adminSignupNotifier,
     ILogger<VerifyEmailUseCase> logger)
 {
     public async Task Execute(string token)
@@ -37,8 +39,16 @@ public sealed class VerifyEmailUseCase(
         // Le jeton est consommé : le lien ne peut pas resservir.
         await emailVerificationRepository.DeleteByUserIdAsync(userId.Value);
 
+        // Lue avant le commit, tant que la transaction porte encore la connexion.
+        var email = await registrationRepository.FindEmailByIdAsync(userId.Value);
+
         await transaction.CommitAsync();
 
         logger.LogInformation("Adresse email confirmée userId={UserId}", userId.Value);
+
+        if (email is not null)
+        {
+            await adminSignupNotifier.EmailVerified(email);
+        }
     }
 }

@@ -13,6 +13,7 @@ using Tools.ApiCore.Modules.Mail.Application.Ports;
 using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
 using Tools.ApiCore.Modules.Access.Application.Ports;
 using Tools.ApiCore.Modules.Admin.Application.Ports;
+using Tools.ApiCore.Modules.Notifications.Application.Ports;
 using Tools.ApiCore.Modules.Security.Application.Ports;
 using Tools.ApiCore.Modules.Users.Application;
 
@@ -20,8 +21,9 @@ namespace Tools.ApiCore.IntegrationTests.Fixtures;
 
 public sealed class ApiCoreWebApplicationFactory : WebApplicationFactory<Program>
 {
-    // Secret de test uniquement : aucun lien avec les environnements réels.
+    // Secrets de test uniquement : aucun lien avec les environnements réels.
     public const string TestJwtSecret = "integration-tests-secret-key-0123456789";
+    public const string TestInternalToken = "integration-tests-internal-token-0123456789";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -32,7 +34,8 @@ public sealed class ApiCoreWebApplicationFactory : WebApplicationFactory<Program
             {
                 ["ConnectionStrings:Postgres"] =
                     "Host=127.0.0.1;Port=5432;Database=tests;Username=tests;Password=tests",
-                ["JWT_SECRET"] = TestJwtSecret
+                ["JWT_SECRET"] = TestJwtSecret,
+                ["INTERNAL_API_TOKEN"] = TestInternalToken
             });
         });
         builder.ConfigureServices(services =>
@@ -73,6 +76,11 @@ public sealed class ApiCoreWebApplicationFactory : WebApplicationFactory<Program
                 provider => provider.GetRequiredService<InMemoryModuleMembershipRepository>());
             services.RemoveAll<IAdminStatsRepository>();
             services.AddSingleton<IAdminStatsRepository, InMemoryAdminStatsRepository>();
+
+            services.RemoveAll<INotificationRepository>();
+            services.AddSingleton<InMemoryNotificationRepository>();
+            services.AddSingleton<INotificationRepository>(
+                provider => provider.GetRequiredService<InMemoryNotificationRepository>());
         });
     }
 

@@ -24,9 +24,13 @@ public sealed class RegistrationTests : IClassFixture<ApiCoreWebApplicationFacto
 
         store.Reset();
         factory.Services.GetRequiredService<RecordingMailSender>().Clear();
+        factory.Services.GetRequiredService<InMemoryNotificationRepository>().Clear();
     }
 
     private RecordingMailSender Mails => factory.Services.GetRequiredService<RecordingMailSender>();
+
+    private InMemoryNotificationRepository Notifications =>
+        factory.Services.GetRequiredService<InMemoryNotificationRepository>();
 
     private static object ValidRegistration => new
     {
@@ -55,6 +59,54 @@ public sealed class RegistrationTests : IClassFixture<ApiCoreWebApplicationFacto
         Assert.NotNull(sent);
         Assert.Equal("nouveau@example.com", Assert.Single(sent.To));
         Assert.Contains($"/auth/verify-email?token={token}", sent.Text);
+    }
+
+    // ---------- Notification des administrateurs ----------
+
+    [Fact]
+    public async Task Register_notifies_the_administrators()
+    {
+        using var response = await factory.CreateClient().PostAsJsonAsync("/auth/register", ValidRegistration);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var notification = Assert.Single(Notifications.Notifications);
+        Assert.Equal("Nouvelle inscription", notification.Title);
+        Assert.Contains("nouveau@example.com", notification.Body);
+        Assert.Equal("INFO", notification.Type);
+
+        // Ciblage par rôle minimum ADMIN : la population visée est ADMIN et au-dessus.
+        Assert.Equal(["ADMIN", "OWNER"], Notifications.RoleCodesAsked);
+    }
+
+    [Fact]
+    public async Task Confirming_the_address_notifies_the_administrators()
+    {
+        await factory.CreateClient().PostAsJsonAsync("/auth/register", ValidRegistration);
+        Notifications.Clear();
+        var token = Assert.Single(store.VerificationTokens).Key;
+
+        using var response = await factory.CreateClient()
+            .PostAsync($"/auth/verify-email?token={token}", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        var notification = Assert.Single(Notifications.Notifications);
+        Assert.Equal("Inscription confirmée", notification.Title);
+        Assert.Contains("nouveau@example.com", notification.Body);
+    }
+
+    [Fact]
+    public async Task Registering_again_before_confirmation_does_not_notify_twice()
+    {
+        await factory.CreateClient().PostAsJsonAsync("/auth/register", ValidRegistration);
+        Notifications.Clear();
+
+        // Reprise d'une inscription en attente : aucun compte de plus n'est créé.
+        using var response = await factory.CreateClient().PostAsJsonAsync("/auth/register", ValidRegistration);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Empty(Notifications.Notifications);
     }
 
     [Fact]

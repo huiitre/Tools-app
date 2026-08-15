@@ -87,6 +87,9 @@ const baseMarkers = computed<MapFrameMarker[]>(() =>
     .filter(({ key }) => !hiddenBaseKeys.value.has(key))
     .map(({ base, key, resolution, guildPlayerNames }) => {
       const tooltipLines = [base.guildName, base.name, `Position : ${base.mapX}, ${base.mapY}`]
+      if (base.palCount != null) {
+        tooltipLines.push(`Pals : ${base.palCount}`)
+      }
       if (guildPlayerNames.length) {
         tooltipLines.push(`Joueurs : ${guildPlayerNames.join(', ')}`)
       }
@@ -111,15 +114,25 @@ const playerLayerItems = computed<MapLayerItem[]>(() =>
     })),
 )
 
+// Tri par nom de guilde puis par joueurs : plusieurs guildes partagent le libellé
+// « unamed guild », et seuls leurs membres permettent alors de les distinguer.
 const baseLayerItems = computed<MapLayerItem[]>(() =>
   [...mapBases.value]
-    .sort((a, b) => b.guildPlayerNames.length - a.guildPlayerNames.length)
-    .map(({ base, key, guildPlayerNames }) => ({
-      key,
-      label: base.guildName,
-      sublabel: `${guildPlayerNames.length} joueur${guildPlayerNames.length > 1 ? 's' : ''}`,
-      children: guildPlayerNames,
-    })),
+    .sort((a, b) =>
+      a.base.guildName.localeCompare(b.base.guildName)
+      || a.guildPlayerNames.join(', ').localeCompare(b.guildPlayerNames.join(', ')))
+    .map(({ base, key, guildPlayerNames }) => {
+      const parts = [`${guildPlayerNames.length} joueur${guildPlayerNames.length > 1 ? 's' : ''}`]
+      if (base.palCount != null) {
+        parts.push(`${base.palCount} pal${base.palCount > 1 ? 's' : ''}`)
+      }
+      return {
+        key,
+        label: base.guildName,
+        sublabel: parts.join(' · '),
+        children: guildPlayerNames,
+      }
+    }),
 )
 
 const activeMapLabel = computed(() => MAP_LABELS[activeMap.value])

@@ -7,6 +7,7 @@ using Tools.ApiCore.Modules.Auth.Infrastructure.Registration;
 using Tools.ApiCore.Modules.Common.Application.Exceptions;
 using Tools.ApiCore.Modules.Common.Application.Ports;
 using Tools.ApiCore.Modules.Common.Infrastructure;
+using Tools.ApiCore.Modules.Auth.Application.Services;
 using Tools.ApiCore.Modules.Mail.Application;
 using Tools.ApiCore.Modules.Mail.Application.Services;
 
@@ -26,6 +27,7 @@ public sealed class RegisterUserUseCase(
     IPasswordHasher passwordHasher,
     ITransactionManager transactionManager,
     MailService mailService,
+    AdminSignupNotifier adminSignupNotifier,
     IOptions<RegistrationOptions> registrationOptions,
     IOptions<AppOptions> appOptions,
     ILogger<RegisterUserUseCase> logger)
@@ -38,6 +40,7 @@ public sealed class RegisterUserUseCase(
         var passwordHash = passwordHasher.Hash(command.Password);
 
         string token;
+        var accountCreated = false;
         await using (var transaction = await transactionManager.BeginAsync())
         {
             var existing = await registrationRepository.FindAccountByEmailAsync(email);
@@ -47,6 +50,7 @@ public sealed class RegisterUserUseCase(
             {
                 userId = await registrationRepository.CreatePendingUserAsync(
                     command.Name.Trim(), email, passwordHash);
+                accountCreated = true;
             }
             else if (existing.EmailVerifiedAt is null)
             {
@@ -95,6 +99,13 @@ public sealed class RegisterUserUseCase(
                     """));
 
         logger.LogInformation("Email de confirmation envoyé pour une inscription.");
+
+        // Seule une création est signalée : une inscription reprise avant confirmation n'est pas
+        // un compte de plus, et l'annoncer deux fois brouillerait la lecture des administrateurs.
+        if (accountCreated)
+        {
+            await adminSignupNotifier.AccountCreated(email);
+        }
     }
 
     // Jeton aléatoire encodé en Base64 URL sans remplissage, comme le flux de réinitialisation.

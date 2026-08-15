@@ -11,7 +11,9 @@ public sealed class GoogleIdentityAuthenticationService(
     IGoogleAuthRepository googleAuthRepository,
     ITransactionManager transactionManager)
 {
-    public async Task<AuthUser> AuthenticateAsync(GoogleIdentity identity)
+    // Le résultat distingue la connexion d'un compte connu de la toute première : seule la
+    // seconde est une inscription, et elle seule doit être signalée aux administrateurs.
+    public async Task<GoogleAuthenticationResult> AuthenticateAsync(GoogleIdentity identity)
     {
         // La recherche, l'éventuelle mise à jour d'avatar et la création sont cohérentes dans une transaction.
         await using var transaction = await transactionManager.BeginAsync();
@@ -29,7 +31,7 @@ public sealed class GoogleIdentityAuthenticationService(
             }
 
             await transaction.CommitAsync();
-            return existingUser;
+            return new GoogleAuthenticationResult(existingUser, AccountCreated: false);
         }
 
         if (await googleAuthRepository.ExistsByEmailAsync(identity.Email))
@@ -42,6 +44,8 @@ public sealed class GoogleIdentityAuthenticationService(
         // Création de l'utilisateur, de son provider Google et de son rôle USER : une seule transaction.
         var user = await googleAuthRepository.CreateGoogleUserAsync(identity);
         await transaction.CommitAsync();
-        return user;
+        return new GoogleAuthenticationResult(user, AccountCreated: true);
     }
 }
+
+public sealed record GoogleAuthenticationResult(AuthUser User, bool AccountCreated);

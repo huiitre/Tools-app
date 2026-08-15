@@ -5,6 +5,7 @@ using Tools.ApiCore.Modules.Auth;
 using Tools.ApiCore.Modules.Common;
 using Tools.ApiCore.Modules.Health;
 using Tools.ApiCore.Modules.Mail;
+using Tools.ApiCore.Modules.Notifications;
 using Tools.ApiCore.Modules.Security;
 using Tools.ApiCore.Modules.Users;
 
@@ -20,6 +21,7 @@ builder.AddCommonModule()
     .AddSecurityModule()
     .AddAuthModule()
     .AddMailModule()
+    .AddNotificationsModule()
     .AddUsersModule()
     .AddAccessModule()
     .AddAdminModule()

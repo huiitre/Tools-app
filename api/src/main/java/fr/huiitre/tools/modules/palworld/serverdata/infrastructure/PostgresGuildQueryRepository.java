@@ -24,7 +24,7 @@ public class PostgresGuildQueryRepository implements GuildQueryRepository {
     @Override
     public List<GuildSummaryView> findAllWithMembersAndBases() {
         Map<UUID, String> guildNameById = new LinkedHashMap<>();
-        jdbcTemplate.query("SELECT guild_id, name FROM tools_palworld.guild ORDER BY name", rs -> {
+        jdbcTemplate.query("SELECT guild_id, name FROM tools_palworld.guild WHERE is_present ORDER BY name", rs -> {
             guildNameById.put(rs.getObject("guild_id", UUID.class), rs.getString("name"));
         });
 
@@ -32,7 +32,7 @@ public class PostgresGuildQueryRepository implements GuildQueryRepository {
         final String playersSql = """
                 SELECT guild_id, player_uid, name, last_online_real_time
                 FROM tools_palworld.player
-                WHERE guild_id IS NOT NULL
+                WHERE guild_id IS NOT NULL AND is_present
                 ORDER BY name
                 """;
         jdbcTemplate.query(playersSql, rs -> {
@@ -50,6 +50,7 @@ public class PostgresGuildQueryRepository implements GuildQueryRepository {
                        b.area_range
                 FROM tools_palworld.base b
                 LEFT JOIN tools_palworld.pal_instance pi ON pi.base_id = b.base_id AND pi.is_present = TRUE
+                WHERE b.is_present
                 GROUP BY b.guild_id, b.base_id
                 """;
         jdbcTemplate.query(basesSql, rs -> {
