@@ -630,6 +630,12 @@ déjà `https://qa.tools.huiitre.fr` avec `AllowCredentials`. C'est le point le 
 de coincer : le comportement du cookie cross-domaine depuis un navigateur n'a jamais été
 exercé.
 
+**1 bis. Le renouvellement de session est déjà centralisé** dans `refreshSession()`
+(`web/src/services/axiosInstance.ts`), fait en préparation de cette bascule : un seul refresh à
+la fois, suivi d'un `/me` qui remet à jour les droits affichés — ils restaient auparavant figés
+depuis le chargement de la page. Les deux URLs de session y sont des constantes ; c'est le seul
+endroit à modifier pour elles, en plus du tableau ci-dessous.
+
 **2. Les URLs à corriger** dans `web/src/modules/Auth/fetch/auth.fetch.ts` :
 
 | Aujourd'hui (Java) | Sur le Core |

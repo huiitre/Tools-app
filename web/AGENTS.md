@@ -57,7 +57,7 @@ L'application utilise une abstraction `IUpdateService` pour gérer les mises à 
 5.  **Finalisation** : Le processus principal appelle `autoUpdater.quitAndInstall()`.
 
 Shared infrastructure:
-- `src/services/axiosInstance.ts` — four versioned Axios clients (v1, v2, v3, v3Dofus), each with request interceptors that inject the Bearer token and response interceptors that handle 401 → token refresh → retry.
+- `src/services/axiosInstance.ts` — four versioned Axios clients (v1, v2, v3, v3Dofus), each with request interceptors that inject the Bearer token and response interceptors that handle 401 → token refresh → retry. Exporte aussi `refreshSession()`, **seul point d'entrée du renouvellement de session** (voir ci-dessous).
 - `src/stores/` — global Pinia stores for UI state and session cleanup on logout (`resetSessionStores()`).
 - `src/composables/` — Vue 3 composables: `useEnv`, `useOS`, `useDevice`, `useScreen`, `useAppUpdate`, etc.
 - `src/ui/` — theme management (dark/light + PicoCSS color scheme).
@@ -104,6 +104,39 @@ Moteur de focus automatique pour le multi-compte Dofus Retro, intégré via `tsh
 ### API Clients
 
 Four Axios instances are exported from `src/services/axiosInstance.ts`: `axiosV1`, `axiosV2`, `axiosV3`, `axiosV3Dofus`. The Dofus client adds `X-Game-Version-Id` and `X-Game-Server-Id` headers. All clients share the same 401-refresh-retry interceptor logic.
+
+### `refreshSession()` — renouvellement de session
+
+Toute reprise de session passe par cette fonction : le démarrage de l'app (`router.beforeEach`)
+comme le 401 rattrapé par l'intercepteur. Elle fait **deux** choses, dans cet ordre :
+
+1. `POST /auth/refresh` → `auth.setToken(...)`
+2. `GET /user/me` → `auth.setUser(...)`
+
+Le second appel est le point important. Les droits affichés (`isAdmin`, `hasModuleAccess`)
+viennent tous de `/me`, jamais du JWT — que le front ne décode nulle part. Sans ce rappel, ils
+restaient figés depuis le chargement de la page pendant que le token, lui, était réémis toutes
+les 10 minutes avec des rôles relus en base : un droit accordé restait invisible jusqu'au F5, et
+un droit retiré laissait une interface permissive que l'API refusait ensuite.
+
+**Un seul refresh à la fois.** La promesse en cours est mémorisée dans `refreshPromise` : les
+appels concurrents s'y raccrochent au lieu d'en déclencher un second. Cinq requêtes qui prennent
+un 401 en même temps (retour d'onglet, page qui charge plusieurs ressources) ne produisent donc
+qu'un `POST /auth/refresh` et un `GET /user/me`. Le verrou est relâché par
+`promise.then(release, release)` — les deux handlers, pour qu'un refresh en échec le libère
+aussi et que le rejet ne remonte pas en `unhandledRejection`.
+
+Deux règles à ne pas casser en modifiant cette fonction :
+
+- **Elle utilise `clientInit`**, le client sans intercepteur. Passer par `clientV3` ferait qu'un
+  401 sur le refresh ou sur `/me` redéclencherait un refresh, en boucle — le garde-fou `_retry`
+  ne protège pas, chaque tour étant une requête neuve.
+- **Un `/me` en échec ne déconnecte pas.** Le token vient d'être renouvelé, la session est
+  valide ; on conserve le profil connu. Seul le démarrage traite l'absence de profil comme une
+  session inexploitable et repart déconnecté.
+
+Les URLs `/auth/refresh` et `/user/me` sont deux constantes en tête de fichier : c'est le seul
+endroit à changer lors de la bascule vers l'API Core (`/user/me` y devient `/users/me`).
 
 ## Key Configuration
 

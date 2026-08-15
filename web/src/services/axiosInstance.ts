@@ -27,6 +27,63 @@ const clientV3 = createClient('v3');
 const clientV3Dofus = createClient('v3');
 
 /* ======================
+   SESSION
+====================== */
+
+//* Routes de session. Elles bougeront lors de la bascule vers l'API Core
+//* (/user/me → /users/me) : c'est le seul endroit à modifier ici.
+const REFRESH_URL = '/auth/refresh';
+const ME_URL = '/user/me';
+
+//* Un seul refresh à la fois, partagé par tous les appelants.
+//*
+//* Sans ce partage, cinq requêtes qui reçoivent un 401 en même temps (typique au retour
+//* d'onglet) déclenchent cinq POST /auth/refresh en parallèle, et autant de GET /user/me
+//* derrière. Ici, la première crée la promesse, les suivantes attendent la même.
+let refreshPromise: Promise<string> | null = null;
+
+export const refreshSession = (): Promise<string> => {
+  //* Un refresh est déjà en vol → on s'y raccroche au lieu d'en lancer un second.
+  if (refreshPromise) return refreshPromise;
+
+  const auth = useAuthStore();
+
+  const promise = (async () => {
+    //* clientInit n'a pas d'intercepteur : un 401 sur ces deux appels ne peut pas
+    //* relancer un refresh, donc pas de récursion possible.
+    const { data } = await clientInit.post(REFRESH_URL);
+    auth.setToken(data.accessToken);
+
+    //* Les droits affichés viennent de /me. Sans cet appel ils restent figés depuis le
+    //* chargement de la page, alors que le token, lui, est réémis avec des rôles relus
+    //* en base : l'interface et l'API finissent par ne plus dire la même chose.
+    try {
+      const me = await clientInit.get(ME_URL, {
+        headers: { Authorization: `Bearer ${data.accessToken}` },
+      });
+      auth.setUser(me.data);
+    } catch {
+      //* La session reste valide, le token vient d'être renouvelé. On garde le profil
+      //* connu plutôt que de déconnecter quelqu'un sur un /me momentanément indisponible.
+    }
+
+    return data.accessToken as string;
+  })();
+
+  refreshPromise = promise;
+
+  //* Libère le verrou dans les deux cas. Les deux handlers sont passés au même .then
+  //* pour que le rejet soit considéré comme traité ici : la promesse rendue aux
+  //* appelants reste celle qu'ils doivent catcher eux-mêmes.
+  const release = () => {
+    if (refreshPromise === promise) refreshPromise = null;
+  };
+  promise.then(release, release);
+
+  return promise;
+};
+
+/* ======================
    INTERCEPTORS
 ====================== */
 
@@ -111,8 +168,9 @@ const attachInterceptors = (client: AxiosInstance) => {
       originalRequest._retry = true;
 
       try {
-        const { data } = await client.post('/auth/refresh');
-        auth.setToken(data.accessToken);
+        //* Refresh partagé : plusieurs 401 simultanés ne produisent qu'un seul appel.
+        //* Le retry repart ensuite avec le nouveau token, posé par l'intercepteur de requête.
+        await refreshSession();
         return client(originalRequest);
       } catch (refreshError) {
         auth.logout();
