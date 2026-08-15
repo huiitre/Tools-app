@@ -9,14 +9,21 @@ namespace Tools.ApiCore.Modules.Mail.Infrastructure;
 
 public sealed class SmtpMailSender(
     IOptions<SmtpMailOptions> options,
+    IConfiguration environment,
     ILogger<SmtpMailSender> logger) : IMailSender
 {
+    // Identifiants SMTP partagés avec l'API Java, qui les reçoit sous ces noms : le NAS
+    // n'a ainsi qu'une seule convention pour une même valeur. Même approche que JWT_SECRET,
+    // DB_HOST ou GOOGLE_CLIENT_ID. Les appsettings restent utilisables en développement.
+    private readonly string? username = environment["MAIL_USERNAME"] ?? options.Value.Username;
+    private readonly string? password = environment["MAIL_PASSWORD"] ?? options.Value.Password;
+
     public async Task SendAsync(SendMailCommand command)
     {
         var configuration = options.Value;
         if (string.IsNullOrWhiteSpace(configuration.Host)
-            || string.IsNullOrWhiteSpace(configuration.Username)
-            || string.IsNullOrWhiteSpace(configuration.Password)
+            || string.IsNullOrWhiteSpace(username)
+            || string.IsNullOrWhiteSpace(password)
             || string.IsNullOrWhiteSpace(configuration.FromAddress))
         {
             throw AppException.Unavailable("MAIL_NOT_CONFIGURED", "Le service d’envoi d’emails n’est pas configuré.");
@@ -46,7 +53,7 @@ public sealed class SmtpMailSender(
         using var client = new SmtpClient(configuration.Host, configuration.Port)
         {
             EnableSsl = configuration.EnableSsl,
-            Credentials = new NetworkCredential(configuration.Username, configuration.Password)
+            Credentials = new NetworkCredential(username, password)
         };
 
         await client.SendMailAsync(email);

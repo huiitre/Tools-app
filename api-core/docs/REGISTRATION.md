@@ -87,37 +87,29 @@ refuse un appelant absent : un tel marquage rendrait l'inscription impossible.
 }
 ```
 
-## Limitation de débit
+## Limitation de débit — retirée
 
-`/auth/register` et `/auth/password/reset-request` sont les deux seules routes anonymes qui
-déclenchent un envoi d'email. Elles partagent la politique `email-sending` :
-**5 requêtes par adresse IP et par fenêtre de 15 minutes**.
+Une politique `email-sending` (5 requêtes par IP et par fenêtre de 15 minutes) a été mise en
+place sur `/auth/register` et `/auth/password/reset-request`, puis **retirée**.
 
-```csharp
-[EnableRateLimiting(RateLimitingExtensions.EmailSendingPolicy)]
-[HttpPost("register")]
-```
+La raison est le déploiement : derrière le reverse proxy, ASP.NET ne voit que l'adresse IP du
+proxy tant que `UseForwardedHeaders` n'est pas activé. Toutes les requêtes tombent alors dans
+la même partition — la limite ne protège plus de rien et devient une gêne, cinq inscriptions
+par quart d'heure pour l'ensemble des visiteurs.
 
-Ce qu'on protège ici n'est pas l'accès aux données : un compte non confirmé ne peut pas se
-connecter, n'a aucun module, et le nettoyage l'efface. Le risque réel est le **service
-d'envoi** — quelques milliers d'appels épuisent le quota SMTP et dégradent la réputation du
-domaine, au point que les mails légitimes de réinitialisation finissent en spam.
+Entre une protection inopérante et pas de protection, la seconde est plus honnête : elle ne
+donne pas l'illusion d'une sécurité qui n'existe pas.
 
-Le refus renvoie `429 TOO_MANY_REQUESTS` via `ApiProblemDetailsFactory`, avec un en-tête
-`Retry-After` quand la fenêtre le permet. `UseRateLimiter()` est placé avant
-l'authentification : une requête rejetée ne déclenche aucun travail.
-
-Bloquer le sous-adressage (`utilisateur+test@gmail.com`) a été écarté : un attaquant utilise
-des domaines jetables, pas le `+`. La mesure ne gênerait que les utilisateurs légitimes.
-
-En environnement `Testing`, la politique est déclarée mais ne limite rien — une route
-référençant une politique absente ferait échouer le démarrage, et les requêtes en mémoire
-n'ayant pas d'adresse IP, elles partageraient toutes le même compteur.
+Pour la réintroduire un jour, il faut les deux ensemble : `UseForwardedHeaders` **et** la
+politique. L'un sans l'autre ne vaut rien.
 
 ## Reste à faire
 
-**Derrière le reverse proxy, la limite s'appliquera au proxy et non au visiteur** : tous les
-utilisateurs partageront un seul compteur. Il faut activer `UseForwardedHeaders` pour
-qu'ASP.NET lise `X-Forwarded-For`. À traiter au déploiement, en même temps que
-`Cors:AllowedOrigins`, aujourd'hui vide dans `appsettings.QA.json` et
-`appsettings.Production.json` — toute requête navigateur y serait refusée.
+`Cors:AllowedOrigins` est renseigné en QA et en Production. Reste, si la limitation de débit
+revient un jour, à activer `UseForwardedHeaders` pour qu'ASP.NET lise `X-Forwarded-For`.
+
+Exposition assumée en attendant : `/auth/register` et `/auth/password/reset-request` sont
+anonymes et déclenchent chacune un envoi d'email. Un appel en boucle épuiserait le quota SMTP
+OVH et dégraderait la réputation du domaine — au point que les mails de réinitialisation
+partiraient en spam. Les comptes créés, eux, ne donnent aucun accès : inactifs tant que
+l'adresse n'est pas confirmée, et effacés par le nettoyage.

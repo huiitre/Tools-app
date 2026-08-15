@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.RateLimiting;
-using Tools.ApiCore.Modules.Common.Api.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
@@ -114,7 +112,6 @@ public sealed class AuthController(
     }
 
     [AllowAnonymous]
-    [EnableRateLimiting(RateLimitingExtensions.EmailSendingPolicy)]
     [HttpPost("password/reset-request")]
     public async Task<IActionResult> RequestPasswordReset(
         PasswordResetRequest request)
@@ -137,7 +134,6 @@ public sealed class AuthController(
     }
 
     [AllowAnonymous]
-    [EnableRateLimiting(RateLimitingExtensions.EmailSendingPolicy)]
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
     {

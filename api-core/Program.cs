@@ -19,7 +19,6 @@ using Tools.ApiCore.Modules.Auth.Infrastructure.Password;
 using Tools.ApiCore.Modules.Auth.Infrastructure.Persistence;
 using Tools.ApiCore.Modules.Auth.Infrastructure.Registration;
 using Tools.ApiCore.Modules.Common.Api.Errors;
-using Tools.ApiCore.Modules.Common.Api.RateLimiting;
 using Tools.ApiCore.Modules.Common.Application.Exceptions;
 using Tools.ApiCore.Modules.Common.Application.Ports;
 using Tools.ApiCore.Modules.Common.Infrastructure;
@@ -104,7 +103,6 @@ builder.Services.AddSingleton<IMailSender, SmtpMailSender>();
 builder.Services.AddScoped<MailService>();
 builder.Services.AddScoped<SendMailUseCase>();
 builder.Services.AddCoreJwtAuthentication();
-builder.Services.AddCoreRateLimiting(builder.Environment);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserProvider, HttpCurrentUserProvider>();
 builder.Services.AddScoped<UseCaseAuthorizer>();
@@ -148,7 +146,6 @@ app.UseCors("ToolsFrontend");
 
 // L'ordre n'est pas négociable : l'authentification identifie l'appelant, l'autorisation
 // décide ensuite si la route lui est ouverte.
-app.UseRateLimiter();
 app.UseAuthentication();
 
 // La FallbackPolicy s'applique aussi aux requêtes qui n'ont atteint aucun endpoint : sans

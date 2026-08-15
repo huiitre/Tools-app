@@ -140,14 +140,6 @@ La validation automatique des contrôleurs (`[ApiController]`) utilise la même 
 
 Les réponses 401 et 403 du middleware d'authentification passent par cette même fabrique, via les callbacks `OnChallenge` et `OnForbidden` de `JwtBearerEvents`. Il est interdit d'écrire un second format JSON d'erreur ailleurs.
 
-### Limitation de débit
-
-Les routes anonymes qui déclenchent un envoi d'email — `/auth/register` et
-`/auth/password/reset-request` — sont limitées à 5 requêtes par IP et par fenêtre de
-15 minutes (politique `email-sending`). Le refus emprunte le même contrat d'erreur :
-`429 TOO_MANY_REQUESTS`, produit par `ApiProblemDetailsFactory`. Détail et raisonnement dans
-`REGISTRATION.md`.
-
 ### Tests d'intégration du contrat HTTP
 
 Les tests HTTP sont dans `api-core/tests/Tools.ApiCore.IntegrationTests`. Ils démarrent API Core en mémoire avec l'environnement `Testing`, sans ouvrir de port ni appeler PostgreSQL. Les endpoints `/_tests/errors/{kind}` sont mappés uniquement dans cet environnement et ne sont donc pas exposés en Development, QA ou Production.
