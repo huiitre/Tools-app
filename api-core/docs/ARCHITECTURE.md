@@ -609,7 +609,9 @@ Ordre recommandé :
 [x] flux mot de passe (réinitialisation, définition)
 [x] inscription et confirmation d'adresse
 [x] profil utilisateur (/users/me)
-[ ] migration frontend de l'authentification   ← prochaine étape
+[x] migration frontend de l'authentification
+[x] administration sur le Core (/users, /roles, /modules, /admin/stats) — côté API
+[ ] bascule du module Admin du frontend   ← prochaine étape
 [ ] rôles et droits de module dans les claims
 [ ] SignalR / realtime
 ```
@@ -619,10 +621,15 @@ partagent le même `JWT_SECRET`, le même issuer et le même choix d'algorithme 
 jeton émis par le Core est déjà accepté par Java. La question se reposera le jour où le Core
 passera à une paire de clés asymétrique.
 
-## Bascule du frontend — faite côté code, à valider en QA
+## Bascule du frontend — faite et validée en QA
 
 L'authentification du front est branchée sur l'API Core. Tout s'est passé dans `web/`, et reste
 réversible en repointant `clientCore` sur `/api/v3`.
+
+Vérifié en QA : login, refresh, Google OAuth (web), et — le point qui compte — **le métier Java
+répond normalement à un access token émis par le Core**. Le mode mixte tient donc : l'identité
+vient du Core, les modules métier restent sur Java. Le reste (inscription, réinitialisation,
+Google sous Electron) se validera à l'usage.
 
 **Ce qui a été fait :**
 
@@ -669,6 +676,82 @@ distinctes dans le même navigateur.
 2. **Le module Admin reste sur Java** : `/users`, `/roles`, `/modules` n'existent pas encore sur
    le Core. C'est la condition pour retirer le module core de l'API Java.
 3. **Le realtime des notifications reste sur Java** (STOMP), en attente de la tranche SignalR.
+
+## Administration portée sur le Core
+
+Les onze routes que consomme le module Admin du frontend existent désormais sur le Core :
+
+```text
+GET    /users                                Users
+PUT    /users/{id}/role                      Users
+GET    /roles                                Security
+GET    /modules                              Access
+POST   /modules                              Access
+PUT    /modules/{id}                         Access
+GET    /modules/{id}/users                   Access
+POST   /modules/{id}/users/{userId}          Access
+PUT    /modules/{id}/users/{userId}/role     Access
+DELETE /modules/{id}/users/{userId}          Access
+GET    /admin/stats                          Admin
+```
+
+**Deux nouveaux modules.** `Access` porte les modules *fonctionnels* de l'application (Dofus,
+Palworld…) et les accès des utilisateurs à ces modules. Il ne s'appelle pas « Modules » pour ne
+pas produire `Modules/Modules` et un namespace `Tools.ApiCore.Modules.Modules`, où le même mot
+désignerait deux choses sans rapport ; `Access` nomme la responsabilité réelle. `Admin` ne
+détient aucune ressource — il agrège en lecture ce que possèdent Users et Access, d'où un
+module qui ne fait que lire.
+
+**`/roles` est servi par Security**, et non par Users. La table `tools_core.role` est la
+contrepartie persistée de `RoleCode`, qui vit déjà là ; et deux modules la consomment — Users
+pour le rôle global, Access pour le rôle contextuel. La ranger sous l'un des deux laisserait
+croire à une appartenance qui n'existe pas, comme pour un port partagé.
+
+### Le rôle exigé est ADMIN partout — y compris là où Java affiche TECH
+
+L'API Java porte **deux** déclarations de rôle : `@RequiredRole` sur la méthode du contrôleur,
+et `requiredRole()` dans le use case. Seule la seconde est appliquée — `UseCaseAuthorizationAspect`
+n'intercepte que les implémentations de `SecuredUseCase`, et **aucun aspect ne lit
+`@RequiredRole`**. L'annotation est décorative.
+
+L'écart est visible : `RoleController`, `ModuleController` et leurs use cases se contredisent
+(`TECH` sur le contrôleur, `ADMIN` dans le use case). C'est ADMIN qui s'applique réellement, et
+c'est donc ADMIN qui a été reproduit. Porter les annotations aurait ouvert `/roles` et
+`/modules` à des comptes TECH qui n'y ont aujourd'hui pas accès.
+
+**ADMIN est au-dessus de TECH.** L'énumération Java déclare `ADMIN` avant `TECH`, ce qui suggère
+l'inverse, mais l'ordre de déclaration ne sert à rien : `RoleHierarchy` donne `TECH = 4` et
+`ADMIN = 5`, et c'est lui qui décide. Le `RoleCode` du Core est fidèle à cette hiérarchie. Un
+test vérifie explicitement qu'un compte TECH est refusé sur chacune de ces routes.
+
+> Le frontend, lui, ordonne `[…, ADMIN, TECH, OWNER]` dans `auth.store.ts` : son
+> `hasModuleAccess` place TECH au-dessus d'ADMIN, à l'inverse des deux APIs. Cela ne concerne
+> que l'affichage — le backend tranche en dernier ressort — mais la divergence existe et
+> mériterait d'être résolue un jour.
+
+### Plusieurs rôles pour une même paire : le plus permissif gagne
+
+La clé primaire de `user_module_role` est `(user_id, module_id, role_id)` et celle de
+`user_role` autorise également le cumul : plusieurs rôles sont donc possibles là où tout le code
+suppose l'unicité. L'API Java s'en remet à un `LIMIT 1`, c'est-à-dire à un rôle arbitraire.
+
+Le Core retient **le rôle le plus permissif**, ce qui est déterministe et cohérent avec
+`CurrentUser.HighestRole`, qui fait déjà ce choix pour les rôles du jeton. En écriture, les
+lignes existantes sont supprimées avant l'insertion : le Core ne crée donc jamais de doublon,
+et un `UPDATE` aurait de toute façon violé la clé primaire s'il en existait deux.
+
+**Le tri se fait sur le code du rôle, jamais sur `role_id`.** Les identifiants suivent l'ordre
+d'insertion du référentiel — `ADMIN = 4`, `TECH = 5` — soit l'inverse de la hiérarchie. Trier
+par identifiant intervertirait ces deux rôles.
+
+La migration rendant l'unicité explicite reste à faire ; elle est volontairement séparée de
+cette bascule.
+
+### Ce qui n'a pas été porté
+
+`DELETE /modules/{id}` et `GET /users/{id}` existent côté Java mais ne sont appelés par aucun
+écran : ils n'ont pas été repris. `GET /modules/users/{userId}` non plus — le profil renvoyé
+par `/users/me` porte déjà les modules de l'appelant.
 
 ### Points restés en suspens
 

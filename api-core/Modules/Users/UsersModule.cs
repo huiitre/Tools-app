@@ -14,6 +14,8 @@ public static class UsersModule
     {
         builder.Services.AddScoped<IUserRepository, PostgresUserRepository>();
         builder.Services.AddScoped<GetMyProfileUseCase>();
+        builder.Services.AddScoped<ListUsersUseCase>();
+        builder.Services.AddScoped<SetUserGlobalRoleUseCase>();
 
         return builder;
     }

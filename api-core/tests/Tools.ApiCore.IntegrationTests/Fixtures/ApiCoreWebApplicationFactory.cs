@@ -11,6 +11,10 @@ using Tools.ApiCore.Modules.Auth.Domain;
 using Tools.ApiCore.Modules.Common.Application.Ports;
 using Tools.ApiCore.Modules.Mail.Application.Ports;
 using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+using Tools.ApiCore.Modules.Access.Application.Ports;
+using Tools.ApiCore.Modules.Admin.Application.Ports;
+using Tools.ApiCore.Modules.Security.Application.Ports;
+using Tools.ApiCore.Modules.Users.Application;
 
 namespace Tools.ApiCore.IntegrationTests.Fixtures;
 
@@ -53,6 +57,22 @@ public sealed class ApiCoreWebApplicationFactory : WebApplicationFactory<Program
             services.AddScoped<IEmailVerificationRepository, InMemoryEmailVerificationRepository>();
             services.RemoveAll<ITransactionManager>();
             services.AddScoped<ITransactionManager, NoOpTransactionManager>();
+
+            // L'administration est testée sans PostgreSQL : ces doubles sont des singletons
+            // pour que le test puisse relire l'état laissé par la requête.
+            services.RemoveAll<IRoleRepository>();
+            services.AddSingleton<IRoleRepository, InMemoryRoleRepository>();
+            services.RemoveAll<IUserRepository>();
+            services.AddSingleton<InMemoryUserRepository>();
+            services.AddSingleton<IUserRepository>(provider => provider.GetRequiredService<InMemoryUserRepository>());
+            services.RemoveAll<IModuleRepository>();
+            services.AddSingleton<IModuleRepository, InMemoryModuleRepository>();
+            services.RemoveAll<IModuleMembershipRepository>();
+            services.AddSingleton<InMemoryModuleMembershipRepository>();
+            services.AddSingleton<IModuleMembershipRepository>(
+                provider => provider.GetRequiredService<InMemoryModuleMembershipRepository>());
+            services.RemoveAll<IAdminStatsRepository>();
+            services.AddSingleton<IAdminStatsRepository, InMemoryAdminStatsRepository>();
         });
     }
 

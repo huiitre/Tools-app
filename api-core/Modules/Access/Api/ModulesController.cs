@@ -1,0 +1,89 @@
+using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
+using Tools.ApiCore.Modules.Access.Application;
+using Tools.ApiCore.Modules.Access.Application.Dto;
+using Tools.ApiCore.Modules.Access.Application.Usecases;
+
+namespace Tools.ApiCore.Modules.Access.Api;
+
+// Modules fonctionnels de l'application et accès des utilisateurs à ces modules.
+//
+// Les routes imbriquées sous `/modules/{id}/users` ne manipulent pas une ressource mais la
+// relation entre deux : quel utilisateur appartient à quel module, et avec quel rôle.
+[ApiController]
+[Route("modules")]
+public class ModulesController(
+    ListModulesUseCase listModulesUseCase,
+    CreateModuleUseCase createModuleUseCase,
+    UpdateModuleUseCase updateModuleUseCase,
+    ListModuleMembersUseCase listModuleMembersUseCase,
+    GrantModuleAccessUseCase grantModuleAccessUseCase,
+    ChangeModuleRoleUseCase changeModuleRoleUseCase,
+    RevokeModuleAccessUseCase revokeModuleAccessUseCase) : ControllerBase
+{
+    [HttpGet]
+    public Task<IReadOnlyList<ModuleDto>> List() => listModulesUseCase.Execute();
+
+    [HttpPost]
+    public async Task<IActionResult> Create(CreateModuleRequest request)
+    {
+        var moduleId = await createModuleUseCase.Execute(
+            new CreateModuleCommand(request.Code, request.Name, request.Description));
+
+        return StatusCode(StatusCodes.Status201Created, new { id = moduleId });
+    }
+
+    [HttpPut("{moduleId:long}")]
+    public async Task<IActionResult> Update(long moduleId, UpdateModuleRequest request)
+    {
+        await updateModuleUseCase.Execute(new UpdateModuleCommand(
+            moduleId,
+            request.Code,
+            request.Name,
+            request.Description,
+            request.Active));
+
+        return NoContent();
+    }
+
+    [HttpGet("{moduleId:long}/users")]
+    public Task<IReadOnlyList<ModuleMemberDto>> Members(long moduleId) =>
+        listModuleMembersUseCase.Execute(moduleId);
+
+    [HttpPost("{moduleId:long}/users/{userId:long}")]
+    public async Task<IActionResult> GrantAccess(long moduleId, long userId)
+    {
+        await grantModuleAccessUseCase.Execute(new GrantModuleAccessCommand(moduleId, userId));
+        return StatusCode(StatusCodes.Status201Created);
+    }
+
+    [HttpPut("{moduleId:long}/users/{userId:long}/role")]
+    public async Task<IActionResult> ChangeRole(long moduleId, long userId, ChangeModuleRoleRequest request)
+    {
+        await changeModuleRoleUseCase.Execute(
+            new ChangeModuleRoleCommand(moduleId, userId, request.RoleId));
+
+        return NoContent();
+    }
+
+    [HttpDelete("{moduleId:long}/users/{userId:long}")]
+    public async Task<IActionResult> RevokeAccess(long moduleId, long userId)
+    {
+        await revokeModuleAccessUseCase.Execute(new RevokeModuleAccessCommand(moduleId, userId));
+        return NoContent();
+    }
+}
+
+// DTO entrants : ASP.NET applique ces règles avant d'appeler l'action.
+public sealed record CreateModuleRequest(
+    [Required] string Code,
+    [Required] string Name,
+    string? Description);
+
+public sealed record UpdateModuleRequest(
+    [Required] string Code,
+    [Required] string Name,
+    string? Description,
+    bool Active);
+
+public sealed record ChangeModuleRoleRequest([Required] long RoleId);

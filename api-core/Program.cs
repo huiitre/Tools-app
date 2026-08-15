@@ -1,4 +1,6 @@
 using Tools.ApiCore.Composition;
+using Tools.ApiCore.Modules.Access;
+using Tools.ApiCore.Modules.Admin;
 using Tools.ApiCore.Modules.Auth;
 using Tools.ApiCore.Modules.Common;
 using Tools.ApiCore.Modules.Health;
@@ -19,6 +21,8 @@ builder.AddCommonModule()
     .AddAuthModule()
     .AddMailModule()
     .AddUsersModule()
+    .AddAccessModule()
+    .AddAdminModule()
     .AddHealthModule();
 
 var app = builder.Build();
