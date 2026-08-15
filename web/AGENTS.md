@@ -105,13 +105,46 @@ Moteur de focus automatique pour le multi-compte Dofus Retro, intégré via `tsh
 
 Four Axios instances are exported from `src/services/axiosInstance.ts`: `axiosV1`, `axiosV2`, `axiosV3`, `axiosV3Dofus`. The Dofus client adds `X-Game-Version-Id` and `X-Game-Server-Id` headers. All clients share the same 401-refresh-retry interceptor logic.
 
+### `clientCore` — l'API Core
+
+Deux APIs coexistent, et la frontière est **la capacité, pas la technologie** :
+
+| Client | Sert | Contenu |
+|---|---|---|
+| `clientCore` | API Core | identité, profil, et à terme notifications / realtime |
+| `clientV3` (et v1/v2/v3Dofus) | API Java | métier : Dofus, Palworld, Riot, Admin |
+
+Tout `auth.fetch.ts` passe par `clientCore`. Aucune vue, aucun store n'a bougé : ils ne
+connaissent que les fonctions de ce fichier.
+
+**Le front ignore ce qui sert le Core.** En QA et en production, les deux APIs sont derrière la
+même origine et le reverse proxy route par chemin (`/api/v3` → Java, `/api/core` → Core, qui
+reçoit les requêtes débarrassées du préfixe). Le langage, la version ou la machine derrière
+`/api/core` peuvent changer sans qu'une ligne du front bouge — c'est pour ça que le client est
+nommé d'après une capacité (`Core`) et jamais d'après une implémentation.
+
+En développement, le Core est un process séparé sur son propre port et **sans le préfixe
+`/api/core`** (il n'a pas de `UsePathBase`). D'où `VITE_TOOLS_CORE_BASE_URL` :
+
+```bash
+# .env local
+VITE_TOOLS_CORE_BASE_URL=http://localhost:5090
+```
+
+Variable absente → repli automatique sur `${VITE_TOOLS_API_BASE_URL}/api/core`, le cas de QA et
+de production. Les workflows CI n'ont donc rien à passer.
+
+Ce qui **reste sur Java** faute d'équivalent Core : le module Admin (`/users`, `/roles`,
+`/modules`) et le realtime des notifications (STOMP). Retirer le module core de l'API Java
+suppose de porter ces endpoints d'abord.
+
 ### `refreshSession()` — renouvellement de session
 
 Toute reprise de session passe par cette fonction : le démarrage de l'app (`router.beforeEach`)
 comme le 401 rattrapé par l'intercepteur. Elle fait **deux** choses, dans cet ordre :
 
 1. `POST /auth/refresh` → `auth.setToken(...)`
-2. `GET /user/me` → `auth.setUser(...)`
+2. `GET /users/me` → `auth.setUser(...)`
 
 Le second appel est le point important. Les droits affichés (`isAdmin`, `hasModuleAccess`)
 viennent tous de `/me`, jamais du JWT — que le front ne décode nulle part. Sans ce rappel, ils
@@ -135,8 +168,8 @@ Deux règles à ne pas casser en modifiant cette fonction :
   valide ; on conserve le profil connu. Seul le démarrage traite l'absence de profil comme une
   session inexploitable et repart déconnecté.
 
-Les URLs `/auth/refresh` et `/user/me` sont deux constantes en tête de fichier : c'est le seul
-endroit à changer lors de la bascule vers l'API Core (`/user/me` y devient `/users/me`).
+Les URLs `/auth/refresh` et `/users/me` sont deux constantes en tête de fichier. Elles sont
+servies par `clientInit`, qui vise l'API Core au même titre que `clientCore`.
 
 ## Key Configuration
 

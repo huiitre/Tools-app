@@ -15,8 +15,23 @@ const createClient = (version: string): AxiosInstance =>
     withCredentials: true,
   });
 
+//* Adresse de l'API Core.
+//*
+//* En QA et en production, les deux APIs sont derrière la même origine et le reverse proxy
+//* route par chemin : /api/v3 vers Java, /api/core vers le Core (qui reçoit les requêtes
+//* débarrassées du préfixe). C'est le cas par défaut, aucune variable à renseigner.
+//*
+//* En développement le Core est un process séparé, écouté sur son propre port et sans
+//* préfixe : VITE_TOOLS_CORE_BASE_URL permet alors de le viser directement
+//* (ex. http://localhost:5090).
+const CORE_BASE_URL =
+  import.meta.env.VITE_TOOLS_CORE_BASE_URL ||
+  `${import.meta.env.VITE_TOOLS_API_BASE_URL}/api/core`;
+
+//* Client sans intercepteur, réservé aux appels de session (refresh, /me, logout) :
+//* un 401 dessus ne doit jamais relancer un refresh. Il vise l'API Core comme clientCore.
 const clientInit = axios.create({
-  baseURL: `${import.meta.env.VITE_TOOLS_API_BASE_URL}/api/v3`,
+  baseURL: CORE_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
@@ -26,14 +41,23 @@ const clientV2 = createClient('v2');
 const clientV3 = createClient('v3');
 const clientV3Dofus = createClient('v3');
 
+//* API Core : identité, profil et — à terme — notifications et realtime.
+//*
+//* Le front ne connaît qu'une adresse : ni le langage, ni la version, ni la machine qui la
+//* sert. Un changement d'implémentation côté Core ne se voit pas ici.
+const clientCore = axios.create({
+  baseURL: CORE_BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
+});
+
 /* ======================
    SESSION
 ====================== */
 
-//* Routes de session. Elles bougeront lors de la bascule vers l'API Core
-//* (/user/me → /users/me) : c'est le seul endroit à modifier ici.
+//* Routes de session, servies par l'API Core (clientInit vise déjà /api/core).
 const REFRESH_URL = '/auth/refresh';
-const ME_URL = '/user/me';
+const ME_URL = '/users/me';
 
 //* Un seul refresh à la fois, partagé par tous les appelants.
 //*
@@ -189,6 +213,7 @@ attachInterceptors(clientV1);
 attachInterceptors(clientV2);
 attachInterceptors(clientV3);
 attachInterceptors(clientV3Dofus);
+attachInterceptors(clientCore);
 
 /* ======================
    INTERCEPTOR DOFUS
@@ -208,4 +233,4 @@ clientV3Dofus.interceptors.request.use((config) => {
   return config;
 });
 
-export { clientV1, clientV2, clientV3, clientInit, clientV3Dofus };
+export { clientV1, clientV2, clientV3, clientInit, clientV3Dofus, clientCore };

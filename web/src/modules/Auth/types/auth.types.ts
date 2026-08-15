@@ -3,10 +3,6 @@ export type useFetchLoginType = {
   password: string;
 }
 
-export type useFetchLoginWithGoogleType = {
-  idToken: string
-}
-
 export type PasswordResetPayload = {
   password: string
   token: string

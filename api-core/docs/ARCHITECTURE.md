@@ -619,43 +619,56 @@ partagent le même `JWT_SECRET`, le même issuer et le même choix d'algorithme 
 jeton émis par le Core est déjà accepté par Java. La question se reposera le jour où le Core
 passera à une paire de clés asymétrique.
 
-## Prochaine étape — bascule du frontend
+## Bascule du frontend — faite côté code, à valider en QA
 
-L'API Core est déployée et fonctionnelle en QA (`https://qa.api.tools.huiitre.fr/api/core`).
-Tout ce qui suit se passe dans `web/`, et reste réversible en repointant le client sur Java.
+L'authentification du front est branchée sur l'API Core. Tout s'est passé dans `web/`, et reste
+réversible en repointant `clientCore` sur `/api/v3`.
 
-**1. Un client HTTP vers api-core**, à côté de `clientV3`, avec `withCredentials: true` — le
-cookie `refresh_token` est posé sur un autre sous-domaine que le front. Le CORS QA autorise
-déjà `https://qa.tools.huiitre.fr` avec `AllowCredentials`. C'est le point le plus susceptible
-de coincer : le comportement du cookie cross-domaine depuis un navigateur n'a jamais été
-exercé.
+**Ce qui a été fait :**
 
-**1 bis. Le renouvellement de session est déjà centralisé** dans `refreshSession()`
-(`web/src/services/axiosInstance.ts`), fait en préparation de cette bascule : un seul refresh à
-la fois, suivi d'un `/me` qui remet à jour les droits affichés — ils restaient auparavant figés
-depuis le chargement de la page. Les deux URLs de session y sont des constantes ; c'est le seul
-endroit à modifier pour elles, en plus du tableau ci-dessous.
+- **`clientCore`** (`web/src/services/axiosInstance.ts`), à côté de `clientV3`, avec
+  `withCredentials: true` et les mêmes intercepteurs. `auth.fetch.ts` passe entièrement par lui.
+- **`refreshSession()`** — renouvellement de session centralisé, un seul refresh à la fois,
+  suivi d'un `/users/me` qui remet à jour les droits affichés (ils restaient figés depuis le
+  chargement de la page). `clientInit`, qu'il utilise pour éviter toute récursion, vise le Core
+  lui aussi.
+- **Les URLs corrigées** : `/user/me` → `/users/me`, `/user/password` → `/auth/password`, et
+  suppression de `useFetchLoginWithGoogle` (aucun appelant) avec son type. Les autres gardent le
+  même chemin : `login`, `refresh`, `logout`, `register`, `verify-email`, `password/reset`,
+  `password/reset-request`, `google/url`, `electron/session` — toutes vérifiées présentes sur
+  le Core.
+- **Le store n'a pas bougé.** Le contrat de `/users/me` est identique à celui de Java — `id`,
+  `email`, `name`, `userType`, `active`, `avatarUrl`, `roles[]`, `modules[]` avec leurs rôles
+  imbriqués. Le sur-fetch connu (`roles[].id`, `name`, `description` transmis alors que seuls
+  `code` et `active` sont lus) est conservé volontairement : on ne modifie pas la forme des
+  données pendant une bascule, sinon un bug devient impossible à attribuer.
 
-**2. Les URLs à corriger** dans `web/src/modules/Auth/fetch/auth.fetch.ts` :
+**Le développement local a demandé une variable.** Le Core y est un process séparé, sur son
+propre port et **sans le préfixe `/api/core`** — celui-ci n'existe qu'en QA et en production, où
+le reverse proxy le retire avant de transmettre. D'où `VITE_TOOLS_CORE_BASE_URL`
+(`http://localhost:5090` en local), avec repli automatique sur
+`${VITE_TOOLS_API_BASE_URL}/api/core` quand elle est absente — donc rien à changer dans les
+workflows CI. Ajouter un `UsePathBase` conditionnel côté Core supprimerait ce besoin ; ça n'a
+pas été fait.
 
-| Aujourd'hui (Java) | Sur le Core |
-|---|---|
-| `/user/me` | `/users/me` |
-| `/user/password` | `/auth/password` |
-| `/auth/google` | à supprimer — `useFetchLoginWithGoogle` n'est appelé nulle part |
+**Le cookie n'était pas le risque annoncé.** Cette section prévenait que le comportement
+cross-domaine du cookie `refresh_token` n'avait jamais été exercé. C'est faux : Java le pose
+depuis la même origine (`qa.api.tools.huiitre.fr`), avec des attributs **strictement
+identiques** — même nom, `Path=/`, `HttpOnly`, `Secure`, `SameSite=None` en HTTPS, aucun
+`Domain`. Le navigateur se comporte donc exactement pareil.
 
-Les autres routes gardent le même chemin : `login`, `refresh`, `logout`, `register`,
-`verify-email`, `password/reset`, `password/reset-request`, `google/url`, `electron/session`.
+Conséquence à connaître en revanche : **les deux APIs partagent physiquement le même cookie.**
+Un login sur le Core écrase celui de Java. Sans danger — elles partagent secret, issuer et
+algorithme, donc chacune lit le jeton de l'autre — mais on ne peut pas tenir deux sessions
+distinctes dans le même navigateur.
 
-**3. Le contrat de `/users/me` est identique à celui de Java** — `id`, `email`, `name`,
-`userType`, `active`, `avatarUrl`, `roles[]`, `modules[]` avec leurs rôles imbriqués. Le store
-`auth.store.ts` n'a donc rien à changer. Le sur-fetch connu (`roles[].id`, `name`,
-`description` transmis alors que seuls `code` et `active` sont lus) est conservé
-volontairement : on ne modifie pas la forme des données pendant une bascule, sinon un bug
-devient impossible à attribuer.
+**Ce qui reste :**
 
-**4. Ordre suggéré** : basculer d'abord `login` + `/users/me` + `refresh` et vérifier qu'une
-session tient au rechargement de page, puis le reste.
+1. **Valider en QA** — login, rechargement de page, expiration à 10 minutes, Google OAuth
+   (web et Electron), inscription, réinitialisation de mot de passe.
+2. **Le module Admin reste sur Java** : `/users`, `/roles`, `/modules` n'existent pas encore sur
+   le Core. C'est la condition pour retirer le module core de l'API Java.
+3. **Le realtime des notifications reste sur Java** (STOMP), en attente de la tranche SignalR.
 
 ### Points restés en suspens
 
