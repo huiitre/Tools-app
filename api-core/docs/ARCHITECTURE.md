@@ -267,6 +267,85 @@ par le login, le renouvellement, la session Electron et les flux de mot de passe
 sous l'un d'eux laisserait croire à une appartenance qui n'existe pas. Le rangement doit
 décrire les dépendances réelles, pas les suggérer.
 
+### Racine de composition et enregistrement des modules
+
+`Program.cs` a compté jusqu'à 265 lignes : 45 `using`, une quarantaine de `AddScoped` à la
+file, la construction de la chaîne de connexion PostgreSQL et les endpoints de test du contrat
+d'erreur. Rien n'y était faux, mais le fichier ne répondait plus à la seule question qu'on lui
+pose — *de quoi cette application est-elle faite ?*
+
+**Chaque module porte sa propre composition**, dans un fichier `<Module>Module.cs` à sa racine :
+
+```text
+Modules/Auth/AuthModule.cs          AddAuthModule()
+Modules/Common/CommonModule.cs      AddCommonModule()
+Modules/Health/HealthModule.cs      AddHealthModule()
+Modules/Mail/MailModule.cs          AddMailModule()
+Modules/Security/SecurityModule.cs  AddSecurityModule()
+Modules/Users/UsersModule.cs        AddUsersModule()
+```
+
+Ce fichier vit **à la racine du module**, pas dans une couche : il câble `Api`, `Application`
+et `Infrastructure` ensemble, donc il ne peut appartenir à aucune des trois. C'est l'équivalent
+.NET idiomatique d'une classe `@Configuration` Java — même granularité, même rôle.
+
+L'extension porte sur **`IHostApplicationBuilder`** et non sur `IServiceCollection` : les
+modules ont besoin de `Configuration` pour leurs options et de `Environment` pour ce qui dépend
+de l'environnement, et le type de retour rend l'enchaînement lisible. `Program.cs` retombe
+alors à une trentaine de lignes, dont la partie qui compte :
+
+```csharp
+builder.AddCommonModule()
+    .AddSecurityModule()
+    .AddAuthModule()
+    .AddMailModule()
+    .AddUsersModule()
+    .AddHealthModule();
+```
+
+`Common` vient en premier parce que les autres dépendent de son contrat d'erreur et de son
+accès PostgreSQL. La flèche ne s'inverse jamais : un module transverse ne connaît aucun module
+métier.
+
+**Un enregistrement appartient au module sans lequel il n'aurait plus de raison d'être.**
+`AddHttpContextAccessor()` est déclaré par `Security`, seul consommateur du contexte ambiant,
+et non par la racine de composition — sinon un déplacement de fichier laisserait
+`HttpCurrentUserProvider` sans sa dépendance. Ce qui reste vraiment à l'hôte — journalisation,
+MVC, CORS, ordre du pipeline — vit dans `Composition/` :
+
+```text
+Composition/CoreHostExtensions.cs      AddCoreHost()      configuration locale, Serilog, contrôleurs, CORS
+Composition/CorePipelineExtensions.cs  UseCorePipeline()  l'ordre des middlewares
+```
+
+**L'ordre du pipeline reste au même endroit.** C'est la raison de ne pas laisser chaque module
+insérer ses propres middlewares : leur ordre relatif est un comportement — authentification
+avant autorisation, garde 404 entre les deux — pas un détail d'organisation.
+
+Les routes suivent la même règle que les services. `/version` est mappé par le module Health
+(`MapVersionEndpoint`) et non par la racine : c'est une route de diagnostic de la même famille
+que `/health/*`, appelée par les mêmes clients sans jeton, et `DiagnosticsTests` les vérifie
+déjà ensemble. Les endpoints de test suivent leur module — contrat d'erreur pour `Common`,
+route témoin non sécurisée pour `Auth` — et le `if (IsEnvironment("Testing"))` qui les mappe
+reste visible dans `Program.cs`.
+
+Le `public partial class Program {}` en fin de fichier a disparu au passage : il servait à
+rendre le type visible depuis `WebApplicationFactory<Program>`, ce que le SDK fait désormais
+seul (analyseur `ASP0027`). Les 50 tests d'intégration passent sans lui.
+
+#### Aucune découverte de modules par réflexion
+
+Les templates de monolithe modulaire proposent couramment une interface `IModule` découverte
+par scan d'assemblies, ou un enregistrement automatique par convention (Scrutor). **Les deux
+sont écartés ici**, pour la raison déjà retenue à propos du contexte ambiant : cela remplace du
+bruit visible par de la magie invisible. Le graphe de composition cesse d'être lisible, et des
+règles d'architecture vérifiables par la machine ne peuvent plus rien constater sur des
+enregistrements qui n'existent qu'au runtime.
+
+Le volume de `using` en tête d'un fichier reste un signal utile, pas une gêne à masquer : dans
+`Program.cs` il doit désigner six modules, ce qui est exactement ce que la racine de
+composition est censée voir.
+
 ### Pas de CancellationToken dans les signatures
 
 Le projet **n'utilise pas** l'annulation coopérative. Aucun port, use case, service applicatif
@@ -580,6 +659,8 @@ session tient au rechargement de page, puis le reste.
   (voir `REGISTRATION.md`).
 - **`Modules/Users/Domain/User.cs`** est orphelin depuis la suppression du bac à sable de
   création : plus aucun appelant.
+- **`SmtpMailOptions` est déclarée dans `SmtpMailSender.cs`**, contrairement à la règle « une
+  classe publique est un fichier portant son nom ».
 - **`docs/LEARNING.md`** mentionne encore `PATCH /users/password`, devenu `/auth/password`.
 
 Chaque tranche doit pouvoir être testée en QA sans retirer prématurément le comportement Java existant.
