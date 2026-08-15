@@ -34,8 +34,8 @@ using Tools.ApiCore.Modules.Security.Application.Usecases;
 using Tools.ApiCore.Modules.Security.Domain;
 using Tools.ApiCore.Modules.Security.Infrastructure;
 using Tools.ApiCore.Modules.Users.Api;
+using Tools.ApiCore.Modules.Users.Application.Usecases;
 using Tools.ApiCore.Modules.Users.Application;
-using Tools.ApiCore.Modules.Users.Domain;
 using Tools.ApiCore.Modules.Users.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -124,7 +124,7 @@ builder.Services.AddScoped<CompleteGoogleOAuthLoginUseCase>();
 builder.Services.AddScoped<PostgresSession>();
 builder.Services.AddScoped<ITransactionManager, PostgresTransactionManager>();
 builder.Services.AddScoped<IUserRepository, PostgresUserRepository>();
-builder.Services.AddScoped<ListUsersUseCase>();
+builder.Services.AddScoped<GetMyProfileUseCase>();
 builder.Services.AddScoped<IHealthRepository, PostgresHealthRepository>();
 builder.Services.AddScoped<CheckReadinessUseCase>();
 

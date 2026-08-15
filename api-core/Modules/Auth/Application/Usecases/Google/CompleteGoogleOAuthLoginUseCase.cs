@@ -14,14 +14,13 @@ public sealed class CompleteGoogleOAuthLoginUseCase(
 {
     public async Task<GoogleOAuthLoginResult> Execute(
         string code,
-        string state,
-        CancellationToken cancellationToken)
+        string state)
     {
         var source = stateStore.Consume(state);
-        var idToken = await googleOAuthClient.ExchangeCodeForIdTokenAsync(code, cancellationToken);
-        var googleIdentity = await googleIdentityVerifier.VerifyAsync(idToken, cancellationToken);
-        var user = await googleIdentityAuthenticationService.AuthenticateAsync(googleIdentity, cancellationToken);
-        var session = await authSessionService.Create(user, null, cancellationToken);
+        var idToken = await googleOAuthClient.ExchangeCodeForIdTokenAsync(code);
+        var googleIdentity = await googleIdentityVerifier.VerifyAsync(idToken);
+        var user = await googleIdentityAuthenticationService.AuthenticateAsync(googleIdentity);
+        var session = await authSessionService.Create(user, null);
         return new GoogleOAuthLoginResult(source, session);
     }
 }

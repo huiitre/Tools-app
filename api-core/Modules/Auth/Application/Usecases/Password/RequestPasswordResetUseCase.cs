@@ -29,9 +29,9 @@ public sealed class RequestPasswordResetUseCase(
 {
     private readonly PasswordResetOptions options = passwordResetOptions.Value;
 
-    public async Task Execute(string email, CancellationToken cancellationToken)
+    public async Task Execute(string email)
     {
-        var user = await authRepository.FindByEmailAsync(email, cancellationToken);
+        var user = await authRepository.FindByEmailAsync(email);
         if (user is null)
         {
             logger.LogDebug("Demande de réinitialisation pour un email inconnu.");
@@ -42,18 +42,18 @@ public sealed class RequestPasswordResetUseCase(
         await using (var transaction = await transactionManager.BeginAsync())
         {
             // Sans provider PASSWORD, il n'y a pas de mot de passe à réinitialiser.
-            if (!await userAuthProviderRepository.ExistsAsync(user.Id, "PASSWORD", cancellationToken))
+            if (!await userAuthProviderRepository.ExistsAsync(user.Id, "PASSWORD"))
             {
                 logger.LogDebug("Demande de réinitialisation refusée userId={UserId} : aucun provider PASSWORD.", user.Id);
                 return;
             }
 
             // Une seule demande active par utilisateur : la précédente est remplacée.
-            await passwordResetRepository.DeleteByUserIdAsync(user.Id, cancellationToken);
+            await passwordResetRepository.DeleteByUserIdAsync(user.Id);
 
             token = GenerateToken();
             var expiresAt = DateTime.UtcNow.AddMinutes(options.TokenTtlMinutes);
-            await passwordResetRepository.SaveAsync(user.Id, token, expiresAt, cancellationToken);
+            await passwordResetRepository.SaveAsync(user.Id, token, expiresAt);
 
             await transaction.CommitAsync();
         }
@@ -74,8 +74,7 @@ public sealed class RequestPasswordResetUseCase(
 
                     Ce lien expire dans {options.TokenTtlMinutes} minutes.
                     Si vous n’êtes pas à l’origine de cette demande, ignorez cet email.
-                    """),
-            cancellationToken);
+                    """));
 
         logger.LogInformation("Email de réinitialisation envoyé userId={UserId}", user.Id);
     }

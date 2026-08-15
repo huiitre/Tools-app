@@ -29,10 +29,10 @@ public sealed class AuthController(
 {
     [AllowAnonymous]
     [HttpPost("login")]
-    public async Task<ActionResult<LoginResponse>> Login(LoginRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
     {
         // Le use case vérifie les identifiants et crée les deux tokens.
-        var session = await loginUseCase.Execute(request.Email, request.Password, cancellationToken);
+        var session = await loginUseCase.Execute(request.Email, request.Password);
 
         // Le refresh token ne sort jamais dans le JSON : il reste dans un cookie HttpOnly.
         refreshTokenCookieManager.Set(Response, session.RefreshToken, session.RefreshTokenExpiresAt);
@@ -43,7 +43,7 @@ public sealed class AuthController(
 
     [AllowAnonymous]
     [HttpPost("refresh")]
-    public async Task<ActionResult<LoginResponse>> Refresh(CancellationToken cancellationToken)
+    public async Task<ActionResult<LoginResponse>> Refresh()
     {
         // Le navigateur renvoie normalement ce cookie automatiquement.
         if (!refreshTokenCookieManager.TryGet(Request, out var refreshToken))
@@ -54,7 +54,7 @@ public sealed class AuthController(
 
         logger.LogDebug("Refresh demandé avec un cookie refresh_token.");
         // Le use case valide le refresh token, recharge l'utilisateur et crée une nouvelle session.
-        var session = await refreshSessionUseCase.Execute(refreshToken, cancellationToken);
+        var session = await refreshSessionUseCase.Execute(refreshToken);
 
         // Le cookie est remplacé, tout en gardant sa date d'expiration d'origine.
         refreshTokenCookieManager.Set(Response, session.RefreshToken, session.RefreshTokenExpiresAt);
@@ -71,7 +71,7 @@ public sealed class AuthController(
     }
 
     [HttpPost("electron/session")]
-    public async Task<IActionResult> CreateElectronSession(CancellationToken cancellationToken)
+    public async Task<IActionResult> CreateElectronSession()
     {
         // Electron appelle cette route avec l'access token reçu par le deep link tools://auth?token=... .
         var authorization = Request.Headers.Authorization.ToString();
@@ -80,7 +80,7 @@ public sealed class AuthController(
             throw AppException.Unauthorized("INVALID_ACCESS_TOKEN", "Session invalide ou expirée.");
         }
 
-        var refreshToken = await createElectronSessionUseCase.Execute(authorization["Bearer ".Length..], cancellationToken);
+        var refreshToken = await createElectronSessionUseCase.Execute(authorization["Bearer ".Length..]);
         refreshTokenCookieManager.Set(Response, refreshToken.Value, refreshToken.ExpiresAt);
         return NoContent();
     }
@@ -95,10 +95,9 @@ public sealed class AuthController(
     [HttpGet("callback/google")]
     public async Task<IActionResult> CompleteGoogleOAuthLogin(
         [FromQuery, Required] string code,
-        [FromQuery, Required] string state,
-        CancellationToken cancellationToken)
+        [FromQuery, Required] string state)
     {
-        var result = await completeGoogleOAuthLoginUseCase.Execute(code, state, cancellationToken);
+        var result = await completeGoogleOAuthLoginUseCase.Execute(code, state);
         refreshTokenCookieManager.Set(Response, result.Session.RefreshToken, result.Session.RefreshTokenExpiresAt);
 
         // Compatibilité temporaire avec le front actuel : il lit l'access token dans query.token.
@@ -111,10 +110,9 @@ public sealed class AuthController(
     [AllowAnonymous]
     [HttpPost("password/reset-request")]
     public async Task<IActionResult> RequestPasswordReset(
-        PasswordResetRequest request,
-        CancellationToken cancellationToken)
+        PasswordResetRequest request)
     {
-        await requestPasswordResetUseCase.Execute(request.Email, cancellationToken);
+        await requestPasswordResetUseCase.Execute(request.Email);
 
         // Réponse volontairement identique dans tous les cas : elle ne dit jamais
         // si un compte existe, ni s'il dispose d'un mot de passe.
@@ -125,9 +123,9 @@ public sealed class AuthController(
 
     [AllowAnonymous]
     [HttpPost("password/reset")]
-    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
     {
-        await resetPasswordUseCase.Execute(request.Token, request.Password, cancellationToken);
+        await resetPasswordUseCase.Execute(request.Token, request.Password);
         return NoContent();
     }
 }

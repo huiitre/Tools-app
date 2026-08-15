@@ -20,7 +20,7 @@ public sealed class PasswordResetCleanupService(
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            await CleanupAsync(stoppingToken);
+            await CleanupAsync();
 
             if (!await timer.WaitForNextTickAsync(stoppingToken))
             {
@@ -29,14 +29,14 @@ public sealed class PasswordResetCleanupService(
         }
     }
 
-    private async Task CleanupAsync(CancellationToken cancellationToken)
+    private async Task CleanupAsync()
     {
         try
         {
             using var scope = scopeFactory.CreateScope();
             var repository = scope.ServiceProvider.GetRequiredService<IPasswordResetRepository>();
 
-            var deleted = await repository.DeleteExpiredAsync(DateTime.UtcNow, cancellationToken);
+            var deleted = await repository.DeleteExpiredAsync(DateTime.UtcNow);
             logger.LogInformation("Jetons de réinitialisation expirés supprimés : {Count}", deleted);
         }
         catch (OperationCanceledException)

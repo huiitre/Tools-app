@@ -10,13 +10,13 @@ public sealed class RefreshSessionUseCase(
     ITokenService tokenService,
     AuthSessionService authSessionService)
 {
-    public async Task<AuthSession> Execute(string refreshToken, CancellationToken cancellationToken)
+    public async Task<AuthSession> Execute(string refreshToken)
     {
         // Vérifie signature, expiration et tokenType=REFRESH ; retourne l'id et la date d'expiration.
         var refreshTokenData = tokenService.ReadRefreshToken(refreshToken);
 
         // L'utilisateur est relu en BDD : un ancien refresh ne réactive jamais un compte désactivé.
-        var user = await authRepository.FindByIdAsync(refreshTokenData.UserId, cancellationToken);
+        var user = await authRepository.FindByIdAsync(refreshTokenData.UserId);
 
         if (user is null || !user.IsActive)
         {
@@ -24,6 +24,6 @@ public sealed class RefreshSessionUseCase(
         }
 
         // La date reçue est conservée : le refresh ne rallonge pas la durée maximale de session.
-        return await authSessionService.Create(user, refreshTokenData.ExpiresAt, cancellationToken);
+        return await authSessionService.Create(user, refreshTokenData.ExpiresAt);
     }
 }

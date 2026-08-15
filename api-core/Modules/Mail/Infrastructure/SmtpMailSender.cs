@@ -11,7 +11,7 @@ public sealed class SmtpMailSender(
     IOptions<SmtpMailOptions> options,
     ILogger<SmtpMailSender> logger) : IMailSender
 {
-    public async Task SendAsync(SendMailCommand command, CancellationToken cancellationToken)
+    public async Task SendAsync(SendMailCommand command)
     {
         var configuration = options.Value;
         if (string.IsNullOrWhiteSpace(configuration.Host)
@@ -49,7 +49,7 @@ public sealed class SmtpMailSender(
             Credentials = new NetworkCredential(configuration.Username, configuration.Password)
         };
 
-        await client.SendMailAsync(email, cancellationToken);
+        await client.SendMailAsync(email);
         logger.LogInformation("Email envoyé recipients={RecipientCount}", command.To.Count);
     }
 }

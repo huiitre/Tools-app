@@ -11,11 +11,11 @@ public sealed class GoogleIdentityAuthenticationService(
     IGoogleAuthRepository googleAuthRepository,
     ITransactionManager transactionManager)
 {
-    public async Task<AuthUser> AuthenticateAsync(GoogleIdentity identity, CancellationToken cancellationToken)
+    public async Task<AuthUser> AuthenticateAsync(GoogleIdentity identity)
     {
         // La recherche, l'éventuelle mise à jour d'avatar et la création sont cohérentes dans une transaction.
         await using var transaction = await transactionManager.BeginAsync();
-        var existingUser = await googleAuthRepository.FindByGoogleProviderIdAsync(identity.ProviderUserId, cancellationToken);
+        var existingUser = await googleAuthRepository.FindByGoogleProviderIdAsync(identity.ProviderUserId);
         if (existingUser is not null)
         {
             if (!existingUser.IsActive)
@@ -25,14 +25,14 @@ public sealed class GoogleIdentityAuthenticationService(
 
             if (!string.IsNullOrWhiteSpace(identity.PictureUrl))
             {
-                await googleAuthRepository.UpdateGoogleAvatarAsync(existingUser.Id, identity.PictureUrl, cancellationToken);
+                await googleAuthRepository.UpdateGoogleAvatarAsync(existingUser.Id, identity.PictureUrl);
             }
 
             await transaction.CommitAsync();
             return existingUser;
         }
 
-        if (await googleAuthRepository.ExistsByEmailAsync(identity.Email, cancellationToken))
+        if (await googleAuthRepository.ExistsByEmailAsync(identity.Email))
         {
             throw AppException.Conflict(
                 "GOOGLE_EMAIL_ALREADY_REGISTERED",
@@ -40,7 +40,7 @@ public sealed class GoogleIdentityAuthenticationService(
         }
 
         // Création de l'utilisateur, de son provider Google et de son rôle USER : une seule transaction.
-        var user = await googleAuthRepository.CreateGoogleUserAsync(identity, cancellationToken);
+        var user = await googleAuthRepository.CreateGoogleUserAsync(identity);
         await transaction.CommitAsync();
         return user;
     }

@@ -11,15 +11,14 @@ namespace Tools.ApiCore.Modules.Mail.Api;
 public sealed class MailController(SendMailUseCase sendMailUseCase) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> Send(SendMailRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Send(SendMailRequest request)
     {
         var attachments = request.Attachments?
             .Select(file => new MailAttachment(file.FileName, file.ContentType, Decode(file.ContentBase64)))
             .ToArray();
 
         await sendMailUseCase.Execute(
-            new SendMailCommand(request.To, request.Subject, request.Text, request.Html, attachments),
-            cancellationToken);
+            new SendMailCommand(request.To, request.Subject, request.Text, request.Html, attachments));
 
         return NoContent();
     }

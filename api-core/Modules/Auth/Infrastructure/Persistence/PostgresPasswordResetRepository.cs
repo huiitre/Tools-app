@@ -12,7 +12,7 @@ public sealed class PostgresPasswordResetRepository(
     PostgresSession session,
     NpgsqlDataSource dataSource) : IPasswordResetRepository
 {
-    public async Task SaveAsync(long userId, string token, DateTime expiresAt, CancellationToken cancellationToken)
+    public async Task SaveAsync(long userId, string token, DateTime expiresAt)
     {
         const string sql = """
             INSERT INTO tools_core.user_password_reset (user_id, token, expires_at)
@@ -22,11 +22,10 @@ public sealed class PostgresPasswordResetRepository(
         await Connection().ExecuteAsync(new CommandDefinition(
             sql,
             new { UserId = userId, Token = token, ExpiresAt = expiresAt },
-            session.Transaction,
-            cancellationToken: cancellationToken));
+            session.Transaction));
     }
 
-    public async Task<long?> FindUserIdByValidTokenAsync(string token, DateTime now, CancellationToken cancellationToken)
+    public async Task<long?> FindUserIdByValidTokenAsync(string token, DateTime now)
     {
         const string sql = """
             SELECT user_id
@@ -37,35 +36,33 @@ public sealed class PostgresPasswordResetRepository(
         return await Connection().QuerySingleOrDefaultAsync<long?>(new CommandDefinition(
             sql,
             new { Token = token, Now = now },
-            session.Transaction,
-            cancellationToken: cancellationToken));
+            session.Transaction));
     }
 
-    public async Task DeleteByUserIdAsync(long userId, CancellationToken cancellationToken)
+    public async Task DeleteByUserIdAsync(long userId)
     {
         const string sql = "DELETE FROM tools_core.user_password_reset WHERE user_id = @UserId";
 
         await Connection().ExecuteAsync(new CommandDefinition(
             sql,
             new { UserId = userId },
-            session.Transaction,
-            cancellationToken: cancellationToken));
+            session.Transaction));
     }
 
-    public async Task<int> DeleteExpiredAsync(DateTime now, CancellationToken cancellationToken)
+    public async Task<int> DeleteExpiredAsync(DateTime now)
     {
         const string sql = "DELETE FROM tools_core.user_password_reset WHERE expires_at <= @Now";
 
         // Le nettoyage planifié tourne hors requête HTTP : il n'a pas de transaction ouverte.
         if (session.Connection is null)
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var connection = await dataSource.OpenConnectionAsync();
             return await connection.ExecuteAsync(new CommandDefinition(
-                sql, new { Now = now }, cancellationToken: cancellationToken));
+                sql, new { Now = now }));
         }
 
         return await Connection().ExecuteAsync(new CommandDefinition(
-            sql, new { Now = now }, session.Transaction, cancellationToken: cancellationToken));
+            sql, new { Now = now }, session.Transaction));
     }
 
     private NpgsqlConnection Connection() => session.Connection

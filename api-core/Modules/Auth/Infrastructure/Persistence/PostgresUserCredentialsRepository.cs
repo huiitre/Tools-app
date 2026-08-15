@@ -9,15 +9,15 @@ namespace Tools.ApiCore.Modules.Auth.Infrastructure.Persistence;
 // Adaptateur PostgreSQL/Dapper du port IUserCredentialsRepository.
 public sealed class PostgresUserCredentialsRepository(PostgresSession session) : IUserCredentialsRepository
 {
-    public async Task<bool> ExistsAsync(long userId, CancellationToken cancellationToken)
+    public async Task<bool> ExistsAsync(long userId)
     {
         const string sql = "SELECT EXISTS (SELECT 1 FROM tools_core.user_credentials WHERE user_id = @UserId)";
 
         return await Connection().ExecuteScalarAsync<bool>(new CommandDefinition(
-            sql, new { UserId = userId }, session.Transaction, cancellationToken: cancellationToken));
+            sql, new { UserId = userId }, session.Transaction));
     }
 
-    public async Task InsertAsync(long userId, string passwordHash, CancellationToken cancellationToken)
+    public async Task InsertAsync(long userId, string passwordHash)
     {
         const string sql = """
             INSERT INTO tools_core.user_credentials (user_id, password_hash)
@@ -27,11 +27,10 @@ public sealed class PostgresUserCredentialsRepository(PostgresSession session) :
         await Connection().ExecuteAsync(new CommandDefinition(
             sql,
             new { UserId = userId, PasswordHash = passwordHash },
-            session.Transaction,
-            cancellationToken: cancellationToken));
+            session.Transaction));
     }
 
-    public async Task<int> UpdatePasswordAsync(long userId, string passwordHash, CancellationToken cancellationToken)
+    public async Task<int> UpdatePasswordAsync(long userId, string passwordHash)
     {
         const string sql = """
             UPDATE tools_core.user_credentials
@@ -42,8 +41,7 @@ public sealed class PostgresUserCredentialsRepository(PostgresSession session) :
         return await Connection().ExecuteAsync(new CommandDefinition(
             sql,
             new { UserId = userId, PasswordHash = passwordHash },
-            session.Transaction,
-            cancellationToken: cancellationToken));
+            session.Transaction));
     }
 
     private NpgsqlConnection Connection() => session.Connection

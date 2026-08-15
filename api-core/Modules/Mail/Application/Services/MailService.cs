@@ -7,11 +7,10 @@ namespace Tools.ApiCore.Modules.Mail.Application.Services;
 public sealed class MailService(IMailSender mailSender)
 {
     public async Task Send(
-        SendMailCommand command,
-        CancellationToken cancellationToken)
+        SendMailCommand command)
     {
         Validate(command);
-        await mailSender.SendAsync(command, cancellationToken);
+        await mailSender.SendAsync(command);
     }
 
     private static void Validate(SendMailCommand command)

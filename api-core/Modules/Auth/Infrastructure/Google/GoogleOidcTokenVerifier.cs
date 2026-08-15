@@ -17,7 +17,7 @@ public sealed class GoogleOidcTokenVerifier(IConfiguration configuration) : IGoo
     private readonly IConfigurationManager<OpenIdConnectConfiguration> configurationManager =
         new ConfigurationManager<OpenIdConnectConfiguration>(MetadataAddress, new OpenIdConnectConfigurationRetriever());
 
-    public async Task<GoogleIdentity> VerifyAsync(string idToken, CancellationToken cancellationToken)
+    public async Task<GoogleIdentity> VerifyAsync(string idToken)
     {
         if (string.IsNullOrWhiteSpace(clientId))
         {
@@ -26,7 +26,8 @@ public sealed class GoogleOidcTokenVerifier(IConfiguration configuration) : IGoo
 
         try
         {
-            var oidcConfiguration = await configurationManager.GetConfigurationAsync(cancellationToken);
+            // L'API de la bibliothèque exige un jeton d'annulation : on lui passe l'absence de jeton.
+            var oidcConfiguration = await configurationManager.GetConfigurationAsync(CancellationToken.None);
             var tokenHandler = new JwtSecurityTokenHandler { MapInboundClaims = false };
             var principal = tokenHandler.ValidateToken(idToken, new TokenValidationParameters
             {

@@ -19,13 +19,13 @@ public abstract class SecuredUseCase<TCommand>(UseCaseAuthorizer authorizer)
 {
     protected abstract RoleCode RequiredRole { get; }
 
-    public Task Execute(TCommand command, CancellationToken cancellationToken)
+    public Task Execute(TCommand command)
     {
         var currentUser = authorizer.EnsureAtLeast(RequiredRole);
-        return Handle(command, currentUser, cancellationToken);
+        return Handle(command, currentUser);
     }
 
-    protected abstract Task Handle(TCommand command, CurrentUser currentUser, CancellationToken cancellationToken);
+    protected abstract Task Handle(TCommand command, CurrentUser currentUser);
 }
 
 // Variante pour les use cases qui retournent un résultat.
@@ -33,11 +33,11 @@ public abstract class SecuredUseCase<TCommand, TResult>(UseCaseAuthorizer author
 {
     protected abstract RoleCode RequiredRole { get; }
 
-    public Task<TResult> Execute(TCommand command, CancellationToken cancellationToken)
+    public Task<TResult> Execute(TCommand command)
     {
         var currentUser = authorizer.EnsureAtLeast(RequiredRole);
-        return Handle(command, currentUser, cancellationToken);
+        return Handle(command, currentUser);
     }
 
-    protected abstract Task<TResult> Handle(TCommand command, CurrentUser currentUser, CancellationToken cancellationToken);
+    protected abstract Task<TResult> Handle(TCommand command, CurrentUser currentUser);
 }

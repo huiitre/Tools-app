@@ -8,12 +8,11 @@ public sealed class AuthSessionService(IAuthRepository authRepository, ITokenSer
 {
     public async Task<AuthSession> Create(
         AuthUser user,
-        DateTimeOffset? refreshTokenExpiresAt,
-        CancellationToken cancellationToken)
+        DateTimeOffset? refreshTokenExpiresAt)
     {
         // Les droits sont relus en BDD pour être intégrés dans l'access token actuel.
-        var roles = await authRepository.FindGlobalRolesAsync(user.Id, cancellationToken);
-        var modules = await authRepository.FindModuleRolesAsync(user.Id, cancellationToken);
+        var roles = await authRepository.FindGlobalRolesAsync(user.Id);
+        var modules = await authRepository.FindModuleRolesAsync(user.Id);
 
         // Au refresh, la date d'expiration existante est fournie pour ne pas prolonger la session indéfiniment.
         var refreshToken = tokenService.CreateRefreshToken(user.Id, refreshTokenExpiresAt);

@@ -11,10 +11,10 @@ public sealed class LoginUseCase(
     IPasswordHasher passwordHasher,
     AuthSessionService authSessionService)
 {
-    public async Task<AuthSession> Execute(string email, string password, CancellationToken cancellationToken)
+    public async Task<AuthSession> Execute(string email, string password)
     {
         // Une seule requête récupère l'utilisateur PASSWORD et son hash.
-        var candidate = await authRepository.FindPasswordLoginAsync(email, cancellationToken);
+        var candidate = await authRepository.FindPasswordLoginAsync(email);
         var passwordMatches = false;
         if (candidate is not null)
         {
@@ -43,6 +43,6 @@ public sealed class LoginUseCase(
         }
 
         // Le service partagé lit les droits puis crée l'access et le refresh token.
-        return await authSessionService.Create(candidate.Value.User, null, cancellationToken);
+        return await authSessionService.Create(candidate.Value.User, null);
     }
 }

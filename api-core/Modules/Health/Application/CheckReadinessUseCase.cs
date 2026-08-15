@@ -13,10 +13,10 @@ public class CheckReadinessUseCase
         this.logger = logger;
     }
 
-    public async Task<bool> Execute(CancellationToken cancellationToken)
+    public async Task<bool> Execute()
     {
         logger.LogTrace("Début du use case de vérification de readiness.");
 
-        return await healthRepository.IsReadyAsync(cancellationToken);
+        return await healthRepository.IsReadyAsync();
     }
 }

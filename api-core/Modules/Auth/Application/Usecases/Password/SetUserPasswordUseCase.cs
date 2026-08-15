@@ -31,15 +31,14 @@ public sealed class SetUserPasswordUseCase(
 
     protected override async Task Handle(
         SetUserPasswordCommand command,
-        CurrentUser currentUser,
-        CancellationToken cancellationToken)
+        CurrentUser currentUser)
     {
         if (string.IsNullOrWhiteSpace(command.Password))
         {
             throw AppException.Validation("INVALID_PASSWORD", "Le mot de passe est obligatoire.");
         }
 
-        var user = await authRepository.FindByIdAsync(currentUser.UserId, cancellationToken)
+        var user = await authRepository.FindByIdAsync(currentUser.UserId)
             ?? throw AppException.NotFound("USER_NOT_FOUND", "Utilisateur introuvable.");
 
         var passwordHash = passwordHasher.Hash(command.Password);
@@ -47,19 +46,19 @@ public sealed class SetUserPasswordUseCase(
         // Credentials et provider doivent apparaître ensemble ou pas du tout.
         await using var transaction = await transactionManager.BeginAsync();
 
-        if (await userCredentialsRepository.ExistsAsync(user.Id, cancellationToken))
+        if (await userCredentialsRepository.ExistsAsync(user.Id))
         {
-            await userCredentialsRepository.UpdatePasswordAsync(user.Id, passwordHash, cancellationToken);
+            await userCredentialsRepository.UpdatePasswordAsync(user.Id, passwordHash);
         }
         else
         {
-            await userCredentialsRepository.InsertAsync(user.Id, passwordHash, cancellationToken);
+            await userCredentialsRepository.InsertAsync(user.Id, passwordHash);
 
             // provider_user_id vaut l'email, même convention qu'à l'inscription.
-            if (!await userAuthProviderRepository.ExistsAsync(user.Id, "PASSWORD", cancellationToken))
+            if (!await userAuthProviderRepository.ExistsAsync(user.Id, "PASSWORD"))
             {
                 await userAuthProviderRepository.InsertAsync(
-                    user.Id, "PASSWORD", user.Email, user.Email, cancellationToken);
+                    user.Id, "PASSWORD", user.Email, user.Email);
 
                 logger.LogInformation("Provider PASSWORD créé userId={UserId}", user.Id);
             }

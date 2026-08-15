@@ -1,14 +1,10 @@
-using Tools.ApiCore.Modules.Users.Domain;
+using Tools.ApiCore.Modules.Users.Application.Dto;
 
 namespace Tools.ApiCore.Modules.Users.Application;
 
 public interface IUserRepository
 {
-    Task<IReadOnlyList<User>> GetAllAsync();
-
-    Task<IReadOnlyList<User>> GetAllNative();
-
-    Task<User> CreateAsync(User user);
-
-    Task<User> CreateNative(User user);
+    // Profil complet d'un utilisateur : identité, rôles globaux, modules et rôles par module.
+    // Retourne null si l'identifiant ne correspond à aucun compte.
+    Task<UserProfileDto?> FindProfileAsync(long userId);
 }

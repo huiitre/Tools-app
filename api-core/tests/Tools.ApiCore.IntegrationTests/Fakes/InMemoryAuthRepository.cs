@@ -5,18 +5,18 @@ namespace Tools.ApiCore.IntegrationTests.Fakes;
 
 public sealed class InMemoryAuthRepository(InMemoryAuthStore store) : IAuthRepository
 {
-    public Task<(AuthUser User, string PasswordHash)?> FindPasswordLoginAsync(string email, CancellationToken cancellationToken) =>
+    public Task<(AuthUser User, string PasswordHash)?> FindPasswordLoginAsync(string email) =>
         Task.FromResult<(AuthUser, string)?>(null);
 
-    public Task<AuthUser?> FindByIdAsync(long userId, CancellationToken cancellationToken) =>
+    public Task<AuthUser?> FindByIdAsync(long userId) =>
         Task.FromResult(store.Users.TryGetValue(userId, out var user) ? user : null);
 
-    public Task<AuthUser?> FindByEmailAsync(string email, CancellationToken cancellationToken) =>
+    public Task<AuthUser?> FindByEmailAsync(string email) =>
         Task.FromResult(store.Users.Values.FirstOrDefault(user => user.Email == email));
 
-    public Task<IReadOnlyList<string>> FindGlobalRolesAsync(long userId, CancellationToken cancellationToken) =>
+    public Task<IReadOnlyList<string>> FindGlobalRolesAsync(long userId) =>
         Task.FromResult<IReadOnlyList<string>>([]);
 
-    public Task<IReadOnlyDictionary<string, string>> FindModuleRolesAsync(long userId, CancellationToken cancellationToken) =>
+    public Task<IReadOnlyDictionary<string, string>> FindModuleRolesAsync(long userId) =>
         Task.FromResult<IReadOnlyDictionary<string, string>>(new Dictionary<string, string>());
 }

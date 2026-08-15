@@ -11,6 +11,7 @@ public sealed class ApiExceptionHandler(
     ApiProblemDetailsFactory problemDetailsFactory,
     ILogger<ApiExceptionHandler> logger) : IExceptionHandler
 {
+    // La signature est imposée par IExceptionHandler : le token ne peut pas être retiré.
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
@@ -82,8 +83,7 @@ public sealed class ApiExceptionHandler(
         await JsonSerializer.SerializeAsync(
             httpContext.Response.Body,
             problem,
-            new JsonSerializerOptions(JsonSerializerDefaults.Web),
-            cancellationToken);
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
         return true;
     }

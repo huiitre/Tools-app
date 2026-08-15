@@ -8,7 +8,7 @@ public sealed class RecordingMailSender : IMailSender
 {
     public SendMailCommand? LastCommand { get; private set; }
 
-    public Task SendAsync(SendMailCommand command, CancellationToken cancellationToken)
+    public Task SendAsync(SendMailCommand command)
     {
         LastCommand = command;
         return Task.CompletedTask;

@@ -231,6 +231,40 @@ par le login, le renouvellement, la session Electron et les flux de mot de passe
 sous l'un d'eux laisserait croire à une appartenance qui n'existe pas. Le rangement doit
 décrire les dépendances réelles, pas les suggérer.
 
+### Pas de CancellationToken dans les signatures
+
+Le projet **n'utilise pas** l'annulation coopérative. Aucun port, use case, service applicatif
+ou repository ne prend de `CancellationToken`.
+
+La convention .NET veut qu'on propage ce jeton de bout en bout pour qu'une requête abandonnée
+par le client libère immédiatement ses ressources. C'est utile sur des I/O longues et à fort
+trafic ; ici les requêtes durent quelques millisecondes pour une poignée d'utilisateurs. Le
+bénéfice réel est nul, le coût — un paramètre supplémentaire sur chaque méthode de chaque
+couche, définitivement — ne l'est pas.
+
+Trois exceptions subsistent, toutes imposées de l'extérieur :
+
+| Emplacement | Raison |
+|---|---|
+| `ApiExceptionHandler.TryHandleAsync` | Signature de l'interface `IExceptionHandler` |
+| `PasswordResetCleanupService.ExecuteAsync` | Signature de `BackgroundService` |
+| `GoogleOidcTokenVerifier` | `GetConfigurationAsync` n'a pas de surcharge sans jeton |
+
+Le cas du `BackgroundService` est le seul où le jeton **sert** : `WaitForNextTickAsync`
+l'utilise pour interrompre l'attente à l'arrêt de l'application. Sans lui, couper le
+conteneur attendrait le prochain tick, soit jusqu'à trente minutes.
+
+Ce qui a été écarté au passage : exposer le jeton par un contexte ambiant
+(`AsyncLocal`, ou un port lisant `HttpContext.RequestAborted`) pour alléger les signatures.
+Cela remplace du bruit visible par de la magie invisible, empêche toute composition
+(pas de délai local via un jeton lié), et renvoie silencieusement `CancellationToken.None`
+hors requête HTTP — c'est-à-dire précisément dans les tâches de fond, là où l'annulation
+compte le plus.
+
+Rien n'a été désinstallé : `CancellationToken` appartient à `System.Threading`, donc au
+runtime. Le réintroduire un jour reste possible ; le faire à moitié ne l'est pas — soit les
+signatures le portent partout, soit nulle part.
+
 ### Nommage des exceptions
 
 L'exception applicative s'appelle `AppException`. Elle s'est d'abord appelée

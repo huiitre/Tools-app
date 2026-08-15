@@ -10,7 +10,7 @@ namespace Tools.ApiCore.Modules.Auth.Infrastructure.Persistence;
 // Adaptateur PostgreSQL/Dapper des opérations atomiques de rattachement d'une identité Google.
 public sealed class PostgresGoogleAuthRepository(PostgresSession session) : IGoogleAuthRepository
 {
-    public async Task<AuthUser?> FindByGoogleProviderIdAsync(string providerUserId, CancellationToken cancellationToken)
+    public async Task<AuthUser?> FindByGoogleProviderIdAsync(string providerUserId)
     {
         const string sql = """
             SELECT u.id AS Id, u.email AS Email, u.is_active AS IsActive, u.user_type AS UserType
@@ -19,17 +19,17 @@ public sealed class PostgresGoogleAuthRepository(PostgresSession session) : IGoo
             WHERE provider.provider = 'GOOGLE' AND provider.provider_user_id = @ProviderUserId
             """;
         return await Connection().QuerySingleOrDefaultAsync<AuthUser>(
-            new CommandDefinition(sql, new { ProviderUserId = providerUserId }, session.Transaction, cancellationToken: cancellationToken));
+            new CommandDefinition(sql, new { ProviderUserId = providerUserId }, session.Transaction));
     }
 
-    public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken)
+    public async Task<bool> ExistsByEmailAsync(string email)
     {
         const string sql = "SELECT EXISTS (SELECT 1 FROM tools_core.users WHERE email = @Email)";
         return await Connection().ExecuteScalarAsync<bool>(
-            new CommandDefinition(sql, new { Email = email }, session.Transaction, cancellationToken: cancellationToken));
+            new CommandDefinition(sql, new { Email = email }, session.Transaction));
     }
 
-    public async Task<AuthUser> CreateGoogleUserAsync(GoogleIdentity identity, CancellationToken cancellationToken)
+    public async Task<AuthUser> CreateGoogleUserAsync(GoogleIdentity identity)
     {
         const string userSql = """
             INSERT INTO tools_core.users (name, email, is_active, user_type, avatar_source)
@@ -38,7 +38,7 @@ public sealed class PostgresGoogleAuthRepository(PostgresSession session) : IGoo
             """;
         var connection = Connection();
         var user = await connection.QuerySingleAsync<AuthUser>(
-            new CommandDefinition(userSql, identity, session.Transaction, cancellationToken: cancellationToken));
+            new CommandDefinition(userSql, identity, session.Transaction));
 
         const string providerSql = """
             INSERT INTO tools_core.user_auth_provider (user_id, provider, provider_user_id, provider_email, provider_avatar_url)
@@ -47,15 +47,14 @@ public sealed class PostgresGoogleAuthRepository(PostgresSession session) : IGoo
         await connection.ExecuteAsync(new CommandDefinition(
             providerSql,
             new { UserId = user.Id, identity.ProviderUserId, identity.Email, identity.PictureUrl },
-            session.Transaction,
-            cancellationToken: cancellationToken));
+            session.Transaction));
 
         const string roleSql = """
             INSERT INTO tools_core.user_role (user_id, role_id)
             SELECT @UserId, id FROM tools_core.role WHERE code = 'USER'
             """;
         var insertedRoles = await connection.ExecuteAsync(new CommandDefinition(
-            roleSql, new { UserId = user.Id }, session.Transaction, cancellationToken: cancellationToken));
+            roleSql, new { UserId = user.Id }, session.Transaction));
         if (insertedRoles != 1)
         {
             throw new InvalidOperationException("Le rôle USER est introuvable.");
@@ -64,7 +63,7 @@ public sealed class PostgresGoogleAuthRepository(PostgresSession session) : IGoo
         return user;
     }
 
-    public async Task UpdateGoogleAvatarAsync(long userId, string pictureUrl, CancellationToken cancellationToken)
+    public async Task UpdateGoogleAvatarAsync(long userId, string pictureUrl)
     {
         const string sql = """
             UPDATE tools_core.user_auth_provider
@@ -72,7 +71,7 @@ public sealed class PostgresGoogleAuthRepository(PostgresSession session) : IGoo
             WHERE user_id = @UserId AND provider = 'GOOGLE'
             """;
         await Connection().ExecuteAsync(new CommandDefinition(
-            sql, new { UserId = userId, PictureUrl = pictureUrl }, session.Transaction, cancellationToken: cancellationToken));
+            sql, new { UserId = userId, PictureUrl = pictureUrl }, session.Transaction));
     }
 
     private Npgsql.NpgsqlConnection Connection() => session.Connection

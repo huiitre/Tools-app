@@ -4,5 +4,5 @@ namespace Tools.ApiCore.Modules.Auth.Application.Ports.Google;
 public interface IGoogleOAuthClient
 {
     string BuildAuthorizationUrl(string state);
-    Task<string> ExchangeCodeForIdTokenAsync(string code, CancellationToken cancellationToken);
+    Task<string> ExchangeCodeForIdTokenAsync(string code);
 }

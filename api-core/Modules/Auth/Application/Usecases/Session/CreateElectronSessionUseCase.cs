@@ -9,13 +9,13 @@ public sealed class CreateElectronSessionUseCase(
     ITokenService tokenService,
     IAuthRepository authRepository)
 {
-    public async Task<IssuedToken> Execute(string accessToken, CancellationToken cancellationToken)
+    public async Task<IssuedToken> Execute(string accessToken)
     {
         // L'access token est validé avant toute création de session.
         var accessTokenData = tokenService.ReadAccessToken(accessToken);
 
         // Le compte est relu pour ne jamais créer une session pour un utilisateur désactivé.
-        var user = await authRepository.FindByIdAsync(accessTokenData.UserId, cancellationToken);
+        var user = await authRepository.FindByIdAsync(accessTokenData.UserId);
         if (user is null || !user.IsActive)
         {
             throw AppException.Unauthorized("INVALID_ACCESS_TOKEN", "Session invalide ou expirée.");

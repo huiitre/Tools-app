@@ -9,7 +9,7 @@ namespace Tools.ApiCore.Modules.Auth.Infrastructure.Persistence;
 // Adaptateur PostgreSQL/Dapper du port IUserAuthProviderRepository.
 public sealed class PostgresUserAuthProviderRepository(PostgresSession session) : IUserAuthProviderRepository
 {
-    public async Task<bool> ExistsAsync(long userId, string provider, CancellationToken cancellationToken)
+    public async Task<bool> ExistsAsync(long userId, string provider)
     {
         const string sql = """
             SELECT EXISTS (
@@ -21,16 +21,14 @@ public sealed class PostgresUserAuthProviderRepository(PostgresSession session) 
         return await Connection().ExecuteScalarAsync<bool>(new CommandDefinition(
             sql,
             new { UserId = userId, Provider = provider },
-            session.Transaction,
-            cancellationToken: cancellationToken));
+            session.Transaction));
     }
 
     public async Task InsertAsync(
         long userId,
         string provider,
         string providerUserId,
-        string? providerEmail,
-        CancellationToken cancellationToken)
+        string? providerEmail)
     {
         const string sql = """
             INSERT INTO tools_core.user_auth_provider (user_id, provider, provider_user_id, provider_email)
@@ -40,8 +38,7 @@ public sealed class PostgresUserAuthProviderRepository(PostgresSession session) 
         await Connection().ExecuteAsync(new CommandDefinition(
             sql,
             new { UserId = userId, Provider = provider, ProviderUserId = providerUserId, ProviderEmail = providerEmail },
-            session.Transaction,
-            cancellationToken: cancellationToken));
+            session.Transaction));
     }
 
     private NpgsqlConnection Connection() => session.Connection

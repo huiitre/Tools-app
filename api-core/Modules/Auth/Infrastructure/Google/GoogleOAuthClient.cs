@@ -34,7 +34,7 @@ public sealed class GoogleOAuthClient(
             });
     }
 
-    public async Task<string> ExchangeCodeForIdTokenAsync(string code, CancellationToken cancellationToken)
+    public async Task<string> ExchangeCodeForIdTokenAsync(string code)
     {
         EnsureConfigured();
         using var content = new FormUrlEncodedContent(new Dictionary<string, string>
@@ -46,13 +46,13 @@ public sealed class GoogleOAuthClient(
             ["grant_type"] = "authorization_code"
         });
 
-        using var response = await httpClient.PostAsync("token", content, cancellationToken);
+        using var response = await httpClient.PostAsync("token", content);
         if (!response.IsSuccessStatusCode)
         {
             throw AppException.Unauthorized("GOOGLE_AUTHENTICATION_FAILED", "Authentification Google invalide.");
         }
 
-        var tokenResponse = await response.Content.ReadFromJsonAsync<GoogleTokenResponse>(cancellationToken);
+        var tokenResponse = await response.Content.ReadFromJsonAsync<GoogleTokenResponse>();
         return !string.IsNullOrWhiteSpace(tokenResponse?.IdToken)
             ? tokenResponse.IdToken
             : throw AppException.Unauthorized("GOOGLE_AUTHENTICATION_FAILED", "Authentification Google invalide.");

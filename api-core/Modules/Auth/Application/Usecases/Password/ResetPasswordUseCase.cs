@@ -14,7 +14,7 @@ public sealed class ResetPasswordUseCase(
     ITransactionManager transactionManager,
     ILogger<ResetPasswordUseCase> logger)
 {
-    public async Task Execute(string token, string newPassword, CancellationToken cancellationToken)
+    public async Task Execute(string token, string newPassword)
     {
         if (string.IsNullOrWhiteSpace(newPassword))
         {
@@ -25,7 +25,7 @@ public sealed class ResetPasswordUseCase(
         // forment une seule opération : un échec ne doit pas consommer le jeton.
         await using var transaction = await transactionManager.BeginAsync();
 
-        var userId = await passwordResetRepository.FindUserIdByValidTokenAsync(token, DateTime.UtcNow, cancellationToken)
+        var userId = await passwordResetRepository.FindUserIdByValidTokenAsync(token, DateTime.UtcNow)
             ?? throw AppException.Validation(
                 "INVALID_PASSWORD_RESET_TOKEN",
                 "Lien de réinitialisation du mot de passe invalide ou expiré.");
@@ -34,12 +34,12 @@ public sealed class ResetPasswordUseCase(
 
         // Un compte disposant du provider PASSWORD sans ligne de credentials est anormal,
         // mais le mot de passe doit être écrit plutôt que perdu silencieusement.
-        if (await userCredentialsRepository.UpdatePasswordAsync(userId, passwordHash, cancellationToken) == 0)
+        if (await userCredentialsRepository.UpdatePasswordAsync(userId, passwordHash) == 0)
         {
-            await userCredentialsRepository.InsertAsync(userId, passwordHash, cancellationToken);
+            await userCredentialsRepository.InsertAsync(userId, passwordHash);
         }
 
-        await passwordResetRepository.DeleteByUserIdAsync(userId, cancellationToken);
+        await passwordResetRepository.DeleteByUserIdAsync(userId);
         await transaction.CommitAsync();
 
         logger.LogInformation("Mot de passe réinitialisé userId={UserId}", userId);
