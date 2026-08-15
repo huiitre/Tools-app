@@ -19,6 +19,7 @@
     - Electron pour les modules Sniffer/Autofocus.
 
 ## Common Tasks
+- **Route API (règle immuable)** : toute route **ajoutée, modifiée ou supprimée**, quelle que soit l'API (Java `api/`, C# `api-core/`, Node), doit être répercutée dans la collection Bruno (`bruno/`) dans le même commit. C'est le seul moyen de tester les routes à la main : une route livrée sans son entrée Bruno n'est pas testable, donc pas terminée.
 - **Migration BDD** : Ajouter un script dans `database/sql/V2.x.y__nom.sql` et l'exécuter manuellement sur Postgres.
 - **Nouvelle Feature** : Créer le Use Case dans l'API, le repository (Port/Adapter), puis le service/composant dans le Web.
 - **Update** : Les releases sont gérées via `huiitre/Tools-app` sur GitHub.

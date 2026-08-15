@@ -1,0 +1,23 @@
+info:
+  name: 7. Revoke access
+  type: http
+  seq: 7
+
+http:
+  method: DELETE
+  url: "{{apiCoreUrl}}/modules/1/users/1"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+docs: |-
+  Retire l'accès d'un utilisateur à un module.
+
+  Réponses : 204, 404 USER_MODULE_ROLE_NOT_FOUND si l'accès n'existe pas — le signe que
+  l'écran affiche un état périmé.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

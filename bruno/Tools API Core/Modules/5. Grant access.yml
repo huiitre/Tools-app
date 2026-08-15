@@ -1,0 +1,26 @@
+info:
+  name: 5. Grant access
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{apiCoreUrl}}/modules/1/users/1"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+docs: |-
+  Ouvre l'accès d'un utilisateur à un module — `/modules/{moduleId}/users/{userId}`.
+
+  L'accès est accordé en **READ_ONLY** : entrer dans un module ne confère aucun pouvoir. Le
+  rôle se change ensuite avec `6. Change member role`.
+
+  Réponses : 201, 404 MODULE_NOT_FOUND ou USER_NOT_FOUND,
+  409 USER_ALREADY_HAS_ACCESS_TO_MODULE.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

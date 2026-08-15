@@ -1,0 +1,24 @@
+info:
+  name: List roles
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiCoreUrl}}/roles"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+docs: |-
+  Catalogue des rôles attribuables, servi par le module Security.
+
+  Rôle minimum : ADMIN. L'API Java annote son contrôleur `@RequiredRole(TECH)`, mais cette
+  annotation n'est lue par aucun aspect : c'est le use case — ADMIN — qui décide, des deux
+  côtés.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

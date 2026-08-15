@@ -1,0 +1,31 @@
+info:
+  name: 2. Create module
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiCoreUrl}}/modules"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+  body:
+    type: json
+    data: |-
+      {
+        "code": "module-test",
+        "name": "Module de test",
+        "description": "Créé depuis Bruno"
+      }
+
+docs: |-
+  Crée un module. Il naît **toujours inactif** : l'activation se fait ensuite via
+  `3. Update module` avec `active: true`.
+
+  Réponses : 201 avec l'identifiant créé, 409 MODULE_CODE_ALREADY_EXISTS si le code est pris.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

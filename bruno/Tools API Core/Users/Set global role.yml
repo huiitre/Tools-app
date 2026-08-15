@@ -1,0 +1,34 @@
+info:
+  name: Set global role
+  type: http
+  seq: 3
+
+http:
+  method: PUT
+  url: "{{apiCoreUrl}}/users/1/role"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+  body:
+    type: json
+    data: |-
+      {
+        "roleId": 2
+      }
+
+docs: |-
+  Fixe le rôle global d'un utilisateur. Le rôle **remplace** le précédent, il ne s'y ajoute pas.
+
+  Rôle minimum : ADMIN.
+
+  Identifiants du référentiel : 1 READ_ONLY, 2 USER, 3 MODERATOR, 4 ADMIN, 5 TECH, 6 OWNER.
+  Ces identifiants suivent l'ordre d'insertion et **ne reflètent pas la hiérarchie**
+  (TECH est sous ADMIN malgré un identifiant plus grand).
+
+  Réponses : 204 si le rôle est posé, 404 USER_NOT_FOUND ou ROLE_NOT_FOUND sinon.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
