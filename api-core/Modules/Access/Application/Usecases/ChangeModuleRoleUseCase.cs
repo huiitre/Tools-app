@@ -16,7 +16,8 @@ public sealed class ChangeModuleRoleUseCase(
     UseCaseAuthorizer authorizer,
     IModuleMembershipRepository membershipRepository,
     IRoleRepository roleRepository,
-    ITransactionManager transactionManager
+    ITransactionManager transactionManager,
+    ILogger<ChangeModuleRoleUseCase> logger
 ) : SecuredUseCase<ChangeModuleRoleCommand>(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
@@ -40,5 +41,12 @@ public sealed class ChangeModuleRoleUseCase(
         await using var transaction = await transactionManager.BeginAsync();
         await membershipRepository.ChangeRoleAsync(command.ModuleId, command.UserId, command.RoleId);
         await transaction.CommitAsync();
+
+        logger.LogInformation(
+            "Rôle module modifié par userId={ActorId} : moduleId={ModuleId} cible={TargetUserId} roleId={RoleId}",
+            currentUser.UserId,
+            command.ModuleId,
+            command.UserId,
+            command.RoleId);
     }
 }

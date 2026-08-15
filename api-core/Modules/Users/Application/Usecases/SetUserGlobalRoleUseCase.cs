@@ -16,7 +16,8 @@ public sealed class SetUserGlobalRoleUseCase(
     UseCaseAuthorizer authorizer,
     IUserRepository userRepository,
     IRoleRepository roleRepository,
-    ITransactionManager transactionManager
+    ITransactionManager transactionManager,
+    ILogger<SetUserGlobalRoleUseCase> logger
 ) : SecuredUseCase<SetUserGlobalRoleCommand>(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
@@ -40,5 +41,14 @@ public sealed class SetUserGlobalRoleUseCase(
         await using var transaction = await transactionManager.BeginAsync();
         await userRepository.ReplaceGlobalRoleAsync(command.UserId, command.RoleId);
         await transaction.CommitAsync();
+
+        // Journalisé après le commit : une trace ne doit jamais affirmer un changement que la
+        // transaction aurait annulé. L'acteur est tracé autant que la cible — c'est ce qui
+        // permet de répondre à « qui a donné ce rôle ».
+        logger.LogInformation(
+            "Rôle global modifié par userId={ActorId} : cible={TargetUserId} roleId={RoleId}",
+            currentUser.UserId,
+            command.UserId,
+            command.RoleId);
     }
 }

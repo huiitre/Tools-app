@@ -13,7 +13,8 @@ namespace Tools.ApiCore.Modules.Access.Application.Usecases;
 // activer est un second geste, une fois le module configuré et ses membres désignés.
 public sealed class CreateModuleUseCase(
     UseCaseAuthorizer authorizer,
-    IModuleRepository moduleRepository
+    IModuleRepository moduleRepository,
+    ILogger<CreateModuleUseCase> logger
 ) : SecuredUseCase<CreateModuleCommand, long>(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
@@ -30,6 +31,14 @@ public sealed class CreateModuleUseCase(
             throw AppException.Conflict("MODULE_CODE_ALREADY_EXISTS", "Ce code de module est déjà utilisé.");
         }
 
-        return await moduleRepository.CreateAsync(code, name, command.Description?.Trim());
+        var moduleId = await moduleRepository.CreateAsync(code, name, command.Description?.Trim());
+
+        logger.LogInformation(
+            "Module créé par userId={ActorId} : moduleId={ModuleId} code={Code}",
+            currentUser.UserId,
+            moduleId,
+            code);
+
+        return moduleId;
     }
 }

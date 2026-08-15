@@ -10,7 +10,8 @@ namespace Tools.ApiCore.Modules.Access.Application.Usecases;
 // Cas d'usage administrateur : modifier un module fonctionnel, activation comprise.
 public sealed class UpdateModuleUseCase(
     UseCaseAuthorizer authorizer,
-    IModuleRepository moduleRepository
+    IModuleRepository moduleRepository,
+    ILogger<UpdateModuleUseCase> logger
 ) : SecuredUseCase<UpdateModuleCommand>(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
@@ -36,6 +37,15 @@ public sealed class UpdateModuleUseCase(
             code,
             command.Name.Trim(),
             command.Description?.Trim(),
+            command.Active);
+
+        // L'activation est la modification qui a un effet visible pour les utilisateurs :
+        // elle mérite d'apparaître explicitement dans la trace.
+        logger.LogInformation(
+            "Module modifié par userId={ActorId} : moduleId={ModuleId} code={Code} actif={Active}",
+            currentUser.UserId,
+            command.ModuleId,
+            code,
             command.Active);
     }
 }

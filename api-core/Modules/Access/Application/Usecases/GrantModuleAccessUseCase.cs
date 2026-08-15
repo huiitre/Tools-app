@@ -19,7 +19,8 @@ public sealed class GrantModuleAccessUseCase(
     IModuleMembershipRepository membershipRepository,
     IUserRepository userRepository,
     IRoleRepository roleRepository,
-    ITransactionManager transactionManager
+    ITransactionManager transactionManager,
+    ILogger<GrantModuleAccessUseCase> logger
 ) : SecuredUseCase<GrantModuleAccessCommand>(authorizer)
 {
     private const string DefaultRoleCode = "READ_ONLY";
@@ -53,5 +54,12 @@ public sealed class GrantModuleAccessUseCase(
         await using var transaction = await transactionManager.BeginAsync();
         await membershipRepository.GrantAsync(command.ModuleId, command.UserId, defaultRoleId);
         await transaction.CommitAsync();
+
+        logger.LogInformation(
+            "Accès module accordé par userId={ActorId} : moduleId={ModuleId} cible={TargetUserId} rôle={RoleCode}",
+            currentUser.UserId,
+            command.ModuleId,
+            command.UserId,
+            DefaultRoleCode);
     }
 }

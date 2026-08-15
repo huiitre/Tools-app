@@ -12,7 +12,8 @@ namespace Tools.ApiCore.Modules.Access.Application.Usecases;
 public sealed class RevokeModuleAccessUseCase(
     UseCaseAuthorizer authorizer,
     IModuleMembershipRepository membershipRepository,
-    ITransactionManager transactionManager
+    ITransactionManager transactionManager,
+    ILogger<RevokeModuleAccessUseCase> logger
 ) : SecuredUseCase<RevokeModuleAccessCommand>(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
@@ -31,5 +32,11 @@ public sealed class RevokeModuleAccessUseCase(
         await using var transaction = await transactionManager.BeginAsync();
         await membershipRepository.RevokeAsync(command.ModuleId, command.UserId);
         await transaction.CommitAsync();
+
+        logger.LogInformation(
+            "Accès module révoqué par userId={ActorId} : moduleId={ModuleId} cible={TargetUserId}",
+            currentUser.UserId,
+            command.ModuleId,
+            command.UserId);
     }
 }

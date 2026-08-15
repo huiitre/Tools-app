@@ -763,6 +763,35 @@ La conséquence est à connaître pour la suite : un futur bouton d'activation q
 la raison pour laquelle `web/AGENTS.md` a été corrigé — il décrivait l'activation comme un envoi
 partiel.
 
+### Journalisation : une ligne par requête, une trace par changement de droit
+
+Deux mécanismes distincts, ajoutés ensemble parce qu'aucune des routes d'administration
+n'écrivait quoi que ce soit dans les logs — les premiers appels en QA passaient sans laisser la
+moindre trace.
+
+**`UseSerilogRequestLogging()`** émet une ligne par requête HTTP avec méthode, chemin, statut et
+durée. Il est placé juste après `RequestIdMiddleware`, pour que l'identifiant de corrélation
+soit déjà posé et pour englober ce qui échouerait plus loin dans le pipeline.
+
+Le niveau est calculé par requête : `Error` sur une exception ou un 5xx, **`Verbose` sur
+`/health*` et `/version`**, `Information` pour le reste. Sans cette exception, les sondes
+interrogées toutes les trente secondes par le healthcheck et Watchtower produiraient à elles
+seules des milliers de lignes par jour — le dépôt garde d'ailleurs le souvenir d'un incident où
+elles avaient rempli les logs.
+
+**Les six écritures d'administration tracent leur acteur** en `Information` : attribution d'un
+rôle global, création et modification d'un module, ouverture, changement et révocation d'un
+accès. Le message porte toujours l'identifiant de celui qui agit **et** celui de la cible :
+
+```text
+Rôle global modifié par userId=3 : cible=42 roleId=4
+Accès module accordé par userId=3 : moduleId=1 cible=42 rôle=READ_ONLY
+```
+
+Ces lignes sont écrites **après le commit**, jamais avant : une trace ne doit pas affirmer un
+changement que la transaction aurait annulé. Les lectures restent muettes — les journaliser à
+chaque affichage du panel noierait ce qui compte.
+
 ### Un bug d'affichage antérieur, révélé au passage
 
 `POST /modules` et `PUT /modules/{id}` sont typés `Promise<AdminModule>` côté frontend, mais
