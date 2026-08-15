@@ -611,9 +611,9 @@ Ordre recommandé :
 [x] profil utilisateur (/users/me)
 [x] migration frontend de l'authentification
 [x] administration sur le Core (/users, /roles, /modules, /admin/stats) — côté API
-[ ] bascule du module Admin du frontend   ← prochaine étape
+[x] bascule du module Admin du frontend
 [ ] rôles et droits de module dans les claims
-[ ] SignalR / realtime
+[ ] SignalR / realtime   ← dernier morceau du Core encore servi par Java
 ```
 
 La validation locale des JWT par Java n'a pas lieu d'être pour l'instant : les deux APIs
@@ -746,6 +746,35 @@ par identifiant intervertirait ces deux rôles.
 
 La migration rendant l'unicité explicite reste à faire ; elle est volontairement séparée de
 cette bascule.
+
+### `PUT /modules/{id}` est un vrai remplacement
+
+L'API Java expose un PATCH déguisé en PUT : `Module.update()` teste chaque champ et ignore ceux
+qui valent `null`, si bien qu'un `{ "active": true }` seul ne touche que l'activation. Le Core
+retient la sémantique HTTP : **le corps décrit le module dans son intégralité**, `code` et
+`name` sont obligatoires, et un champ absent est écrasé.
+
+Le comportement observable ne change pas pour autant. Le seul appelant côté frontend est
+`ModuleEditModal.vue`, qui construit son formulaire par `{ ...props.module }` : il envoie
+toujours l'objet complet. Aucun appel partiel n'existe dans le code.
+
+La conséquence est à connaître pour la suite : un futur bouton d'activation qui n'enverrait que
+`active` fonctionnerait sur Java et serait refusé par le Core, avec `VALIDATION_FAILED`. C'est
+la raison pour laquelle `web/AGENTS.md` a été corrigé — il décrivait l'activation comme un envoi
+partiel.
+
+### Un bug d'affichage antérieur, révélé au passage
+
+`POST /modules` et `PUT /modules/{id}` sont typés `Promise<AdminModule>` côté frontend, mais
+l'API Java ne renvoie **aucun corps** (`void`, 201 et 204). `createModule` rend donc `""`, et
+`AdminModules.vue` fait `store.addModuleLocally("")` : une entrée vide s'ajoute à la liste
+jusqu'au prochain chargement. `updateModuleLocally` ne trouve jamais son index et n'actualise
+rien.
+
+Le Core reproduit le 204 sur le PUT, et renvoie `{ id }` sur le POST — l'entrée fantôme devient
+donc `{ id: 5 }`, toujours sans nom. Le défaut est antérieur à la bascule et n'a pas été
+corrigé avec elle : le réparer suppose soit de renvoyer le module complet à la création, soit
+de recharger la liste côté frontend. À trancher séparément.
 
 ### Ce qui n'a pas été porté
 

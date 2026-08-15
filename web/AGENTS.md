@@ -111,11 +111,12 @@ Deux APIs coexistent, et la frontière est **la capacité, pas la technologie** 
 
 | Client | Sert | Contenu |
 |---|---|---|
-| `clientCore` | API Core | identité, profil, et à terme notifications / realtime |
-| `clientV3` (et v1/v2/v3Dofus) | API Java | métier : Dofus, Palworld, Riot, Admin |
+| `clientCore` | API Core | identité, profil, administration, et à terme notifications / realtime |
+| `clientV3` (et v1/v2/v3Dofus) | API Java | métier : Dofus, Palworld, Riot |
 
-Tout `auth.fetch.ts` passe par `clientCore`. Aucune vue, aucun store n'a bougé : ils ne
-connaissent que les fonctions de ce fichier.
+`auth.fetch.ts` et les trois `fetch` du module Admin (`adminUsers`, `adminModules`,
+`adminStats`) passent par `clientCore`. Aucune vue, aucun store n'a bougé : ils ne connaissent
+que les fonctions de ces fichiers.
 
 **Le front ignore ce qui sert le Core.** En QA et en production, les deux APIs sont derrière la
 même origine et le reverse proxy route par chemin (`/api/v3` → Java, `/api/core` → Core, qui
@@ -134,9 +135,8 @@ VITE_TOOLS_CORE_BASE_URL=http://localhost:5090
 Variable absente → repli automatique sur `${VITE_TOOLS_API_BASE_URL}/api/core`, le cas de QA et
 de production. Les workflows CI n'ont donc rien à passer.
 
-Ce qui **reste sur Java** faute d'équivalent Core : le module Admin (`/users`, `/roles`,
-`/modules`) et le realtime des notifications (STOMP). Retirer le module core de l'API Java
-suppose de porter ces endpoints d'abord.
+Ce qui **reste sur Java** faute d'équivalent Core : le realtime des notifications (STOMP), en
+attente de la tranche SignalR. C'est le dernier morceau du Core encore servi par Java.
 
 ### `refreshSession()` — renouvellement de session
 
@@ -237,7 +237,7 @@ src/modules/Admin/
 - **Drag & drop natif HTML5** : deux colonnes "Disponibles" / "Membres". Glisser vers Membres → `ModuleRolePickerModal` pour choisir le rôle → `POST /modules/:id/users/:userId` puis `PUT /modules/:id/users/:userId/role { roleId }`. Glisser vers Disponibles → `DELETE /modules/:id/users/:userId`.
 - **Rôle inline** : clic sur le badge rôle d'un membre → popup avec la liste des rôles → `PUT /modules/:id/users/:userId/role { roleId }`. Fermeture au clic extérieur et au scroll (listeners sur `document`).
 - **Types** : `ModuleUser` → `{ userId: number, name, email, roleId, roleCode }`. Les utilisateurs disponibles viennent de `GET /users` typé `AdminUser[]` (plus de `SimpleUser` — type supprimé). `AdminRole` importé depuis `users/types/adminUsers.types.ts`.
-- **Création module** : `POST /modules` — toujours créé inactif. Activer via `PUT /modules/:id { active: true }`. Le code doit correspondre à l'enum `ModuleCode` côté Java.
+- **Création module** : `POST /modules` — toujours créé inactif. Activer via `PUT /modules/:id` en envoyant **le module complet** avec `active: true`, et non le seul champ modifié : côté API Core c'est un vrai PUT, un payload partiel écraserait les champs absents et se ferait refuser sans `code` ni `name`. `ModuleEditModal.vue` envoie déjà `{ ...props.module }`, donc l'objet entier. Le code doit correspondre à l'enum `ModuleCode` côté Java.
 
 ## Module Riot (`src/modules/Riot/`)
 
