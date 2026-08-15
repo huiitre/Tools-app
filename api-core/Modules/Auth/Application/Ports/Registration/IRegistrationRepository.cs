@@ -15,6 +15,10 @@ public interface IRegistrationRepository
 
     // Confirme l'adresse et autorise la connexion.
     Task MarkEmailVerifiedAsync(long userId, DateTime verifiedAt);
+
+    // Adresse du compte, pour les messages destinés aux administrateurs : un identifiant
+    // numérique ne dit rien à qui lit la notification.
+    Task<string?> FindEmailByIdAsync(long userId);
 }
 
 // Projection minimale nécessaire pour décider quoi faire d'une adresse déjà connue.

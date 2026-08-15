@@ -103,6 +103,14 @@ public sealed class PostgresRegistrationRepository(PostgresSession session) : IR
             new CommandDefinition(sql, new { UserId = userId, VerifiedAt = verifiedAt }, session.Transaction));
     }
 
+    public async Task<string?> FindEmailByIdAsync(long userId)
+    {
+        const string sql = "SELECT email FROM tools_core.users WHERE id = @UserId";
+
+        return await Connection().QuerySingleOrDefaultAsync<string?>(
+            new CommandDefinition(sql, new { UserId = userId }, session.Transaction));
+    }
+
     private Npgsql.NpgsqlConnection Connection() => session.Connection
         ?? throw new InvalidOperationException("Aucune transaction PostgreSQL n'est ouverte.");
 }

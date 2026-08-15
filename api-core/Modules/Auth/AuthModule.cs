@@ -28,6 +28,10 @@ public static class AuthModule
         // ce port n'appartient à aucun flux en particulier.
         builder.Services.AddScoped<IAuthRepository, PostgresAuthRepository>();
 
+        // Signale les arrivées de comptes aux administrateurs : appelé par l'inscription, la
+        // confirmation d'adresse et le premier passage Google — donc par trois flux.
+        builder.Services.AddScoped<AdminSignupNotifier>();
+
         AddSession(builder);
         AddPasswordFlows(builder);
         AddGoogleFlows(builder);

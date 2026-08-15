@@ -31,4 +31,17 @@ public static class RoleCodes
         code is not null && ByCode.TryGetValue(code, out var role) ? role : null;
 
     public static bool HasAtLeast(this RoleCode actual, RoleCode required) => actual >= required;
+
+    // Code tel qu'il est stocké en base. Construit depuis la même table que Parse : les deux
+    // sens ne peuvent pas diverger.
+    public static string ToCode(this RoleCode role) =>
+        ByCode.First(entry => entry.Value == role).Key;
+
+    // Tous les codes à partir de ce niveau, le plus permissif compris. Sert à désigner une
+    // population par son rôle minimum — « les administrateurs » signifie ADMIN et au-dessus.
+    public static IReadOnlyList<string> CodesAtOrAbove(RoleCode minRole) =>
+        Enum.GetValues<RoleCode>()
+            .Where(role => role >= minRole)
+            .Select(ToCode)
+            .ToList();
 }

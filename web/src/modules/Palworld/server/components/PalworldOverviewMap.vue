@@ -114,9 +114,13 @@ const playerLayerItems = computed<MapLayerItem[]>(() =>
     })),
 )
 
+// Tri par nom de guilde puis par joueurs : plusieurs guildes partagent le libellé
+// « unamed guild », et seuls leurs membres permettent alors de les distinguer.
 const baseLayerItems = computed<MapLayerItem[]>(() =>
   [...mapBases.value]
-    .sort((a, b) => b.guildPlayerNames.length - a.guildPlayerNames.length)
+    .sort((a, b) =>
+      a.base.guildName.localeCompare(b.base.guildName)
+      || a.guildPlayerNames.join(', ').localeCompare(b.guildPlayerNames.join(', ')))
     .map(({ base, key, guildPlayerNames }) => {
       const parts = [`${guildPlayerNames.length} joueur${guildPlayerNames.length > 1 ? 's' : ''}`]
       if (base.palCount != null) {
