@@ -443,6 +443,120 @@ Le monorepo n’empêche pas des cycles de version indépendants par composant. 
 contrats seront suffisamment stables ; elle ne conditionne pas le démarrage de
 `api-core`.
 
+## Cible : une seule API C# et des satellites polyglottes
+
+> **Statut : décision prise le 16/08/2026, non planifiée.** Rien de ce qui suit n'est engagé ;
+> la section existe pour que l'intention ne se reperde pas.
+
+### Ce qui change par rapport à l'intention initiale
+
+Le découpage `api/` (Java) et `api-core/` (C#) n'a jamais eu de motif d'exploitation — ni
+blast radius, ni cadence de déploiement, ni montée en charge. L'intention réelle était
+d'isoler **un périmètre assez petit pour être réécrit dans un autre langage**, comme
+exercice.
+
+Le Core ne remplit pas ce critère : 136 fichiers, 5 581 lignes, et surtout tout le reste en
+dépend. C'était le bon geste appliqué au mauvais morceau — le Core est précisément la partie
+qu'on ne réécrit pas.
+
+La cible devient donc :
+
+```text
+api/           une application C# modulaire — plateforme transverse ET modules métier
+api-legacy/    l'API Java, figée, vidée au fil des migrations
+api-<module>/  satellites optionnels, un par module réécrit dans un autre langage
+web/
+database/
+```
+
+L'ancienne `api/` Java est renommée `api-legacy/` ; `api-core/` absorbe les modules métier et
+reprend le nom `api/`. La frontière Core / métier reste décrite dans ce document — elle
+devient une frontière **entre modules d'une même application**, plus entre deux services.
+
+Conséquence assumée : un déploiement raté emporte l'authentification **et** le métier. À
+l'échelle du projet c'est acceptable, et l'incident `JWT_SECRET` du 15/08/2026 avait déjà
+montré qu'une configuration invalide cassait `/health` sur le Core seul.
+
+### Ce qu'est un satellite
+
+Un satellite sert **un module et un seul**, dans le langage de son choix, et n'implémente
+jamais l'authentification : il ne fait que **vérifier** un jeton émis par l'API principale.
+Aucun appel au Core par requête métier — la règle posée plus haut ne change pas. Le contrat
+exact de cette vérification est dans `SECURITY.md`.
+
+**Prérequis dur : les rôles et droits de module dans les claims** (item non coché du plan par
+tranches). Aujourd'hui le rôle contextuel se lit en base dans `tools_core.user_module_role` ;
+un satellite devrait donc taper le schéma du Core, ce qu'interdit la règle « aucun accès SQL
+direct d'un service au schéma détenu par l'autre ». Avec les claims, il lit un champ du jeton
+et n'a besoin d'aucun accès. Cette tranche conditionne tout le reste.
+
+### Module pilote retenu : todolist
+
+```text
+22 fichiers, 1 353 lignes, 7 endpoints
+/todolists  et  /todolists/{id}/todos
+schéma propre : tools_todolist.todolist, tools_todolist.todo
+```
+
+C'est le seul module de cette taille dans le dépôt — assez gros pour être un vrai exercice
+(couches, ports, SQL, autorisation, erreurs, déploiement), assez petit pour être fini. Et
+surtout : **il possède son propre schéma**, aucune table partagée avec `tools_core`. La
+propriété des données se transfère donc proprement avec le module.
+
+Langage envisagé : Rust. Il n'est pas dans le nom du dossier — `api-todolist/`, jamais
+`api-todolist-rust/`. Un nom décrit une capacité, pas une implémentation ; sinon il ment le
+jour où le module change de langage.
+
+### Bascule et retour arrière
+
+Il n'existe **jamais deux routes publiques** pour le même module : une seule route, deux
+implémentations, une seule branchée par le reverse proxy.
+
+```text
+/api/todolist/*  ──>  satellite        (routé)
+                      module de api/   (présent, non routé)
+```
+
+Le frontend ne change pas d'une ligne, et le retour arrière tient dans une règle de proxy —
+le même mécanisme qui a permis la bascule de l'authentification.
+
+Deux disciplines qui vont avec :
+
+- **La propriété des données se transfère, elle ne se partage pas.** Jamais deux écrivains
+  sur `tools_todolist` en même temps. L'implémentation non routée est du code mort gardé
+  comme filet, puis supprimée.
+- **Une seule collection Bruno reste à jour**, celle de l'implémentation branchée. La règle
+  « toute route dans Bruno » devient sinon ambiguë dès qu'il existe deux implémentations.
+
+### Ce qui a été écarté : une route `/internal/` d'introspection de jeton
+
+L'idée était de faire vérifier le jeton par l'API principale, via un appel Docker à Docker,
+pour éviter de réécrire la validation dans chaque langage. Écartée :
+
+- Elle ne supprime pas l'accord à tenir, elle le déplace. Un satellite qui tague ses use
+  cases par rôle et par module doit de toute façon comprendre la sémantique des claims ; il
+  les recevrait en JSON au lieu de les décoder.
+- Elle ajoute un secret d'en-tête `/internal/` à aligner entre conteneurs — exactement le
+  type de désalignement qui a coûté la mise en production du 15/08/2026.
+- La logique réellement à reproduire est courte : six paramètres de validation et deux
+  comparaisons de claims (voir `SECURITY.md`). `isActive` étant un claim et non une lecture
+  en base, la vérification locale ne demande **rien** au Core.
+
+L'argument de disponibilité, en revanche, ne tient pas et n'a pas servi à trancher : avec un
+access token de dix minutes, une panne du Core tue toutes les sessions de toute façon.
+L'indépendance d'un satellite vaut dix minutes.
+
+`/internal/` garde son usage actuel — la publication d'événements vers le Core, **une fois
+par action métier**, pas une fois par requête.
+
+### Le coût réel
+
+Écrire le module dans un autre langage n'est pas le morceau difficile. Le coût est
+opérationnel, et il est déjà connu pour l'avoir payé une fois avec `api-core` : une image,
+un conteneur, un healthcheck, une entrée Watchtower, une règle de reverse proxy, un workflow,
+un calcul de version, des secrets alignés. C'est la raison de n'avoir **qu'un** satellite à la
+fois, et de vivre plusieurs mois avec le premier avant d'en envisager un second.
+
 ## Versioning et identification des déploiements
 
 ### Besoin

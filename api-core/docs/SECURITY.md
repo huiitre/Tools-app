@@ -61,6 +61,47 @@ Ce point diverge de l'API Java, qui relit les rôles en base à chaque use case.
 
 Les deux API signent avec le même `JWT_SECRET`, le même issuer et le même choix d'algorithme HMAC, et écrivent les mêmes claims : `roles` en tableau JSON, `modules` en objet. La bascule vers la lecture des rôles dans le token n'a touché que la **lecture** côté Core : un token émis par l'une reste lisible par l'autre.
 
+### Contrat de vérification pour un service tiers
+
+Un service qui n'est ni le Core ni l'API Java — un satellite écrit dans un autre langage, voir
+`ARCHITECTURE.md` — **ne réimplémente jamais l'authentification**. Il vérifie, et rien de plus.
+Le Core est le seul à émettre.
+
+Ce qu'il doit reproduire tient en deux blocs, et il n'a besoin d'**aucun accès à la base du
+Core** — `isActive` est un claim, pas une lecture SQL.
+
+Validation cryptographique (`JwtTokenParameters.Validation`) :
+
+| Règle | Valeur |
+|---|---|
+| Signature | HMAC, clé = `JWT_SECRET` |
+| Algorithme | **choisi selon la taille de la clé** : ≥ 64 octets → HS512, ≥ 48 → HS384, sinon HS256 |
+| Issuer | validé, `Auth:Jwt:Issuer` |
+| Audience | non validée |
+| Expiration | validée, **`ClockSkew` à zéro** |
+
+Règles applicatives (`JwtAuthenticationExtensions.EnforceAccessTokenRules`) :
+
+- **`tokenType == "ACCESS"`** — sans ce contrôle, un refresh token présenté en `Bearer` vaut
+  sept jours d'accès.
+- **`isActive == "true"`** — un compte désactivé garde un jeton signé valide jusqu'à son
+  expiration.
+
+Le choix d'algorithme selon la taille de la clé est le piège : il imite le comportement de
+JJWT côté Java, il est invisible dans un jeton, et un satellite qui coderait HS256 en dur
+refuserait tout le jour où le secret passe à 64 octets. **Ces trois points — algorithme,
+`ClockSkew`, les deux claims — sont le contrat ; toute divergence est un bug de sécurité ou
+une panne silencieuse.**
+
+Le reste du code de `JwtAuthenticationExtensions` (formatage `problem+json`, câblage des
+options ASP.NET) n'est pas à porter : chaque service produit ses propres réponses d'erreur,
+au format décrit dans `ARCHITECTURE.md`.
+
+**Direction souhaitable : passer à une paire de clés asymétrique.** Le Core signerait avec sa
+clé privée et publierait la clé publique ; chaque service la récupérerait **une fois au
+démarrage**. Plus aucun secret recopié d'un conteneur à l'autre — la cause de l'incident du
+15/08/2026 — et toujours zéro appel réseau par requête. Non fait.
+
 ## Tâches de fond
 
 Un use case sécurisé ne doit pas être appelé hors requête HTTP : aucun utilisateur n'est alors identifié et l'exécution est refusée. Un traitement planifié doit appeler le service applicatif sous-jacent, jamais le use case sécurisé.
