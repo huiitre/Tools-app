@@ -19,9 +19,14 @@ public abstract class SecuredUseCase<TCommand>(UseCaseAuthorizer authorizer)
 {
     protected abstract RoleCode RequiredRole { get; }
 
+    // Module auquel appartient le use case. Déclaré, le rôle exigé se lit dans ce module et
+    // non parmi les rôles globaux. Absent par défaut : les use cases transverses du Core
+    // (administration, compte, mail) ne relèvent d'aucun module.
+    protected virtual ModuleCode? RequiredModule => null;
+
     public Task Execute(TCommand command)
     {
-        var currentUser = authorizer.EnsureAtLeast(RequiredRole);
+        var currentUser = authorizer.EnsureAtLeast(RequiredRole, RequiredModule);
         return Handle(command, currentUser);
     }
 
@@ -33,9 +38,11 @@ public abstract class SecuredUseCase<TCommand, TResult>(UseCaseAuthorizer author
 {
     protected abstract RoleCode RequiredRole { get; }
 
+    protected virtual ModuleCode? RequiredModule => null;
+
     public Task<TResult> Execute(TCommand command)
     {
-        var currentUser = authorizer.EnsureAtLeast(RequiredRole);
+        var currentUser = authorizer.EnsureAtLeast(RequiredRole, RequiredModule);
         return Handle(command, currentUser);
     }
 

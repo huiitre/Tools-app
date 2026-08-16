@@ -14,7 +14,13 @@ public sealed class UseCaseAuthorizer(
     ILogger<UseCaseAuthorizer> logger)
 {
     // Retourne l'appelant validé : le use case y accède sans avoir à le résoudre lui-même.
-    public CurrentUser EnsureAtLeast(RoleCode requiredRole)
+    //
+    // `requiredModule` désigne le module auquel le use case appartient. Le rôle comparé est
+    // alors celui détenu **dans ce module**, jamais le rôle global : sans cette règle, un
+    // administrateur du site contournerait la restriction qu'on lui a posée sur un module, et
+    // un droit de module ne voudrait plus rien dire pour les rôles élevés. Un use case sans
+    // module reste jugé sur le rôle global.
+    public CurrentUser EnsureAtLeast(RoleCode requiredRole, ModuleCode? requiredModule = null)
     {
         var currentUser = currentUserProvider.Current;
         if (currentUser is null)
@@ -24,19 +30,29 @@ public sealed class UseCaseAuthorizer(
                 "Authentification requise.");
         }
 
-        var actualRole = currentUser.HighestRole;
+        var actualRole = requiredModule is null
+            ? currentUser.HighestRole
+            : currentUser.HighestRoleIn(requiredModule.Value);
+
         if (actualRole is null || !actualRole.Value.HasAtLeast(requiredRole))
         {
             // Trace la tentative sans révéler à l'appelant le rôle attendu.
             logger.LogWarning(
-                "Accès refusé userId={UserId} requiredRole={RequiredRole} actualRole={ActualRole}",
+                "Accès refusé userId={UserId} module={Module} requiredRole={RequiredRole} actualRole={ActualRole}",
                 currentUser.UserId,
+                requiredModule,
                 requiredRole,
                 actualRole);
 
-            throw AppException.Forbidden(
-                "INSUFFICIENT_ROLE",
-                "Vous n’avez pas les droits nécessaires pour cette action.");
+            // Deux refus distincts que le frontend ne traite pas de la même manière : le module
+            // n'est pas ouvert à cet utilisateur, ou il l'est mais son rôle n'y suffit pas.
+            throw requiredModule is not null && actualRole is null
+                ? AppException.Forbidden(
+                    "NO_MODULE_ACCESS",
+                    "Ce module ne vous est pas ouvert.")
+                : AppException.Forbidden(
+                    "INSUFFICIENT_ROLE",
+                    "Vous n’avez pas les droits nécessaires pour cette action.");
         }
 
         return currentUser;

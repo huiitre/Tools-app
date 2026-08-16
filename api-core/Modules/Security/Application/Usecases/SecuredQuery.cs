@@ -19,9 +19,12 @@ public abstract class SecuredQuery<TResult>(UseCaseAuthorizer authorizer)
 {
     protected abstract RoleCode RequiredRole { get; }
 
+    // Même règle que SecuredUseCase : déclaré, le rôle exigé se lit dans ce module.
+    protected virtual ModuleCode? RequiredModule => null;
+
     public Task<TResult> Execute()
     {
-        var currentUser = authorizer.EnsureAtLeast(RequiredRole);
+        var currentUser = authorizer.EnsureAtLeast(RequiredRole, RequiredModule);
         return Handle(currentUser);
     }
 

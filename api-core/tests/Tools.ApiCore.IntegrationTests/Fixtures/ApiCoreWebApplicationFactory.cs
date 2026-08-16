@@ -90,12 +90,20 @@ public sealed class ApiCoreWebApplicationFactory : WebApplicationFactory<Program
     // sont donc testées ensemble, exactement comme en production.
     public HttpClient CreateClientWithRoles(params string[] roles) => CreateClientForUser(1, roles);
 
-    public HttpClient CreateClientForUser(long userId, params string[] roles)
+    public HttpClient CreateClientForUser(long userId, params string[] roles) =>
+        CreateClientForUser(userId, new Dictionary<string, IReadOnlyList<string>>(), roles);
+
+    // Variante avec des rôles de module, sous la forme portée par le claim : un module associé
+    // aux rôles que l'utilisateur y détient.
+    public HttpClient CreateClientForUser(
+        long userId,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> moduleRoles,
+        params string[] roles)
     {
         var token = Services.GetRequiredService<ITokenService>().CreateAccessToken(
             new AuthUser(userId, "admin@example.com", true, "HUMAN"),
             roles,
-            new Dictionary<string, string>());
+            moduleRoles);
 
         var client = CreateClient();
         client.DefaultRequestHeaders.Authorization =

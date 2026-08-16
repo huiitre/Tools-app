@@ -5,7 +5,10 @@ namespace Tools.ApiCore.Modules.Auth.Application.Services;
 // Port de gestion JWT : son implémentation connaît l'algorithme et le secret, pas les use cases.
 public interface ITokenService
 {
-    string CreateAccessToken(AuthUser user, IReadOnlyList<string> roles, IReadOnlyDictionary<string, string> modules);
+    string CreateAccessToken(
+        AuthUser user,
+        IReadOnlyList<string> roles,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> modules);
     IssuedToken CreateRefreshToken(long userId, DateTimeOffset? expiresAt = null);
     AccessTokenData ReadAccessToken(string token);
     RefreshTokenData ReadRefreshToken(string token);

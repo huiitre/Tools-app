@@ -14,7 +14,9 @@ public interface IAuthRepository
     // Point d'entrée d'une demande de réinitialisation, où seul l'email est connu.
     Task<AuthUser?> FindByEmailAsync(string email);
 
-    // Ces deux lectures alimentent les claims d'autorisation de l'access token.
+    // Ces deux lectures alimentent les claims d'autorisation de l'access token. Les rôles de
+    // module sont rendus en liste par module : la table autorise le cumul, et arbitrer lequel
+    // l'emporte est une règle d'autorisation, pas une affaire de persistance.
     Task<IReadOnlyList<string>> FindGlobalRolesAsync(long userId);
-    Task<IReadOnlyDictionary<string, string>> FindModuleRolesAsync(long userId);
+    Task<IReadOnlyDictionary<string, IReadOnlyList<string>>> FindModuleRolesAsync(long userId);
 }

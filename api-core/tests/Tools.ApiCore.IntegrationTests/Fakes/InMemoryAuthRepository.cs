@@ -17,6 +17,7 @@ public sealed class InMemoryAuthRepository(InMemoryAuthStore store) : IAuthRepos
     public Task<IReadOnlyList<string>> FindGlobalRolesAsync(long userId) =>
         Task.FromResult<IReadOnlyList<string>>([]);
 
-    public Task<IReadOnlyDictionary<string, string>> FindModuleRolesAsync(long userId) =>
-        Task.FromResult<IReadOnlyDictionary<string, string>>(new Dictionary<string, string>());
+    public Task<IReadOnlyDictionary<string, IReadOnlyList<string>>> FindModuleRolesAsync(long userId) =>
+        Task.FromResult<IReadOnlyDictionary<string, IReadOnlyList<string>>>(
+            new Dictionary<string, IReadOnlyList<string>>());
 }

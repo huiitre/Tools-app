@@ -43,33 +43,39 @@ Une capacité doit rester dans un module métier lorsqu’elle dépend de ses r�
 
 Le Core signe les JWT ; l’API Java les vérifie localement avec une clé publique ou un JWKS. Il ne doit pas y avoir d’appel HTTP au Core pour chaque requête métier.
 
-Les claims devront inclure l’identité et les droits nécessaires à Java, notamment le rôle contextuel par module. Exemple conceptuel :
+Les claims incluent l’identité et les droits nécessaires, dont le rôle contextuel par module :
 
 ```json
 {
   "sub": "42",
+  "roles": ["ADMIN"],
   "modules": {
-    "chat": "READ_ONLY",
-    "dofus": "USER"
+    "codename": ["READ_ONLY"],
+    "dofus": ["USER"]
   }
 }
 ```
 
-Un use case Java qui exige `USER` et le module `CHAT` rejette donc un utilisateur ayant `READ_ONLY` sur ce module, avant toute persistance ou diffusion.
+Un use case qui exige `USER` et le module `CODENAME` rejette donc un utilisateur ayant `READ_ONLY` sur ce module, avant toute persistance ou diffusion — **y compris l’administrateur du site ci-dessus**, dont le rôle global ne relève pas son niveau à l’intérieur d’un module.
 
 Le délai de prise en compte d’un changement de droit est au plus la durée de vie de l’access token. Commencer avec des access tokens courts est préférable à une introspection réseau systématique ou à une infrastructure de révocation complexe.
 
-### État actuel à prendre en compte
+### Ce que fait l’API Java, et ce que le Core en a repris
 
-L’API Java actuelle fait cette vérification en base à chaque use case :
+L’API Java fait cette vérification en base à chaque use case :
 
 1. `ModuleAuthorizationPort.hasAccess` vérifie l’accès au module ;
 2. `UserRoleProvider.getUserRole(userId, module)` lit le rôle contextuel dans `tools_core.user_module_role` ;
 3. l’aspect compare ce rôle à `SecuredUseCase.requiredRole()`.
 
-Le rôle de module remplace donc le rôle global pour l’autorisation du use case concerné. La migration devra remplacer ces lectures SQL par la lecture des claims JWT, sans modifier l’intention de la règle.
+**L’intention est conservée à l’identique côté Core : le rôle de module remplace le rôle global, il ne s’y ajoute pas.** Seule la source change — les claims du jeton au lieu de deux requêtes SQL par appel. Le déroulé complet est dans `SECURITY.md` (« Use case appartenant à un module »).
 
-Point à clarifier avant la migration : la clé primaire actuelle de `user_module_role` autorise plusieurs rôles pour une paire `(user, module)`, mais le code récupère un seul rôle avec un `LIMIT 1`. Le modèle visé semble être un rôle contextuel unique ; cela devra être rendu explicite.
+Deux détails du Java n’ont pas été repris, parce qu’ils tiennent à sa manière de lire et non à la règle :
+
+- l’étape 1 est presque redondante avec l’étape 2, qui échoue déjà en l’absence de ligne ; côté Core, un module absent des claims est un refus, sans lecture séparée ;
+- `LIMIT 1` sans tri rend le rôle retenu arbitraire quand `user_module_role` en contient plusieurs pour une même paire `(user, module)` — sa clé primaire `(user_id, module_id, role_id)` l’autorise. Le Core retient le plus permissif, comme il le fait déjà pour les rôles globaux, plutôt que de dépendre d’une contrainte d’unicité qui n’existe pas.
+
+Reste ouvert : décider si le modèle veut vraiment un rôle unique par `(user, module)` et poser la contrainte. Tant qu’elle n’est pas là, l’arbitrage ci-dessus est la seule chose qui rende le comportement déterministe.
 
 ## Realtime / WebSocket
 
@@ -484,11 +490,15 @@ jamais l'authentification : il ne fait que **vérifier** un jeton émis par l'AP
 Aucun appel au Core par requête métier — la règle posée plus haut ne change pas. Le contrat
 exact de cette vérification est dans `SECURITY.md`.
 
-**Prérequis dur : les rôles et droits de module dans les claims** (item non coché du plan par
-tranches). Aujourd'hui le rôle contextuel se lit en base dans `tools_core.user_module_role` ;
-un satellite devrait donc taper le schéma du Core, ce qu'interdit la règle « aucun accès SQL
-direct d'un service au schéma détenu par l'autre ». Avec les claims, il lit un champ du jeton
-et n'a besoin d'aucun accès. Cette tranche conditionne tout le reste.
+**Le prérequis dur est levé : les rôles de module sont dans les claims** et le Core décide
+désormais sans lire `tools_core.user_module_role`. C'était ce qui bloquait tout le reste — un
+satellite aurait dû taper le schéma du Core, ce qu'interdit la règle « aucun accès SQL direct
+d'un service au schéma détenu par l'autre ». Il lit maintenant un champ du jeton et n'a besoin
+d'aucun accès.
+
+Ce que cela ne rend pas fait pour autant : le coût opérationnel décrit plus bas reste entier,
+et aucun module métier n'est encore porté par le Core. Le prérequis technique tombe, la
+décision de démarrer un satellite reste à prendre.
 
 ### Module pilote retenu : todolist
 
@@ -726,7 +736,7 @@ Ordre recommandé :
 [x] migration frontend de l'authentification
 [x] administration sur le Core (/users, /roles, /modules, /admin/stats) — côté API
 [x] bascule du module Admin du frontend
-[ ] rôles et droits de module dans les claims
+[x] rôles et droits de module dans les claims
 [ ] SignalR / realtime   ← dernier morceau du Core encore servi par Java
 ```
 
@@ -850,7 +860,10 @@ La clé primaire de `user_module_role` est `(user_id, module_id, role_id)` et ce
 suppose l'unicité. L'API Java s'en remet à un `LIMIT 1`, c'est-à-dire à un rôle arbitraire.
 
 Le Core retient **le rôle le plus permissif**, ce qui est déterministe et cohérent avec
-`CurrentUser.HighestRole`, qui fait déjà ce choix pour les rôles du jeton. En écriture, les
+`CurrentUser.HighestRole`, qui fait déjà ce choix pour les rôles du jeton. La règle vaut
+désormais aussi à l'intérieur d'un module (`CurrentUser.HighestRoleIn`) : le claim `modules`
+porte la liste des rôles détenus par module, précisément parce que l'unicité n'est pas garantie
+en base. En écriture, les
 lignes existantes sont supprimées avant l'insertion : le Core ne crée donc jamais de doublon,
 et un `UPDATE` aurait de toute façon violé la clé primaire s'il en existait deux.
 
