@@ -209,7 +209,7 @@ public sealed class AuthenticationTests : IClassFixture<ApiCoreWebApplicationFac
     // ---------- Utilitaires ----------
 
     private string AccessTokenFor(AuthUser user, params string[] roles) =>
-        Tokens.CreateAccessToken(user, roles, new Dictionary<string, string>());
+        Tokens.CreateAccessToken(user, roles, new Dictionary<string, IReadOnlyList<string>>());
 
     // Reproduit un access token de production, en gardant la maîtrise de sa fenêtre de
     // validité. L'algorithme est celui que JwtTokenService déduit du secret de test

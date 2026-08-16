@@ -20,9 +20,15 @@ public sealed class JwtTokenService(
     private readonly JwtOptions options = options.Value;
     private readonly string jwtSecret = configuration["JWT_SECRET"] ?? string.Empty;
 
-    public string CreateAccessToken(AuthUser user, IReadOnlyList<string> roles, IReadOnlyDictionary<string, string> modules)
+    public string CreateAccessToken(
+        AuthUser user,
+        IReadOnlyList<string> roles,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> modules)
     {
         // Claims que l'API Java connaît déjà, puis rôles/droits pour la migration progressive.
+        // "modules" porte un objet { code_module: [codes_rôle] } : c'est ce claim qui permet de
+        // décider d'un droit contextuel sans lire `tools_core.user_module_role`, et donc à un
+        // service tiers de le faire sans accéder au schéma du Core (voir docs/SECURITY.md).
         var claims = new List<Claim>
         {
             new("tokenType", "ACCESS"),

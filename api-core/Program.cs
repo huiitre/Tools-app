@@ -40,6 +40,7 @@ if (app.Environment.IsEnvironment("Testing"))
 {
     app.MapErrorContractTestingEndpoints();
     app.MapUnsecuredTestingEndpoint();
+    app.MapModuleAuthorizationTestingEndpoint();
 }
 
 app.Run();

@@ -43,33 +43,39 @@ Une capacité doit rester dans un module métier lorsqu’elle dépend de ses r�
 
 Le Core signe les JWT ; l’API Java les vérifie localement avec une clé publique ou un JWKS. Il ne doit pas y avoir d’appel HTTP au Core pour chaque requête métier.
 
-Les claims devront inclure l’identité et les droits nécessaires à Java, notamment le rôle contextuel par module. Exemple conceptuel :
+Les claims incluent l’identité et les droits nécessaires, dont le rôle contextuel par module :
 
 ```json
 {
   "sub": "42",
+  "roles": ["ADMIN"],
   "modules": {
-    "chat": "READ_ONLY",
-    "dofus": "USER"
+    "codename": ["READ_ONLY"],
+    "dofus": ["USER"]
   }
 }
 ```
 
-Un use case Java qui exige `USER` et le module `CHAT` rejette donc un utilisateur ayant `READ_ONLY` sur ce module, avant toute persistance ou diffusion.
+Un use case qui exige `USER` et le module `CODENAME` rejette donc un utilisateur ayant `READ_ONLY` sur ce module, avant toute persistance ou diffusion — **y compris l’administrateur du site ci-dessus**, dont le rôle global ne relève pas son niveau à l’intérieur d’un module.
 
 Le délai de prise en compte d’un changement de droit est au plus la durée de vie de l’access token. Commencer avec des access tokens courts est préférable à une introspection réseau systématique ou à une infrastructure de révocation complexe.
 
-### État actuel à prendre en compte
+### Ce que fait l’API Java, et ce que le Core en a repris
 
-L’API Java actuelle fait cette vérification en base à chaque use case :
+L’API Java fait cette vérification en base à chaque use case :
 
 1. `ModuleAuthorizationPort.hasAccess` vérifie l’accès au module ;
 2. `UserRoleProvider.getUserRole(userId, module)` lit le rôle contextuel dans `tools_core.user_module_role` ;
 3. l’aspect compare ce rôle à `SecuredUseCase.requiredRole()`.
 
-Le rôle de module remplace donc le rôle global pour l’autorisation du use case concerné. La migration devra remplacer ces lectures SQL par la lecture des claims JWT, sans modifier l’intention de la règle.
+**L’intention est conservée à l’identique côté Core : le rôle de module remplace le rôle global, il ne s’y ajoute pas.** Seule la source change — les claims du jeton au lieu de deux requêtes SQL par appel. Le déroulé complet est dans `SECURITY.md` (« Use case appartenant à un module »).
 
-Point à clarifier avant la migration : la clé primaire actuelle de `user_module_role` autorise plusieurs rôles pour une paire `(user, module)`, mais le code récupère un seul rôle avec un `LIMIT 1`. Le modèle visé semble être un rôle contextuel unique ; cela devra être rendu explicite.
+Deux détails du Java n’ont pas été repris, parce qu’ils tiennent à sa manière de lire et non à la règle :
+
+- l’étape 1 est presque redondante avec l’étape 2, qui échoue déjà en l’absence de ligne ; côté Core, un module absent des claims est un refus, sans lecture séparée ;
+- `LIMIT 1` sans tri rend le rôle retenu arbitraire quand `user_module_role` en contient plusieurs pour une même paire `(user, module)` — sa clé primaire `(user_id, module_id, role_id)` l’autorise. Le Core retient le plus permissif, comme il le fait déjà pour les rôles globaux, plutôt que de dépendre d’une contrainte d’unicité qui n’existe pas.
+
+Reste ouvert : décider si le modèle veut vraiment un rôle unique par `(user, module)` et poser la contrainte. Tant qu’elle n’est pas là, l’arbitrage ci-dessus est la seule chose qui rende le comportement déterministe.
 
 ## Realtime / WebSocket
 
@@ -443,6 +449,124 @@ Le monorepo n’empêche pas des cycles de version indépendants par composant. 
 contrats seront suffisamment stables ; elle ne conditionne pas le démarrage de
 `api-core`.
 
+## Cible : une seule API C# et des satellites polyglottes
+
+> **Statut : décision prise le 16/08/2026, non planifiée.** Rien de ce qui suit n'est engagé ;
+> la section existe pour que l'intention ne se reperde pas.
+
+### Ce qui change par rapport à l'intention initiale
+
+Le découpage `api/` (Java) et `api-core/` (C#) n'a jamais eu de motif d'exploitation — ni
+blast radius, ni cadence de déploiement, ni montée en charge. L'intention réelle était
+d'isoler **un périmètre assez petit pour être réécrit dans un autre langage**, comme
+exercice.
+
+Le Core ne remplit pas ce critère : 136 fichiers, 5 581 lignes, et surtout tout le reste en
+dépend. C'était le bon geste appliqué au mauvais morceau — le Core est précisément la partie
+qu'on ne réécrit pas.
+
+La cible devient donc :
+
+```text
+api/           une application C# modulaire — plateforme transverse ET modules métier
+api-legacy/    l'API Java, figée, vidée au fil des migrations
+api-<module>/  satellites optionnels, un par module réécrit dans un autre langage
+web/
+database/
+```
+
+L'ancienne `api/` Java est renommée `api-legacy/` ; `api-core/` absorbe les modules métier et
+reprend le nom `api/`. La frontière Core / métier reste décrite dans ce document — elle
+devient une frontière **entre modules d'une même application**, plus entre deux services.
+
+Conséquence assumée : un déploiement raté emporte l'authentification **et** le métier. À
+l'échelle du projet c'est acceptable, et l'incident `JWT_SECRET` du 15/08/2026 avait déjà
+montré qu'une configuration invalide cassait `/health` sur le Core seul.
+
+### Ce qu'est un satellite
+
+Un satellite sert **un module et un seul**, dans le langage de son choix, et n'implémente
+jamais l'authentification : il ne fait que **vérifier** un jeton émis par l'API principale.
+Aucun appel au Core par requête métier — la règle posée plus haut ne change pas. Le contrat
+exact de cette vérification est dans `SECURITY.md`.
+
+**Le prérequis dur est levé : les rôles de module sont dans les claims** et le Core décide
+désormais sans lire `tools_core.user_module_role`. C'était ce qui bloquait tout le reste — un
+satellite aurait dû taper le schéma du Core, ce qu'interdit la règle « aucun accès SQL direct
+d'un service au schéma détenu par l'autre ». Il lit maintenant un champ du jeton et n'a besoin
+d'aucun accès.
+
+Ce que cela ne rend pas fait pour autant : le coût opérationnel décrit plus bas reste entier,
+et aucun module métier n'est encore porté par le Core. Le prérequis technique tombe, la
+décision de démarrer un satellite reste à prendre.
+
+### Module pilote retenu : todolist
+
+```text
+22 fichiers, 1 353 lignes, 7 endpoints
+/todolists  et  /todolists/{id}/todos
+schéma propre : tools_todolist.todolist, tools_todolist.todo
+```
+
+C'est le seul module de cette taille dans le dépôt — assez gros pour être un vrai exercice
+(couches, ports, SQL, autorisation, erreurs, déploiement), assez petit pour être fini. Et
+surtout : **il possède son propre schéma**, aucune table partagée avec `tools_core`. La
+propriété des données se transfère donc proprement avec le module.
+
+Langage envisagé : Rust. Il n'est pas dans le nom du dossier — `api-todolist/`, jamais
+`api-todolist-rust/`. Un nom décrit une capacité, pas une implémentation ; sinon il ment le
+jour où le module change de langage.
+
+### Bascule et retour arrière
+
+Il n'existe **jamais deux routes publiques** pour le même module : une seule route, deux
+implémentations, une seule branchée par le reverse proxy.
+
+```text
+/api/todolist/*  ──>  satellite        (routé)
+                      module de api/   (présent, non routé)
+```
+
+Le frontend ne change pas d'une ligne, et le retour arrière tient dans une règle de proxy —
+le même mécanisme qui a permis la bascule de l'authentification.
+
+Deux disciplines qui vont avec :
+
+- **La propriété des données se transfère, elle ne se partage pas.** Jamais deux écrivains
+  sur `tools_todolist` en même temps. L'implémentation non routée est du code mort gardé
+  comme filet, puis supprimée.
+- **Une seule collection Bruno reste à jour**, celle de l'implémentation branchée. La règle
+  « toute route dans Bruno » devient sinon ambiguë dès qu'il existe deux implémentations.
+
+### Ce qui a été écarté : une route `/internal/` d'introspection de jeton
+
+L'idée était de faire vérifier le jeton par l'API principale, via un appel Docker à Docker,
+pour éviter de réécrire la validation dans chaque langage. Écartée :
+
+- Elle ne supprime pas l'accord à tenir, elle le déplace. Un satellite qui tague ses use
+  cases par rôle et par module doit de toute façon comprendre la sémantique des claims ; il
+  les recevrait en JSON au lieu de les décoder.
+- Elle ajoute un secret d'en-tête `/internal/` à aligner entre conteneurs — exactement le
+  type de désalignement qui a coûté la mise en production du 15/08/2026.
+- La logique réellement à reproduire est courte : six paramètres de validation et deux
+  comparaisons de claims (voir `SECURITY.md`). `isActive` étant un claim et non une lecture
+  en base, la vérification locale ne demande **rien** au Core.
+
+L'argument de disponibilité, en revanche, ne tient pas et n'a pas servi à trancher : avec un
+access token de dix minutes, une panne du Core tue toutes les sessions de toute façon.
+L'indépendance d'un satellite vaut dix minutes.
+
+`/internal/` garde son usage actuel — la publication d'événements vers le Core, **une fois
+par action métier**, pas une fois par requête.
+
+### Le coût réel
+
+Écrire le module dans un autre langage n'est pas le morceau difficile. Le coût est
+opérationnel, et il est déjà connu pour l'avoir payé une fois avec `api-core` : une image,
+un conteneur, un healthcheck, une entrée Watchtower, une règle de reverse proxy, un workflow,
+un calcul de version, des secrets alignés. C'est la raison de n'avoir **qu'un** satellite à la
+fois, et de vivre plusieurs mois avec le premier avant d'en envisager un second.
+
 ## Versioning et identification des déploiements
 
 ### Besoin
@@ -612,7 +736,7 @@ Ordre recommandé :
 [x] migration frontend de l'authentification
 [x] administration sur le Core (/users, /roles, /modules, /admin/stats) — côté API
 [x] bascule du module Admin du frontend
-[ ] rôles et droits de module dans les claims
+[x] rôles et droits de module dans les claims
 [ ] SignalR / realtime   ← dernier morceau du Core encore servi par Java
 ```
 
@@ -736,7 +860,10 @@ La clé primaire de `user_module_role` est `(user_id, module_id, role_id)` et ce
 suppose l'unicité. L'API Java s'en remet à un `LIMIT 1`, c'est-à-dire à un rôle arbitraire.
 
 Le Core retient **le rôle le plus permissif**, ce qui est déterministe et cohérent avec
-`CurrentUser.HighestRole`, qui fait déjà ce choix pour les rôles du jeton. En écriture, les
+`CurrentUser.HighestRole`, qui fait déjà ce choix pour les rôles du jeton. La règle vaut
+désormais aussi à l'intérieur d'un module (`CurrentUser.HighestRoleIn`) : le claim `modules`
+porte la liste des rôles détenus par module, précisément parce que l'unicité n'est pas garantie
+en base. En écriture, les
 lignes existantes sont supprimées avant l'insertion : le Core ne crée donc jamais de doublon,
 et un `UPDATE` aurait de toute façon violé la clé primaire s'il en existait deux.
 

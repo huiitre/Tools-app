@@ -23,6 +23,39 @@ public sealed class SendMailUseCase(UseCaseAuthorizer authorizer, MailService ma
 
 Un use case non sécurisé reste une classe ordinaire : l'absence d'héritage est un choix visible à la lecture.
 
+### Use case appartenant à un module
+
+Un use case métier déclare en plus son module. Le rôle exigé est alors cherché **dans ce module**, pas parmi les rôles globaux :
+
+```csharp
+public sealed class CreateTodolistUseCase(UseCaseAuthorizer authorizer, ...)
+    : SecuredUseCase<CreateTodolistCommand>(authorizer)
+{
+    protected override RoleCode RequiredRole => RoleCode.User;
+    protected override ModuleCode? RequiredModule => ModuleCode.Todolist;
+}
+```
+
+`RequiredModule` vaut `null` par défaut : les use cases transverses du Core (administration, compte, mail) ne relèvent d'aucun module et restent jugés sur le rôle global.
+
+Le module se désigne par l'énumération `ModuleCode`, jamais par une chaîne. Une chaîne libre ne se trompe qu'à l'exécution, et un module que personne ne reconnaît est un contrôle qui ne s'applique à personne. Les valeurs y sont celles de `tools_core.module.code` (minuscules, convention héritée de `ModuleCode.name().toLowerCase()` côté Java) : les deux applications lisent la même colonne, elle ne peut pas être réécrite d'un seul côté.
+
+### Rôle global et rôle de module ne se cumulent pas
+
+C'est la règle à ne pas réinventer :
+
+| Use case | Rôle comparé |
+|---|---|
+| sans module | le plus permissif des rôles globaux |
+| avec module | le plus permissif des rôles **détenus dans ce module** |
+
+Un administrateur du site absent d'un module ne peut pas y entrer ; présent en `READ_ONLY`, il y est `READ_ONLY`. Sans cette règle, un rôle global élevé serait un passe-partout métier et un droit de module ne voudrait plus rien dire pour les personnes qu'il vise en premier. C'est aussi le comportement de l'API Java, à laquelle le Core reste ici identique.
+
+Deux refus distincts en découlent, que le frontend ne traite pas de la même manière :
+
+- `403 NO_MODULE_ACCESS` — le module n'est pas ouvert à cet utilisateur ;
+- `403 INSUFFICIENT_ROLE` — il l'est, mais le rôle qu'il y détient ne suffit pas.
+
 ## Hiérarchie des rôles
 
 ```text
@@ -35,10 +68,10 @@ Identique à l'API Java. Le niveau est porté par la valeur de l'énumération `
 
 1. `ICurrentUserProvider` fournit l'appelant : identifiant et rôles. L'implémentation HTTP se contente de traduire les claims de `HttpContext.User` — la validation du jeton a déjà eu lieu dans le middleware d'authentification, une seule fois pour la requête.
 2. Sans utilisateur identifié : `401 UNAUTHENTICATED`. Avec un token invalide ou expiré : `401 INVALID_ACCESS_TOKEN`. Sur une route protégée, ces refus viennent désormais du middleware, avant même d'atteindre le contrôleur ; `UseCaseAuthorizer` conserve le sien pour les appels hors HTTP.
-3. Les rôles proviennent du claim `roles` de l'access token, gravé à l'émission par `AuthSessionService`. **Aucune requête n'est faite lors de l'autorisation.**
-4. Rôle insuffisant ou inexistant : `403 INSUFFICIENT_ROLE`. La réponse ne révèle pas le rôle attendu ; la tentative est journalisée.
+3. Les rôles proviennent des claims `roles` (global) et `modules` (par module) de l'access token, gravés à l'émission par `AuthSessionService`. **Aucune requête n'est faite lors de l'autorisation.**
+4. Rôle insuffisant ou inexistant : `403 INSUFFICIENT_ROLE`, ou `403 NO_MODULE_ACCESS` si le use case appartient à un module auquel l'appelant n'a aucun accès. La réponse ne révèle pas le rôle attendu ; la tentative est journalisée.
 
-Un utilisateur peut cumuler plusieurs rôles : c'est **le plus permissif** qui détermine son niveau effectif. Un code de rôle inconnu de l'énumération est ignoré plutôt que d'accorder un droit.
+Un utilisateur peut cumuler plusieurs rôles, globalement comme à l'intérieur d'un module : c'est **le plus permissif** qui détermine son niveau effectif. La table `user_module_role` n'a pas de contrainte d'unicité sur `(user_id, module_id)` — ce cumul n'est donc pas théorique. Un code de rôle ou de module inconnu de l'énumération est ignoré plutôt que d'accorder un droit.
 
 ## Fenêtre de révocation — choix assumé
 
@@ -60,6 +93,66 @@ Ce point diverge de l'API Java, qui relit les rôles en base à chaque use case.
 ## Compatibilité des tokens entre les deux API
 
 Les deux API signent avec le même `JWT_SECRET`, le même issuer et le même choix d'algorithme HMAC, et écrivent les mêmes claims : `roles` en tableau JSON, `modules` en objet. La bascule vers la lecture des rôles dans le token n'a touché que la **lecture** côté Core : un token émis par l'une reste lisible par l'autre.
+
+Le claim `modules` associe un code module aux rôles qu'y détient l'utilisateur :
+
+```json
+"modules": { "todolist": ["USER"], "palworld": ["ADMIN"] }
+```
+
+La valeur est un tableau parce que le cumul est possible en base ; le Core accepte aussi la forme antérieure, un rôle unique en chaîne, le temps qu'un jeton déjà émis expire. Personne d'autre ne lit ce claim aujourd'hui — l'API Java relit `tools_core.user_module_role` à chaque use case et le frontend prend ses droits sur `/users/me`.
+
+### Contrat de vérification pour un service tiers
+
+Un service qui n'est ni le Core ni l'API Java — un satellite écrit dans un autre langage, voir
+`ARCHITECTURE.md` — **ne réimplémente jamais l'authentification**. Il vérifie, et rien de plus.
+Le Core est le seul à émettre.
+
+Ce qu'il doit reproduire tient en deux blocs, et il n'a besoin d'**aucun accès à la base du
+Core** — `isActive` est un claim, pas une lecture SQL.
+
+Validation cryptographique (`JwtTokenParameters.Validation`) :
+
+| Règle | Valeur |
+|---|---|
+| Signature | HMAC, clé = `JWT_SECRET` |
+| Algorithme | **choisi selon la taille de la clé** : ≥ 64 octets → HS512, ≥ 48 → HS384, sinon HS256 |
+| Issuer | validé, `Auth:Jwt:Issuer` |
+| Audience | non validée |
+| Expiration | validée, **`ClockSkew` à zéro** |
+
+Règles applicatives (`JwtAuthenticationExtensions.EnforceAccessTokenRules`) :
+
+- **`tokenType == "ACCESS"`** — sans ce contrôle, un refresh token présenté en `Bearer` vaut
+  sept jours d'accès.
+- **`isActive == "true"`** — un compte désactivé garde un jeton signé valide jusqu'à son
+  expiration.
+
+Décision de droits, une fois le jeton accepté :
+
+- rôle global : claim `roles`, le plus permissif l'emporte ;
+- rôle dans le module servi par le satellite : claim `modules`, le plus permissif l'emporte ;
+- un use case rattaché à un module se juge **sur le rôle du module seul** — le rôle global n'y
+  ajoute rien, y compris pour un administrateur du site.
+
+C'est ce claim qui rend un satellite possible : il décide sans jamais lire
+`tools_core.user_module_role`, donc sans toucher au schéma du Core — la règle d'appartenance
+des schémas est respectée sans exception à négocier.
+
+Le choix d'algorithme selon la taille de la clé est le piège : il imite le comportement de
+JJWT côté Java, il est invisible dans un jeton, et un satellite qui coderait HS256 en dur
+refuserait tout le jour où le secret passe à 64 octets. **Ces trois points — algorithme,
+`ClockSkew`, les deux claims — sont le contrat ; toute divergence est un bug de sécurité ou
+une panne silencieuse.**
+
+Le reste du code de `JwtAuthenticationExtensions` (formatage `problem+json`, câblage des
+options ASP.NET) n'est pas à porter : chaque service produit ses propres réponses d'erreur,
+au format décrit dans `ARCHITECTURE.md`.
+
+**Direction souhaitable : passer à une paire de clés asymétrique.** Le Core signerait avec sa
+clé privée et publierait la clé publique ; chaque service la récupérerait **une fois au
+démarrage**. Plus aucun secret recopié d'un conteneur à l'autre — la cause de l'incident du
+15/08/2026 — et toujours zéro appel réseau par requête. Non fait.
 
 ## Tâches de fond
 
@@ -156,7 +249,5 @@ garantirait qu'elles divergent un jour, et un jeton signé en HS512 puis validé
 refusé sans que rien n'indique pourquoi.
 
 ## Ce qui reste à faire
-
-Les droits par module (`tools_core.user_module_role`) ne sont pas encore portés : seul le rôle global est contrôlé. `SecuredUseCase` devra recevoir un module optionnel, comme `requiredModule()` côté Java.
 
 `SecuredUseCase<TCommand, TResult>` impose de déclarer un type d'entrée même quand le use case n'en a aucun — le cas d'une lecture comme `/me`. La forme manquante est une `SecuredQuery<TResult>` : en C#, l'arité générique fait la signature, `SecuredUseCase<TResult>` désignerait donc « une commande sans résultat ». C'est le prix du contrôle porté par héritage plutôt que par un aspect, et il vaut la garantie obtenue — l'oubli du contrôle est inexprimable.
