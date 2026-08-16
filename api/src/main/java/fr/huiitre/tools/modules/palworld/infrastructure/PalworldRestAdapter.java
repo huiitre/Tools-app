@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class PalworldRestAdapter implements PalworldServerPort {
@@ -173,7 +174,7 @@ public class PalworldRestAdapter implements PalworldServerPort {
                 asInt(actor.get("level")),
                 asInt(actor.get("HP")),
                 asInt(actor.get("MaxHP")),
-                (String) actor.get("GuildID"),
+                toCanonicalGuildId((String) actor.get("GuildID")),
                 (String) actor.get("GuildName"),
                 locationX,
                 locationY,
@@ -199,7 +200,7 @@ public class PalworldRestAdapter implements PalworldServerPort {
         PalworldCoord.MapPoint mapPoint = PalworldCoord.savToMap(locationX, locationY);
         return new PalworldBaseView(
                 (String) actor.get("Name"),
-                (String) actor.get("GuildID"),
+                toCanonicalGuildId((String) actor.get("GuildID")),
                 (String) actor.get("GuildName"),
                 locationX,
                 locationY,
@@ -218,7 +219,7 @@ public class PalworldRestAdapter implements PalworldServerPort {
                 asInt(actor.get("level")),
                 asInt(actor.get("HP")),
                 asInt(actor.get("MaxHP")),
-                (String) actor.get("GuildID"),
+                toCanonicalGuildId((String) actor.get("GuildID")),
                 locationX,
                 locationY,
                 asDouble(actor.get("LocationZ")),
@@ -337,5 +338,28 @@ public class PalworldRestAdapter implements PalworldServerPort {
 
     private static double asDouble(Object value) {
         return value == null ? 0.0 : ((Number) value).doubleValue();
+    }
+
+    /**
+     * L'API du serveur écrit les GUID en hexadécimal majuscule sans tirets
+     * (8F05C04606C64CB3B895E84AD4E9D13D) là où les snapshots — donc la base — utilisent
+     * la forme canonique (8f05c046-06c6-4cb3-b895-e84ad4e9d13d). Sans cette conversion,
+     * une même guilde compte pour deux entités dès qu'on croise le direct et le persisté.
+     */
+    private static String toCanonicalGuildId(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String hex = raw.replace("-", "");
+        if (hex.length() != 32) {
+            return raw;
+        }
+        try {
+            return new UUID(
+                    Long.parseUnsignedLong(hex.substring(0, 16), 16),
+                    Long.parseUnsignedLong(hex.substring(16), 16)).toString();
+        } catch (NumberFormatException e) {
+            return raw;
+        }
     }
 }

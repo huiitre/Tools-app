@@ -386,6 +386,35 @@ UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + r
   absent) — prévue par l'utilisateur mais explicitement hors scope pour l'instant. Voir aussi la spec frontend
   dans `web/AGENTS.md` (page Breeding Calculator, pas commencée).
 
+9c. Module Palworld — Format des guildId direct ↔ snapshot (2026-08-16)
+
+  **Le direct et le persisté n'écrivaient pas le même GUID de la même façon.** `/v1/api/game-data`
+  renvoie `8F05C04606C64CB3B895E84AD4E9D13D` (hexadécimal majuscule, sans tirets) là où l'extracteur
+  de snapshots — donc `tools_palworld.guild.guild_id`, colonne `UUID` — porte
+  `8f05c046-06c6-4cb3-b895-e84ad4e9d13d`. Même guilde, deux chaînes : tout rapprochement entre les
+  deux sources échouait silencieusement.
+
+  Symptômes observés côté carte : un joueur connecté et ses propres bases recevaient deux couleurs
+  différentes (la palette est indexée par `guildId`) ; la fusion base direct / base snapshot ne
+  s'accrochait jamais, donc aucune base du direct n'héritait de son `palCount` et le filtre censé
+  écarter les bases détruites les supprimait toutes ; les noms de joueurs en ligne n'étaient jamais
+  rattachés à une base.
+
+  Correction : `PalworldRestAdapter.toCanonicalGuildId` normalise le `GuildID` en UUID canonique aux
+  trois sorties du direct (joueurs, bases, pals de base). La fonction est idempotente — un identifiant
+  déjà canonique ressort inchangé — et laisse passer tel quel ce qui n'est pas 32 caractères
+  hexadécimaux (identifiants du `PalworldMockAdapter`). **La normalisation appartient à
+  l'infrastructure** : le reste de l'application n'a pas à connaître les conventions d'écriture de
+  l'API du jeu, et le frontend n'a rien eu à changer.
+
+  Vérifié en production sur un joueur connecté : les trois bases du direct correspondent aux trois
+  bases du snapshot à moins d'un centième d'unité de distance — l'appariement par coordonnées était
+  correct depuis le début, seul le `guildId` bloquait.
+
+  À retenir : `userId` souffre du même écart (le direct renvoie `gdk_...` / `steam_...`, le snapshot un
+  UUID de sauvegarde) mais il s'agit là de deux identités réellement distinctes, pas d'un formatage —
+  aucune conversion n'est possible, ne pas tenter de les rapprocher par ce biais.
+
 10. Discovery Log
 
 [Architecture] Initialisation du squelette DDD Java 21.
@@ -409,6 +438,7 @@ UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + r
 - user/ : Skins possédés, Watchlist et Historique boutique.
 - Suppression des dossiers à plat usecase/, command/, ports/, view/.
 [Feature] Palworld/Breeding — moteur de reproduction, endpoints result/parents, sync breeding.json (voir section 9b). Pas de cache précalculé (décision motivée). Frontend pas commencé, spec dans web/AGENTS.md.
+[Fix] Palworld — guildId du direct normalisé en UUID canonique dans PalworldRestAdapter : le direct et les snapshots écrivaient le même GUID différemment (voir section 9c).
 
 11. Module Notifications — COMPLÈTE (2026-05-10)
 
