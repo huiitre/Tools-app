@@ -91,7 +91,12 @@ const bases = computed<PalworldBase[]>(() => {
     const replaced = duplicateIndex >= 0 ? merged.splice(duplicateIndex, 1)[0] : undefined
     merged.push({ ...liveBase, palCount: liveBase.palCount ?? replaced?.palCount ?? null })
   }
-  return merged
+
+  // Le snapshot fait seul foi sur l'existence d'une base : il filtre déjà les bases détruites
+  // (is_present). Une base live sans palCount n'a été appariée à aucune base du snapshot —
+  // l'apparier par coordonnées est impossible, une base détruite et une base neuve pouvant
+  // occuper le même emplacement. Elle est donc écartée plutôt qu'ajoutée en double.
+  return merged.filter(base => base.palCount !== null && base.palCount !== undefined)
 })
 
 const GUILD_COLOR_PALETTE = [
