@@ -27,7 +27,7 @@ public static class HealthModule
 
         app.MapGet("/version", () => new
         {
-            service = "api-core",
+            service = "api",
             runtime = ".NET",
             version = applicationVersion,
             gitSha,

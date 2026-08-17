@@ -1,0 +1,35 @@
+name: Deploy API Java Production
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'api-java/**'
+      - '.github/workflows/api-java-deploy-prod.yml'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image (PROD)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./api-java
+          file: ./api-java/Dockerfile
+          push: true
+          tags: |
+            huiitre/tools_api_v3:latest

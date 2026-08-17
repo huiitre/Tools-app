@@ -7,6 +7,14 @@ on:
     paths:
       - 'api/**'
       - '.github/workflows/api-deploy-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-qa-deploy
+  cancel-in-progress: false
 
 jobs:
   build-and-push:
@@ -15,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -25,11 +35,57 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push image (QA)
-        uses: docker/build-push-action@v5
+      - name: Calculate application version from API commits
+        id: version
+        run: |
+          set -euo pipefail
+
+          git_sha="${GITHUB_SHA::7}"
+          version="0.0.0"
+          breaking_pattern='^[[:alnum:]_-]+(\([^)]*\))?!:'
+          feature_pattern='^feat(\([^)]*\))?:'
+          fix_pattern='^fix(\([^)]*\))?:'
+
+          while IFS= read -r commit; do
+            subject="$(git log --format=%s -n 1 "$commit")"
+            message="$(git log --format=%B -n 1 "$commit")"
+            major="${version%%.*}"
+            remainder="${version#*.}"
+            minor="${remainder%%.*}"
+            patch="${remainder#*.}"
+
+            if [[ "$subject" =~ $breaking_pattern ]] || grep --quiet '^BREAKING CHANGE:' <<< "$message"; then
+              version="$((major + 1)).0.0"
+            elif [[ "$subject" =~ $feature_pattern ]]; then
+              version="$major.$((minor + 1)).0"
+            elif [[ "$subject" =~ $fix_pattern ]]; then
+              version="$major.$minor.$((patch + 1))"
+            fi
+          # Les chemins sont énumérés un par un, et non réduits à « api » : ce dossier a porté
+          # l'API Java jusqu'au renommage du 17/08/2026, et un simple « -- api » ferait avaler
+          # tout son historique au calcul (0.16.0 devenait 2.22.0). « api-core » reste dans la
+          # liste pour la même raison, en sens inverse : c'est là que vit l'historique d'avant le
+          # renommage. Un nouveau dossier de premier niveau dans l'API doit être ajouté ici.
+          done < <(git log --reverse --format=%H "$GITHUB_SHA" -- \
+            api-core \
+            api/Modules api/Composition api/Program.cs api/Properties api/tests api/docs \
+            api/Tools.ApiCore.csproj api/Dockerfile \
+            api/appsettings.json api/appsettings.QA.json api/appsettings.Production.json)
+
+          echo "Calculated API version: $version."
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "git_sha=$git_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
         with:
           context: ./api
           file: ./api/Dockerfile
           push: true
+          build-args: |
+            APPLICATION_VERSION=${{ steps.version.outputs.version }}
+            GIT_SHA=${{ steps.version.outputs.git_sha }}
           tags: |
-            huiitre/tools_api_v3:qa
+            huiitre/tools_api_core:qa
+            huiitre/tools_api_core:sha-${{ steps.version.outputs.git_sha }}
