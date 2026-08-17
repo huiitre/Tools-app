@@ -437,7 +437,18 @@ Visualisation en arbre des combinaisons menant à (ou partant de) un Pal. Pas de
   suppression.
 - **Store** : `useNotificationStore` (Pinia) dans `src/modules/Core/Notification/store`.
 - **Transport** : `SignalRNotificationTransport` (connexion à `CoreHub` sur le Core, voir section
-  `clientCore` ci-dessus) gère le flux temps réel. `SseNotificationTransport` et
+  `clientCore` ci-dessus) gère le flux temps réel.
+- **Reconnexion du hub — deux pièges corrigés le 2026-08-17**, après un hub resté mort une heure
+  en production suite à une mise à jour Watchtower :
+  1. `connect()` reçoit désormais **une fonction** (`hubAccessToken`) et non un jeton. Passer la
+     valeur figeait le jeton de la connexion initiale : toute reconnexion survenant plus de dix
+     minutes plus tard se prenait un `401 INVALID_ACCESS_TOKEN` définitif. Le hub est le seul
+     appel du front à ne traverser aucun intercepteur axios — personne d'autre ne renouvelle son
+     jeton. `hubAccessToken` appelle `refreshSession()` au plus une fois par minute et ne décode
+     jamais le JWT.
+  2. `withAutomaticReconnect()` sans argument abandonne après quatre essais (0, 2, 10, 30 s), soit
+     moins que le redémarrage d'un conteneur. Remplacé par
+     `{ nextRetryDelayInMilliseconds: () => 5000 }` : toutes les cinq secondes, sans limite. `SseNotificationTransport` et
   `WebSocketNotificationTransport` (STOMP côté Java) restent dans `notification.transport.ts`
   mais ne sont plus instanciés — à supprimer si aucun retour arrière n'est prévu.
 - **Auto-Sync** : Chargement historique au boot + connexion SignalR auto selon l'auth.
