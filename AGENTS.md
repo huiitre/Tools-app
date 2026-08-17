@@ -5,7 +5,7 @@
 - **API (Alias)** : `api:dev` (alias vers `SPRING_PROFILES_ACTIVE=dev mvn -f api/pom.xml spring-boot:run`)
 - **WEB** : `cd web && npm install && npm run dev`
 - **ELECTRON** : `cd web && npm run electron:watch`
-- **GLOBAL** : `./dev.sh` (API + Web) ou `./dev.sh --electron`
+- **GLOBAL** : `npm run dev` (API Java + API Core + Web) ou `npm run dev:qa` (Web seul, pointé sur les API QA distantes). Lance `dev-console/server.js` : logs des 3 process en temps réel sur `http://localhost:4488` (filtre par process, clear, copier), résout automatiquement l'accès Postgres (direct sur le LAN maison, sinon tunnel SSH via `.env`, voir `.env.example`).
 
 ## Architecture Rules
 - **Règle transversale** : respecter les patterns, composants et conventions déjà présents dans le monorepo. Ne pas introduire de variante locale ou de comportement maison lorsqu'un équivalent existe. Le code doit rester cohérent, maintenable, évolutif et organisé par responsabilité ; demander une clarification avant de choisir une architecture incertaine.

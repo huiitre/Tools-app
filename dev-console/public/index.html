@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>tools-app — dev console</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --panel: #1c1f26;
+    --border: #2b2f38;
+    --text: #d7dbe0;
+    --dim: #7a8090;
+    --accent: #4f8cff;
+    --ok: #3ecf8e;
+    --ko: #e5534b;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 13px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  body { display: flex; flex-direction: column; }
+
+  header {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .6rem 1rem; border-bottom: 1px solid var(--border); background: var(--panel);
+    flex-wrap: wrap;
+  }
+  header h1 { font-size: .95rem; font-weight: 600; margin: 0 .5rem 0 0; }
+  #conn { width: .5rem; height: .5rem; border-radius: 50%; background: var(--dim); flex: none; }
+  #conn.up { background: var(--ok); }
+  #conn.down { background: var(--ko); }
+
+  #sources { display: flex; gap: .5rem; flex-wrap: wrap; margin-left: .5rem; }
+  .source-toggle {
+    display: flex; align-items: center; gap: .35rem;
+    padding: .25rem .5rem; border: 1px solid var(--border); border-radius: .4rem;
+    background: #00000030; user-select: none;
+  }
+  .source-toggle label { cursor: pointer; }
+
+  .spacer { flex: 1; }
+  header button.action {
+    background: var(--border); color: var(--text); border: 1px solid var(--border);
+    border-radius: .4rem; padding: .35rem .7rem; cursor: pointer; font: inherit;
+  }
+  header button.action:hover { border-color: var(--accent); }
+
+  #columns {
+    flex: 1; min-height: 0; display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-auto-rows: 1fr;
+    gap: 1px; background: var(--border); overflow: auto;
+  }
+  .column { display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--bg); }
+  .column.hidden { display: none; }
+
+  .col-header {
+    display: flex; align-items: center; gap: .4rem; padding: .4rem .6rem;
+    background: var(--panel); border-bottom: 1px solid var(--border); flex: none;
+  }
+  .col-header .dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--dim); flex: none; }
+  .col-header .dot.running { background: var(--ok); }
+  .col-header .dot.stopped { background: var(--ko); }
+  .col-header .name { font-weight: 600; flex: 1; }
+  .col-header button {
+    border: none; background: transparent; color: var(--dim); cursor: pointer; font-size: .95em;
+    padding: 0 .2rem;
+  }
+  .col-header button:hover { color: var(--accent); }
+
+  .col-body { flex: 1; min-height: 0; overflow-y: auto; padding: .3rem 0; }
+  .line {
+    padding: .05rem .6rem; white-space: pre-wrap; word-break: break-word;
+  }
+  .line:hover { background: #ffffff08; }
+  .line.system { color: var(--dim); font-style: italic; background: #ffffff05; }
+
+  #empty { color: var(--dim); padding: 1rem; grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>dev-console</h1>
+    <div id="conn" title="État de la connexion SSE"></div>
+    <div id="sources"></div>
+    <div class="spacer"></div>
+    <button class="action" id="restartAll">⟳ Tout relancer</button>
+    <button class="action" id="clear">Effacer (visible)</button>
+    <button class="action" id="copy">Copier (visible)</button>
+  </header>
+  <div id="columns"><div id="empty">En attente des logs…</div></div>
+
+<script>
+(function () {
+  var columnsEl = document.getElementById('columns');
+  var emptyEl = document.getElementById('empty');
+  var sourcesEl = document.getElementById('sources');
+  var connEl = document.getElementById('conn');
+
+  var HIDDEN_BY_DEFAULT = { system: true, tunnel: true };
+  var HAS_PROCESS = { system: false }; // tout le reste (tunnel/api/core/web) a un vrai process
+  var PRIMARY = { api: true, core: true, web: true }; // les 3 avec clear/copy/reload dédiés
+
+  var hidden = {}; // name -> true si la colonne est masquée
+  var cols = {};   // name -> {root, body, dot}
+  var headerToggles = {}; // name -> checkbox
+
+  function ensureColumn(name) {
+    if (cols[name]) return cols[name];
+    if (emptyEl) { emptyEl.remove(); emptyEl = null; }
+    if (HIDDEN_BY_DEFAULT[name]) hidden[name] = true;
+
+    // colonne
+    var root = document.createElement('div');
+    root.className = 'column';
+    if (hidden[name]) root.classList.add('hidden');
+
+    var head = document.createElement('div');
+    head.className = 'col-header';
+
+    var dot = document.createElement('span');
+    dot.className = 'dot';
+    head.appendChild(dot);
+
+    var label = document.createElement('span');
+    label.className = 'name';
+    label.textContent = name;
+    head.appendChild(label);
+
+    if (PRIMARY[name]) {
+      var clearBtn = document.createElement('button');
+      clearBtn.textContent = '␡';
+      clearBtn.title = 'Effacer ' + name;
+      clearBtn.addEventListener('click', function () { body.innerHTML = ''; });
+      head.appendChild(clearBtn);
+
+      var copyBtn = document.createElement('button');
+      copyBtn.textContent = '⧉';
+      copyBtn.title = 'Copier ' + name;
+      copyBtn.addEventListener('click', function () {
+        var lines = body.querySelectorAll('.line');
+        var out = [];
+        lines.forEach(function (l) { out.push(l.textContent); });
+        navigator.clipboard.writeText(out.join('\n')).catch(function () {});
+      });
+      head.appendChild(copyBtn);
+    }
+
+    if (HAS_PROCESS[name] !== false) {
+      var restartBtn = document.createElement('button');
+      restartBtn.textContent = '⟳';
+      restartBtn.title = 'Redémarrer ' + name;
+      restartBtn.addEventListener('click', function () {
+        fetch('/restart/' + encodeURIComponent(name), { method: 'POST' });
+      });
+      head.appendChild(restartBtn);
+    }
+
+    root.appendChild(head);
+
+    var body = document.createElement('div');
+    body.className = 'col-body';
+    root.appendChild(body);
+
+    columnsEl.appendChild(root);
+    cols[name] = { root: root, body: body, dot: dot };
+
+    // toggle dans la barre du haut
+    var wrap = document.createElement('div');
+    wrap.className = 'source-toggle';
+    var toggleDot = document.createElement('span');
+    toggleDot.style.cssText = 'width:.5rem;height:.5rem;border-radius:50%;background:var(--dim)';
+    wrap.appendChild(toggleDot);
+    var id = 'src-toggle-' + name;
+    var checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = !hidden[name];
+    checkbox.id = id;
+    checkbox.addEventListener('change', function () {
+      hidden[name] = !checkbox.checked;
+      root.classList.toggle('hidden', hidden[name]);
+    });
+    wrap.appendChild(checkbox);
+    var lab = document.createElement('label');
+    lab.htmlFor = id;
+    lab.textContent = name;
+    wrap.appendChild(lab);
+    sourcesEl.appendChild(wrap);
+    headerToggles[name] = { dot: toggleDot };
+
+    return cols[name];
+  }
+
+  function isNearBottom(body) {
+    return body.scrollHeight - body.scrollTop - body.clientHeight < 60;
+  }
+
+  function appendLine(entry) {
+    var col = ensureColumn(entry.name);
+    var stick = isNearBottom(col.body);
+
+    var line = document.createElement('div');
+    line.className = 'line' + (entry.kind === 'system' ? ' system' : '');
+    line.textContent = entry.text;
+    col.body.appendChild(line);
+
+    if (stick) col.body.scrollTop = col.body.scrollHeight;
+  }
+
+  function handleEntry(entry) {
+    if (entry.kind === 'status') {
+      var col = ensureColumn(entry.name);
+      col.dot.className = 'dot ' + entry.status;
+      var t = headerToggles[entry.name];
+      if (t) t.dot.style.background = entry.status === 'running' ? 'var(--ok)' : (entry.status === 'stopped' ? 'var(--ko)' : 'var(--dim)');
+      return;
+    }
+    appendLine(entry);
+  }
+
+  document.getElementById('restartAll').addEventListener('click', function () {
+    fetch('/restart-all', { method: 'POST' });
+  });
+
+  document.getElementById('clear').addEventListener('click', function () {
+    for (var name in cols) {
+      if (!hidden[name]) cols[name].body.innerHTML = '';
+    }
+  });
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var parts = [];
+    for (var name in cols) {
+      if (hidden[name]) continue;
+      var lines = cols[name].body.querySelectorAll('.line');
+      if (!lines.length) continue;
+      parts.push('=== ' + name + ' ===');
+      lines.forEach(function (l) { parts.push(l.textContent); });
+    }
+    navigator.clipboard.writeText(parts.join('\n')).catch(function () {});
+  });
+
+  var es = new EventSource('/events');
+  es.onopen = function () { connEl.className = 'up'; };
+  es.onerror = function () { connEl.className = 'down'; };
+  es.onmessage = function (ev) {
+    try { handleEntry(JSON.parse(ev.data)); } catch (e) { console.error('[dev-console]', e, ev.data); }
+  };
+})();
+</script>
+</body>
+</html>
