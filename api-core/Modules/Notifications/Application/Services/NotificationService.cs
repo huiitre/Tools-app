@@ -31,6 +31,7 @@ public sealed class NotificationService(
             command.Body,
             command.Type.ToCode(),
             command.TargetUserId,
+            command.TargetModuleId,
             command.Metadata);
 
         await notificationRepository.AddRecipientsAsync(notificationId, recipients);
@@ -57,8 +58,13 @@ public sealed class NotificationService(
                 RoleCodes.CodesAtOrAbove(minRole));
         }
 
+        if (command.TargetModuleId is { } moduleId)
+        {
+            return await notificationRepository.FindRecipientsByModuleIdAsync(moduleId);
+        }
+
         // Aucun critère : le ciblage global n'a pas été porté, faute d'appelant.
         throw new InvalidOperationException(
-            "Une notification doit désigner un utilisateur ou un rôle minimum.");
+            "Une notification doit désigner un utilisateur, un rôle minimum ou un module.");
     }
 }

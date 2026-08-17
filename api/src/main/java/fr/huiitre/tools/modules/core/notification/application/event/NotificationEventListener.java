@@ -44,13 +44,13 @@ public class NotificationEventListener {
         this.roleRepository = roleRepository;
     }
 
-    // Ciblage par utilisateur ou rôle minimum : persistance déléguée à l'API Core, push local inchangé.
-    // Ciblage par rôle exact ou module (aucun appelant) : écriture locale inchangée.
+    // Ciblage par utilisateur, rôle minimum ou module : persistance déléguée à l'API Core, push local inchangé.
+    // Ciblage par rôle exact ou global (aucun appelant) : écriture locale inchangée.
     @Async
     @EventListener
     @Transactional
     public void handleNotificationEvent(NotificationEvent event) {
-        if (event.targetUserId() != null || event.targetMinRoleCode() != null) {
+        if (event.targetUserId() != null || event.targetMinRoleCode() != null || event.targetModuleId() != null) {
             handleViaApiCore(event);
         } else {
             handleLegacyLocalWrite(event);
@@ -60,10 +60,12 @@ public class NotificationEventListener {
     private void handleViaApiCore(NotificationEvent event) {
         List<Long> potentialTargetIds = event.targetUserId() != null
                 ? List.of(event.targetUserId())
-                : userRepository.findAllIdsByRoleCodes(
-                        RoleHierarchy.getCodesAtOrAbove(event.targetMinRoleCode()).stream()
-                                .map(RoleCode::name)
-                                .toList());
+                : event.targetMinRoleCode() != null
+                        ? userRepository.findAllIdsByRoleCodes(
+                                RoleHierarchy.getCodesAtOrAbove(event.targetMinRoleCode()).stream()
+                                        .map(RoleCode::name)
+                                        .toList())
+                        : userRepository.findAllIdsByModuleId(event.targetModuleId());
 
         List<Long> finalTargetIds = excludingTech(potentialTargetIds);
         if (finalTargetIds.isEmpty()) {
@@ -76,6 +78,7 @@ public class NotificationEventListener {
                 event.type(),
                 event.targetUserId(),
                 event.targetMinRoleCode(),
+                event.targetModuleId(),
                 event.metadata());
 
         notificationId.ifPresent(id -> {
@@ -109,9 +112,7 @@ public class NotificationEventListener {
 
         List<Long> potentialTargetIds = event.targetRoleId() != null
                 ? userRepository.findAllIdsByRoleId(event.targetRoleId())
-                : event.targetModuleId() != null
-                        ? userRepository.findAllIdsByModuleId(event.targetModuleId())
-                        : userRepository.findAllIds();
+                : userRepository.findAllIds();
 
         List<Long> finalTargetIds = excludingTech(potentialTargetIds);
 

@@ -13,5 +13,6 @@ public interface ApiCoreNotificationPort {
             NotificationType type,
             Long targetUserId,
             RoleCode targetMinRole,
+            Long targetModuleId,
             String metadata);
 }

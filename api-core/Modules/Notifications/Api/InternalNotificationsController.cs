@@ -28,13 +28,14 @@ public class InternalNotificationsController(PublishInternalNotificationUseCase 
 
 public sealed record PublishNotificationResponse(long Id);
 
-// DTO entrant : un destinataire précis, ou une population désignée par son rôle minimum.
+// DTO entrant : un destinataire précis, une population par rôle minimum, ou les membres d'un module.
 public sealed record PublishNotificationRequest(
     [Required] string Title,
     [Required] string Body,
     string? Type,
     long? TargetUserId,
     string? TargetMinRole,
+    long? TargetModuleId,
     string? Metadata)
 {
     public SendNotificationCommand ToCommand()
@@ -56,9 +57,14 @@ public sealed record PublishNotificationRequest(
             return SendNotificationCommand.ForMinRole(minRole, Title, Body, type, Metadata);
         }
 
+        if (TargetModuleId is { } moduleId)
+        {
+            return SendNotificationCommand.ForModule(moduleId, Title, Body, type, Metadata);
+        }
+
         throw AppException.Validation(
             "MISSING_NOTIFICATION_TARGET",
-            "Un destinataire ou un rôle minimum est obligatoire.");
+            "Un destinataire, un rôle minimum ou un module est obligatoire.");
     }
 
     // Type omis : INFO, comme la valeur par défaut de la colonne.

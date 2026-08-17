@@ -10,6 +10,7 @@ namespace Tools.ApiCore.IntegrationTests.Fakes;
 public sealed class InMemoryNotificationRepository : INotificationRepository
 {
     public const long AdminUserId = 99;
+    public const long ModuleMemberUserId = 77;
 
     private readonly List<RecordedNotification> notifications = [];
 
@@ -17,15 +18,19 @@ public sealed class InMemoryNotificationRepository : INotificationRepository
 
     public IReadOnlyList<string> RoleCodesAsked { get; private set; } = [];
 
+    public long? ModuleIdAsked { get; private set; }
+
     public void Clear()
     {
         notifications.Clear();
         RoleCodesAsked = [];
+        ModuleIdAsked = null;
     }
 
-    public Task<long> CreateAsync(string title, string body, string type, long? targetUserId, string? metadata)
+    public Task<long> CreateAsync(
+        string title, string body, string type, long? targetUserId, long? targetModuleId, string? metadata)
     {
-        notifications.Add(new RecordedNotification(title, body, type, targetUserId, metadata));
+        notifications.Add(new RecordedNotification(title, body, type, targetUserId, targetModuleId, metadata));
         return Task.FromResult((long)notifications.Count);
     }
 
@@ -33,6 +38,12 @@ public sealed class InMemoryNotificationRepository : INotificationRepository
     {
         RoleCodesAsked = roleCodes.ToList();
         return Task.FromResult<IReadOnlyList<long>>([AdminUserId]);
+    }
+
+    public Task<IReadOnlyList<long>> FindRecipientsByModuleIdAsync(long moduleId)
+    {
+        ModuleIdAsked = moduleId;
+        return Task.FromResult<IReadOnlyList<long>>([ModuleMemberUserId]);
     }
 
     public Task AddRecipientsAsync(long notificationId, IReadOnlyCollection<long> userIds) => Task.CompletedTask;
@@ -45,4 +56,5 @@ public sealed record RecordedNotification(
     string Body,
     string Type,
     long? TargetUserId,
+    long? TargetModuleId,
     string? Metadata);

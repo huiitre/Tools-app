@@ -102,6 +102,26 @@ public sealed class InternalNotificationsTests : IClassFixture<ApiCoreWebApplica
     }
 
     [Fact]
+    public async Task Publishing_with_a_module_id_notifies_the_module_members()
+    {
+        var client = ClientWithToken(ApiCoreWebApplicationFactory.TestInternalToken);
+
+        using var response = await client.PostAsJsonAsync("/internal/notifications", new
+        {
+            title = "Mise à jour Dofus",
+            body = "Les assets ont été synchronisés.",
+            type = "SUCCESS",
+            targetModuleId = 3
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(3, Notifications.ModuleIdAsked);
+
+        var notification = Assert.Single(Notifications.Notifications);
+        Assert.Equal(3, notification.TargetModuleId);
+    }
+
+    [Fact]
     public async Task Publishing_without_a_target_is_refused()
     {
         var client = ClientWithToken(ApiCoreWebApplicationFactory.TestInternalToken);

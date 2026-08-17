@@ -42,6 +42,7 @@ public class ApiCoreNotificationHttpAdapter implements ApiCoreNotificationPort {
             NotificationType type,
             Long targetUserId,
             RoleCode targetMinRole,
+            Long targetModuleId,
             String metadata) {
 
         HttpHeaders headers = new HttpHeaders();
@@ -54,6 +55,7 @@ public class ApiCoreNotificationHttpAdapter implements ApiCoreNotificationPort {
         payload.put("type", type.name());
         payload.put("targetUserId", targetUserId);
         payload.put("targetMinRole", targetMinRole != null ? targetMinRole.name() : null);
+        payload.put("targetModuleId", targetModuleId);
         payload.put("metadata", metadata);
 
         try {
