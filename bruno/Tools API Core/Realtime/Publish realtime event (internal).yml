@@ -12,12 +12,37 @@ http:
   body:
     type: json
     data: |-
+      /* Un seul destinataire au choix parmi targetUserId / targetUserIds / targetMinRole /
+         targetModuleId est obligatoire (voir InternalRealtimePublishController.cs). payload est
+         libre : le Core le relaie tel quel, sans le comprendre.
+      {
+        "eventType": "test.event",
+        "payload": { "message": "..." },
+        "targetUserId": 1              // Un utilisateur précis
+      }
+      {
+        "eventType": "test.event",
+        "payload": { "message": "..." },
+        "targetUserIds": [1, 2, 3]     // Plusieurs utilisateurs précis
+      }
+      {
+        "eventType": "test.event",
+        "payload": { "message": "..." },
+        "targetMinRole": "USER"        // Rôle mini (READ_ONLY/USER/MODERATOR/TECH/ADMIN/OWNER)
+                                        // "USER" = tout le monde (rôle assigné à l'inscription)
+      }
+      {
+        "eventType": "test.event",
+        "payload": { "message": "..." },
+        "targetModuleId": 5            // Tous les membres d'un module
+      }
+      */
       {
         "eventType": "test.event",
         "payload": {
           "message": "Envoi de test depuis Bruno via la route de service à service."
         },
-        "targetUserId": null
+        "targetMinRole": "READ_ONLY"
       }
 
 settings:
@@ -25,3 +50,5 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: Relais d'événement temps réel (SignalR) pour un appelant de service à service. Un seul destinataire au choix est obligatoire.

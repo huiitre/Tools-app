@@ -440,25 +440,29 @@ UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + r
 [Feature] Palworld/Breeding — moteur de reproduction, endpoints result/parents, sync breeding.json (voir section 9b). Pas de cache précalculé (décision motivée). Frontend pas commencé, spec dans web/AGENTS.md.
 [Fix] Palworld — guildId du direct normalisé en UUID canonique dans PalworldRestAdapter : le direct et les snapshots écrivaient le même GUID différemment (voir section 9c).
 
-11. Module Notifications — COMPLÈTE (2026-05-10)
+11. Module Notifications — SPLIT avec l'API Core (à jour 2026-08-17)
 
-Architecture : Asynchrone via Spring Events et temps réel via SSE (Server-Sent Events).
+**Écriture ET push temps réel migrés sur l'API Core** (C#, `NotificationService.Send()` : persiste,
+résout les destinataires, pousse en direct via SignalR — un seul endroit, plus de double
+résolution). `NotificationEventListener` ici ne fait plus que déléguer (`ApiCoreNotificationPort`) —
+la persistance directe et le push WebSocket/STOMP locaux ont disparu du Java avec ce refactor.
 
-Déclenchement : eventPublisher.publishEvent(new NotificationEvent(...)).
-Bus asynchrone (@Async) géré par NotificationEventListener.
-
-Persistence : 1 ligne par destinataire dans user_notifications. Suppression physique (DELETE).
+**Lecture/gestion restent ici** (tant que ce module n'a pas migré — voir le commentaire dans
+`PostgresNotificationRepository.cs` côté Core) : les deux APIs partagent les mêmes tables
+`tools_core.notifications`/`user_notifications`.
 
 Sécurité :
 - Role TECH exclu systématiquement de tous les envois.
-- JWT passé via query param ?token= pour le flux SSE.
 
-Routes :
-- POST  /notifications       → Envoyer manuellement (TECH)
-- GET   /notifications/stream → Flux SSE (Accept: text/event-stream)
+Routes encore servies ici :
+- POST  /notifications        → Envoyer manuellement (TECH) — délègue in fine à l'API Core
 - GET   /notifications        → Liste des notifs actives
 - PATCH /notifications/read   → Marquer comme lu (Batch ids[] ou all)
 - DELETE /notifications       → Supprimer (Batch ids[] ou all)
+
+**Route morte** : `GET /notifications/stream` (SSE) — plus aucun appelant, le front n'utilise plus
+que SignalR côté Core (`SignalRNotificationTransport`). `StreamNotificationsUseCase`/
+`SseNotificationService` n'ont plus de raison d'être, pas encore supprimés.
 
 ## Module Riot/Valorant (Updates 2026-05-10)
 - Authentification : Chiffrement AES-256 du refresh token en base. Rotation auto via ValorantAuthService (utilisable hors contexte de sécurité).

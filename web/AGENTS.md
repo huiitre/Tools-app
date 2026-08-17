@@ -111,8 +111,8 @@ Deux APIs coexistent, et la frontière est **la capacité, pas la technologie** 
 
 | Client | Sert | Contenu |
 |---|---|---|
-| `clientCore` | API Core | identité, profil, administration, et à terme notifications / realtime |
-| `clientV3` (et v1/v2/v3Dofus) | API Java | métier : Dofus, Palworld, Riot |
+| `clientCore` | API Core | identité, profil, administration, realtime (SignalR, `/hub`) |
+| `clientV3` (et v1/v2/v3Dofus) | API Java | métier : Dofus, Palworld, Riot, **et encore la gestion des notifications** (liste/lu/suppression — seuls l'écriture et le push temps réel ont migré côté Core, voir `api/AGENTS.md` §11) |
 
 `auth.fetch.ts` et les trois `fetch` du module Admin (`adminUsers`, `adminModules`,
 `adminStats`) passent par `clientCore`. Aucune vue, aucun store n'a bougé : ils ne connaissent
