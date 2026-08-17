@@ -474,7 +474,7 @@ Les routes du Core sont dans `bruno/Tools API Core/Notifications/`.
 
 ⚠️ **Ordre de déploiement** : l'image web (front sur `clientCore`) doit partir **avant ou en même
 temps** que cette image Java. Déployée seule, l'API Java retire des routes que le front en
-production appelle encore — neutraliser Watchtower sur `tools_api_v3` le temps que `tools_web`
+production appelle encore — neutraliser Watchtower sur `tools_api_java` le temps que `tools_web`
 soit à jour, comme lors de la mise en production du 15/08.
 
 ## Module Riot/Valorant (Updates 2026-05-10)

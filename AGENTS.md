@@ -9,6 +9,16 @@ Depuis le renommage du 17/08/2026 :
 | `api/` | **l'API** — ASP.NET Core (C#). Plateforme transverse (auth, administration, notifications, realtime) et, au fur et à mesure, les modules métier. C'est ici qu'on écrit tout ce qui est nouveau. |
 | `api-java/` | l'API Spring Boot d'origine, figée et vidée module par module. Elle sert encore Dofus, Palworld, Riot et Feedback. |
 
+Le nommage est le même partout — dossier, image Docker et conteneur — pour qu'un nom lu quelque
+part désigne toujours la même chose :
+
+| | dossier | image | conteneur prod | conteneur QA |
+|---|---|---|---|---|
+| C# | `api/` | `huiitre/tools_api` | `tools_api` | `tools_api_qa` |
+| Java | `api-java/` | `huiitre/tools_api_java` | `tools_api_java` | `tools_api_java_qa` |
+
+L'API Java joint l'API C# par `TOOLS_API_HOST` (route interne `/internal/notifications`).
+
 Aucune URL publique n'a changé : `api-java/` garde son `context-path=/api/v3`, `api/` reste servie
 sous `/api/core`. La cible et le mécanisme de bascule sont décrits dans `api/docs/ARCHITECTURE.md`
 (section « Cible : une seule API C# et des satellites polyglottes »).

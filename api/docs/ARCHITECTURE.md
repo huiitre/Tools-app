@@ -613,8 +613,8 @@ sans modifier l'historique Git ni publier de GitHub Release.
 Les images QA publiées sont :
 
 ```text
-huiitre/tools_api_core:qa
-huiitre/tools_api_core:sha-a1b2c3d
+huiitre/tools_api:qa
+huiitre/tools_api:sha-a1b2c3d
 ```
 
 `qa` est suivi par Watchtower ; le tag SHA est immuable et identifie le
@@ -673,7 +673,7 @@ GET /version
 
 - Calculer la version depuis les Conventional Commits apparus après le SHA de
   l'image QA `qa` précédente.
-- Construire et publier `huiitre/tools_api_core:qa`.
+- Construire et publier `huiitre/tools_api:qa`.
 - Publier également un tag immuable `sha-<SHA court>`, en plus de `qa`, pour faciliter le diagnostic et un éventuel rollback.
 
 ### Phase 3 — service QA sur le NAS
