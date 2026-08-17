@@ -1,6 +1,6 @@
-using Tools.ApiCore.Modules.Security.Application.Dto;
+using Tools.Api.Modules.Security.Application.Dto;
 
-namespace Tools.ApiCore.Modules.Security.Application.Ports;
+namespace Tools.Api.Modules.Security.Application.Ports;
 
 // Catalogue des rôles attribuables.
 //

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Tools.ApiCore.Modules.Admin.Application.Dto;
-using Tools.ApiCore.Modules.Admin.Application.Usecases;
+using Tools.Api.Modules.Admin.Application.Dto;
+using Tools.Api.Modules.Admin.Application.Usecases;
 
-namespace Tools.ApiCore.Modules.Admin.Api;
+namespace Tools.Api.Modules.Admin.Api;
 
 // Tableau de bord d'administration.
 //

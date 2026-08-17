@@ -160,12 +160,12 @@ Les réponses 401 et 403 du middleware d'authentification passent par cette mêm
 
 ### Tests d'intégration du contrat HTTP
 
-Les tests HTTP sont dans `api/tests/Tools.ApiCore.IntegrationTests`. Ils démarrent API Core en mémoire avec l'environnement `Testing`, sans ouvrir de port ni appeler PostgreSQL. Les endpoints `/_tests/errors/{kind}` sont mappés uniquement dans cet environnement et ne sont donc pas exposés en Development, QA ou Production.
+Les tests HTTP sont dans `api/tests/Tools.Api.IntegrationTests`. Ils démarrent API Core en mémoire avec l'environnement `Testing`, sans ouvrir de port ni appeler PostgreSQL. Les endpoints `/_tests/errors/{kind}` sont mappés uniquement dans cet environnement et ne sont donc pas exposés en Development, QA ou Production.
 
 Ils vérifient le contrat partagé pour 400, 404, 409 et 500, ainsi que la propagation ou génération de `X-Request-Id`. Ils doivent être complétés lorsqu'un nouveau `code` ou un nouveau comportement HTTP est introduit.
 
 ```bash
-dotnet test api/tests/Tools.ApiCore.IntegrationTests/Tools.ApiCore.IntegrationTests.csproj
+dotnet test api/tests/Tools.Api.IntegrationTests/Tools.Api.IntegrationTests.csproj
 ```
 
 ## Contrat de routes HTTP
@@ -419,7 +419,7 @@ les unitaires sans eux.
 
 ```text
 tests/
-  Tools.ApiCore.IntegrationTests/
+  Tools.Api.IntegrationTests/
     Fixtures/    ApiCoreWebApplicationFactory
     Fakes/       doubles mémoire des ports, une classe par fichier
     Modules/     miroir des modules du code source

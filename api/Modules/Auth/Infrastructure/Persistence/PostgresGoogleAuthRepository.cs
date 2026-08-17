@@ -1,11 +1,11 @@
 using Dapper;
-using Tools.ApiCore.Modules.Auth.Application;
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Auth.Domain;
-using Tools.ApiCore.Modules.Common.Infrastructure;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Google;
+using Tools.Api.Modules.Auth.Application;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Auth.Domain;
+using Tools.Api.Modules.Common.Infrastructure;
+using Tools.Api.Modules.Auth.Application.Ports.Google;
 
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Persistence;
+namespace Tools.Api.Modules.Auth.Infrastructure.Persistence;
 
 // Adaptateur PostgreSQL/Dapper des opérations atomiques de rattachement d'une identité Google.
 public sealed class PostgresGoogleAuthRepository(PostgresSession session) : IGoogleAuthRepository

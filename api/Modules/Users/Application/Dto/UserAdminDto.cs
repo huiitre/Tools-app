@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Users.Application.Dto;
+namespace Tools.Api.Modules.Users.Application.Dto;
 
 // Ligne du tableau d'administration des utilisateurs.
 //

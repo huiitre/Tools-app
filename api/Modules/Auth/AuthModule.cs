@@ -1,19 +1,19 @@
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Google;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Registration;
-using Tools.ApiCore.Modules.Auth.Application.Services;
-using Tools.ApiCore.Modules.Auth.Application.Usecases.Google;
-using Tools.ApiCore.Modules.Auth.Application.Usecases.Password;
-using Tools.ApiCore.Modules.Auth.Application.Usecases.Registration;
-using Tools.ApiCore.Modules.Auth.Application.Usecases.Session;
-using Tools.ApiCore.Modules.Auth.Infrastructure.Google;
-using Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
-using Tools.ApiCore.Modules.Auth.Infrastructure.Password;
-using Tools.ApiCore.Modules.Auth.Infrastructure.Persistence;
-using Tools.ApiCore.Modules.Auth.Infrastructure.Registration;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Auth.Application.Ports.Google;
+using Tools.Api.Modules.Auth.Application.Ports.Password;
+using Tools.Api.Modules.Auth.Application.Ports.Registration;
+using Tools.Api.Modules.Auth.Application.Services;
+using Tools.Api.Modules.Auth.Application.Usecases.Google;
+using Tools.Api.Modules.Auth.Application.Usecases.Password;
+using Tools.Api.Modules.Auth.Application.Usecases.Registration;
+using Tools.Api.Modules.Auth.Application.Usecases.Session;
+using Tools.Api.Modules.Auth.Infrastructure.Google;
+using Tools.Api.Modules.Auth.Infrastructure.Jwt;
+using Tools.Api.Modules.Auth.Infrastructure.Password;
+using Tools.Api.Modules.Auth.Infrastructure.Persistence;
+using Tools.Api.Modules.Auth.Infrastructure.Registration;
 
-namespace Tools.ApiCore.Modules.Auth;
+namespace Tools.Api.Modules.Auth;
 
 // Composition du module Auth : tout ce qui sert à s'identifier.
 //

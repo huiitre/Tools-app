@@ -1,9 +1,9 @@
-using Tools.ApiCore.Modules.Mail.Application.Ports;
-using Tools.ApiCore.Modules.Mail.Application.Services;
-using Tools.ApiCore.Modules.Mail.Application.Usecases;
-using Tools.ApiCore.Modules.Mail.Infrastructure;
+using Tools.Api.Modules.Mail.Application.Ports;
+using Tools.Api.Modules.Mail.Application.Services;
+using Tools.Api.Modules.Mail.Application.Usecases;
+using Tools.Api.Modules.Mail.Infrastructure;
 
-namespace Tools.ApiCore.Modules.Mail;
+namespace Tools.Api.Modules.Mail;
 
 // Composition du module Mail : passerelle d'envoi générique.
 //

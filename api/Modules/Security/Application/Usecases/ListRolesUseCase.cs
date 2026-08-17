@@ -1,9 +1,9 @@
-using Tools.ApiCore.Modules.Security.Application.Dto;
-using Tools.ApiCore.Modules.Security.Application.Ports;
-using Tools.ApiCore.Modules.Security.Application.Services;
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.Api.Modules.Security.Application.Dto;
+using Tools.Api.Modules.Security.Application.Ports;
+using Tools.Api.Modules.Security.Application.Services;
+using Tools.Api.Modules.Security.Domain;
 
-namespace Tools.ApiCore.Modules.Security.Application.Usecases;
+namespace Tools.Api.Modules.Security.Application.Usecases;
 
 // Cas d'usage administrateur : lister les rôles attribuables.
 //

@@ -1,10 +1,10 @@
 using Dapper;
 using Npgsql;
-using Tools.ApiCore.Modules.Common.Infrastructure;
-using Tools.ApiCore.Modules.Users.Application;
-using Tools.ApiCore.Modules.Users.Application.Dto;
+using Tools.Api.Modules.Common.Infrastructure;
+using Tools.Api.Modules.Users.Application;
+using Tools.Api.Modules.Users.Application.Dto;
 
-namespace Tools.ApiCore.Modules.Users.Infrastructure;
+namespace Tools.Api.Modules.Users.Infrastructure;
 
 // Adaptateur PostgreSQL/Dapper du port IUserRepository.
 //

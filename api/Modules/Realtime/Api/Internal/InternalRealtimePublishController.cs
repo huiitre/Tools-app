@@ -2,13 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
-using Tools.ApiCore.Modules.Common.Api.Internal;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Realtime.Application;
-using Tools.ApiCore.Modules.Realtime.Application.Usecases;
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.Api.Modules.Common.Api.Internal;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Realtime.Application;
+using Tools.Api.Modules.Realtime.Application.Usecases;
+using Tools.Api.Modules.Security.Domain;
 
-namespace Tools.ApiCore.Modules.Realtime.Api.Internal;
+namespace Tools.Api.Modules.Realtime.Api.Internal;
 
 // Relais d'événement temps réel pour un appelant de service à service, authentifié par secret partagé.
 [ApiController]

@@ -1,10 +1,10 @@
 using Dapper;
 using Npgsql;
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Common.Infrastructure;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Common.Infrastructure;
+using Tools.Api.Modules.Auth.Application.Ports.Password;
 
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Persistence;
+namespace Tools.Api.Modules.Auth.Infrastructure.Persistence;
 
 // Adaptateur PostgreSQL/Dapper du port IUserAuthProviderRepository.
 public sealed class PostgresUserAuthProviderRepository(PostgresSession session) : IUserAuthProviderRepository

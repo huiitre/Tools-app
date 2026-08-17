@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Realtime.Application.Ports;
+namespace Tools.Api.Modules.Realtime.Application.Ports;
 
 public interface IRealtimePublisher
 {

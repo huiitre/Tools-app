@@ -1,14 +1,14 @@
-using Tools.ApiCore.Modules.Access.Application.Ports;
-using Tools.ApiCore.Modules.Access.Application.Usecases;
-using Tools.ApiCore.Modules.Access.Infrastructure;
+using Tools.Api.Modules.Access.Application.Ports;
+using Tools.Api.Modules.Access.Application.Usecases;
+using Tools.Api.Modules.Access.Infrastructure;
 
-namespace Tools.ApiCore.Modules.Access;
+namespace Tools.Api.Modules.Access;
 
 // Composition du module Access : les modules fonctionnels de l'application et les accès des
 // utilisateurs à ces modules.
 //
 // Il ne s'appelle pas « Modules » pour éviter `Modules/Modules` et un namespace
-// `Tools.ApiCore.Modules.Modules` — le mot désigne ici un module *fonctionnel* (Dofus,
+// `Tools.Api.Modules.Modules` — le mot désigne ici un module *fonctionnel* (Dofus,
 // Palworld…), pas un module de code. `Access` nomme la responsabilité réelle : qui a accès à
 // quoi, et avec quel rôle.
 public static class AccessModule

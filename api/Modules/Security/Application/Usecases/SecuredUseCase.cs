@@ -1,8 +1,8 @@
-using Tools.ApiCore.Modules.Security.Application.Ports;
-using Tools.ApiCore.Modules.Security.Application.Services;
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.Api.Modules.Security.Application.Ports;
+using Tools.Api.Modules.Security.Application.Services;
+using Tools.Api.Modules.Security.Domain;
 
-namespace Tools.ApiCore.Modules.Security.Application.Usecases;
+namespace Tools.Api.Modules.Security.Application.Usecases;
 
 // Use case dont l'exécution exige un appelant identifié et un rôle minimum.
 //

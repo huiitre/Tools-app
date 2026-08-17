@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Common.Application.Exceptions;
+namespace Tools.Api.Modules.Common.Application.Exceptions;
 
 public enum ErrorKind
 {

@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Registration;
+namespace Tools.Api.Modules.Auth.Infrastructure.Registration;
 
 // Paramètres du flux d'inscription. Valeurs alignées sur l'API Java.
 public sealed class RegistrationOptions

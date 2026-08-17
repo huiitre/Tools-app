@@ -1,9 +1,9 @@
 using Dapper;
 using Npgsql;
-using Tools.ApiCore.Modules.Security.Application.Dto;
-using Tools.ApiCore.Modules.Security.Application.Ports;
+using Tools.Api.Modules.Security.Application.Dto;
+using Tools.Api.Modules.Security.Application.Ports;
 
-namespace Tools.ApiCore.Modules.Security.Infrastructure;
+namespace Tools.Api.Modules.Security.Infrastructure;
 
 // Adaptateur PostgreSQL/Dapper du port IRoleRepository.
 //

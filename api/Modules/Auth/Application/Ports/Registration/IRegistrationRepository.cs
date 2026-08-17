@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Auth.Application.Ports.Registration;
+namespace Tools.Api.Modules.Auth.Application.Ports.Registration;
 
 // Écritures propres à l'inscription par mot de passe.
 public interface IRegistrationRepository

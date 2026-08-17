@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using System.Net.Mail;
 using System.Text.Json;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Common.Application.Exceptions;
 
-namespace Tools.ApiCore.Modules.Common.Api.Errors;
+namespace Tools.Api.Modules.Common.Api.Errors;
 
 public sealed class ApiExceptionHandler(
     ApiProblemDetailsFactory problemDetailsFactory,

@@ -1,6 +1,6 @@
-using Tools.ApiCore.Modules.Auth.Domain;
+using Tools.Api.Modules.Auth.Domain;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Ports.Google;
+namespace Tools.Api.Modules.Auth.Application.Ports.Google;
 
 // Port BDD spécifique au rattachement d'une identité Google à un utilisateur Tools.
 public interface IGoogleAuthRepository

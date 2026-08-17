@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Security.Domain;
+namespace Tools.Api.Modules.Security.Domain;
 
 // Modules sur lesquels une autorisation peut porter, tels que `tools_core.module.code` les
 // nomme. L'énumération n'existe que pour qu'un use case désigne son module autrement que par

@@ -3,11 +3,11 @@ using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Google;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Auth.Application.Ports.Google;
 
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Google;
+namespace Tools.Api.Modules.Auth.Infrastructure.Google;
 
 public sealed class GoogleOAuthClient(
     HttpClient httpClient,

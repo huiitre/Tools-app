@@ -6,17 +6,17 @@ info:
 http:
   method: POST
   url: "{{apiCoreUrl}}/mail"
-  auth:
-    type: bearer
-    token: "{{authToken}}"
   body:
     type: json
     data: |-
       {
-        "to": ["{{authEmail}}"],
+        "to": ["yanisdeluca69@gmail.com"],
         "subject": "Test API Core",
         "text": "Envoi de test depuis Bruno via l'API Core."
       }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
 
 settings:
   encodeUrl: true

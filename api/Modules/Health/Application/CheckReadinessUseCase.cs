@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Health.Application;
+namespace Tools.Api.Modules.Health.Application;
 
 public class CheckReadinessUseCase
 {

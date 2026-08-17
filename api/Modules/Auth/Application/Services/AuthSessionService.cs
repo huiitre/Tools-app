@@ -1,7 +1,7 @@
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Auth.Domain;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Auth.Domain;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Services;
+namespace Tools.Api.Modules.Auth.Application.Services;
 
 // Service partagé : Login et Refresh construisent une session exactement de la même manière.
 public sealed class AuthSessionService(IAuthRepository authRepository, ITokenService tokenService)

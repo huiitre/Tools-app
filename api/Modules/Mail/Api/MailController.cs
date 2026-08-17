@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using Tools.ApiCore.Modules.Mail.Application.Usecases;
-using Tools.ApiCore.Modules.Mail.Application;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Mail.Application.Usecases;
+using Tools.Api.Modules.Mail.Application;
+using Tools.Api.Modules.Common.Application.Exceptions;
 
-namespace Tools.ApiCore.Modules.Mail.Api;
+namespace Tools.Api.Modules.Mail.Api;
 
 [ApiController]
 [Route("mail")]

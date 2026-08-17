@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Tools.ApiCore.Modules.Health.Application;
+using Tools.Api.Modules.Health.Application;
 
-namespace Tools.ApiCore.Modules.Health.Api;
+namespace Tools.Api.Modules.Health.Api;
 
 [ApiController]
 [Route("health")]

@@ -1,6 +1,6 @@
-using Tools.ApiCore.Modules.Admin.Application.Dto;
+using Tools.Api.Modules.Admin.Application.Dto;
 
-namespace Tools.ApiCore.Modules.Admin.Application.Ports;
+namespace Tools.Api.Modules.Admin.Application.Ports;
 
 public interface IAdminStatsRepository
 {

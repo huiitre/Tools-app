@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Tools.ApiCore.Modules.Security.Infrastructure;
+using Tools.Api.Modules.Security.Infrastructure;
 
-namespace Tools.ApiCore.Modules.Realtime.Infrastructure;
+namespace Tools.Api.Modules.Realtime.Infrastructure;
 
 // Point de connexion temps réel unique du Core : chaque utilisateur connecté rejoint son
 // groupe à la connexion, et tout module (notifications aujourd'hui, un autre demain) pousse

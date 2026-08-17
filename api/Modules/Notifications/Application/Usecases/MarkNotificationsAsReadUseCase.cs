@@ -1,8 +1,8 @@
-using Tools.ApiCore.Modules.Notifications.Application.Ports;
-using Tools.ApiCore.Modules.Security.Application.Services;
-using Tools.ApiCore.Modules.Security.Application.Usecases;
+using Tools.Api.Modules.Notifications.Application.Ports;
+using Tools.Api.Modules.Security.Application.Services;
+using Tools.Api.Modules.Security.Application.Usecases;
 
-namespace Tools.ApiCore.Modules.Notifications.Application.Usecases;
+namespace Tools.Api.Modules.Notifications.Application.Usecases;
 
 // Marque comme lues les notifications de l'appelant.
 public sealed class MarkNotificationsAsReadUseCase(

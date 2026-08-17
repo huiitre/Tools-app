@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Tools.ApiCore.Modules.Common.Api.Errors;
-using Tools.ApiCore.Modules.Realtime;
+using Tools.Api.Modules.Common.Api.Errors;
+using Tools.Api.Modules.Realtime;
 
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
+namespace Tools.Api.Modules.Auth.Infrastructure.Jwt;
 
 // Authentification du pipeline : « ce jeton est-il valide, et qui es-tu ? ».
 //

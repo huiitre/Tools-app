@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using Tools.ApiCore.Modules.Access.Application;
-using Tools.ApiCore.Modules.Access.Application.Dto;
-using Tools.ApiCore.Modules.Access.Application.Usecases;
+using Tools.Api.Modules.Access.Application;
+using Tools.Api.Modules.Access.Application.Dto;
+using Tools.Api.Modules.Access.Application.Usecases;
 
-namespace Tools.ApiCore.Modules.Access.Api;
+namespace Tools.Api.Modules.Access.Api;
 
 // Modules fonctionnels de l'application et accès des utilisateurs à ces modules.
 //

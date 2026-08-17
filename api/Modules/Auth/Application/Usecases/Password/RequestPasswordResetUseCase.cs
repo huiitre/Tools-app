@@ -1,15 +1,15 @@
 using Microsoft.Extensions.Options;
 using System.Buffers.Text;
 using System.Security.Cryptography;
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Common.Application.Ports;
-using Tools.ApiCore.Modules.Common.Infrastructure;
-using Tools.ApiCore.Modules.Mail.Application.Services;
-using Tools.ApiCore.Modules.Mail.Application;
-using Tools.ApiCore.Modules.Auth.Infrastructure.Password;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Common.Application.Ports;
+using Tools.Api.Modules.Common.Infrastructure;
+using Tools.Api.Modules.Mail.Application.Services;
+using Tools.Api.Modules.Mail.Application;
+using Tools.Api.Modules.Auth.Infrastructure.Password;
+using Tools.Api.Modules.Auth.Application.Ports.Password;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Usecases.Password;
+namespace Tools.Api.Modules.Auth.Application.Usecases.Password;
 
 // Cas d'usage utilisateur : demander un lien de réinitialisation de mot de passe.
 //

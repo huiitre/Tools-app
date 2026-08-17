@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Tools.ApiCore.Modules.Security.Application.Dto;
-using Tools.ApiCore.Modules.Security.Application.Usecases;
+using Tools.Api.Modules.Security.Application.Dto;
+using Tools.Api.Modules.Security.Application.Usecases;
 
-namespace Tools.ApiCore.Modules.Security.Api;
+namespace Tools.Api.Modules.Security.Api;
 
 // Catalogue des rôles attribuables.
 //

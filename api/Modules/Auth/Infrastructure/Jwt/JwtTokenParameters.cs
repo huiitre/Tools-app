@@ -1,7 +1,7 @@
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
+namespace Tools.Api.Modules.Auth.Infrastructure.Jwt;
 
 // Paramètres cryptographiques partagés par l'émission des jetons (JwtTokenService) et par
 // leur validation dans le pipeline (middleware JwtBearer).

@@ -1,6 +1,6 @@
-using Tools.ApiCore.Modules.Access.Application.Dto;
+using Tools.Api.Modules.Access.Application.Dto;
 
-namespace Tools.ApiCore.Modules.Access.Application.Ports;
+namespace Tools.Api.Modules.Access.Application.Ports;
 
 // Catalogue des modules fonctionnels.
 public interface IModuleRepository

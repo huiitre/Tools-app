@@ -1,8 +1,8 @@
-using Tools.ApiCore.Modules.Admin.Application.Ports;
-using Tools.ApiCore.Modules.Admin.Application.Usecases;
-using Tools.ApiCore.Modules.Admin.Infrastructure;
+using Tools.Api.Modules.Admin.Application.Ports;
+using Tools.Api.Modules.Admin.Application.Usecases;
+using Tools.Api.Modules.Admin.Infrastructure;
 
-namespace Tools.ApiCore.Modules.Admin;
+namespace Tools.Api.Modules.Admin;
 
 // Composition du module Admin : le tableau de bord d'administration.
 //

@@ -1,9 +1,9 @@
-using Tools.ApiCore.Modules.Auth.Application.Ports.Registration;
-using Tools.ApiCore.Modules.Auth.Application.Services;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Common.Application.Ports;
+using Tools.Api.Modules.Auth.Application.Ports.Registration;
+using Tools.Api.Modules.Auth.Application.Services;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Common.Application.Ports;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Usecases.Registration;
+namespace Tools.Api.Modules.Auth.Application.Usecases.Registration;
 
 // Cas d'usage visiteur : confirmer son adresse email et activer son compte.
 //

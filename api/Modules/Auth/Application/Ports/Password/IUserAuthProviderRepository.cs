@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+namespace Tools.Api.Modules.Auth.Application.Ports.Password;
 
 // Port du lien entre un utilisateur et ses méthodes d'authentification
 // (tools_core.user_auth_provider).

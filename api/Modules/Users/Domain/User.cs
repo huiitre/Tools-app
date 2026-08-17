@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Users.Domain;
+namespace Tools.Api.Modules.Users.Domain;
 
 public class User
 {

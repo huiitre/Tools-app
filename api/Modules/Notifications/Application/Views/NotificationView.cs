@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Notifications.Application.Views;
+namespace Tools.Api.Modules.Notifications.Application.Views;
 
 // Une notification telle que le frontend l'affiche. `Read` porte l'état de lecture du
 // destinataire, pas celui de la notification : la même notification est lue par l'un et pas

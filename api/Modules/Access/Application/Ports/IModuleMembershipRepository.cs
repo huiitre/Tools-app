@@ -1,6 +1,6 @@
-using Tools.ApiCore.Modules.Access.Application.Dto;
+using Tools.Api.Modules.Access.Application.Dto;
 
-namespace Tools.ApiCore.Modules.Access.Application.Ports;
+namespace Tools.Api.Modules.Access.Application.Ports;
 
 // Appartenance d'un utilisateur à un module, et rôle qu'il y détient
 // (table tools_core.user_module_role).

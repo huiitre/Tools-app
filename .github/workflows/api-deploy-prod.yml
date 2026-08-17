@@ -69,7 +69,7 @@ jobs:
           done < <(git log --reverse --format=%H "$GITHUB_SHA" -- \
             api-core \
             api/Modules api/Composition api/Program.cs api/Properties api/tests api/docs \
-            api/Tools.ApiCore.csproj api/Dockerfile \
+            api/Tools.Api.csproj api/Dockerfile \
             api/appsettings.json api/appsettings.QA.json api/appsettings.Production.json)
 
           echo "Calculated API version: $version."

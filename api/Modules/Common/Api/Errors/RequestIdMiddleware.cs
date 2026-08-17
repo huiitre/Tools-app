@@ -1,6 +1,6 @@
 using Serilog.Context;
 
-namespace Tools.ApiCore.Modules.Common.Api.Errors;
+namespace Tools.Api.Modules.Common.Api.Errors;
 
 public sealed class RequestIdMiddleware(RequestDelegate next)
 {

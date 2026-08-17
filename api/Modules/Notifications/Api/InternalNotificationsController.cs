@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using Tools.ApiCore.Modules.Common.Api.Internal;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Notifications.Application;
-using Tools.ApiCore.Modules.Notifications.Application.Usecases;
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.Api.Modules.Common.Api.Internal;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Notifications.Application;
+using Tools.Api.Modules.Notifications.Application.Usecases;
+using Tools.Api.Modules.Security.Domain;
 
-namespace Tools.ApiCore.Modules.Notifications.Api;
+namespace Tools.Api.Modules.Notifications.Api;
 
 // Publication de notification pour un appelant de service à service, authentifié par secret partagé.
 [ApiController]

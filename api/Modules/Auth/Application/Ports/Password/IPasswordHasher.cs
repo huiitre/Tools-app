@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+namespace Tools.Api.Modules.Auth.Application.Ports.Password;
 
 // Port de hachage de mot de passe : l'Application ne dépend pas directement de BCrypt.
 public interface IPasswordHasher

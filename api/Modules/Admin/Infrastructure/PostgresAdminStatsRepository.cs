@@ -1,9 +1,9 @@
 using Dapper;
 using Npgsql;
-using Tools.ApiCore.Modules.Admin.Application.Dto;
-using Tools.ApiCore.Modules.Admin.Application.Ports;
+using Tools.Api.Modules.Admin.Application.Dto;
+using Tools.Api.Modules.Admin.Application.Ports;
 
-namespace Tools.ApiCore.Modules.Admin.Infrastructure;
+namespace Tools.Api.Modules.Admin.Infrastructure;
 
 // Adaptateur PostgreSQL/Dapper du port IAdminStatsRepository.
 public sealed class PostgresAdminStatsRepository(NpgsqlDataSource dataSource) : IAdminStatsRepository

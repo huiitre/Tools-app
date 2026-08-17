@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
-using Tools.ApiCore.Modules.Common.Api.Errors;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Common.Application.Ports;
-using Tools.ApiCore.Modules.Common.Infrastructure;
+using Tools.Api.Modules.Common.Api.Errors;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Common.Application.Ports;
+using Tools.Api.Modules.Common.Infrastructure;
 
-namespace Tools.ApiCore.Modules.Common;
+namespace Tools.Api.Modules.Common;
 
 // Composition du module Common : le contrat d'erreur HTTP et l'accès PostgreSQL partagé.
 //

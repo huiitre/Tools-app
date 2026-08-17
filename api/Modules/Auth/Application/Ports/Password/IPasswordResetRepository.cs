@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+namespace Tools.Api.Modules.Auth.Application.Ports.Password;
 
 // Port des jetons de réinitialisation de mot de passe (tools_core.user_password_reset).
 public interface IPasswordResetRepository

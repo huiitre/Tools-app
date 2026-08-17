@@ -3,7 +3,7 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
-namespace Tools.ApiCore.Modules.Common.Api.Internal;
+namespace Tools.Api.Modules.Common.Api.Internal;
 
 // Réserve une route aux appels de service à service : un autre composant du NAS — l'API Java,
 // un extracteur — qui n'agit au nom d'aucun utilisateur.

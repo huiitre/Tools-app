@@ -1,6 +1,6 @@
 using Npgsql;
 
-namespace Tools.ApiCore.Modules.Common.Infrastructure;
+namespace Tools.Api.Modules.Common.Infrastructure;
 
 public sealed class PostgresSession
 {

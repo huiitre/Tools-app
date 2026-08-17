@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Mail.Application;
+namespace Tools.Api.Modules.Mail.Application;
 
 public sealed record SendMailCommand(
     IReadOnlyCollection<string> To,

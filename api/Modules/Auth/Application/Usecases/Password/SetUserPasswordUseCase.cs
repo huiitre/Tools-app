@@ -1,13 +1,13 @@
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Common.Application.Ports;
-using Tools.ApiCore.Modules.Security.Application.Ports;
-using Tools.ApiCore.Modules.Security.Application.Services;
-using Tools.ApiCore.Modules.Security.Application.Usecases;
-using Tools.ApiCore.Modules.Security.Domain;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Common.Application.Ports;
+using Tools.Api.Modules.Security.Application.Ports;
+using Tools.Api.Modules.Security.Application.Services;
+using Tools.Api.Modules.Security.Application.Usecases;
+using Tools.Api.Modules.Security.Domain;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Auth.Application.Ports.Password;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Usecases.Password;
+namespace Tools.Api.Modules.Auth.Application.Usecases.Password;
 
 // Cas d'usage utilisateur : définir ou changer son mot de passe depuis ses options.
 //

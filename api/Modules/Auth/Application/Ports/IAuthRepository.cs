@@ -1,6 +1,6 @@
-using Tools.ApiCore.Modules.Auth.Domain;
+using Tools.Api.Modules.Auth.Domain;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Ports;
+namespace Tools.Api.Modules.Auth.Application.Ports;
 
 // Port BDD : l'Application décrit les données dont elle a besoin, sans connaître PostgreSQL/Dapper.
 public interface IAuthRepository

@@ -1,7 +1,7 @@
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Google;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Auth.Application.Ports.Google;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Usecases.Google;
+namespace Tools.Api.Modules.Auth.Application.Usecases.Google;
 
 // Cas d'usage utilisateur : démarrer une connexion Google dans le navigateur ou Electron.
 public sealed class GetGoogleAuthorizationUrlUseCase(

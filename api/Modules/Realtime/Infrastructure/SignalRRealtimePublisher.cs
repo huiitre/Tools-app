@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
-using Tools.ApiCore.Modules.Realtime.Application.Ports;
+using Tools.Api.Modules.Realtime.Application.Ports;
 
-namespace Tools.ApiCore.Modules.Realtime.Infrastructure;
+namespace Tools.Api.Modules.Realtime.Infrastructure;
 
 public sealed class SignalRRealtimePublisher(IHubContext<CoreHub> hubContext) : IRealtimePublisher
 {

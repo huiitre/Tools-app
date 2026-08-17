@@ -1,8 +1,8 @@
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Auth.Application.Services;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Google;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Auth.Application.Services;
+using Tools.Api.Modules.Auth.Application.Ports.Google;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Usecases.Google;
+namespace Tools.Api.Modules.Auth.Application.Usecases.Google;
 
 // Cas d'usage utilisateur : terminer le callback Google et ouvrir une session Tools.
 public sealed class CompleteGoogleOAuthLoginUseCase(

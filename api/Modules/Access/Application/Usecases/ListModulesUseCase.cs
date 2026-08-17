@@ -1,11 +1,11 @@
-using Tools.ApiCore.Modules.Access.Application.Dto;
-using Tools.ApiCore.Modules.Access.Application.Ports;
-using Tools.ApiCore.Modules.Security.Application.Ports;
-using Tools.ApiCore.Modules.Security.Application.Services;
-using Tools.ApiCore.Modules.Security.Application.Usecases;
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.Api.Modules.Access.Application.Dto;
+using Tools.Api.Modules.Access.Application.Ports;
+using Tools.Api.Modules.Security.Application.Ports;
+using Tools.Api.Modules.Security.Application.Services;
+using Tools.Api.Modules.Security.Application.Usecases;
+using Tools.Api.Modules.Security.Domain;
 
-namespace Tools.ApiCore.Modules.Access.Application.Usecases;
+namespace Tools.Api.Modules.Access.Application.Usecases;
 
 // Cas d'usage administrateur : lister les modules fonctionnels.
 //

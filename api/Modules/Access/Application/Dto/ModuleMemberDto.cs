@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Access.Application.Dto;
+namespace Tools.Api.Modules.Access.Application.Dto;
 
 // Un utilisateur ayant accès à un module, avec le rôle qu'il y détient.
 //

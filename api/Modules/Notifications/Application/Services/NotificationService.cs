@@ -1,8 +1,8 @@
-using Tools.ApiCore.Modules.Notifications.Application.Ports;
-using Tools.ApiCore.Modules.Realtime.Application.Ports;
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.Api.Modules.Notifications.Application.Ports;
+using Tools.Api.Modules.Realtime.Application.Ports;
+using Tools.Api.Modules.Security.Domain;
 
-namespace Tools.ApiCore.Modules.Notifications.Application.Services;
+namespace Tools.Api.Modules.Notifications.Application.Services;
 
 // Persiste une notification, lui résout ses destinataires, et pousse en temps réel.
 //

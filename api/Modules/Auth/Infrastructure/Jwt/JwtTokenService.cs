@@ -4,11 +4,11 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Tools.ApiCore.Modules.Auth.Application.Services;
-using Tools.ApiCore.Modules.Auth.Domain;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Auth.Application.Services;
+using Tools.Api.Modules.Auth.Domain;
+using Tools.Api.Modules.Common.Application.Exceptions;
 
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
+namespace Tools.Api.Modules.Auth.Infrastructure.Jwt;
 
 // Adaptateur JWT compatible avec l'API Java : même secret, issuer et choix d'algorithme HMAC.
 public sealed class JwtTokenService(
