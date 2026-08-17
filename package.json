@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "dev": "node dev-console/server.js",
+    "dev:qa": "node dev-console/server.js qa",
     "api:dev": "cd api && SPRING_PROFILES_ACTIVE=dev mvn spring-boot:run",
     "api:build": "cd api && mvn clean package && cd ..",
     "core:dev": "cd api-core && DOTNET_WATCH_RESTART_ON_RUDE_EDIT=1 dotnet watch run",

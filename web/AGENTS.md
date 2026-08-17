@@ -135,8 +135,10 @@ VITE_TOOLS_CORE_BASE_URL=http://localhost:5090
 Variable absente → repli automatique sur `${VITE_TOOLS_API_BASE_URL}/api/core`, le cas de QA et
 de production. Les workflows CI n'ont donc rien à passer.
 
-Ce qui **reste sur Java** faute d'équivalent Core : le realtime des notifications (STOMP), en
-attente de la tranche SignalR. C'est le dernier morceau du Core encore servi par Java.
+Le realtime (notifications, et à terme tout autre événement temps réel) est passé sur le Core :
+point de connexion WebSocket unique `CoreHub` (SignalR) sur `${VITE_TOOLS_CORE_BASE_URL}/hub`.
+Le token voyage en query string (`access_token`) car un navigateur ne peut pas poser de header
+custom sur la poignée de main WebSocket. Plus rien ne dépend du STOMP/WebSocket Java.
 
 ### `refreshSession()` — renouvellement de session
 
@@ -426,11 +428,14 @@ Visualisation en arbre des combinaisons menant à (ou partant de) un Pal. Pas de
 - Types de réponse API (`BreedingResultView`, `BreedingParentPairView` côté Java) à retranspiper en interfaces TS dans `breeding/types/breeding.types.ts`, camelCase (Jackson par défaut, pas d'annotation — vérifier le JSON réel une fois l'endpoint appelé plutôt que deviner les noms de champs).
 - Client HTTP : `clientV3` (`@/services/axiosInstance`), comme partout ailleurs dans Palworld.
 
-## Module Notifications — COMPLÈTE (2026-05-10)
+## Module Notifications — COMPLÈTE (2026-05-10, transport SignalR depuis 2026-08-17)
 
 - **Store** : `useNotificationStore` (Pinia) dans `src/modules/Core/Notification/store`.
-- **Transport** : `SseNotificationTransport` gère le flux temps réel.
-- **Auto-Sync** : Chargement historique au boot + connexion SSE auto selon l'auth.
+- **Transport** : `SignalRNotificationTransport` (connexion à `CoreHub` sur le Core, voir section
+  `clientCore` ci-dessus) gère le flux temps réel. `SseNotificationTransport` et
+  `WebSocketNotificationTransport` (STOMP côté Java) restent dans `notification.transport.ts`
+  mais ne sont plus instanciés — à supprimer si aucun retour arrière n'est prévu.
+- **Auto-Sync** : Chargement historique au boot + connexion SignalR auto selon l'auth.
 - **Types** : Utilise l'interface `AppNotification` pour éviter le conflit avec `window.Notification`.
 - Batch : `markAsRead([ids])` et `remove([ids])` gèrent le mode global si tableau vide.
 - OS Push : Déclenche une notif système si l'onglet n'a pas le focus.
