@@ -11,10 +11,14 @@ public interface INotificationRepository
         string body,
         string type,
         long? targetUserId,
+        long? targetModuleId,
         string? metadata);
 
     // Comptes dont le rôle global atteint au moins l'un des codes fournis, hors comptes TECH.
     Task<IReadOnlyList<long>> FindRecipientsByRoleCodesAsync(IReadOnlyCollection<string> roleCodes);
+
+    // Membres du module désigné, hors comptes TECH.
+    Task<IReadOnlyList<long>> FindRecipientsByModuleIdAsync(long moduleId);
 
     // Une ligne par destinataire : c'est elle qui porte l'état de lecture.
     Task AddRecipientsAsync(long notificationId, IReadOnlyCollection<long> userIds);

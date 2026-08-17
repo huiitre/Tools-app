@@ -23,7 +23,7 @@ public sealed class MailController(SendMailUseCase sendMailUseCase) : Controller
         return NoContent();
     }
 
-    private static byte[] Decode(string value)
+    internal static byte[] Decode(string value)
     {
         try
         {

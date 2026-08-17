@@ -1,0 +1,27 @@
+info:
+  name: Publish notification (internal)
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiCoreUrl}}/internal/notifications"
+  headers:
+    - name: X-Internal-Token
+      value: "{{internalApiToken}}"
+  auth: none
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Test API Core - route interne",
+        "body": "Envoi de test depuis Bruno via la route de service à service.",
+        "type": "INFO",
+        "targetUserId": 1
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

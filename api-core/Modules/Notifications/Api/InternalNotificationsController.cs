@@ -4,39 +4,38 @@ using System.ComponentModel.DataAnnotations;
 using Tools.ApiCore.Modules.Common.Api.Internal;
 using Tools.ApiCore.Modules.Common.Application.Exceptions;
 using Tools.ApiCore.Modules.Notifications.Application;
-using Tools.ApiCore.Modules.Notifications.Application.Services;
+using Tools.ApiCore.Modules.Notifications.Application.Usecases;
 using Tools.ApiCore.Modules.Security.Domain;
 
 namespace Tools.ApiCore.Modules.Notifications.Api;
 
-// Publication d'une notification par un autre service : l'API Java pour ses modules métier,
-// un extracteur du NAS, et demain le push realtime.
-//
-// AllowAnonymous est indispensable : la FallbackPolicy exige un utilisateur authentifié sur
-// toute route non déclarée, et l'appelant ici est une machine qui n'agit au nom de personne.
-// C'est InternalApi qui prend le relais du contrôle.
+// Publication de notification pour un appelant de service à service, authentifié par secret partagé.
 [ApiController]
 [Route("internal/notifications")]
 [AllowAnonymous]
 [InternalApi]
-public class InternalNotificationsController(NotificationService notificationService) : ControllerBase
+public class InternalNotificationsController(PublishInternalNotificationUseCase publishInternalNotificationUseCase)
+    : ControllerBase
 {
+    // 200 + id si créée, 204 si aucun destinataire n'a été trouvé.
     [HttpPost]
     public async Task<IActionResult> Publish(PublishNotificationRequest request)
     {
-        await notificationService.Send(request.ToCommand());
-        return NoContent();
+        var notificationId = await publishInternalNotificationUseCase.Execute(request.ToCommand());
+        return notificationId is { } id ? Ok(new PublishNotificationResponse(id)) : NoContent();
     }
 }
 
-// DTO entrant. Le ciblage reprend celui de l'API Java : un destinataire précis, ou une
-// population désignée par son rôle minimum.
+public sealed record PublishNotificationResponse(long Id);
+
+// DTO entrant : un destinataire précis, une population par rôle minimum, ou les membres d'un module.
 public sealed record PublishNotificationRequest(
     [Required] string Title,
     [Required] string Body,
     string? Type,
     long? TargetUserId,
     string? TargetMinRole,
+    long? TargetModuleId,
     string? Metadata)
 {
     public SendNotificationCommand ToCommand()
@@ -58,9 +57,14 @@ public sealed record PublishNotificationRequest(
             return SendNotificationCommand.ForMinRole(minRole, Title, Body, type, Metadata);
         }
 
+        if (TargetModuleId is { } moduleId)
+        {
+            return SendNotificationCommand.ForModule(moduleId, Title, Body, type, Metadata);
+        }
+
         throw AppException.Validation(
             "MISSING_NOTIFICATION_TARGET",
-            "Un destinataire ou un rôle minimum est obligatoire.");
+            "Un destinataire, un rôle minimum ou un module est obligatoire.");
     }
 
     // Type omis : INFO, comme la valeur par défaut de la colonne.

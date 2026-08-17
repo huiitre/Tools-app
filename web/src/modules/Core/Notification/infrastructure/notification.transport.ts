@@ -1,3 +1,4 @@
+import * as signalR from '@microsoft/signalr';
 import { AppNotification } from '../domain/notification.types';
 import { socketService } from '../../Socket/infrastructure/socket.service';
 
@@ -93,5 +94,38 @@ export class WebSocketNotificationTransport implements NotificationTransport {
   disconnect(): void {
     // On déconnecte tout le socket lors d'un logout pour nettoyer la session backend
     socketService.disconnect();
+  }
+}
+
+// Point de connexion réel de l'API Core (voir CoreHub) : notifications, et demain tout autre
+// événement temps réel, sur la même connexion.
+export class SignalRNotificationTransport implements NotificationTransport {
+  private connection: signalR.HubConnection | null = null;
+
+  connect(
+    url: string,
+    token: string,
+    onConnect: () => void,
+    onMessage: (notif: AppNotification) => void,
+    onError: () => void
+  ): void {
+    if (this.connection) this.disconnect();
+
+    this.connection = new signalR.HubConnectionBuilder()
+      .withUrl(url, { accessTokenFactory: () => token })
+      .withAutomaticReconnect()
+      .build();
+
+    this.connection.on('ReceiveNotification', onMessage);
+    this.connection.onreconnected(() => onConnect());
+    this.connection.onreconnecting(() => onError());
+    this.connection.onclose(() => onError());
+
+    this.connection.start().then(onConnect).catch(() => onError());
+  }
+
+  disconnect(): void {
+    this.connection?.stop();
+    this.connection = null;
   }
 }

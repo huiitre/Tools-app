@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Tools.ApiCore.Modules.Common.Api.Errors;
+using Tools.ApiCore.Modules.Realtime;
 
 namespace Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
 
@@ -37,6 +38,7 @@ public static class JwtAuthenticationExtensions
                     configuration["JWT_SECRET"] ?? string.Empty);
                 options.Events = new JwtBearerEvents
                 {
+                    OnMessageReceived = ReadTokenFromQueryStringForHub,
                     OnTokenValidated = EnforceAccessTokenRules,
                     OnChallenge = WriteUnauthorizedProblem,
                     OnForbidden = WriteForbiddenProblem
@@ -54,6 +56,18 @@ public static class JwtAuthenticationExtensions
         });
 
         return services;
+    }
+
+    // Le navigateur ne peut pas poser d'en-tête personnalisé sur la poignée de main WebSocket :
+    // le token voyage donc en query string pour cette seule route, jamais ailleurs.
+    private static Task ReadTokenFromQueryStringForHub(MessageReceivedContext context)
+    {
+        if (context.HttpContext.Request.Path.StartsWithSegments(RealtimeModule.HubRoute))
+        {
+            context.Token = context.Request.Query["access_token"];
+        }
+
+        return Task.CompletedTask;
     }
 
     // Le middleware valide signature, issuer et expiration — rien de plus. Ces deux règles

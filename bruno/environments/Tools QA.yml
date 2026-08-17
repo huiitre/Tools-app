@@ -7,3 +7,5 @@ variables:
     value: https://qa.api.tools.huiitre.fr/api/v3
   - secret: true
     name: authToken
+  - secret: true
+    name: internalApiToken

@@ -19,6 +19,7 @@ public static class MailModule
         builder.Services.AddSingleton<IMailSender, SmtpMailSender>();
         builder.Services.AddScoped<MailService>();
         builder.Services.AddScoped<SendMailUseCase>();
+        builder.Services.AddScoped<SendInternalMailUseCase>();
 
         return builder;
     }

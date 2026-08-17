@@ -2,18 +2,14 @@ using Tools.ApiCore.Modules.Security.Domain;
 
 namespace Tools.ApiCore.Modules.Notifications.Application;
 
-// Envoi d'une notification. La cible est décrite par l'un des deux critères ci-dessous,
-// jamais les deux — d'où les fabriques, qui rendent l'intention explicite à l'appel.
-//
-// Seuls ces deux ciblages sont portés pour l'instant : ce sont les seuls que l'API Java
-// utilise réellement. Ses variantes `global()` et `module()` existent sans appelant et seront
-// reprises lorsqu'un besoin apparaîtra.
+// Envoi d'une notification. La cible est décrite par un seul des critères ci-dessous — d'où les fabriques.
 public sealed record SendNotificationCommand(
     string Title,
     string Body,
     NotificationType Type,
     long? TargetUserId = null,
     RoleCode? TargetMinRole = null,
+    long? TargetModuleId = null,
 
     // JSON libre consommé par le frontend, par exemple {"route": "valorant-shop"}.
     string? Metadata = null)
@@ -34,4 +30,13 @@ public sealed record SendNotificationCommand(
         NotificationType type,
         string? metadata = null) =>
         new(title, body, type, TargetMinRole: minRole, Metadata: metadata);
+
+    // Destinataires : tous les membres du module désigné.
+    public static SendNotificationCommand ForModule(
+        long moduleId,
+        string title,
+        string body,
+        NotificationType type,
+        string? metadata = null) =>
+        new(title, body, type, TargetModuleId: moduleId, Metadata: metadata);
 }

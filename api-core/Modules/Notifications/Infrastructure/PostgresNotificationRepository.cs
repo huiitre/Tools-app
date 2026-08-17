@@ -1,6 +1,5 @@
 using Dapper;
 using Npgsql;
-using NpgsqlTypes;
 using Tools.ApiCore.Modules.Notifications.Application.Ports;
 
 namespace Tools.ApiCore.Modules.Notifications.Infrastructure;
@@ -16,14 +15,14 @@ public sealed class PostgresNotificationRepository(NpgsqlDataSource dataSource) 
         string body,
         string type,
         long? targetUserId,
+        long? targetModuleId,
         string? metadata)
     {
-        // target_role_id et target_module_id restent nuls : le ciblage par rôle minimum n'est
-        // pas persistable en l'état — l'API Java ne le stocke pas davantage, elle ne conserve
-        // que les critères qui désignent une ligne précise.
+        // ::jsonb caste le paramètre texte côté Postgres — Dapper ne sait pas binder un
+        // NpgsqlParameter typé directement dans un objet anonyme.
         const string sql = """
-            INSERT INTO tools_core.notifications (title, body, type, target_user_id, metadata)
-            VALUES (@Title, @Body, @Type, @TargetUserId, @Metadata)
+            INSERT INTO tools_core.notifications (title, body, type, target_user_id, target_module_id, metadata)
+            VALUES (@Title, @Body, @Type, @TargetUserId, @TargetModuleId, @Metadata::jsonb)
             RETURNING id
             """;
 
@@ -34,8 +33,8 @@ public sealed class PostgresNotificationRepository(NpgsqlDataSource dataSource) 
             Body = body,
             Type = type,
             TargetUserId = targetUserId,
-            // metadata est de type jsonb : sans ce typage explicite, Npgsql enverrait du texte.
-            Metadata = metadata is null ? null : new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = metadata }
+            TargetModuleId = targetModuleId,
+            Metadata = metadata
         }));
     }
 
@@ -78,6 +77,28 @@ public sealed class PostgresNotificationRepository(NpgsqlDataSource dataSource) 
             UserIds = userIds.ToArray(),
             NotificationId = notificationId
         }));
+    }
+
+    public async Task<IReadOnlyList<long>> FindRecipientsByModuleIdAsync(long moduleId)
+    {
+        const string sql = """
+            SELECT DISTINCT umr.user_id
+            FROM tools_core.user_module_role umr
+            INNER JOIN tools_core.users u ON u.id = umr.user_id
+            WHERE umr.module_id = @ModuleId
+              AND u.is_active
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM tools_core.user_role tech_role
+                  INNER JOIN tools_core.role tech ON tech.id = tech_role.role_id
+                  WHERE tech_role.user_id = umr.user_id AND tech.code = 'TECH'
+              )
+            """;
+
+        await using var connection = await dataSource.OpenConnectionAsync();
+        var recipients = await connection.QueryAsync<long>(
+            new CommandDefinition(sql, new { ModuleId = moduleId }));
+        return recipients.ToList();
     }
 
     public async Task<bool> UserExistsAsync(long userId)

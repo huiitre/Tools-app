@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Tools.ApiCore.IntegrationTests.Fakes;
 using Tools.ApiCore.IntegrationTests.Fixtures;
@@ -18,10 +19,14 @@ public sealed class InternalNotificationsTests : IClassFixture<ApiCoreWebApplica
     {
         this.factory = factory;
         factory.Services.GetRequiredService<InMemoryNotificationRepository>().Clear();
+        factory.Services.GetRequiredService<RecordingRealtimePublisher>().Clear();
     }
 
     private InMemoryNotificationRepository Notifications =>
         factory.Services.GetRequiredService<InMemoryNotificationRepository>();
+
+    private RecordingRealtimePublisher RealtimePublisher =>
+        factory.Services.GetRequiredService<RecordingRealtimePublisher>();
 
     private static object ValidPayload => new
     {
@@ -39,18 +44,25 @@ public sealed class InternalNotificationsTests : IClassFixture<ApiCoreWebApplica
     }
 
     [Fact]
-    public async Task Publishing_with_the_shared_secret_records_the_notification()
+    public async Task Publishing_with_the_shared_secret_records_the_notification_and_returns_its_id()
     {
         var client = ClientWithToken(ApiCoreWebApplicationFactory.TestInternalToken);
 
         using var response = await client.PostAsJsonAsync("/internal/notifications", ValidPayload);
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(body.GetProperty("id").GetInt64() > 0);
 
         var notification = Assert.Single(Notifications.Notifications);
         Assert.Equal("Sync terminée", notification.Title);
         Assert.Equal("SUCCESS", notification.Type);
         Assert.Equal(["ADMIN", "OWNER"], Notifications.RoleCodesAsked);
+
+        var push = RealtimePublisher.LastPublish;
+        Assert.NotNull(push);
+        Assert.Equal("ReceiveNotification", push!.EventType);
+        Assert.Equal([InMemoryNotificationRepository.AdminUserId], push.UserIds);
     }
 
     // 404 et non 401 : la réponse ne doit pas confirmer que la route existe.
@@ -96,6 +108,26 @@ public sealed class InternalNotificationsTests : IClassFixture<ApiCoreWebApplica
         using var response = await client.PostAsJsonAsync("/internal/notifications", ValidPayload);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Publishing_with_a_module_id_notifies_the_module_members()
+    {
+        var client = ClientWithToken(ApiCoreWebApplicationFactory.TestInternalToken);
+
+        using var response = await client.PostAsJsonAsync("/internal/notifications", new
+        {
+            title = "Mise à jour Dofus",
+            body = "Les assets ont été synchronisés.",
+            type = "SUCCESS",
+            targetModuleId = 3
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(3, Notifications.ModuleIdAsked);
+
+        var notification = Assert.Single(Notifications.Notifications);
+        Assert.Equal(3, notification.TargetModuleId);
     }
 
     [Fact]

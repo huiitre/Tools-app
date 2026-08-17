@@ -1,28 +1,30 @@
 using Tools.ApiCore.Modules.Notifications.Application.Ports;
+using Tools.ApiCore.Modules.Realtime.Application.Ports;
 using Tools.ApiCore.Modules.Security.Domain;
 
 namespace Tools.ApiCore.Modules.Notifications.Application.Services;
 
-// Persiste une notification et lui résout ses destinataires.
+// Persiste une notification, lui résout ses destinataires, et pousse en temps réel.
 //
 // Ce n'est pas un use case sécurisé : il est appelé depuis des flux sans utilisateur
 // authentifié — une inscription, par exemple, est le fait d'un visiteur anonyme. Le contrôle
 // d'accès appartient aux use cases qui s'en servent, comme pour MailService.
-//
-// Le temps réel n'est pas de son ressort : la notification est enregistrée, et le destinataire
-// la découvre au prochain chargement. Le push viendra avec SignalR, sans rien changer ici.
 public sealed class NotificationService(
     INotificationRepository notificationRepository,
+    IRealtimePublisher realtimePublisher,
     ILogger<NotificationService> logger)
 {
-    public async Task Send(SendNotificationCommand command)
+    private const string PushEventType = "ReceiveNotification";
+
+    // Retourne l'identifiant créé, nul si aucun destinataire n'a été trouvé.
+    public async Task<long?> Send(SendNotificationCommand command)
     {
         var recipients = await ResolveRecipients(command);
         if (recipients.Count == 0)
         {
             // Sans destinataire, le message source serait un orphelin que personne ne lira.
             logger.LogWarning("Notification sans destinataire, ignorée : {Title}", command.Title);
-            return;
+            return null;
         }
 
         var notificationId = await notificationRepository.CreateAsync(
@@ -30,6 +32,7 @@ public sealed class NotificationService(
             command.Body,
             command.Type.ToCode(),
             command.TargetUserId,
+            command.TargetModuleId,
             command.Metadata);
 
         await notificationRepository.AddRecipientsAsync(notificationId, recipients);
@@ -39,6 +42,20 @@ public sealed class NotificationService(
             notificationId,
             recipients.Count,
             command.Title);
+
+        // Contrat consommé par le front : { id, title, body, type, metadata, createdAt, read }.
+        await realtimePublisher.PublishAsync(recipients, PushEventType, new
+        {
+            id = notificationId,
+            title = command.Title,
+            body = command.Body,
+            type = command.Type.ToCode(),
+            metadata = command.Metadata,
+            createdAt = DateTimeOffset.UtcNow,
+            read = false
+        });
+
+        return notificationId;
     }
 
     private async Task<IReadOnlyList<long>> ResolveRecipients(SendNotificationCommand command)
@@ -54,8 +71,13 @@ public sealed class NotificationService(
                 RoleCodes.CodesAtOrAbove(minRole));
         }
 
-        // Aucun critère : le ciblage global de l'API Java n'a pas été porté, faute d'appelant.
+        if (command.TargetModuleId is { } moduleId)
+        {
+            return await notificationRepository.FindRecipientsByModuleIdAsync(moduleId);
+        }
+
+        // Aucun critère : le ciblage global n'a pas été porté, faute d'appelant.
         throw new InvalidOperationException(
-            "Une notification doit désigner un utilisateur ou un rôle minimum.");
+            "Une notification doit désigner un utilisateur, un rôle minimum ou un module.");
     }
 }
