@@ -15,14 +15,15 @@ public sealed class NotificationService(
     INotificationRepository notificationRepository,
     ILogger<NotificationService> logger)
 {
-    public async Task Send(SendNotificationCommand command)
+    // Retourne l'identifiant créé, nul si aucun destinataire n'a été trouvé.
+    public async Task<long?> Send(SendNotificationCommand command)
     {
         var recipients = await ResolveRecipients(command);
         if (recipients.Count == 0)
         {
             // Sans destinataire, le message source serait un orphelin que personne ne lira.
             logger.LogWarning("Notification sans destinataire, ignorée : {Title}", command.Title);
-            return;
+            return null;
         }
 
         var notificationId = await notificationRepository.CreateAsync(
@@ -39,6 +40,8 @@ public sealed class NotificationService(
             notificationId,
             recipients.Count,
             command.Title);
+
+        return notificationId;
     }
 
     private async Task<IReadOnlyList<long>> ResolveRecipients(SendNotificationCommand command)
@@ -54,7 +57,7 @@ public sealed class NotificationService(
                 RoleCodes.CodesAtOrAbove(minRole));
         }
 
-        // Aucun critère : le ciblage global de l'API Java n'a pas été porté, faute d'appelant.
+        // Aucun critère : le ciblage global n'a pas été porté, faute d'appelant.
         throw new InvalidOperationException(
             "Une notification doit désigner un utilisateur ou un rôle minimum.");
     }

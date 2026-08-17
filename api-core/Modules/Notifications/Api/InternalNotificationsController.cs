@@ -9,12 +9,7 @@ using Tools.ApiCore.Modules.Security.Domain;
 
 namespace Tools.ApiCore.Modules.Notifications.Api;
 
-// Publication d'une notification par un autre service : l'API Java pour ses modules métier,
-// un extracteur du NAS, et demain le push realtime.
-//
-// AllowAnonymous est indispensable : la FallbackPolicy exige un utilisateur authentifié sur
-// toute route non déclarée, et l'appelant ici est une machine qui n'agit au nom de personne.
-// C'est InternalApi qui prend le relais du contrôle.
+// Publication de notification pour un appelant de service à service, authentifié par secret partagé.
 [ApiController]
 [Route("internal/notifications")]
 [AllowAnonymous]
@@ -22,16 +17,18 @@ namespace Tools.ApiCore.Modules.Notifications.Api;
 public class InternalNotificationsController(PublishInternalNotificationUseCase publishInternalNotificationUseCase)
     : ControllerBase
 {
+    // 200 + id si créée, 204 si aucun destinataire n'a été trouvé.
     [HttpPost]
     public async Task<IActionResult> Publish(PublishNotificationRequest request)
     {
-        await publishInternalNotificationUseCase.Execute(request.ToCommand());
-        return NoContent();
+        var notificationId = await publishInternalNotificationUseCase.Execute(request.ToCommand());
+        return notificationId is { } id ? Ok(new PublishNotificationResponse(id)) : NoContent();
     }
 }
 
-// DTO entrant. Le ciblage reprend celui de l'API Java : un destinataire précis, ou une
-// population désignée par son rôle minimum.
+public sealed record PublishNotificationResponse(long Id);
+
+// DTO entrant : un destinataire précis, ou une population désignée par son rôle minimum.
 public sealed record PublishNotificationRequest(
     [Required] string Title,
     [Required] string Body,

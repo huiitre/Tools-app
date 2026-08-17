@@ -6,12 +6,7 @@ using Tools.ApiCore.Modules.Mail.Application.Usecases;
 
 namespace Tools.ApiCore.Modules.Mail.Api;
 
-// Envoi de mail par un autre service : l'API Java, le temps de retirer progressivement sa
-// propre gestion de l'envoi d'email (voir docs/MAIL.md), puis tout autre appelant du NAS.
-//
-// AllowAnonymous est indispensable : la FallbackPolicy exige un utilisateur authentifié sur
-// toute route non déclarée, et l'appelant ici est une machine qui n'agit au nom de personne.
-// C'est InternalApi qui prend le relais du contrôle — même modèle que /internal/notifications.
+// Envoi de mail pour un appelant de service à service, authentifié par secret partagé et non par jeton utilisateur.
 [ApiController]
 [Route("internal/mail")]
 [AllowAnonymous]

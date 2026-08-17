@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Tools.ApiCore.IntegrationTests.Fakes;
 using Tools.ApiCore.IntegrationTests.Fixtures;
@@ -39,13 +40,15 @@ public sealed class InternalNotificationsTests : IClassFixture<ApiCoreWebApplica
     }
 
     [Fact]
-    public async Task Publishing_with_the_shared_secret_records_the_notification()
+    public async Task Publishing_with_the_shared_secret_records_the_notification_and_returns_its_id()
     {
         var client = ClientWithToken(ApiCoreWebApplicationFactory.TestInternalToken);
 
         using var response = await client.PostAsJsonAsync("/internal/notifications", ValidPayload);
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(body.GetProperty("id").GetInt64() > 0);
 
         var notification = Assert.Single(Notifications.Notifications);
         Assert.Equal("Sync terminée", notification.Title);
