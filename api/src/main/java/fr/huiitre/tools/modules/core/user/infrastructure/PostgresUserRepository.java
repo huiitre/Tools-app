@@ -1,18 +1,13 @@
 package fr.huiitre.tools.modules.core.user.infrastructure;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
 import fr.huiitre.tools.modules.core.user.application.ports.UserRepository;
-import fr.huiitre.tools.modules.core.user.application.view.UserAdminView;
 import fr.huiitre.tools.modules.core.user.domain.AvatarSource;
 import fr.huiitre.tools.modules.core.user.domain.User;
 import fr.huiitre.tools.modules.core.user.domain.UserType;
@@ -109,43 +104,6 @@ public class PostgresUserRepository implements UserRepository {
 
         List<User> results = jdbcTemplate.query(sql, USER_ROW_MAPPER, id);
         return results.stream().findFirst();
-    }
-
-    @Override
-    public List<UserAdminView> findAllForAdmin() {
-        final String sql = """
-                    SELECT u.id, u.email, u.name, u.is_active, u.created_at,
-                           uap.provider_avatar_url AS avatar_url,
-                           r.id AS role_id
-                    FROM tools_core.users u
-                    LEFT JOIN tools_core.user_role ur ON u.id = ur.user_id
-                    LEFT JOIN tools_core.role r ON ur.role_id = r.id
-                    LEFT JOIN tools_core.user_auth_provider uap ON u.id = uap.user_id AND uap.provider = 'GOOGLE'
-                    ORDER BY u.created_at DESC
-                """;
-
-        Map<Long, UserAdminView> userById = new LinkedHashMap<>();
-
-        jdbcTemplate.query(sql, rs -> {
-            long id = rs.getLong("id");
-            if (!userById.containsKey(id)) {
-                Timestamp ts = rs.getTimestamp("created_at");
-                userById.put(id, new UserAdminView(
-                        id,
-                        rs.getString("email"),
-                        rs.getString("name"),
-                        rs.getBoolean("is_active"),
-                        ts != null ? ts.toLocalDateTime() : null,
-                        rs.getString("avatar_url"),
-                        new ArrayList<>()));
-            }
-            long roleId = rs.getLong("role_id");
-            if (!rs.wasNull()) {
-                userById.get(id).getRoles().add(roleId);
-            }
-        });
-
-        return new ArrayList<>(userById.values());
     }
 
     @Override
