@@ -1,6 +1,10 @@
 # Journal d'apprentissage ASP.NET Core
 
-Ce document est la mémoire opérationnelle du passage de l'API Java Tools vers `api-core` en C# / ASP.NET Core. Il sert à reprendre une session sans devoir reconstruire le contexte.
+Ce document est la mémoire opérationnelle du passage de l'API Java Tools vers C# / ASP.NET Core. Il sert à reprendre une session sans devoir reconstruire le contexte.
+
+> **Renommage du 17/08/2026** : le dossier s'appelait `api-core/`, il s'appelle maintenant `api/`
+> (et l'API Java est passée dans `api-java/`). Les mentions de `api-core` restées dans les entrées
+> ci-dessous sont d'époque — les commandes et les chemins, eux, ont été mis à jour.
 
 Pour le plan produit et les frontières de migration, voir `ARCHITECTURE.md` : il reste séparé car il décrit la cible, tandis que ce journal décrit ce qui a réellement été appris et mis en place.
 
@@ -9,7 +13,7 @@ Pour le plan produit et les frontières de migration, voir `ARCHITECTURE.md` : i
 Le projet réel est maintenant dans :
 
 ```text
-/home/huiitre/development/perso/tools/tools-app/api-core
+/home/huiitre/development/perso/tools/tools-app/api
 ```
 
 Il s'agit d'une application .NET 10 nommée `Tools.ApiCore`, créée avec le template minimal `dotnet new web`. `api-core` est encore non versionné dans le monorepo ; aucun commit ni push n'a été fait.
@@ -18,7 +22,7 @@ Le projet C# n'est relié à rien en production : il ne modifie ni `api/` (Sprin
 
 ## Démarrage local
 
-Depuis `tools-app/api-core` :
+Depuis `tools-app/api` :
 
 ```bash
 DOTNET_WATCH_RESTART_ON_RUDE_EDIT=1 dotnet watch run
@@ -293,7 +297,7 @@ Les échecs SMTP sont convertis par le handler global en
 ### Validation effectuée
 
 ```bash
-dotnet test api-core/tests/Tools.ApiCore.IntegrationTests/Tools.ApiCore.IntegrationTests.csproj --no-restore
+dotnet test api/tests/Tools.ApiCore.IntegrationTests/Tools.ApiCore.IntegrationTests.csproj --no-restore
 ```
 
 Résultat final : 7 tests réussis. Les tests remplacent `IMailSender` par un
@@ -314,7 +318,7 @@ Le chemin d'erreur a aussi été vérifié sur une instance sans configuration :
 ### Configuration locale de développement
 
 `Program.cs` charge désormais `appsettings.Local.json` (optionnel, déjà présent
-dans `api-core/.gitignore`) :
+dans `api/.gitignore`) :
 
 ```csharp
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);

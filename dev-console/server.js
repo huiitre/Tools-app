@@ -207,7 +207,7 @@ async function restartAsync(name, spec) {
 
 // Les 3 process de dev (ou juste web en mode qa) — pas le tunnel, qui n'en fait pas partie.
 function restartAll() {
-  const names = QA ? ['web'] : ['api', 'core', 'web'];
+  const names = QA ? ['web'] : ['api', 'java', 'web'];
   for (const name of names) restart(name);
 }
 
@@ -219,9 +219,9 @@ async function main() {
     return;
   }
 
-  // api (Java) ET core (C#) lisent tous les deux DB_HOST/DB_PORT/DB_NAME/DB_USERNAME/
-  // DB_PASSWORD (cf. PostgresConnectionString.cs côté core, application-dev.properties côté
-  // api) : un seul et même override pour les deux, pas la peine de les traiter séparément.
+  // api (C#) ET java (Spring) lisent tous les deux DB_HOST/DB_PORT/DB_NAME/DB_USERNAME/
+  // DB_PASSWORD (cf. PostgresConnectionString.cs côté api, application-dev.properties côté
+  // java) : un seul et même override pour les deux, pas la peine de les traiter séparément.
   // DB_NAME/USERNAME/PASSWORD ne sont PAS touchés ici : soit déjà exportés globalement (setup
   // existant de ce poste), soit à renseigner dans .env pour une machine qui ne les a pas.
   let dbEnv = {};
@@ -270,8 +270,8 @@ async function main() {
   // Un enfant Node n'hérite pas de ~/.bashrc : sans ça, `mvn` peut retomber sur le Java par
   // défaut de SDKMAN (peut différer de la version utilisée dans un terminal interactif).
   const sourceSdkman = '[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ] && source "$HOME/.sdkman/bin/sdkman-init.sh"; ';
-  spawnLogged('api', 'bash', ['-c', sourceSdkman + 'exec npm run api:dev'], dbEnv);
-  spawnLogged('core', 'npm', ['run', 'core:dev'], dbEnv);
+  spawnLogged('java', 'bash', ['-c', sourceSdkman + 'exec npm run java:dev'], dbEnv);
+  spawnLogged('api', 'npm', ['run', 'api:dev'], dbEnv);
   spawnLogged('web', 'npm', ['run', 'web:dev']);
 }
 

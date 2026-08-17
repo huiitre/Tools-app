@@ -94,7 +94,7 @@ seule valeur ferait perdre du temps à l'exploitation. C'est le choix déjà fai
 private readonly string? username = environment["MAIL_USERNAME"] ?? options.Value.Username;
 ```
 
-En local, `api-core/appsettings.Local.json` — non versionné, chargé en option par
+En local, `api/appsettings.Local.json` — non versionné, chargé en option par
 `Program.cs` — continue donc de fonctionner sans variable d'environnement.
 
 Si l'un des quatre champs `Host`, `Username`, `Password` ou `FromAddress` manque, tout envoi

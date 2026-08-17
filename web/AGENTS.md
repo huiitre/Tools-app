@@ -432,7 +432,7 @@ Visualisation en arbre des combinaisons menant à (ou partant de) un Pal. Pas de
 
 - **API** : les trois appels du store (`GET /notifications`, `PATCH /notifications/read`,
   `DELETE /notifications`) passent par `clientCore` — l'API Java ne sert plus les notifications
-  (voir `api/AGENTS.md` §11). Le contrat n'a pas changé : `ids` reste une liste séparée par des
+  (voir `api-java/AGENTS.md` §11). Le contrat n'a pas changé : `ids` reste une liste séparée par des
   virgules, paramètre absent = « tout ». Réponses en 204 sans corps pour le marquage et la
   suppression.
 - **Store** : `useNotificationStore` (Pinia) dans `src/modules/Core/Notification/store`.

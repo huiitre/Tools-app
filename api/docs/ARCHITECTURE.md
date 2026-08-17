@@ -1,10 +1,22 @@
-# API Core — étude d’architecture et plan de migration
+# API — étude d’architecture et plan de migration
 
-Ce document conserve les décisions prises pour l’extraction progressive du Core historique Java vers `api-core`, une application C# / ASP.NET Core.
+Ce document conserve les décisions prises pour l’extraction progressive du Core historique Java vers une application C# / ASP.NET Core.
+
+> ### ⚠️ Renommage des dossiers, 17/08/2026
+>
+> `api-core/` est devenu **`api/`**, et l'ancienne API Java **`api-java/`**. Les sections
+> historiques ci-dessous parlent encore de `api-core/` (le C#) et de `api/` (le Java) : c'est
+> volontaire, elles racontent des décisions prises avant le renommage et les réécrire les
+> falsifierait. **Dans le code d'aujourd'hui, `api/` = C# et `api-java/` = Java.** Les chemins
+> exécutables (commandes, workflows) ont, eux, été mis à jour.
+>
+> `api-java` plutôt que `api-legacy` : la migration s'étalera, et « legacy » est une prophétie
+> qui vieillit mal. Un dossier de code peut porter le nom de sa technologie — il ne changera
+> jamais de langage — là où une URL publique ne le doit pas.
 
 > Statut : migration engagée. L’authentification complète (inscription, connexion, Google,
-> session, mot de passe) et le profil utilisateur sont implémentés dans `api-core`. Le
-> frontend appelle encore l’API Java : la bascule reste à faire.
+> session, mot de passe), le profil utilisateur, l'administration et les notifications sont
+> implémentés côté C# et servis en production.
 
 ## Intention
 
@@ -12,8 +24,8 @@ Le monorepo conserve quatre zones principales :
 
 ```text
 web/       Frontend Vue
-api/       API métier Java / Spring Boot (monolithe modulaire)
-api-core/  Plateforme Core C# / ASP.NET Core
+api/       API C# / ASP.NET Core — plateforme transverse et modules métier migrés
+api-java/  API métier Java / Spring Boot, figée et vidée au fil des migrations
 database/  Migrations et éléments PostgreSQL
 ```
 
@@ -148,12 +160,12 @@ Les réponses 401 et 403 du middleware d'authentification passent par cette mêm
 
 ### Tests d'intégration du contrat HTTP
 
-Les tests HTTP sont dans `api-core/tests/Tools.ApiCore.IntegrationTests`. Ils démarrent API Core en mémoire avec l'environnement `Testing`, sans ouvrir de port ni appeler PostgreSQL. Les endpoints `/_tests/errors/{kind}` sont mappés uniquement dans cet environnement et ne sont donc pas exposés en Development, QA ou Production.
+Les tests HTTP sont dans `api/tests/Tools.ApiCore.IntegrationTests`. Ils démarrent API Core en mémoire avec l'environnement `Testing`, sans ouvrir de port ni appeler PostgreSQL. Les endpoints `/_tests/errors/{kind}` sont mappés uniquement dans cet environnement et ne sont donc pas exposés en Development, QA ou Production.
 
 Ils vérifient le contrat partagé pour 400, 404, 409 et 500, ainsi que la propagation ou génération de `X-Request-Id`. Ils doivent être complétés lorsqu'un nouveau `code` ou un nouveau comportement HTTP est introduit.
 
 ```bash
-dotnet test api-core/tests/Tools.ApiCore.IntegrationTests/Tools.ApiCore.IntegrationTests.csproj
+dotnet test api/tests/Tools.ApiCore.IntegrationTests/Tools.ApiCore.IntegrationTests.csproj
 ```
 
 ## Contrat de routes HTTP
@@ -469,14 +481,14 @@ La cible devient donc :
 
 ```text
 api/           une application C# modulaire — plateforme transverse ET modules métier
-api-legacy/    l'API Java, figée, vidée au fil des migrations
+api-java/      l'API Java, figée, vidée au fil des migrations
 api-<module>/  satellites optionnels, un par module réécrit dans un autre langage
 web/
 database/
 ```
 
-L'ancienne `api/` Java est renommée `api-legacy/` ; `api-core/` absorbe les modules métier et
-reprend le nom `api/`. La frontière Core / métier reste décrite dans ce document — elle
+**Fait le 17/08/2026** : l'ancienne `api/` Java est renommée `api-java/` et `api-core/` reprend le
+nom `api/`. Elle absorbera les modules métier au fil de l'eau. La frontière Core / métier reste décrite dans ce document — elle
 devient une frontière **entre modules d'une même application**, plus entre deux services.
 
 Conséquence assumée : un déploiement raté emporte l'authentification **et** le métier. À
@@ -655,8 +667,8 @@ GET /version
 - Ajouter un workflow GitHub Actions QA, déclenché seulement pour :
 
   ```yaml
-  - 'api-core/**'
-  - '.github/workflows/api-core-deploy-qa.yml'
+  - 'api/**'
+  - '.github/workflows/api-deploy-qa.yml'
   ```
 
 - Calculer la version depuis les Conventional Commits apparus après le SHA de
@@ -1034,7 +1046,7 @@ broncher : seul `EmailVerificationCleanupService` échoue, toutes les trente min
 et la confirmation d'adresse sont hors service, sans que rien ne l'annonce.
 
 À retenir pour les prochaines tranches : **appliquer les migrations avant de déployer le Core**,
-sans compter sur le workflow, puisque les trois pipelines (`database/**`, `api-core/**`,
+sans compter sur le workflow, puisque les trois pipelines (`database/**`, `api/**`,
 `web/**`) se déclenchent en parallèle sur le même merge et qu'aucun n'attend les autres. Le
 risque symétrique existe côté frontend : si l'image web arrive avant celle du Core, le front
 appelle des routes qui n'existent pas encore et plus personne ne peut se connecter. Neutraliser
