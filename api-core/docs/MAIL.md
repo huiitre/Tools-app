@@ -46,6 +46,30 @@ Les pièces jointes sont toujours envoyées en Base64 : aucun appelant ne transm
 
 Les use cases internes du Core n’utilisent jamais ce use case : ils injectent `MailService` directement et ne passent donc par aucun contrôle de rôle.
 
+## Endpoint de service à service
+
+```text
+POST /internal/mail
+```
+
+Même contrat JSON que `POST /mail` ci-dessus. Réservé aux appelants machine — l'API Java pour
+commencer, le temps de retirer progressivement sa propre gestion de l'envoi d'email — jamais à
+un utilisateur : la route n'accepte aucun jeton JWT, uniquement le secret partagé attendu par
+`[InternalApi]` (voir `docs/ARCHITECTURE.md`, section réservée à `/internal/`), dans l'en-tête
+
+```text
+X-Internal-Token: <INTERNAL_API_TOKEN>
+```
+
+Un appel sans le secret, ou avec un secret incorrect, renvoie `404` — jamais `401`, pour ne pas
+confirmer l'existence de la route à qui la cherche. Même modèle que `POST /internal/notifications`.
+
+`InternalMailController` appelle `SendInternalMailUseCase`, pas `MailService` directement : un
+endpoint appelle toujours un use case, qui orchestre et appelle le service — l'absence
+d'utilisateur courant à autoriser ne change rien à cette règle, elle explique seulement pourquoi
+ce use case n'est pas un `SecuredUseCase` (qui exige un `CurrentUser` résolu depuis une requête
+authentifiée) mais une classe autonome, sans rôle ni module requis.
+
 Les requêtes Bruno correspondantes sont dans `bruno/Tools API Core/Mail/`.
 
 ## Configuration SMTP

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using Tools.ApiCore.Modules.Common.Api.Internal;
 using Tools.ApiCore.Modules.Common.Application.Exceptions;
 using Tools.ApiCore.Modules.Notifications.Application;
-using Tools.ApiCore.Modules.Notifications.Application.Services;
+using Tools.ApiCore.Modules.Notifications.Application.Usecases;
 using Tools.ApiCore.Modules.Security.Domain;
 
 namespace Tools.ApiCore.Modules.Notifications.Api;
@@ -19,12 +19,13 @@ namespace Tools.ApiCore.Modules.Notifications.Api;
 [Route("internal/notifications")]
 [AllowAnonymous]
 [InternalApi]
-public class InternalNotificationsController(NotificationService notificationService) : ControllerBase
+public class InternalNotificationsController(PublishInternalNotificationUseCase publishInternalNotificationUseCase)
+    : ControllerBase
 {
     [HttpPost]
     public async Task<IActionResult> Publish(PublishNotificationRequest request)
     {
-        await notificationService.Send(request.ToCommand());
+        await publishInternalNotificationUseCase.Execute(request.ToCommand());
         return NoContent();
     }
 }

@@ -1,5 +1,6 @@
 using Tools.ApiCore.Modules.Notifications.Application.Ports;
 using Tools.ApiCore.Modules.Notifications.Application.Services;
+using Tools.ApiCore.Modules.Notifications.Application.Usecases;
 using Tools.ApiCore.Modules.Notifications.Infrastructure;
 
 namespace Tools.ApiCore.Modules.Notifications;
@@ -16,6 +17,7 @@ public static class NotificationsModule
     {
         builder.Services.AddScoped<INotificationRepository, PostgresNotificationRepository>();
         builder.Services.AddScoped<NotificationService>();
+        builder.Services.AddScoped<PublishInternalNotificationUseCase>();
 
         return builder;
     }
