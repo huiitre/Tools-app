@@ -1003,10 +1003,11 @@ Reste à trancher leur authentification : le Core exige un jeton sur toutes ses 
 proxy et protégée par un secret d'en-tête — la seconde évite d'inventer un utilisateur qui
 n'existe pas.
 
-## Déploiement en production — deux pièges rencontrés
+## Déploiement en production — trois pièges rencontrés
 
 La mise en production du 15/08/2026 a livré d'un coup l'authentification, l'administration et la
-bascule du frontend. Deux incidents, tous deux d'ordre opérationnel et non applicatif.
+bascule du frontend. Deux incidents, tous deux d'ordre opérationnel et non applicatif. Un
+troisième s'est ajouté le 17/08/2026, du côté du reverse proxy.
 
 **Un `JWT_SECRET` désaligné entre les deux APIs boucle sur la déconnexion.** Le secret avait été
 changé sur le Core mais pas répercuté sur l'API Java du même environnement. Le symptôme est
@@ -1038,6 +1039,54 @@ sans compter sur le workflow, puisque les trois pipelines (`database/**`, `api-c
 risque symétrique existe côté frontend : si l'image web arrive avant celle du Core, le front
 appelle des routes qui n'existent pas encore et plus personne ne peut se connecter. Neutraliser
 Watchtower sur le conteneur web le temps que le Core soit à jour évite cette fenêtre.
+
+**Une « erreur CORS » qui n'en est pas une : nginx garde l'adresse du conteneur en cache.**
+Incident du 17/08/2026. Après une mise à jour Watchtower, le frontend de production a renvoyé des
+erreurs CORS **en boucle et de façon permanente** — pas quelques secondes, treize minutes, jusqu'à
+un redémarrage manuel de Nginx Proxy Manager. L'API Core, elle, tournait et se déclarait
+`healthy`.
+
+La preuve tient dans ses journaux : `Application started` à 17:08:11, puis **aucune requête
+reçue** jusqu'à 17:21:23, l'instant du redémarrage du proxy. Côté nginx, au même moment :
+
+```text
+connect() failed (111: Connection refused) while connecting to upstream,
+request: "OPTIONS /api/core/hub/negotiate", upstream: "http://172.18.0.22:8080/..."
+```
+
+L'enchaînement :
+
+1. Watchtower ne redémarre pas un conteneur, il le **recrée** — donc nouvelle IP sur le réseau Docker.
+2. nginx continue d'écrire vers l'ancienne adresse et prend un `Connection refused` sur **tout**,
+   y compris le `OPTIONS` de préflight — la toute première requête de chaque appel.
+3. Une réponse produite par nginx (502) ne porte **aucun en-tête CORS**, contrairement aux réponses
+   de l'application, qui les portent même en 401 ou 404. Le navigateur n'annonce donc pas « API
+   injoignable » mais « No 'Access-Control-Allow-Origin' header ».
+
+**La cause exacte est une incohérence de Nginx Proxy Manager**, et elle explique pourquoi l'API
+Java n'a jamais connu ce problème en deux ans :
+
+| | ce que NPM génère | conséquence |
+|---|---|---|
+| destination principale du proxy host (API Java) | `proxy_pass $forward_scheme://$server:$port;` | `proxy_pass` **avec variable** → nginx re-résout le nom à chaque requête, jamais de cache |
+| *custom location* (`/api/core/`) | `proxy_pass http://tools_api_core:8080;` | `proxy_pass` **littéral** → nom résolu une seule fois au démarrage, IP gardée à vie |
+
+Les deux se remplissent de la même façon dans l'interface, rien n'indique la différence. Tout
+service branché par une custom location est donc exposé, prod comme QA.
+
+**Correctif retenu : une IP fixe sur les conteneurs du Core** (`ipv4_address` dans leur
+`docker-compose.yml`, réseau déclaré `external: true`, adresses hautes hors de la plage
+d'attribution automatique). Le nom résout alors toujours vers la même adresse et le cache d'nginx
+devient sans effet — sans toucher au reverse proxy, dont dépend tout le reste de la machine.
+Watchtower réutilisant la configuration du conteneur existant, l'IP survit aux mises à jour.
+Un dernier redémarrage de NPM est nécessaire après le changement, pour purger l'adresse périmée.
+
+L'autre voie — réécrire la location dans l'*Advanced* du proxy host avec `resolver 127.0.0.11`,
+une variable et le `rewrite` d'origine — fonctionne aussi, mais impose de reproduire à la main les
+en-têtes `Upgrade`/`Connection` du hub SignalR. À noter si le sujet revient : **on ne peut pas se
+contenter d'ajouter un `proxy_pass` dans le champ *Advanced* d'une custom location** — NPM insère
+ce texte avant le sien, nginx voit deux `proxy_pass` dans le même bloc et refuse de démarrer,
+coupant tous les hôtes du proxy.
 
 ### Points restés en suspens
 
