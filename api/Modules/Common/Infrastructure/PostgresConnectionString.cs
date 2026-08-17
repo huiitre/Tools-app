@@ -1,6 +1,6 @@
 using Npgsql;
 
-namespace Tools.ApiCore.Modules.Common.Infrastructure;
+namespace Tools.Api.Modules.Common.Infrastructure;
 
 // Construction de la chaîne de connexion PostgreSQL à partir des variables d'environnement.
 //

@@ -1,10 +1,10 @@
-using Tools.ApiCore.Modules.Security.Application.Ports;
-using Tools.ApiCore.Modules.Security.Application.Services;
-using Tools.ApiCore.Modules.Security.Application.Usecases;
-using Tools.ApiCore.Modules.Security.Domain;
-using Tools.ApiCore.Modules.Users.Application.Dto;
+using Tools.Api.Modules.Security.Application.Ports;
+using Tools.Api.Modules.Security.Application.Services;
+using Tools.Api.Modules.Security.Application.Usecases;
+using Tools.Api.Modules.Security.Domain;
+using Tools.Api.Modules.Users.Application.Dto;
 
-namespace Tools.ApiCore.Modules.Users.Application.Usecases;
+namespace Tools.Api.Modules.Users.Application.Usecases;
 
 // Cas d'usage administrateur : lister les utilisateurs pour le tableau d'administration.
 //

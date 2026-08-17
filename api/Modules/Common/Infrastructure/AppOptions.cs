@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Common.Infrastructure;
+namespace Tools.Api.Modules.Common.Infrastructure;
 
 // Paramètres généraux de l'application, indépendants d'un module.
 public sealed class AppOptions

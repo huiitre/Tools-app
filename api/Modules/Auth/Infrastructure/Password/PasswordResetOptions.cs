@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Password;
+namespace Tools.Api.Modules.Auth.Infrastructure.Password;
 
 // Paramètres du flux de réinitialisation de mot de passe.
 // Valeurs alignées sur l'API Java : jeton de 32 octets, valable 30 minutes.

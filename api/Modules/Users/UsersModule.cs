@@ -1,8 +1,8 @@
-using Tools.ApiCore.Modules.Users.Application;
-using Tools.ApiCore.Modules.Users.Application.Usecases;
-using Tools.ApiCore.Modules.Users.Infrastructure;
+using Tools.Api.Modules.Users.Application;
+using Tools.Api.Modules.Users.Application.Usecases;
+using Tools.Api.Modules.Users.Infrastructure;
 
-namespace Tools.ApiCore.Modules.Users;
+namespace Tools.Api.Modules.Users;
 
 // Composition du module Users : le profil utilisateur.
 //

@@ -16,7 +16,7 @@ Le projet réel est maintenant dans :
 /home/huiitre/development/perso/tools/tools-app/api
 ```
 
-Il s'agit d'une application .NET 10 nommée `Tools.ApiCore`, créée avec le template minimal `dotnet new web`. `api-core` est encore non versionné dans le monorepo ; aucun commit ni push n'a été fait.
+Il s'agit d'une application .NET 10 nommée `Tools.Api`, créée avec le template minimal `dotnet new web`. `api-core` est encore non versionné dans le monorepo ; aucun commit ni push n'a été fait.
 
 Le projet C# n'est relié à rien en production : il ne modifie ni `api/` (Spring Boot), ni `web/`, ni Docker, ni le reverse proxy. Le démarrer localement est sans impact sur l'API Java.
 
@@ -303,7 +303,7 @@ Les échecs SMTP sont convertis par le handler global en
 ### Validation effectuée
 
 ```bash
-dotnet test api/tests/Tools.ApiCore.IntegrationTests/Tools.ApiCore.IntegrationTests.csproj --no-restore
+dotnet test api/tests/Tools.Api.IntegrationTests/Tools.Api.IntegrationTests.csproj --no-restore
 ```
 
 Résultat final : 7 tests réussis. Les tests remplacent `IMailSender` par un

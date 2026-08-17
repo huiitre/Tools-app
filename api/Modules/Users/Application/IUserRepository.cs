@@ -1,6 +1,6 @@
-using Tools.ApiCore.Modules.Users.Application.Dto;
+using Tools.Api.Modules.Users.Application.Dto;
 
-namespace Tools.ApiCore.Modules.Users.Application;
+namespace Tools.Api.Modules.Users.Application;
 
 public interface IUserRepository
 {

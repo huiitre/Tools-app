@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Auth.Application.Ports.Registration;
+namespace Tools.Api.Modules.Auth.Application.Ports.Registration;
 
 // Jetons de confirmation d'adresse (tools_core.user_email_verification).
 public interface IEmailVerificationRepository

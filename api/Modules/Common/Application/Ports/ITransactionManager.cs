@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Common.Application.Ports;
+namespace Tools.Api.Modules.Common.Application.Ports;
 
 public interface ITransactionManager
 {

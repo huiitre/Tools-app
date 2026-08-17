@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Admin.Application.Dto;
+namespace Tools.Api.Modules.Admin.Application.Dto;
 
 // Nombre d'utilisateurs ayant accès à un module donné.
 //

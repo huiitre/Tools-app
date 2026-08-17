@@ -1,9 +1,9 @@
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Common.Application.Ports;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Common.Application.Ports;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Auth.Application.Ports.Password;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Usecases.Password;
+namespace Tools.Api.Modules.Auth.Application.Usecases.Password;
 
 // Cas d'usage utilisateur : définir un nouveau mot de passe à partir du lien reçu par email.
 // L'identité vient du jeton : l'appelant n'est pas authentifié.

@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Access.Application.Dto;
+namespace Tools.Api.Modules.Access.Application.Dto;
 
 // Reflète tools_core.module : un module fonctionnel de l'application (Dofus, Palworld…),
 // tel que l'administration le gère. À ne pas confondre avec un module de code du Core.

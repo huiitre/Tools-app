@@ -1,8 +1,8 @@
-using Tools.ApiCore.Modules.Security.Application.Ports;
-using Tools.ApiCore.Modules.Security.Domain;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Security.Application.Ports;
+using Tools.Api.Modules.Security.Domain;
+using Tools.Api.Modules.Common.Application.Exceptions;
 
-namespace Tools.ApiCore.Modules.Security.Application.Services;
+namespace Tools.Api.Modules.Security.Application.Services;
 
 // Applique la règle d'accès d'un use case. Les rôles sont lus dans l'access token :
 // aucune requête n'est faite ici, au prix d'un droit retiré qui ne s'applique qu'au

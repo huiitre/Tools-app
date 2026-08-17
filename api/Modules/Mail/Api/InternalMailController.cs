@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Tools.ApiCore.Modules.Common.Api.Internal;
-using Tools.ApiCore.Modules.Mail.Application;
-using Tools.ApiCore.Modules.Mail.Application.Usecases;
+using Tools.Api.Modules.Common.Api.Internal;
+using Tools.Api.Modules.Mail.Application;
+using Tools.Api.Modules.Mail.Application.Usecases;
 
-namespace Tools.ApiCore.Modules.Mail.Api;
+namespace Tools.Api.Modules.Mail.Api;
 
 // Envoi de mail pour un appelant de service à service, authentifié par secret partagé et non par jeton utilisateur.
 [ApiController]

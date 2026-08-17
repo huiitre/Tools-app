@@ -3,10 +3,10 @@ using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Common.Application.Exceptions;
 
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Google;
+namespace Tools.Api.Modules.Auth.Infrastructure.Google;
 
 // Configuration non sensible versionnée ; GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET viennent de l'environnement.
 public sealed class GoogleOAuthOptions

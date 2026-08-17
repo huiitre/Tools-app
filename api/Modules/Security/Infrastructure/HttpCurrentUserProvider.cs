@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using System.Text.Json;
-using Tools.ApiCore.Modules.Security.Application.Ports;
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.Api.Modules.Security.Application.Ports;
+using Tools.Api.Modules.Security.Domain;
 
-namespace Tools.ApiCore.Modules.Security.Infrastructure;
+namespace Tools.Api.Modules.Security.Infrastructure;
 
 // Adaptateur HTTP du port ICurrentUserProvider : traduit les claims de la requête courante
 // en CurrentUser.

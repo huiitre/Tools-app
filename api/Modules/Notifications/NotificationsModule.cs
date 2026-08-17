@@ -1,9 +1,9 @@
-using Tools.ApiCore.Modules.Notifications.Application.Ports;
-using Tools.ApiCore.Modules.Notifications.Application.Services;
-using Tools.ApiCore.Modules.Notifications.Application.Usecases;
-using Tools.ApiCore.Modules.Notifications.Infrastructure;
+using Tools.Api.Modules.Notifications.Application.Ports;
+using Tools.Api.Modules.Notifications.Application.Services;
+using Tools.Api.Modules.Notifications.Application.Usecases;
+using Tools.Api.Modules.Notifications.Infrastructure;
 
-namespace Tools.ApiCore.Modules.Notifications;
+namespace Tools.Api.Modules.Notifications;
 
 // Composition du module Notifications.
 //

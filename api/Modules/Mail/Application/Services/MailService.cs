@@ -1,8 +1,8 @@
 using System.Net.Mail;
-using Tools.ApiCore.Modules.Mail.Application.Ports;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Mail.Application.Ports;
+using Tools.Api.Modules.Common.Application.Exceptions;
 
-namespace Tools.ApiCore.Modules.Mail.Application.Services;
+namespace Tools.Api.Modules.Mail.Application.Services;
 
 public sealed class MailService(IMailSender mailSender)
 {

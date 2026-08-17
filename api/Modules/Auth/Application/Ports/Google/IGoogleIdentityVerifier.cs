@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Auth.Application.Ports.Google;
+namespace Tools.Api.Modules.Auth.Application.Ports.Google;
 
 // Vérifie un ID token émis par Google et en extrait une identité fiable.
 public interface IGoogleIdentityVerifier

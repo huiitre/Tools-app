@@ -1,8 +1,8 @@
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Auth.Application.Services;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Auth.Application.Services;
+using Tools.Api.Modules.Common.Application.Exceptions;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Usecases.Session;
+namespace Tools.Api.Modules.Auth.Application.Usecases.Session;
 
 // Cas d'usage utilisateur : renouveler l'access token à partir du cookie refresh.
 public sealed class RefreshSessionUseCase(

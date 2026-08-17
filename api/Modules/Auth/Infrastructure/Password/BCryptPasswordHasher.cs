@@ -1,7 +1,7 @@
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Auth.Application.Ports.Password;
 
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Password;
+namespace Tools.Api.Modules.Auth.Infrastructure.Password;
 
 // Adaptateur technique BCrypt du port IPasswordHasher.
 // Format compatible avec les hash produits par l'API Java (Spring BCryptPasswordEncoder).

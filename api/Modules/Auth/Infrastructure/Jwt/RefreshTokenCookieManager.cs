@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
+namespace Tools.Api.Modules.Auth.Infrastructure.Jwt;
 
 // Adaptateur HTTP responsable uniquement du cookie refresh token.
 public sealed class RefreshTokenCookieManager(IOptions<JwtOptions> options, IHostEnvironment environment)

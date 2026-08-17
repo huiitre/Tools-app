@@ -1,10 +1,10 @@
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Auth.Domain;
-using Tools.ApiCore.Modules.Common.Application.Ports;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Google;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Auth.Domain;
+using Tools.Api.Modules.Common.Application.Ports;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Auth.Application.Ports.Google;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Services;
+namespace Tools.Api.Modules.Auth.Application.Services;
 
 // Service applicatif partagé par tous les flux Google : retrouve ou crée le compte Tools associé.
 public sealed class GoogleIdentityAuthenticationService(

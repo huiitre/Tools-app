@@ -2,16 +2,16 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
-using Tools.ApiCore.Modules.Auth.Application.Usecases;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Auth.Infrastructure.Google;
-using Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
-using Tools.ApiCore.Modules.Auth.Application.Usecases.Google;
-using Tools.ApiCore.Modules.Auth.Application.Usecases.Password;
-using Tools.ApiCore.Modules.Auth.Application.Usecases.Registration;
-using Tools.ApiCore.Modules.Auth.Application.Usecases.Session;
+using Tools.Api.Modules.Auth.Application.Usecases;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Auth.Infrastructure.Google;
+using Tools.Api.Modules.Auth.Infrastructure.Jwt;
+using Tools.Api.Modules.Auth.Application.Usecases.Google;
+using Tools.Api.Modules.Auth.Application.Usecases.Password;
+using Tools.Api.Modules.Auth.Application.Usecases.Registration;
+using Tools.Api.Modules.Auth.Application.Usecases.Session;
 
-namespace Tools.ApiCore.Modules.Auth.Api;
+namespace Tools.Api.Modules.Auth.Api;
 
 [ApiController]
 [Route("auth")]

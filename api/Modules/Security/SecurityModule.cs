@@ -1,10 +1,10 @@
-using Tools.ApiCore.Modules.Security.Application.Ports;
-using Tools.ApiCore.Modules.Security.Application.Services;
-using Tools.ApiCore.Modules.Security.Application.Usecases;
-using Tools.ApiCore.Modules.Security.Domain;
-using Tools.ApiCore.Modules.Security.Infrastructure;
+using Tools.Api.Modules.Security.Application.Ports;
+using Tools.Api.Modules.Security.Application.Services;
+using Tools.Api.Modules.Security.Application.Usecases;
+using Tools.Api.Modules.Security.Domain;
+using Tools.Api.Modules.Security.Infrastructure;
 
-namespace Tools.ApiCore.Modules.Security;
+namespace Tools.Api.Modules.Security;
 
 // Composition du module Security : l'autorisation par rôle, portée par les use cases, et le
 // catalogue des rôles attribuables.

@@ -1,6 +1,6 @@
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.Api.Modules.Security.Domain;
 
-namespace Tools.ApiCore.Modules.Realtime.Application;
+namespace Tools.Api.Modules.Realtime.Application;
 
 // Un seul des critères de ciblage est renseigné. TargetUserIds sert aux appelants qui
 // connaissent déjà leurs destinataires (ex : les joueurs d'une partie) — le Core ne peut pas

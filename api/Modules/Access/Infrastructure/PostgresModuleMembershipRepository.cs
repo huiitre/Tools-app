@@ -1,11 +1,11 @@
 using Dapper;
 using Npgsql;
-using Tools.ApiCore.Modules.Access.Application.Dto;
-using Tools.ApiCore.Modules.Access.Application.Ports;
-using Tools.ApiCore.Modules.Common.Infrastructure;
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.Api.Modules.Access.Application.Dto;
+using Tools.Api.Modules.Access.Application.Ports;
+using Tools.Api.Modules.Common.Infrastructure;
+using Tools.Api.Modules.Security.Domain;
 
-namespace Tools.ApiCore.Modules.Access.Infrastructure;
+namespace Tools.Api.Modules.Access.Infrastructure;
 
 // Adaptateur PostgreSQL/Dapper du port IModuleMembershipRepository.
 //

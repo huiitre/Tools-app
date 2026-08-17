@@ -1,6 +1,6 @@
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.Api.Modules.Security.Domain;
 
-namespace Tools.ApiCore.Modules.Notifications.Application;
+namespace Tools.Api.Modules.Notifications.Application;
 
 // Envoi d'une notification. La cible est décrite par un seul des critères ci-dessous — d'où les fabriques.
 public sealed record SendNotificationCommand(

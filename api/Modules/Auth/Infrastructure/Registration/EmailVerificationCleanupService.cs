@@ -1,6 +1,6 @@
-using Tools.ApiCore.Modules.Auth.Application.Ports.Registration;
+using Tools.Api.Modules.Auth.Application.Ports.Registration;
 
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Registration;
+namespace Tools.Api.Modules.Auth.Infrastructure.Registration;
 
 // Nettoyage planifié des inscriptions abandonnées, toutes les 30 minutes.
 //

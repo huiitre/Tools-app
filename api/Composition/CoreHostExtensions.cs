@@ -1,6 +1,6 @@
 using Serilog;
 
-namespace Tools.ApiCore.Composition;
+namespace Tools.Api.Composition;
 
 // Ce qui appartient à l'hôte et à aucun module : configuration, journalisation, MVC, CORS.
 //

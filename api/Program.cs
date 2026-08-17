@@ -1,14 +1,14 @@
-using Tools.ApiCore.Composition;
-using Tools.ApiCore.Modules.Access;
-using Tools.ApiCore.Modules.Admin;
-using Tools.ApiCore.Modules.Auth;
-using Tools.ApiCore.Modules.Common;
-using Tools.ApiCore.Modules.Health;
-using Tools.ApiCore.Modules.Mail;
-using Tools.ApiCore.Modules.Notifications;
-using Tools.ApiCore.Modules.Realtime;
-using Tools.ApiCore.Modules.Security;
-using Tools.ApiCore.Modules.Users;
+using Tools.Api.Composition;
+using Tools.Api.Modules.Access;
+using Tools.Api.Modules.Admin;
+using Tools.Api.Modules.Auth;
+using Tools.Api.Modules.Common;
+using Tools.Api.Modules.Health;
+using Tools.Api.Modules.Mail;
+using Tools.Api.Modules.Notifications;
+using Tools.Api.Modules.Realtime;
+using Tools.Api.Modules.Security;
+using Tools.Api.Modules.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 

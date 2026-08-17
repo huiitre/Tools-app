@@ -2,12 +2,12 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
-using Tools.ApiCore.Modules.Auth.Application;
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Google;
+using Tools.Api.Modules.Auth.Application;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Auth.Application.Ports.Google;
 
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Google;
+namespace Tools.Api.Modules.Auth.Infrastructure.Google;
 
 // Vérifie les ID tokens Google avec les clés publiques OIDC récupérées automatiquement chez Google.
 public sealed class GoogleOidcTokenVerifier(IConfiguration configuration) : IGoogleIdentityVerifier

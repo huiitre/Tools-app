@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Jwt;
+namespace Tools.Api.Modules.Auth.Infrastructure.Jwt;
 
 // Paramètres non sensibles versionnés. Le secret vient uniquement de JWT_SECRET.
 public sealed class JwtOptions

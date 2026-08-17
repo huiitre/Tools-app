@@ -1,6 +1,6 @@
-using Tools.ApiCore.Modules.Notifications.Application.Views;
+using Tools.Api.Modules.Notifications.Application.Views;
 
-namespace Tools.ApiCore.Modules.Notifications.Application.Ports;
+namespace Tools.Api.Modules.Notifications.Application.Ports;
 
 public interface INotificationRepository
 {

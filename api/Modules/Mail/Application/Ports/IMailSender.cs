@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Mail.Application.Ports;
+namespace Tools.Api.Modules.Mail.Application.Ports;
 
 public interface IMailSender
 {

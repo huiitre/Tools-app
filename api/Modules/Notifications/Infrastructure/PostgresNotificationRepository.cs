@@ -1,9 +1,9 @@
 using Dapper;
 using Npgsql;
-using Tools.ApiCore.Modules.Notifications.Application.Ports;
-using Tools.ApiCore.Modules.Notifications.Application.Views;
+using Tools.Api.Modules.Notifications.Application.Ports;
+using Tools.Api.Modules.Notifications.Application.Views;
 
-namespace Tools.ApiCore.Modules.Notifications.Infrastructure;
+namespace Tools.Api.Modules.Notifications.Infrastructure;
 
 // Adaptateur PostgreSQL/Dapper du port INotificationRepository.
 //

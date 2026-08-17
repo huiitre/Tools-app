@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Notifications.Application.Usecases;
-using Tools.ApiCore.Modules.Notifications.Application.Views;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Notifications.Application.Usecases;
+using Tools.Api.Modules.Notifications.Application.Views;
 
-namespace Tools.ApiCore.Modules.Notifications.Api;
+namespace Tools.Api.Modules.Notifications.Api;
 
 // Notifications de l'utilisateur connecté : lecture, marquage, suppression, et envoi manuel.
 //

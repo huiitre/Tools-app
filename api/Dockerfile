@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 WORKDIR /src
 
-COPY Tools.ApiCore.csproj ./
+COPY Tools.Api.csproj ./
 RUN dotnet restore
 
 COPY . ./
@@ -37,4 +37,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl --fail --silent http://localhost:8080/health/live || exit 1
 
-ENTRYPOINT ["dotnet", "Tools.ApiCore.dll"]
+ENTRYPOINT ["dotnet", "Tools.Api.dll"]

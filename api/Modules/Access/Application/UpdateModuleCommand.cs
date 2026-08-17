@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Access.Application;
+namespace Tools.Api.Modules.Access.Application;
 
 // Mise à jour d'un module fonctionnel, activation comprise.
 public sealed record UpdateModuleCommand(

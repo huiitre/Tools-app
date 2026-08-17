@@ -1,8 +1,8 @@
-using Tools.ApiCore.Modules.Notifications.Application;
-using Tools.ApiCore.Modules.Notifications.Application.Services;
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.Api.Modules.Notifications.Application;
+using Tools.Api.Modules.Notifications.Application.Services;
+using Tools.Api.Modules.Security.Domain;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Services;
+namespace Tools.Api.Modules.Auth.Application.Services;
 
 // Prévient les administrateurs des arrivées de comptes.
 //

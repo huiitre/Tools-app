@@ -1,9 +1,9 @@
-using Tools.ApiCore.Modules.Auth.Application.Ports;
-using Tools.ApiCore.Modules.Auth.Application.Services;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+using Tools.Api.Modules.Auth.Application.Ports;
+using Tools.Api.Modules.Auth.Application.Services;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Auth.Application.Ports.Password;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Usecases.Password;
+namespace Tools.Api.Modules.Auth.Application.Usecases.Password;
 
 // Cas d'usage utilisateur : se connecter avec email et mot de passe.
 public sealed class LoginUseCase(

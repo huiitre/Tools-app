@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Users.Application.Dto;
+namespace Tools.Api.Modules.Users.Application.Dto;
 
 // Reflète tools_core.module, complété par les rôles que l'utilisateur détient sur ce module.
 // La clé primaire de user_module_role est (user_id, module_id, role_id) : plusieurs rôles par

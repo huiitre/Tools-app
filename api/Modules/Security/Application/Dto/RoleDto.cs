@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Security.Application.Dto;
+namespace Tools.Api.Modules.Security.Application.Dto;
 
 // Une ligne du catalogue tools_core.role.
 //

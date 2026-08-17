@@ -1,17 +1,17 @@
 using Microsoft.Extensions.Options;
 using System.Buffers.Text;
 using System.Security.Cryptography;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Registration;
-using Tools.ApiCore.Modules.Auth.Infrastructure.Registration;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Common.Application.Ports;
-using Tools.ApiCore.Modules.Common.Infrastructure;
-using Tools.ApiCore.Modules.Auth.Application.Services;
-using Tools.ApiCore.Modules.Mail.Application;
-using Tools.ApiCore.Modules.Mail.Application.Services;
+using Tools.Api.Modules.Auth.Application.Ports.Password;
+using Tools.Api.Modules.Auth.Application.Ports.Registration;
+using Tools.Api.Modules.Auth.Infrastructure.Registration;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Common.Application.Ports;
+using Tools.Api.Modules.Common.Infrastructure;
+using Tools.Api.Modules.Auth.Application.Services;
+using Tools.Api.Modules.Mail.Application;
+using Tools.Api.Modules.Mail.Application.Services;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Usecases.Registration;
+namespace Tools.Api.Modules.Auth.Application.Usecases.Registration;
 
 // Cas d'usage visiteur : créer un compte par email et mot de passe.
 //

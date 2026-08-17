@@ -1,4 +1,4 @@
-namespace Tools.ApiCore.Modules.Auth.Application.Ports.Password;
+namespace Tools.Api.Modules.Auth.Application.Ports.Password;
 
 // Port des secrets d'authentification locaux (tools_core.user_credentials).
 public interface IUserCredentialsRepository

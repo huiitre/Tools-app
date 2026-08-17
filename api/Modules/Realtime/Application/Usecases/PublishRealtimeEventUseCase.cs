@@ -1,8 +1,8 @@
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
-using Tools.ApiCore.Modules.Realtime.Application.Ports;
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Realtime.Application.Ports;
+using Tools.Api.Modules.Security.Domain;
 
-namespace Tools.ApiCore.Modules.Realtime.Application.Usecases;
+namespace Tools.Api.Modules.Realtime.Application.Usecases;
 
 // Action déclenchée par un appel de service à service, sans utilisateur à autoriser.
 public sealed class PublishRealtimeEventUseCase(

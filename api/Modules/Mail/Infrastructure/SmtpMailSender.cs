@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Mail;
-using Tools.ApiCore.Modules.Mail.Application;
-using Tools.ApiCore.Modules.Mail.Application.Ports;
-using Tools.ApiCore.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.Mail.Application;
+using Tools.Api.Modules.Mail.Application.Ports;
+using Tools.Api.Modules.Common.Application.Exceptions;
 
-namespace Tools.ApiCore.Modules.Mail.Infrastructure;
+namespace Tools.Api.Modules.Mail.Infrastructure;
 
 public sealed class SmtpMailSender(
     IOptions<SmtpMailOptions> options,

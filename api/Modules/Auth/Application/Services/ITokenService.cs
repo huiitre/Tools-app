@@ -1,6 +1,6 @@
-using Tools.ApiCore.Modules.Auth.Domain;
+using Tools.Api.Modules.Auth.Domain;
 
-namespace Tools.ApiCore.Modules.Auth.Application.Services;
+namespace Tools.Api.Modules.Auth.Application.Services;
 
 // Port de gestion JWT : son implémentation connaît l'algorithme et le secret, pas les use cases.
 public interface ITokenService

@@ -1,8 +1,8 @@
 using Serilog;
 using Serilog.Events;
-using Tools.ApiCore.Modules.Common.Api.Errors;
+using Tools.Api.Modules.Common.Api.Errors;
 
-namespace Tools.ApiCore.Composition;
+namespace Tools.Api.Composition;
 
 // L'ordre du pipeline HTTP, au même endroit et dans un seul sens de lecture.
 //

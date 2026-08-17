@@ -1,7 +1,7 @@
-using Tools.ApiCore.Modules.Health.Application;
-using Tools.ApiCore.Modules.Health.Infrastructure;
+using Tools.Api.Modules.Health.Application;
+using Tools.Api.Modules.Health.Infrastructure;
 
-namespace Tools.ApiCore.Modules.Health;
+namespace Tools.Api.Modules.Health;
 
 // Composition du module Health : les sondes et l'identification du déploiement.
 //

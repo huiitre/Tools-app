@@ -1,8 +1,8 @@
 using Dapper;
 using Npgsql;
-using Tools.ApiCore.Modules.Realtime.Application.Ports;
+using Tools.Api.Modules.Realtime.Application.Ports;
 
-namespace Tools.ApiCore.Modules.Realtime.Infrastructure;
+namespace Tools.Api.Modules.Realtime.Infrastructure;
 
 // Duplique volontairement les requêtes de PostgresNotificationRepository : la résolution
 // "qui a ce rôle / qui est membre de ce module" n'est pas un concept de notification, c'est un

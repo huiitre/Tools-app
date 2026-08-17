@@ -1,9 +1,9 @@
 using Dapper;
 using Npgsql;
-using Tools.ApiCore.Modules.Auth.Application.Ports.Registration;
-using Tools.ApiCore.Modules.Common.Infrastructure;
+using Tools.Api.Modules.Auth.Application.Ports.Registration;
+using Tools.Api.Modules.Common.Infrastructure;
 
-namespace Tools.ApiCore.Modules.Auth.Infrastructure.Persistence;
+namespace Tools.Api.Modules.Auth.Infrastructure.Persistence;
 
 // Adaptateur PostgreSQL/Dapper du port IEmailVerificationRepository.
 //
