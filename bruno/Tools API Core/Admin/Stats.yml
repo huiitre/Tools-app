@@ -10,6 +10,12 @@ http:
     type: bearer
     token: "{{authToken}}"
 
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
 docs: |-
   Indicateurs du tableau de bord : `totalUsers`, `activeUsers`, `newUsersThisWeek` et la
   répartition `usersPerModule`.
@@ -19,9 +25,3 @@ docs: |-
   Chaque entrée de `usersPerModule` porte `moduleCode`, `moduleName` et `userCount` — pas
   `moduleId`, que le type TypeScript du frontend déclare pourtant. Le contrat de l'API Java est
   reproduit tel quel.
-
-settings:
-  encodeUrl: true
-  timeout: 0
-  followRedirects: true
-  maxRedirects: 5

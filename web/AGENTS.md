@@ -111,7 +111,7 @@ Deux APIs coexistent, et la frontière est **la capacité, pas la technologie** 
 
 | Client | Sert | Contenu |
 |---|---|---|
-| `clientCore` | API Core | identité, profil, administration, et à terme notifications / realtime |
+| `clientCore` | API Core | identité, profil, administration, notifications (liste/lu/suppression), realtime (SignalR, `/hub`) |
 | `clientV3` (et v1/v2/v3Dofus) | API Java | métier : Dofus, Palworld, Riot |
 
 `auth.fetch.ts` et les trois `fetch` du module Admin (`adminUsers`, `adminModules`,
@@ -428,8 +428,13 @@ Visualisation en arbre des combinaisons menant à (ou partant de) un Pal. Pas de
 - Types de réponse API (`BreedingResultView`, `BreedingParentPairView` côté Java) à retranspiper en interfaces TS dans `breeding/types/breeding.types.ts`, camelCase (Jackson par défaut, pas d'annotation — vérifier le JSON réel une fois l'endpoint appelé plutôt que deviner les noms de champs).
 - Client HTTP : `clientV3` (`@/services/axiosInstance`), comme partout ailleurs dans Palworld.
 
-## Module Notifications — COMPLÈTE (2026-05-10, transport SignalR depuis 2026-08-17)
+## Module Notifications — COMPLÈTE (2026-05-10, entièrement sur l'API Core depuis 2026-08-17)
 
+- **API** : les trois appels du store (`GET /notifications`, `PATCH /notifications/read`,
+  `DELETE /notifications`) passent par `clientCore` — l'API Java ne sert plus les notifications
+  (voir `api/AGENTS.md` §11). Le contrat n'a pas changé : `ids` reste une liste séparée par des
+  virgules, paramètre absent = « tout ». Réponses en 204 sans corps pour le marquage et la
+  suppression.
 - **Store** : `useNotificationStore` (Pinia) dans `src/modules/Core/Notification/store`.
 - **Transport** : `SignalRNotificationTransport` (connexion à `CoreHub` sur le Core, voir section
   `clientCore` ci-dessus) gère le flux temps réel. `SseNotificationTransport` et

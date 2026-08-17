@@ -13,10 +13,12 @@ namespace Tools.ApiCore.Modules.Users.Application.Usecases;
 public sealed class ListUsersUseCase(
     UseCaseAuthorizer authorizer,
     IUserRepository userRepository
-) : SecuredQuery<IReadOnlyList<UserAdminDto>>(authorizer)
+) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
 
-    protected override Task<IReadOnlyList<UserAdminDto>> Handle(CurrentUser currentUser) =>
-        userRepository.FindAllForAdminAsync();
+    public Task<IReadOnlyList<UserAdminDto>> Execute()
+    {
+        return userRepository.FindAllForAdminAsync();
+    }
 }

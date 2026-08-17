@@ -4,47 +4,49 @@ using Tools.ApiCore.Modules.Security.Domain;
 
 namespace Tools.ApiCore.Modules.Security.Application.Usecases;
 
-// Use case dont l'exécution exige un rôle minimum.
+// Use case dont l'exécution exige un appelant identifié et un rôle minimum.
 //
-// Le contrôle est porté par la classe de base plutôt que par un marquage : `Execute`
-// n'est pas virtuelle, une classe dérivée ne peut donc ni l'outrepasser ni oublier
-// d'appeler l'autorisation. Un use case sécurisé ne peut pas exister sans son contrôle.
+// **Hériter suffit.** Le contrôle est appliqué par le constructeur de cette classe, et le
+// constructeur d'une classe de base s'exécute toujours, avant que l'objet dérivé existe : il n'y
+// a aucun moyen de construire un use case sécurisé sans que son droit d'accès ait été vérifié.
+// Ce n'est pas une convention à respecter, c'est le langage.
 //
-// L'appelant validé est passé à `Handle` : le use case dispose de son identité sans
-// avoir à la résoudre lui-même, et sans jamais manipuler une valeur nulle.
+// En contrepartie, cette classe n'impose **aucune méthode** à ses héritiers : la méthode métier
+// porte le nom, les arguments et le type de retour que le use case veut. C'est ce qui remplace
+// les anciennes `SecuredQuery<TResult>` / `SecuredUseCase<TCommand>` / `SecuredUseCase<TCommand,
+// TResult>`, où le choix de la classe de base dépendait de la forme de la signature.
 //
-// Ces use cases ne doivent pas être appelés hors d'une requête authentifiée : depuis
-// une tâche de fond, aucun utilisateur n'est identifié et l'exécution est refusée.
-public abstract class SecuredUseCase<TCommand>(UseCaseAuthorizer authorizer)
+// Sans rien déclarer, le use case exige un compte portant au moins READ_ONLY : un appel anonyme
+// et un compte sans rôle sont refusés par défaut. Un use case plus exigeant surcharge
+// `RequiredRole`, un use case qui appartient à un module surcharge `RequiredModule`.
+//
+// Le contrôle ne dépend d'aucun middleware HTTP : il vaut aussi pour un appel venu d'un hub
+// SignalR. Ces use cases ne doivent en revanche pas être construits depuis une tâche de fond —
+// aucun utilisateur n'y est identifié, l'autorisation échoue.
+public abstract class SecuredUseCase
 {
-    protected abstract RoleCode RequiredRole { get; }
-
-    // Module auquel appartient le use case. Déclaré, le rôle exigé se lit dans ce module et
-    // non parmi les rôles globaux. Absent par défaut : les use cases transverses du Core
-    // (administration, compte, mail) ne relèvent d'aucun module.
-    protected virtual ModuleCode? RequiredModule => null;
-
-    public Task Execute(TCommand command)
+    protected SecuredUseCase(UseCaseAuthorizer authorizer)
     {
-        var currentUser = authorizer.EnsureAtLeast(RequiredRole, RequiredModule);
-        return Handle(command, currentUser);
+        CurrentUser = authorizer.EnsureAtLeast(RequiredRole, RequiredModule);
     }
 
-    protected abstract Task Handle(TCommand command, CurrentUser currentUser);
-}
+    // L'appelant validé : le use case dispose de son identité sans avoir à la résoudre lui-même,
+    // et sans jamais manipuler une valeur nulle.
+    protected CurrentUser CurrentUser { get; }
 
-// Variante pour les use cases qui retournent un résultat.
-public abstract class SecuredUseCase<TCommand, TResult>(UseCaseAuthorizer authorizer)
-{
-    protected abstract RoleCode RequiredRole { get; }
+    // Rôle minimum exigé. READ_ONLY par défaut : le plus bas de la hiérarchie, donc « un compte,
+    // avec un rôle, quel qu'il soit ».
+    //
+    // À déclarer en valeur littérale (`=> RoleCode.Admin`) : la propriété est lue pendant la
+    // construction de cette classe de base, avant le constructeur de la classe dérivée. Une
+    // valeur calculée à partir d'un champ de la classe dérivée serait lue avant que ce champ soit
+    // renseigné. Le rôle exigé caractérise le use case, jamais son état — la règle est donc
+    // sans effet pratique, mais elle explique pourquoi on ne la contourne pas.
+    protected virtual RoleCode RequiredRole => RoleCode.ReadOnly;
 
+    // Module auquel appartient le use case. Déclaré, le rôle exigé se lit dans ce module et non
+    // parmi les rôles globaux. Absent par défaut : les use cases transverses du Core
+    // (administration, compte, mail) ne relèvent d'aucun module. Même règle de valeur littérale
+    // que `RequiredRole`.
     protected virtual ModuleCode? RequiredModule => null;
-
-    public Task<TResult> Execute(TCommand command)
-    {
-        var currentUser = authorizer.EnsureAtLeast(RequiredRole, RequiredModule);
-        return Handle(command, currentUser);
-    }
-
-    protected abstract Task<TResult> Handle(TCommand command, CurrentUser currentUser);
 }

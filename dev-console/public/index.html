@@ -110,10 +110,16 @@
   var HAS_PROCESS = { system: false }; // tout le reste (tunnel/api/core/web) a un vrai process
   var PRIMARY = { api: true, core: true, web: true }; // les 3 avec clear/copy/reload dédiés
 
-  // Le DOM ne garde qu'une fenêtre de WINDOW_SIZE lignes (au-delà, ça finit par planter le
-  // navigateur) ; l'historique complet reste dans un simple tableau JS (quasi gratuit en texte),
-  // plafonné à MAX_STORED comme filet de sécurité pur pour une session de plusieurs jours.
-  var WINDOW_SIZE = 1000;
+  // Le DOM ne garde que DISPLAY_SIZE lignes après un nettoyage, mais on laisse grossir jusqu'à
+  // TRIM_AT avant d'en faire un — un seul nettoyage par paquet de (TRIM_AT - DISPLAY_SIZE), pas
+  // une éviction ligne par ligne à chaque append : sinon l'historique qu'on vient de révéler via
+  // "charger plus" se refait grignoter tout seul pendant qu'on le lit, dès que du live arrive.
+  // "Charger plus" révèle par paquets fixes de LOAD_CHUNK, pour un comportement prévisible.
+  // L'historique complet reste dans un simple tableau JS (quasi gratuit en texte), plafonné à
+  // MAX_STORED comme filet de sécurité pur pour une session de plusieurs jours.
+  var DISPLAY_SIZE = 1000;
+  var TRIM_AT = 3000;
+  var LOAD_CHUNK = 2000;
   var MAX_STORED = 20000;
 
   var hidden = {}; // name -> true si la colonne est masquée
@@ -225,7 +231,7 @@
   function updateBanner(col) {
     var hiddenCount = col.renderedStart;
     if (hiddenCount > 0) {
-      col.loadMoreBtn.textContent = '▲ Afficher ' + Math.min(WINDOW_SIZE, hiddenCount) + ' logs précédents (' + hiddenCount + ' au total)';
+      col.loadMoreBtn.textContent = '▲ Afficher ' + Math.min(LOAD_CHUNK, hiddenCount) + ' logs précédents (' + hiddenCount + ' au total)';
       col.loadMoreBtn.classList.add('show');
     } else {
       col.loadMoreBtn.classList.remove('show');
@@ -244,12 +250,14 @@
 
     col.body.appendChild(makeLineEl(entry));
 
-    // Fenêtre pleine : on retire la plus vieille ligne affichée (elle reste dans col.all).
+    // Nettoyage par paquet, pas ligne par ligne : une fois TRIM_AT dépassé, on masque d'un coup
+    // tout ce qui excède DISPLAY_SIZE (elles restent dans col.all, juste plus dans le DOM).
     var renderedCount = col.all.length - col.renderedStart;
-    if (renderedCount > WINDOW_SIZE) {
-      var oldest = col.body.querySelector('.line');
-      if (oldest) oldest.remove();
-      col.renderedStart++;
+    if (renderedCount > TRIM_AT) {
+      var toRemove = renderedCount - DISPLAY_SIZE;
+      var lines = col.body.querySelectorAll('.line');
+      for (var i = 0; i < toRemove && i < lines.length; i++) lines[i].remove();
+      col.renderedStart += toRemove;
     }
 
     updateBanner(col);
@@ -260,7 +268,7 @@
     var col = cols[name];
     if (!col || col.renderedStart === 0) return;
 
-    var chunk = Math.min(WINDOW_SIZE, col.renderedStart);
+    var chunk = Math.min(LOAD_CHUNK, col.renderedStart);
     var newStart = col.renderedStart - chunk;
     var frag = document.createDocumentFragment();
     for (var i = newStart; i < col.renderedStart; i++) frag.appendChild(makeLineEl(col.all[i]));

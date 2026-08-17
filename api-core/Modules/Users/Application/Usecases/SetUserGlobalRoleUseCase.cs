@@ -18,11 +18,11 @@ public sealed class SetUserGlobalRoleUseCase(
     IRoleRepository roleRepository,
     ITransactionManager transactionManager,
     ILogger<SetUserGlobalRoleUseCase> logger
-) : SecuredUseCase<SetUserGlobalRoleCommand>(authorizer)
+) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
 
-    protected override async Task Handle(SetUserGlobalRoleCommand command, CurrentUser currentUser)
+    public async Task Execute(SetUserGlobalRoleCommand command)
     {
         // Les deux existences sont vérifiées avant d'ouvrir la transaction : rien à annuler
         // si l'une manque, et le message d'erreur distingue les deux causes.
@@ -47,7 +47,7 @@ public sealed class SetUserGlobalRoleUseCase(
         // permet de répondre à « qui a donné ce rôle ».
         logger.LogInformation(
             "Rôle global modifié par userId={ActorId} : cible={TargetUserId} roleId={RoleId}",
-            currentUser.UserId,
+            CurrentUser.UserId,
             command.UserId,
             command.RoleId);
     }

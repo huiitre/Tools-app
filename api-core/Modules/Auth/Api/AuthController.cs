@@ -16,24 +16,26 @@ namespace Tools.ApiCore.Modules.Auth.Api;
 [ApiController]
 [Route("auth")]
 // Porte HTTP du module : elle délègue chaque action à un use case.
+//
+// **Les use cases sont résolus par action ([FromServices]), jamais par le constructeur.** C'est
+// ici que ça compte le plus : `SetUserPasswordUseCase` est sécurisé, et un use case sécurisé
+// applique son contrôle dès sa construction. Injecté au constructeur, il serait construit pour
+// chaque requête arrivant sur ce contrôleur — donc `/login`, `/register` et `/refresh`, pourtant
+// anonymes, répondraient 401 et plus personne ne pourrait se connecter.
+//
+// La règle vaut pour tous les use cases de ce fichier, sécurisés ou non : c'est ce qui évite
+// qu'ajouter un contrôle à l'un d'eux ferme les routes des autres. Seules les dépendances qui
+// n'en sont pas — cookie, options, journal — restent au constructeur.
 public sealed class AuthController(
-    LoginUseCase loginUseCase,
-    RefreshSessionUseCase refreshSessionUseCase,
-    CreateElectronSessionUseCase createElectronSessionUseCase,
-    GetGoogleAuthorizationUrlUseCase getGoogleAuthorizationUrlUseCase,
-    CompleteGoogleOAuthLoginUseCase completeGoogleOAuthLoginUseCase,
-    RequestPasswordResetUseCase requestPasswordResetUseCase,
-    ResetPasswordUseCase resetPasswordUseCase,
-    SetUserPasswordUseCase setUserPasswordUseCase,
-    RegisterUserUseCase registerUserUseCase,
-    VerifyEmailUseCase verifyEmailUseCase,
     RefreshTokenCookieManager refreshTokenCookieManager,
     IOptions<GoogleOAuthOptions> googleOAuthOptions,
     ILogger<AuthController> logger) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("login")]
-    public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
+    public async Task<ActionResult<LoginResponse>> Login(
+        LoginRequest request,
+        [FromServices] LoginUseCase loginUseCase)
     {
         // Le use case vérifie les identifiants et crée les deux tokens.
         var session = await loginUseCase.Execute(request.Email, request.Password);
@@ -47,7 +49,8 @@ public sealed class AuthController(
 
     [AllowAnonymous]
     [HttpPost("refresh")]
-    public async Task<ActionResult<LoginResponse>> Refresh()
+    public async Task<ActionResult<LoginResponse>> Refresh(
+        [FromServices] RefreshSessionUseCase refreshSessionUseCase)
     {
         // Le navigateur renvoie normalement ce cookie automatiquement.
         if (!refreshTokenCookieManager.TryGet(Request, out var refreshToken))
@@ -75,7 +78,8 @@ public sealed class AuthController(
     }
 
     [HttpPost("electron/session")]
-    public async Task<IActionResult> CreateElectronSession()
+    public async Task<IActionResult> CreateElectronSession(
+        [FromServices] CreateElectronSessionUseCase createElectronSessionUseCase)
     {
         // Electron appelle cette route avec l'access token reçu par le deep link tools://auth?token=... .
         var authorization = Request.Headers.Authorization.ToString();
@@ -92,14 +96,18 @@ public sealed class AuthController(
     [AllowAnonymous]
     [HttpGet("google/url")]
     public ActionResult<GoogleAuthorizationUrlResponse> GetGoogleAuthorizationUrl(
-        [FromQuery] string source = "web") =>
-        Ok(new GoogleAuthorizationUrlResponse(getGoogleAuthorizationUrlUseCase.Execute(source)));
+        [FromServices] GetGoogleAuthorizationUrlUseCase getGoogleAuthorizationUrlUseCase,
+        [FromQuery] string source = "web")
+    {
+        return Ok(new GoogleAuthorizationUrlResponse(getGoogleAuthorizationUrlUseCase.Execute(source)));
+    }
 
     [AllowAnonymous]
     [HttpGet("callback/google")]
     public async Task<IActionResult> CompleteGoogleOAuthLogin(
         [FromQuery, Required] string code,
-        [FromQuery, Required] string state)
+        [FromQuery, Required] string state,
+        [FromServices] CompleteGoogleOAuthLoginUseCase completeGoogleOAuthLoginUseCase)
     {
         var result = await completeGoogleOAuthLoginUseCase.Execute(code, state);
         refreshTokenCookieManager.Set(Response, result.Session.RefreshToken, result.Session.RefreshTokenExpiresAt);
@@ -114,7 +122,8 @@ public sealed class AuthController(
     [AllowAnonymous]
     [HttpPost("password/reset-request")]
     public async Task<IActionResult> RequestPasswordReset(
-        PasswordResetRequest request)
+        PasswordResetRequest request,
+        [FromServices] RequestPasswordResetUseCase requestPasswordResetUseCase)
     {
         await requestPasswordResetUseCase.Execute(request.Email);
 
@@ -127,7 +136,9 @@ public sealed class AuthController(
 
     [AllowAnonymous]
     [HttpPost("password/reset")]
-    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    public async Task<IActionResult> ResetPassword(
+        ResetPasswordRequest request,
+        [FromServices] ResetPasswordUseCase resetPasswordUseCase)
     {
         await resetPasswordUseCase.Execute(request.Token, request.Password);
         return NoContent();
@@ -135,7 +146,9 @@ public sealed class AuthController(
 
     [AllowAnonymous]
     [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterRequest request)
+    public async Task<IActionResult> Register(
+        RegisterRequest request,
+        [FromServices] RegisterUserUseCase registerUserUseCase)
     {
         await registerUserUseCase.Execute(
             new RegisterUserCommand(request.Name, request.Email, request.Password));
@@ -148,7 +161,9 @@ public sealed class AuthController(
 
     [AllowAnonymous]
     [HttpPost("verify-email")]
-    public async Task<IActionResult> VerifyEmail([FromQuery, Required] string token)
+    public async Task<IActionResult> VerifyEmail(
+        [FromQuery, Required] string token,
+        [FromServices] VerifyEmailUseCase verifyEmailUseCase)
     {
         await verifyEmailUseCase.Execute(token);
         return NoContent();
@@ -157,7 +172,9 @@ public sealed class AuthController(
     // Définir ou changer son propre mot de passe. L'identité vient du jeton, comme pour
     // logout : aucun identifiant n'apparaît dans l'URL, personne ne peut viser un autre compte.
     [HttpPatch("password")]
-    public async Task<IActionResult> SetPassword(SetPasswordRequest request)
+    public async Task<IActionResult> SetPassword(
+        SetPasswordRequest request,
+        [FromServices] SetUserPasswordUseCase setUserPasswordUseCase)
     {
         await setUserPasswordUseCase.Execute(new SetUserPasswordCommand(request.Password));
         return NoContent();

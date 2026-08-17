@@ -12,11 +12,11 @@ public sealed class UpdateModuleUseCase(
     UseCaseAuthorizer authorizer,
     IModuleRepository moduleRepository,
     ILogger<UpdateModuleUseCase> logger
-) : SecuredUseCase<UpdateModuleCommand>(authorizer)
+) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
 
-    protected override async Task Handle(UpdateModuleCommand command, CurrentUser currentUser)
+    public async Task Execute(UpdateModuleCommand command)
     {
         if (!await moduleRepository.ExistsAsync(command.ModuleId))
         {
@@ -43,7 +43,7 @@ public sealed class UpdateModuleUseCase(
         // elle mérite d'apparaître explicitement dans la trace.
         logger.LogInformation(
             "Module modifié par userId={ActorId} : moduleId={ModuleId} code={Code} actif={Active}",
-            currentUser.UserId,
+            CurrentUser.UserId,
             command.ModuleId,
             code,
             command.Active);

@@ -1,0 +1,27 @@
+info:
+  name: Mark as read
+  type: http
+  seq: 5
+
+http:
+  method: PATCH
+  url: "{{apiCoreUrl}}/notifications/read?ids=1,2"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Marque comme lues les notifications de l'appelant. 204 sans corps.
+
+  `ids` : identifiants séparés par des virgules. **Paramètre retiré de l'URL = tout est marqué lu**
+  (c'est ce que fait le bouton « tout marquer comme lu » du frontend). Un identifiant non numérique
+  donne 400 `INVALID_NOTIFICATION_IDS`.
+
+  Rôle minimum : READ_ONLY. L'appelant n'agit que sur ses propres lignes — l'identifiant de
+  l'utilisateur ne circule jamais dans la requête.

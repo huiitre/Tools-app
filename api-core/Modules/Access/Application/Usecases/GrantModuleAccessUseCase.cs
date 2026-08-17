@@ -21,13 +21,13 @@ public sealed class GrantModuleAccessUseCase(
     IRoleRepository roleRepository,
     ITransactionManager transactionManager,
     ILogger<GrantModuleAccessUseCase> logger
-) : SecuredUseCase<GrantModuleAccessCommand>(authorizer)
+) : SecuredUseCase(authorizer)
 {
     private const string DefaultRoleCode = "READ_ONLY";
 
     protected override RoleCode RequiredRole => RoleCode.Admin;
 
-    protected override async Task Handle(GrantModuleAccessCommand command, CurrentUser currentUser)
+    public async Task Execute(GrantModuleAccessCommand command)
     {
         if (!await moduleRepository.ExistsAsync(command.ModuleId))
         {
@@ -57,7 +57,7 @@ public sealed class GrantModuleAccessUseCase(
 
         logger.LogInformation(
             "Accès module accordé par userId={ActorId} : moduleId={ModuleId} cible={TargetUserId} rôle={RoleCode}",
-            currentUser.UserId,
+            CurrentUser.UserId,
             command.ModuleId,
             command.UserId,
             DefaultRoleCode);

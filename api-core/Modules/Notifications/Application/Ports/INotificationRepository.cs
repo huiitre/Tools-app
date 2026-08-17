@@ -1,9 +1,22 @@
-using Tools.ApiCore.Modules.Security.Domain;
+using Tools.ApiCore.Modules.Notifications.Application.Views;
 
 namespace Tools.ApiCore.Modules.Notifications.Application.Ports;
 
 public interface INotificationRepository
 {
+    // Les cinquante dernières notifications de l'utilisateur, la plus récente d'abord. La limite
+    // vient de l'API Java : la cloche du frontend affiche un historique court, pas un journal.
+    Task<IReadOnlyList<NotificationView>> FindActiveForUserAsync(long userId);
+
+    // `notificationIds` nul ou vide : toutes les notifications non lues de l'utilisateur.
+    Task MarkAsReadAsync(long userId, IReadOnlyCollection<long>? notificationIds);
+
+    // `notificationIds` nul ou vide : toutes les notifications de l'utilisateur.
+    //
+    // La suppression est physique et ne porte que sur `user_notifications` : le message source
+    // reste, il appartient aux autres destinataires.
+    Task DeleteAsync(long userId, IReadOnlyCollection<long>? notificationIds);
+
     // Enregistre le message source et retourne son identifiant. Les critères de ciblage sont
     // conservés tels quels : ils ne servent pas à la lecture mais à retracer l'intention.
     Task<long> CreateAsync(

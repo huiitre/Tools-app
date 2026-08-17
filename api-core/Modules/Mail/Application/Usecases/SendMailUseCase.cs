@@ -11,10 +11,12 @@ namespace Tools.ApiCore.Modules.Mail.Application.Usecases;
 // (réinitialisation de mot de passe, par exemple) n'utilisent pas ce use case mais
 // MailService.
 public sealed class SendMailUseCase(UseCaseAuthorizer authorizer, MailService mailService)
-    : SecuredUseCase<SendMailCommand>(authorizer)
+    : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Tech;
 
-    protected override Task Handle(SendMailCommand command, CurrentUser currentUser) =>
-        mailService.Send(command);
+    public Task Execute(SendMailCommand command)
+    {
+        return mailService.Send(command);
+    }
 }

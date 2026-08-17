@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 import { AppNotification } from '../domain/notification.types';
 import { SignalRNotificationTransport } from '../infrastructure/notification.transport';
-import { clientV3, CORE_BASE_URL } from '@/services/axiosInstance';
+import { clientCore, CORE_BASE_URL } from '@/services/axiosInstance';
 import { useAuthStore } from '@/modules/Auth/auth.store';
 
 const log = (...args: unknown[]) => console.log('[Realtime]', ...args);
@@ -20,7 +20,7 @@ export const useNotificationStore = defineStore('notifications', () => {
   const hasUnread = computed(() => unreadCount.value > 0);
 
   async function fetchHistory() {
-    const { data } = await clientV3.get<AppNotification[]>('/notifications');
+    const { data } = await clientCore.get<AppNotification[]>('/notifications');
     notifications.value = data;
   }
 
@@ -82,7 +82,7 @@ export const useNotificationStore = defineStore('notifications', () => {
   async function markAsRead(ids?: number[]) {
     try {
       const params = ids ? { ids: ids.join(',') } : {};
-      await clientV3.patch('/notifications/read', null, { params });
+      await clientCore.patch('/notifications/read', null, { params });
 
       if (!ids) {
         notifications.value.forEach(n => n.read = true);
@@ -99,7 +99,7 @@ export const useNotificationStore = defineStore('notifications', () => {
   async function remove(ids?: number[]) {
     try {
       const params = ids ? { ids: ids.join(',') } : {};
-      await clientV3.delete('/notifications', { params });
+      await clientCore.delete('/notifications', { params });
 
       if (!ids) {
         notifications.value = [];

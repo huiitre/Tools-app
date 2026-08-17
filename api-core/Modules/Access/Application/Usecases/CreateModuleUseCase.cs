@@ -15,11 +15,11 @@ public sealed class CreateModuleUseCase(
     UseCaseAuthorizer authorizer,
     IModuleRepository moduleRepository,
     ILogger<CreateModuleUseCase> logger
-) : SecuredUseCase<CreateModuleCommand, long>(authorizer)
+) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
 
-    protected override async Task<long> Handle(CreateModuleCommand command, CurrentUser currentUser)
+    public async Task<long> Execute(CreateModuleCommand command)
     {
         var code = command.Code.Trim();
         var name = command.Name.Trim();
@@ -35,7 +35,7 @@ public sealed class CreateModuleUseCase(
 
         logger.LogInformation(
             "Module créé par userId={ActorId} : moduleId={ModuleId} code={Code}",
-            currentUser.UserId,
+            CurrentUser.UserId,
             moduleId,
             code);
 

@@ -9,15 +9,34 @@ http:
   headers:
     - name: X-Internal-Token
       value: "{{internalApiToken}}"
-  auth: none
   body:
     type: json
     data: |-
+      /* Un seul destinataire au choix parmi targetUserId / targetMinRole / targetModuleId est
+         obligatoire (voir InternalNotificationsController.cs). type facultatif, défaut INFO
+         (SUCCESS/WARNING/ERROR/INFO). Pas de targetUserIds (liste) sur cette route, contrairement
+         à /internal/realtime/publish — un seul utilisateur précis à la fois ici.
+      {
+        "title": "...", "body": "...", "type": "INFO",
+        "targetUserId": 1              // Un utilisateur précis
+      }
+      {
+        "title": "...", "body": "...", "type": "INFO",
+        "targetMinRole": "USER"        // Rôle mini (READ_ONLY/USER/MODERATOR/TECH/ADMIN/OWNER)
+                                        // "USER" = tout le monde (rôle assigné à l'inscription)
+      }
+      {
+        "title": "...", "body": "...", "type": "INFO",
+        "targetModuleId": 5,           // Tous les membres d'un module
+        "metadata": "{\"route\": \"home\"}" // JSON optionnel pour le front
+      }
+      */
       {
         "title": "Test API Core - route interne",
         "body": "Envoi de test depuis Bruno via la route de service à service.",
         "type": "INFO",
-        "targetUserId": 1
+        // "targetUserId": 1,
+        "targetMinRole": "READ_ONLY"
       }
 
 settings:
@@ -25,3 +44,5 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: Publication de notification pour un appelant de service à service. Un seul destinataire au choix est obligatoire.
