@@ -87,5 +87,5 @@ jobs:
             APPLICATION_VERSION=${{ steps.version.outputs.version }}
             GIT_SHA=${{ steps.version.outputs.git_sha }}
           tags: |
-            huiitre/tools_api_core:qa
-            huiitre/tools_api_core:sha-${{ steps.version.outputs.git_sha }}
+            huiitre/tools_api:qa
+            huiitre/tools_api:sha-${{ steps.version.outputs.git_sha }}

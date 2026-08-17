@@ -32,4 +32,4 @@ jobs:
           file: ./api-java/Dockerfile
           push: true
           tags: |
-            huiitre/tools_api_v3:qa
+            huiitre/tools_api_java:qa

@@ -185,11 +185,17 @@ joignable ; c'est le résultat attendu du check.
 ## Déploiement Production
 
 Les workflows QA et Production calculent la même version à partir de tous les
-commits conventionnels qui modifient `api-core/`, dans leur ordre
-chronologique. Ils publient respectivement `huiitre/tools_api_core:qa` et
-`huiitre/tools_api_core:latest` pour Watchtower, ainsi qu'un tag
+commits conventionnels qui modifient l'API, dans leur ordre
+chronologique. Ils publient respectivement `huiitre/tools_api:qa` et
+`huiitre/tools_api:latest` pour Watchtower, ainsi qu'un tag
 `sha-<SHA>` pour identifier ou restaurer une image précise. Cette règle rend
 la version identique après un merge QA vers `master`.
+
+Le chemin surveillé n'est pas simplement `api/` : ce dossier a porté l'API Java
+jusqu'au renommage du 17/08/2026, et un `-- api` naïf ferait avaler tout son
+historique au calcul (0.16.0 devenait 2.22.0). Les workflows énumèrent donc
+`api-core` — où vit l'historique d'avant le renommage — puis les dossiers réels
+du projet C#. **Un nouveau dossier de premier niveau doit y être ajouté.**
 
 ## Ce qui a été comparé à Java / EasyMobile
 
