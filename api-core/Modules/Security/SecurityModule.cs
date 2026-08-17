@@ -50,16 +50,18 @@ public static class SecurityModule
 // appelant peut échouer parce que le module ne lui est pas ouvert, ou parce que son rôle à
 // l'intérieur du module ne suffit pas, et les deux refus doivent rester discernables.
 public sealed class ModuleAuthorizationProbe(UseCaseAuthorizer authorizer)
-    : SecuredQuery<ModuleAuthorizationProbeResult>(authorizer)
+    : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.User;
 
     protected override ModuleCode? RequiredModule => ModuleCode.Todolist;
 
-    protected override Task<ModuleAuthorizationProbeResult> Handle(CurrentUser currentUser) =>
-        Task.FromResult(new ModuleAuthorizationProbeResult(
-            currentUser.UserId,
-            currentUser.HighestRoleIn(ModuleCode.Todolist)?.ToCode()));
+    public Task<ModuleAuthorizationProbeResult> Execute()
+    {
+        return Task.FromResult(new ModuleAuthorizationProbeResult(
+            CurrentUser.UserId,
+            CurrentUser.HighestRoleIn(ModuleCode.Todolist)?.ToCode()));
+    }
 }
 
 public sealed record ModuleAuthorizationProbeResult(long UserId, string? ModuleRole);

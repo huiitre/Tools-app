@@ -14,10 +14,12 @@ namespace Tools.ApiCore.Modules.Access.Application.Usecases;
 public sealed class ListModulesUseCase(
     UseCaseAuthorizer authorizer,
     IModuleRepository moduleRepository
-) : SecuredQuery<IReadOnlyList<ModuleDto>>(authorizer)
+) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
 
-    protected override Task<IReadOnlyList<ModuleDto>> Handle(CurrentUser currentUser) =>
-        moduleRepository.FindAllAsync();
+    public Task<IReadOnlyList<ModuleDto>> Execute()
+    {
+        return moduleRepository.FindAllAsync();
+    }
 }

@@ -440,29 +440,32 @@ UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + r
 [Feature] Palworld/Breeding — moteur de reproduction, endpoints result/parents, sync breeding.json (voir section 9b). Pas de cache précalculé (décision motivée). Frontend pas commencé, spec dans web/AGENTS.md.
 [Fix] Palworld — guildId du direct normalisé en UUID canonique dans PalworldRestAdapter : le direct et les snapshots écrivaient le même GUID différemment (voir section 9c).
 
-11. Module Notifications — SPLIT avec l'API Core (à jour 2026-08-17)
+11. Module Notifications — MIGRÉ sur l'API Core (à jour 2026-08-17)
 
-**Écriture ET push temps réel migrés sur l'API Core** (C#, `NotificationService.Send()` : persiste,
-résout les destinataires, pousse en direct via SignalR — un seul endroit, plus de double
-résolution). `NotificationEventListener` ici ne fait plus que déléguer (`ApiCoreNotificationPort`) —
-la persistance directe et le push WebSocket/STOMP locaux ont disparu du Java avec ce refactor.
+**Tout le module est passé côté C#** : écriture, résolution des destinataires, push temps réel
+(SignalR), et depuis le 2026-08-17 la lecture et la gestion (liste, marquage lu, suppression,
+envoi manuel). Les tables ne bougent pas — `tools_core.notifications` et
+`tools_core.user_notifications` restent la source, le Core les lit et les écrit désormais seul.
 
-**Lecture/gestion restent ici** (tant que ce module n'a pas migré — voir le commentaire dans
-`PostgresNotificationRepository.cs` côté Core) : les deux APIs partagent les mêmes tables
-`tools_core.notifications`/`user_notifications`.
+Ce qui reste ici, et qui doit y rester : **l'émission d'événements métier**. Les use cases Java
+publient toujours un `NotificationEvent` (`eventPublisher.publishEvent(...)`), et
+`NotificationEventListener` le relaie à l'API Core via `ApiCoreNotificationPort` →
+`POST /internal/notifications` (fail-open : une notification manquée ne fait jamais échouer le
+flux métier appelant).
 
-Sécurité :
-- Role TECH exclu systématiquement de tous les envois.
+Sécurité (côté Core maintenant) :
+- Role TECH exclu systématiquement de tous les destinataires d'un envoi.
+- Lecture/marquage/suppression : READ_ONLY. Envoi manuel : TECH.
 
-Routes encore servies ici :
-- POST  /notifications        → Envoyer manuellement (TECH) — délègue in fine à l'API Core
-- GET   /notifications        → Liste des notifs actives
-- PATCH /notifications/read   → Marquer comme lu (Batch ids[] ou all)
-- DELETE /notifications       → Supprimer (Batch ids[] ou all)
+**Code mort côté Java depuis la bascule du front sur `clientCore`** — plus aucun appelant, pas
+encore supprimé :
+- `NotificationController` (les 4 routes `/notifications` + `/notifications/stream`)
+- `GetMyNotificationsUseCase`, `MarkNotificationsAsReadUseCase`, `DeleteNotificationsUseCase`,
+  `SendNotificationUseCase`, `StreamNotificationsUseCase`
+- `NotificationRepository` / `PostgresNotificationRepository` (lecture), `NotificationView`,
+  `SseNotificationService`
 
-**Route morte** : `GET /notifications/stream` (SSE) — plus aucun appelant, le front n'utilise plus
-que SignalR côté Core (`SignalRNotificationTransport`). `StreamNotificationsUseCase`/
-`SseNotificationService` n'ont plus de raison d'être, pas encore supprimés.
+Les routes du Core sont dans `bruno/Tools API Core/Notifications/`.
 
 ## Module Riot/Valorant (Updates 2026-05-10)
 - Authentification : Chiffrement AES-256 du refresh token en base. Rotation auto via ValorantAuthService (utilisable hors contexte de sécurité).

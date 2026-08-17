@@ -1,0 +1,40 @@
+info:
+  name: Send notification
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{apiCoreUrl}}/notifications"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "Envoi manuel",
+        "body": "Notification envoyée à la main depuis Bruno.",
+        "type": "INFO",
+        "targetUserId": 40
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Envoi manuel d'une notification. Rôle minimum : **TECH** (outil d'exploitation, pas une action
+  de produit) — un compte USER reçoit 403 `INSUFFICIENT_ROLE`.
+
+  Même corps que `/internal/notifications` : un seul destinataire au choix parmi `targetUserId`,
+  `targetMinRole` (READ_ONLY/USER/MODERATOR/TECH/ADMIN/OWNER) et `targetModuleId`. `type`
+  facultatif, défaut INFO. `metadata` : JSON optionnel pour le front.
+
+  201 + `{ "id": … }` si la notification est créée, 204 si la cible ne désigne aucun destinataire.
+
+  ⚠️ Le paramètre `targetMinRoleCode` de l'API Java n'existe pas ici : il s'appelle `targetMinRole`,
+  et le ciblage par rôle exact (`targetRoleId`) n'est plus supporté — il ne l'était déjà plus depuis
+  que le Java délègue au Core.

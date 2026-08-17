@@ -8,10 +8,14 @@ namespace Tools.ApiCore.Modules.Mail.Api;
 
 [ApiController]
 [Route("mail")]
-public sealed class MailController(SendMailUseCase sendMailUseCase) : ControllerBase
+public sealed class MailController : ControllerBase
 {
+    // Résolu par action ([FromServices]) : le use case applique son contrôle — TECH — dès sa
+    // construction, il ne doit donc être construit que par la route qui s'en sert.
     [HttpPost]
-    public async Task<IActionResult> Send(SendMailRequest request)
+    public async Task<IActionResult> Send(
+        SendMailRequest request,
+        [FromServices] SendMailUseCase sendMailUseCase)
     {
         var attachments = request.Attachments?
             .Select(file => new MailAttachment(file.FileName, file.ContentType, Decode(file.ContentBase64)))

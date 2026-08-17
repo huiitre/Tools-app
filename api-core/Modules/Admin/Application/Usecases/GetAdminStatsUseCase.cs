@@ -11,10 +11,12 @@ namespace Tools.ApiCore.Modules.Admin.Application.Usecases;
 public sealed class GetAdminStatsUseCase(
     UseCaseAuthorizer authorizer,
     IAdminStatsRepository adminStatsRepository
-) : SecuredQuery<AdminStatsDto>(authorizer)
+) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
 
-    protected override Task<AdminStatsDto> Handle(CurrentUser currentUser) =>
-        adminStatsRepository.GetStatsAsync();
+    public Task<AdminStatsDto> Execute()
+    {
+        return adminStatsRepository.GetStatsAsync();
+    }
 }

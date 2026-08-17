@@ -6,22 +6,46 @@ L'**authentification**, elle, est bien portée par le pipeline HTTP — savoir q
 
 ## Sécuriser un use case
 
-Hériter de `SecuredUseCase<TCommand>` (ou `SecuredUseCase<TCommand, TResult>` s'il retourne un résultat), déclarer le rôle minimum, et implémenter `Handle` :
+Hériter de `SecuredUseCase`. C'est tout :
 
 ```csharp
-public sealed class SendMailUseCase(UseCaseAuthorizer authorizer, MailService mailService)
-    : SecuredUseCase<SendMailCommand>(authorizer)
+public sealed class GetMyNotificationsUseCase(
+    UseCaseAuthorizer authorizer,
+    INotificationRepository notificationRepository) : SecuredUseCase(authorizer)
 {
-    protected override RoleCode RequiredRole => RoleCode.Admin;
-
-    protected override Task Handle(SendMailCommand command, CancellationToken cancellationToken) =>
-        mailService.Send(command, cancellationToken);
+    public Task<IReadOnlyList<NotificationView>> Execute()
+    {
+        return notificationRepository.FindActiveForUserAsync(CurrentUser.UserId);
+    }
 }
 ```
 
-`Execute` appartient à la classe de base et n'est pas virtuelle : une classe dérivée ne peut ni la remplacer, ni oublier d'appeler l'autorisation. Un use case sécurisé ne peut donc pas exister sans son contrôle — contrairement à un marquage par interface, où l'oubli du marqueur passe inaperçu.
+Sans rien déclarer de plus, l'appel exige un compte authentifié portant au moins `READ_ONLY` : un visiteur anonyme et un compte sans rôle sont refusés. Un use case plus exigeant surcharge `RequiredRole`, un use case métier surcharge en plus `RequiredModule` (section suivante).
 
-Un use case non sécurisé reste une classe ordinaire : l'absence d'héritage est un choix visible à la lecture.
+**Le contrôle est appliqué par le constructeur de la classe de base**, et le constructeur d'une classe de base s'exécute toujours, avant que l'objet dérivé existe. Il n'y a donc aucun chemin qui construise un use case sécurisé sans avoir vérifié le droit d'accès : ce n'est pas une convention à respecter, c'est le langage. Le corollaire est que l'appelant validé est disponible dès le corps de la méthode, en propriété `CurrentUser`, jamais nul.
+
+En contrepartie, la classe de base **n'impose aucune méthode** : la méthode métier porte le nom, les arguments et le type de retour que le use case veut. C'est le point qui a motivé la refonte du 2026-08-17 — les anciennes `SecuredQuery<TResult>` / `SecuredUseCase<TCommand>` / `SecuredUseCase<TCommand, TResult>` obligeaient à choisir sa classe de base selon la forme de la signature, et à passer `CurrentUser` en paramètre de `Handle`.
+
+Un use case non sécurisé reste une classe ordinaire : l'absence d'héritage est un choix visible à la lecture (`PublishInternalNotificationUseCase`, appelé de service à service, n'a aucun utilisateur à autoriser).
+
+### Deux règles qui viennent avec cette forme
+
+**Les propriétés surchargées se déclarent en valeur littérale.** `RequiredRole` et `RequiredModule` sont lues pendant la construction de la classe de base, donc avant le constructeur de la classe dérivée : une valeur calculée à partir d'un champ de la classe dérivée serait lue avant que ce champ soit renseigné. Le rôle exigé caractérise le use case et jamais son état — la règle est sans effet pratique, mais elle explique pourquoi on ne la contourne pas.
+
+**Un contrôleur résout ses use cases par action, pas dans son constructeur.** Le contrôle ayant lieu à la construction, un use case sécurisé injecté au niveau du contrôleur serait construit pour *toutes* ses routes : `AuthController` ferait échouer `/login` en 401 rien qu'en portant `SetUserPasswordUseCase`. D'où `[FromServices]` sur le paramètre de l'action :
+
+```csharp
+[HttpGet]
+public Task<IReadOnlyList<NotificationView>> GetMine(
+    [FromServices] GetMyNotificationsUseCase getMyNotificationsUseCase)
+{
+    return getMyNotificationsUseCase.Execute();
+}
+```
+
+L'oubli ne passe pas inaperçu : la route publique du contrôleur répond 401 ou 403 dès le premier appel.
+
+**Un use case sécurisé s'enregistre en `AddScoped`, jamais en `AddSingleton`.** C'est la seule façon connue de casser l'isolation entre utilisateurs : `CurrentUser` étant résolu à la construction, un singleton figerait l'identité du premier appelant et la servirait ensuite à toutes les requêtes — l'utilisateur X lirait les données de Y sans qu'une seule ligne du use case soit fautive. Contrairement aux deux règles précédentes, celle-ci ne se manifeste par aucune erreur visible : elle ne se voit qu'ici.
 
 ### Use case appartenant à un module
 
@@ -29,7 +53,7 @@ Un use case métier déclare en plus son module. Le rôle exigé est alors cherc
 
 ```csharp
 public sealed class CreateTodolistUseCase(UseCaseAuthorizer authorizer, ...)
-    : SecuredUseCase<CreateTodolistCommand>(authorizer)
+    : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.User;
     protected override ModuleCode? RequiredModule => ModuleCode.Todolist;
@@ -250,9 +274,11 @@ refusé sans que rien n'indique pourquoi.
 
 ## Ce qui reste à faire
 
-`SecuredUseCase<TCommand, TResult>` impose de déclarer un type d'entrée même quand le use case n'en a aucun — le cas d'une lecture comme `/me`. La forme manquante est une `SecuredQuery<TResult>` : en C#, l'arité générique fait la signature, `SecuredUseCase<TResult>` désignerait donc « une commande sans résultat ». C'est le prix du contrôle porté par héritage plutôt que par un aspect, et il vaut la garantie obtenue — l'oubli du contrôle est inexprimable.
+**Refonte du socle faite le 2026-08-17, migration terminée le même jour.** `SecuredUseCase` (sans générique) est la seule forme : les quinze use cases sécurisés et les sept contrôleurs qui les servent sont passés dessus, et les trois formes historiques — `SecuredQuery<TResult>`, `SecuredUseCase<TCommand>`, `SecuredUseCase<TCommand, TResult>` — ont été supprimées. Il ne reste donc rien à faire de ce côté ; un use case qui se cherche une classe de base n'a plus qu'un choix.
 
-**Refonte décidée le 2026-08-17, pas encore faite.** Le découpage `SecuredQuery` / `SecuredUseCase<TCommand>` / `SecuredUseCase<TCommand, TResult>` — un héritage différent selon que `Handle` prend un argument ou pas, plus le split `Execute`/`Handle` — est jugé trop lourd à l'usage, sans équivalent côté Java (une seule interface `SecuredUseCase`, `execute()` a la signature libre qu'on veut). Direction retenue :
-- Un seul mécanisme de sécurisation, quel que soit le nombre/type d'arguments du use case — pas plusieurs classes de base à choisir selon l'arité.
-- `CurrentUser` n'est plus imposé en paramètre de la méthode : `ICurrentUserProvider`/`UseCaseAuthorizer` reste injecté par le constructeur, appelé à la demande dans le corps de la méthode — comme `currentUserProvider.getCurrentUserId()` en Java (`GetMyNotificationsUseCase.java:32`). Liberté totale sur la signature de la méthode métier.
-- **Contrainte à ne pas perdre en simplifiant** : le motif exact de ce fichier reste valable (un use case sécurisé doit rester sûr *seul*, un hub SignalR ou une tâche de fond n'ayant aucun middleware HTTP en amont) — donc la garantie "l'oubli du contrôle est inexprimable" doit survivre à la refonte, par un autre moyen que l'héritage actuel, pas juste être abandonnée pour la simplicité.
+Pourquoi la garantie tient toujours après la refonte : le contrôle n'est plus porté par une méthode `Execute` non virtuelle, mais par le constructeur de la classe de base. Dans les deux cas il n'existe aucun moyen d'obtenir l'objet sans que l'autorisation ait eu lieu — la propriété qui compte, « l'oubli du contrôle est inexprimable », est conservée, et le motif de ce fichier reste valable pour un appel venu d'un hub SignalR, où aucun middleware HTTP n'intervient.
+
+Deux options écartées volontairement, pour ne pas les re-débattre :
+
+- **Un proxy d'interception** (Castle DynamicProxy, l'équivalent de l'aspect Spring côté Java) aurait évité de passer `UseCaseAuthorizer` au constructeur de chaque use case. Il exigeait en échange un paquet supplémentaire, des méthodes `virtual`, un enregistrement dédié dans le conteneur — et surtout, l'oubli de l'un ou de l'autre laissait un use case **sans contrôle et sans bruit**. Le paramètre de constructeur est le prix assumé pour qu'aucun trou silencieux n'existe.
+- **Les attributs d'autorisation d'ASP.NET** (`[Authorize(Roles = …)]`) : c'est l'usage majoritaire en C#, mais il place la règle sur la route, ce que tout ce document rejette.

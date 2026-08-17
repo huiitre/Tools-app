@@ -12,13 +12,13 @@ namespace Tools.ApiCore.Modules.Users.Application.Usecases;
 public sealed class GetMyProfileUseCase(
     UseCaseAuthorizer authorizer,
     IUserRepository userRepository
-) : SecuredQuery<UserProfileDto>(authorizer)
+) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.ReadOnly;
 
-    protected override async Task<UserProfileDto> Handle(CurrentUser currentUser)
+    public async Task<UserProfileDto> Execute()
     {
-        var userId = currentUser.UserId;
+        var userId = CurrentUser.UserId;
 
         UserProfileDto userProfile = await userRepository.FindProfileAsync(userId)
             ?? throw new InvalidOperationException($"Le profil de l'utilisateur {userId} n'a pas été trouvé.");

@@ -10,22 +10,24 @@ namespace Tools.ApiCore.Modules.Access.Api;
 //
 // Les routes imbriquées sous `/modules/{id}/users` ne manipulent pas une ressource mais la
 // relation entre deux : quel utilisateur appartient à quel module, et avec quel rôle.
+//
+// Les use cases sont résolus par action ([FromServices]) : un use case sécurisé applique son
+// contrôle dès sa construction, une action ne doit donc construire que celui dont elle se sert.
+// Ici toutes les routes exigent ADMIN, mais la règle vaut pour tous les contrôleurs.
 [ApiController]
 [Route("modules")]
-public class ModulesController(
-    ListModulesUseCase listModulesUseCase,
-    CreateModuleUseCase createModuleUseCase,
-    UpdateModuleUseCase updateModuleUseCase,
-    ListModuleMembersUseCase listModuleMembersUseCase,
-    GrantModuleAccessUseCase grantModuleAccessUseCase,
-    ChangeModuleRoleUseCase changeModuleRoleUseCase,
-    RevokeModuleAccessUseCase revokeModuleAccessUseCase) : ControllerBase
+public class ModulesController : ControllerBase
 {
     [HttpGet]
-    public Task<IReadOnlyList<ModuleDto>> List() => listModulesUseCase.Execute();
+    public Task<IReadOnlyList<ModuleDto>> List([FromServices] ListModulesUseCase listModulesUseCase)
+    {
+        return listModulesUseCase.Execute();
+    }
 
     [HttpPost]
-    public async Task<IActionResult> Create(CreateModuleRequest request)
+    public async Task<IActionResult> Create(
+        CreateModuleRequest request,
+        [FromServices] CreateModuleUseCase createModuleUseCase)
     {
         var moduleId = await createModuleUseCase.Execute(
             new CreateModuleCommand(request.Code, request.Name, request.Description));
@@ -34,7 +36,10 @@ public class ModulesController(
     }
 
     [HttpPut("{moduleId:long}")]
-    public async Task<IActionResult> Update(long moduleId, UpdateModuleRequest request)
+    public async Task<IActionResult> Update(
+        long moduleId,
+        UpdateModuleRequest request,
+        [FromServices] UpdateModuleUseCase updateModuleUseCase)
     {
         await updateModuleUseCase.Execute(new UpdateModuleCommand(
             moduleId,
@@ -47,18 +52,29 @@ public class ModulesController(
     }
 
     [HttpGet("{moduleId:long}/users")]
-    public Task<IReadOnlyList<ModuleMemberDto>> Members(long moduleId) =>
-        listModuleMembersUseCase.Execute(moduleId);
+    public Task<IReadOnlyList<ModuleMemberDto>> Members(
+        long moduleId,
+        [FromServices] ListModuleMembersUseCase listModuleMembersUseCase)
+    {
+        return listModuleMembersUseCase.Execute(moduleId);
+    }
 
     [HttpPost("{moduleId:long}/users/{userId:long}")]
-    public async Task<IActionResult> GrantAccess(long moduleId, long userId)
+    public async Task<IActionResult> GrantAccess(
+        long moduleId,
+        long userId,
+        [FromServices] GrantModuleAccessUseCase grantModuleAccessUseCase)
     {
         await grantModuleAccessUseCase.Execute(new GrantModuleAccessCommand(moduleId, userId));
         return StatusCode(StatusCodes.Status201Created);
     }
 
     [HttpPut("{moduleId:long}/users/{userId:long}/role")]
-    public async Task<IActionResult> ChangeRole(long moduleId, long userId, ChangeModuleRoleRequest request)
+    public async Task<IActionResult> ChangeRole(
+        long moduleId,
+        long userId,
+        ChangeModuleRoleRequest request,
+        [FromServices] ChangeModuleRoleUseCase changeModuleRoleUseCase)
     {
         await changeModuleRoleUseCase.Execute(
             new ChangeModuleRoleCommand(moduleId, userId, request.RoleId));
@@ -67,7 +83,10 @@ public class ModulesController(
     }
 
     [HttpDelete("{moduleId:long}/users/{userId:long}")]
-    public async Task<IActionResult> RevokeAccess(long moduleId, long userId)
+    public async Task<IActionResult> RevokeAccess(
+        long moduleId,
+        long userId,
+        [FromServices] RevokeModuleAccessUseCase revokeModuleAccessUseCase)
     {
         await revokeModuleAccessUseCase.Execute(new RevokeModuleAccessCommand(moduleId, userId));
         return NoContent();

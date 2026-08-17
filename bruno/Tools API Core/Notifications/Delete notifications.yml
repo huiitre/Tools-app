@@ -1,0 +1,27 @@
+info:
+  name: Delete notifications
+  type: http
+  seq: 6
+
+http:
+  method: DELETE
+  url: "{{apiCoreUrl}}/notifications?ids=1,2"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Supprime des notifications de l'appelant. 204 sans corps.
+
+  `ids` : identifiants séparés par des virgules. **Paramètre retiré de l'URL = tout est supprimé.**
+
+  Seul le lien vers l'utilisateur disparaît (`tools_core.user_notifications`) : le message source
+  reste, il appartient aussi aux autres destinataires.
+
+  Rôle minimum : READ_ONLY.

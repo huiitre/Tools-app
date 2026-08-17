@@ -18,11 +18,11 @@ public sealed class ChangeModuleRoleUseCase(
     IRoleRepository roleRepository,
     ITransactionManager transactionManager,
     ILogger<ChangeModuleRoleUseCase> logger
-) : SecuredUseCase<ChangeModuleRoleCommand>(authorizer)
+) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
 
-    protected override async Task Handle(ChangeModuleRoleCommand command, CurrentUser currentUser)
+    public async Task Execute(ChangeModuleRoleCommand command)
     {
         // L'appartenance fait foi : on ne change pas le rôle de quelqu'un qui n'a pas accès
         // au module — ce serait le lui accorder par un chemin détourné.
@@ -44,7 +44,7 @@ public sealed class ChangeModuleRoleUseCase(
 
         logger.LogInformation(
             "Rôle module modifié par userId={ActorId} : moduleId={ModuleId} cible={TargetUserId} roleId={RoleId}",
-            currentUser.UserId,
+            CurrentUser.UserId,
             command.ModuleId,
             command.UserId,
             command.RoleId);

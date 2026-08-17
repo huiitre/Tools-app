@@ -7,10 +7,10 @@ namespace Tools.ApiCore.Modules.Notifications;
 
 // Composition du module Notifications.
 //
-// Socle uniquement : persistance et résolution des destinataires. Les routes de lecture
-// (`GET /notifications`, marquage lu, suppression) et la livraison temps réel restent servies
-// par l'API Java ; les deux écrivent dans les mêmes tables. Le module s'y substituera avec la
-// tranche SignalR, sans que ce qui est ici ait à changer.
+// Le module est complet depuis la migration du 2026-08-17 : écriture, résolution des
+// destinataires, livraison temps réel (SignalR) et lecture/gestion pour l'utilisateur. Les
+// tables restent celles de l'API Java, qui n'écrit plus que par la route interne
+// (`/internal/notifications`) depuis ses propres flux métier.
 public static class NotificationsModule
 {
     public static IHostApplicationBuilder AddNotificationsModule(this IHostApplicationBuilder builder)
@@ -18,6 +18,10 @@ public static class NotificationsModule
         builder.Services.AddScoped<INotificationRepository, PostgresNotificationRepository>();
         builder.Services.AddScoped<NotificationService>();
         builder.Services.AddScoped<PublishInternalNotificationUseCase>();
+        builder.Services.AddScoped<GetMyNotificationsUseCase>();
+        builder.Services.AddScoped<MarkNotificationsAsReadUseCase>();
+        builder.Services.AddScoped<DeleteNotificationsUseCase>();
+        builder.Services.AddScoped<SendNotificationUseCase>();
 
         return builder;
     }

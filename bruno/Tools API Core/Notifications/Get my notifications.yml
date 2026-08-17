@@ -1,0 +1,28 @@
+info:
+  name: Get my notifications
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{apiCoreUrl}}/notifications"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+docs: |-
+  Notifications actives de l'appelant.
+
+  Rôle minimum : READ_ONLY — c'est-à-dire le contrôle par défaut de `SecuredUseCase`, que
+  `GetMyNotificationsUseCase` ne surcharge pas. Sans jeton : 401 `UNAUTHENTICATED`. Avec un jeton
+  d'un compte sans aucun rôle : 403 `INSUFFICIENT_ROLE`.
+
+  Le destinataire n'est pas un paramètre : il vient de l'appelant validé (`CurrentUser.UserId`).
+
+  ⚠️ Le corps est encore une valeur en dur, la lecture en base n'est pas branchée.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

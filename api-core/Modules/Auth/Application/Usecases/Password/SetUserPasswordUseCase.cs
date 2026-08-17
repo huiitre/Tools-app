@@ -25,20 +25,18 @@ public sealed class SetUserPasswordUseCase(
     IUserAuthProviderRepository userAuthProviderRepository,
     IPasswordHasher passwordHasher,
     ITransactionManager transactionManager,
-    ILogger<SetUserPasswordUseCase> logger) : SecuredUseCase<SetUserPasswordCommand>(authorizer)
+    ILogger<SetUserPasswordUseCase> logger) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.ReadOnly;
 
-    protected override async Task Handle(
-        SetUserPasswordCommand command,
-        CurrentUser currentUser)
+    public async Task Execute(SetUserPasswordCommand command)
     {
         if (string.IsNullOrWhiteSpace(command.Password))
         {
             throw AppException.Validation("INVALID_PASSWORD", "Le mot de passe est obligatoire.");
         }
 
-        var user = await authRepository.FindByIdAsync(currentUser.UserId)
+        var user = await authRepository.FindByIdAsync(CurrentUser.UserId)
             ?? throw AppException.NotFound("USER_NOT_FOUND", "Utilisateur introuvable.");
 
         var passwordHash = passwordHasher.Hash(command.Password);

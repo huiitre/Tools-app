@@ -9,18 +9,15 @@ using Tools.ApiCore.Modules.Security.Domain;
 namespace Tools.ApiCore.Modules.Access.Application.Usecases;
 
 // Cas d'usage administrateur : lister les membres d'un module et leur rôle.
-//
-// SecuredQuery ne convient pas : cette lecture prend un paramètre. D'où
-// SecuredUseCase<TCommand, TResult>, malgré la règle « ça lit, c'est une SecuredQuery ».
 public sealed class ListModuleMembersUseCase(
     UseCaseAuthorizer authorizer,
     IModuleRepository moduleRepository,
     IModuleMembershipRepository membershipRepository
-) : SecuredUseCase<long, IReadOnlyList<ModuleMemberDto>>(authorizer)
+) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
 
-    protected override async Task<IReadOnlyList<ModuleMemberDto>> Handle(long moduleId, CurrentUser currentUser)
+    public async Task<IReadOnlyList<ModuleMemberDto>> Execute(long moduleId)
     {
         // Un module inexistant rend 404 plutôt qu'une liste vide, qui laisserait croire à un
         // module sans membre.

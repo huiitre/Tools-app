@@ -14,11 +14,11 @@ public sealed class RevokeModuleAccessUseCase(
     IModuleMembershipRepository membershipRepository,
     ITransactionManager transactionManager,
     ILogger<RevokeModuleAccessUseCase> logger
-) : SecuredUseCase<RevokeModuleAccessCommand>(authorizer)
+) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
 
-    protected override async Task Handle(RevokeModuleAccessCommand command, CurrentUser currentUser)
+    public async Task Execute(RevokeModuleAccessCommand command)
     {
         // Retirer un accès inexistant n'est pas anodin : c'est le signe que l'écran affiche
         // un état périmé. L'API Java rend la même erreur.
@@ -35,7 +35,7 @@ public sealed class RevokeModuleAccessUseCase(
 
         logger.LogInformation(
             "Accès module révoqué par userId={ActorId} : moduleId={ModuleId} cible={TargetUserId}",
-            currentUser.UserId,
+            CurrentUser.UserId,
             command.ModuleId,
             command.UserId);
     }
