@@ -457,15 +457,25 @@ Sécurité (côté Core maintenant) :
 - Role TECH exclu systématiquement de tous les destinataires d'un envoi.
 - Lecture/marquage/suppression : READ_ONLY. Envoi manuel : TECH.
 
-**Code mort côté Java depuis la bascule du front sur `clientCore`** — plus aucun appelant, pas
-encore supprimé :
-- `NotificationController` (les 4 routes `/notifications` + `/notifications/stream`)
-- `GetMyNotificationsUseCase`, `MarkNotificationsAsReadUseCase`, `DeleteNotificationsUseCase`,
-  `SendNotificationUseCase`, `StreamNotificationsUseCase`
-- `NotificationRepository` / `PostgresNotificationRepository` (lecture), `NotificationView`,
-  `SseNotificationService`
+**Le code devenu mort a été supprimé (2026-08-17)** : `NotificationController` et ses quatre
+routes, `/notifications/stream` (SSE) et `SseNotificationService`, les cinq use cases de
+lecture/écriture, `NotificationRepository`/`PostgresNotificationRepository`, `NotificationView`,
+et les entités `Notification`/`UserNotification`. Les entrées Bruno correspondantes
+(`Tools API v3/Core/Notification/`) ont disparu avec elles — **l'API Java ne sert plus aucune
+route `/notifications`**.
+
+Il ne subsiste que le chemin d'émission, qui n'a pas d'équivalent ailleurs :
+`NotificationEvent`, `NotificationEventListener` (`@Component` + `@EventListener` : aucun appel
+direct, ne pas le croire orphelin sur la foi d'une recherche textuelle), `ApiCoreNotificationPort`
+et son adaptateur HTTP, `NotificationType` (utilisé par Feedback, Almanax et Valorant) et
+`NotificationConfig`, réduit au seul bean `apiCoreNotificationPort`.
 
 Les routes du Core sont dans `bruno/Tools API Core/Notifications/`.
+
+⚠️ **Ordre de déploiement** : l'image web (front sur `clientCore`) doit partir **avant ou en même
+temps** que cette image Java. Déployée seule, l'API Java retire des routes que le front en
+production appelle encore — neutraliser Watchtower sur `tools_api_v3` le temps que `tools_web`
+soit à jour, comme lors de la mise en production du 15/08.
 
 ## Module Riot/Valorant (Updates 2026-05-10)
 - Authentification : Chiffrement AES-256 du refresh token en base. Rotation auto via ValorantAuthService (utilisable hors contexte de sécurité).
