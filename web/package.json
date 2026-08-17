@@ -68,6 +68,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
     "@fortawesome/vue-fontawesome": "^3.0.3",
     "@headlessui/vue": "^1.7.23",
+    "@microsoft/signalr": "^10.0.11",
     "@picocss/pico": "^2.1.1",
     "@stomp/stompjs": "^7.3.0",
     "@tanstack/vue-table": "^8.21.3",

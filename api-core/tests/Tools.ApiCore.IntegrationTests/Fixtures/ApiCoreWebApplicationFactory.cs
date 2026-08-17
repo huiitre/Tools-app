@@ -14,6 +14,7 @@ using Tools.ApiCore.Modules.Auth.Application.Ports.Password;
 using Tools.ApiCore.Modules.Access.Application.Ports;
 using Tools.ApiCore.Modules.Admin.Application.Ports;
 using Tools.ApiCore.Modules.Notifications.Application.Ports;
+using Tools.ApiCore.Modules.Realtime.Application.Ports;
 using Tools.ApiCore.Modules.Security.Application.Ports;
 using Tools.ApiCore.Modules.Users.Application;
 
@@ -81,6 +82,15 @@ public sealed class ApiCoreWebApplicationFactory : WebApplicationFactory<Program
             services.AddSingleton<InMemoryNotificationRepository>();
             services.AddSingleton<INotificationRepository>(
                 provider => provider.GetRequiredService<InMemoryNotificationRepository>());
+
+            services.RemoveAll<IRealtimePublisher>();
+            services.AddSingleton<RecordingRealtimePublisher>();
+            services.AddSingleton<IRealtimePublisher>(
+                provider => provider.GetRequiredService<RecordingRealtimePublisher>());
+            services.RemoveAll<IRecipientResolver>();
+            services.AddSingleton<InMemoryRecipientResolver>();
+            services.AddSingleton<IRecipientResolver>(
+                provider => provider.GetRequiredService<InMemoryRecipientResolver>());
         });
     }
 

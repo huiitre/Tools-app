@@ -1,0 +1,8 @@
+info:
+  name: Notifications
+  type: folder
+  seq: 10
+
+request:
+  auth:
+    type: none

@@ -24,7 +24,7 @@ const createClient = (version: string): AxiosInstance =>
 //* En développement le Core est un process séparé, écouté sur son propre port et sans
 //* préfixe : VITE_TOOLS_CORE_BASE_URL permet alors de le viser directement
 //* (ex. http://localhost:5090).
-const CORE_BASE_URL =
+export const CORE_BASE_URL =
   import.meta.env.VITE_TOOLS_CORE_BASE_URL ||
   `${import.meta.env.VITE_TOOLS_API_BASE_URL}/api/core`;
 

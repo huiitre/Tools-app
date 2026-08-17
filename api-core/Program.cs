@@ -6,6 +6,7 @@ using Tools.ApiCore.Modules.Common;
 using Tools.ApiCore.Modules.Health;
 using Tools.ApiCore.Modules.Mail;
 using Tools.ApiCore.Modules.Notifications;
+using Tools.ApiCore.Modules.Realtime;
 using Tools.ApiCore.Modules.Security;
 using Tools.ApiCore.Modules.Users;
 
@@ -21,6 +22,7 @@ builder.AddCommonModule()
     .AddSecurityModule()
     .AddAuthModule()
     .AddMailModule()
+    .AddRealtimeModule()
     .AddNotificationsModule()
     .AddUsersModule()
     .AddAccessModule()
@@ -33,6 +35,7 @@ app.UseCorePipeline();
 
 app.MapVersionEndpoint();
 app.MapControllers();
+app.MapRealtimeModule();
 
 // Ces endpoints existent pour les tests d'intégration et ne sont donc mappés dans aucun
 // environnement réel — ni Development, ni QA, ni Production.

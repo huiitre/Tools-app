@@ -1,0 +1,8 @@
+info:
+  name: Realtime
+  type: folder
+  seq: 11
+
+request:
+  auth:
+    type: none

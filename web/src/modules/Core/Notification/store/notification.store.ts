@@ -1,16 +1,16 @@
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 import { AppNotification } from '../domain/notification.types';
-import { WebSocketNotificationTransport } from '../infrastructure/notification.transport';
-import { clientV3 } from '@/services/axiosInstance';
+import { SignalRNotificationTransport } from '../infrastructure/notification.transport';
+import { clientV3, CORE_BASE_URL } from '@/services/axiosInstance';
 import { useAuthStore } from '@/modules/Auth/auth.store';
 
-const log = (...args: unknown[]) => console.log('[WS]', ...args);
+const log = (...args: unknown[]) => console.log('[Realtime]', ...args);
 
 export const useNotificationStore = defineStore('notifications', () => {
   const notifications = ref<AppNotification[]>([]);
   const isConnected = ref(false);
-  const transport = new WebSocketNotificationTransport();
+  const transport = new SignalRNotificationTransport();
   const authStore = useAuthStore();
 
   let connectedWithToken: string | null = null;
@@ -30,20 +30,18 @@ export const useNotificationStore = defineStore('notifications', () => {
     try {
       await fetchHistory();
 
-      const baseUrl = import.meta.env.VITE_TOOLS_API_BASE_URL || '';
       const token = authStore.accessToken;
 
       if (token) {
         connectedWithToken = token;
-        // WebSocket endpoint configuré côté backend (incluant le context-path)
-        const wsUrl = `${baseUrl}/api/v3/ws`;
-        log('Connexion au WebSocket...');
+        const hubUrl = `${CORE_BASE_URL}/hub`;
+        log('Connexion au hub temps réel...');
         transport.connect(
-          wsUrl,
+          hubUrl,
           token,
           () => {
             isConnected.value = true;
-            log('WebSocket connecté');
+            log('Hub connecté');
             if (pendingReconnect) {
               pendingReconnect = false;
               fetchHistory().catch(() => {});
@@ -52,16 +50,16 @@ export const useNotificationStore = defineStore('notifications', () => {
           (newNotif) => handleIncoming(newNotif),
           () => {
             isConnected.value = false;
-            log('WebSocket erreur / déconnecté');
+            log('Hub en erreur / déconnecté');
             if (!authStore.isAuthenticated) {
               log('Non authentifié → abandon');
               transport.disconnect();
               connectedWithToken = null;
               return;
             }
-            
-            // Le STOMP Client va tenter de se reconnecter tout seul toutes les 5s.
-            // On se contente de marquer qu'on a besoin d'un refresh d'historique au retour.
+
+            // SignalR (withAutomaticReconnect) retente seul. On se contente de marquer
+            // qu'un rafraîchissement de l'historique sera nécessaire au retour.
             pendingReconnect = true;
           }
         );

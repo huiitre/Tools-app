@@ -19,10 +19,14 @@ public sealed class InternalNotificationsTests : IClassFixture<ApiCoreWebApplica
     {
         this.factory = factory;
         factory.Services.GetRequiredService<InMemoryNotificationRepository>().Clear();
+        factory.Services.GetRequiredService<RecordingRealtimePublisher>().Clear();
     }
 
     private InMemoryNotificationRepository Notifications =>
         factory.Services.GetRequiredService<InMemoryNotificationRepository>();
+
+    private RecordingRealtimePublisher RealtimePublisher =>
+        factory.Services.GetRequiredService<RecordingRealtimePublisher>();
 
     private static object ValidPayload => new
     {
@@ -54,6 +58,11 @@ public sealed class InternalNotificationsTests : IClassFixture<ApiCoreWebApplica
         Assert.Equal("Sync terminée", notification.Title);
         Assert.Equal("SUCCESS", notification.Type);
         Assert.Equal(["ADMIN", "OWNER"], Notifications.RoleCodesAsked);
+
+        var push = RealtimePublisher.LastPublish;
+        Assert.NotNull(push);
+        Assert.Equal("ReceiveNotification", push!.EventType);
+        Assert.Equal([InMemoryNotificationRepository.AdminUserId], push.UserIds);
     }
 
     // 404 et non 401 : la réponse ne doit pas confirmer que la route existe.

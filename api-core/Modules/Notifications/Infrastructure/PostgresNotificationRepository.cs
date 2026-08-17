@@ -1,6 +1,5 @@
 using Dapper;
 using Npgsql;
-using NpgsqlTypes;
 using Tools.ApiCore.Modules.Notifications.Application.Ports;
 
 namespace Tools.ApiCore.Modules.Notifications.Infrastructure;
@@ -19,9 +18,11 @@ public sealed class PostgresNotificationRepository(NpgsqlDataSource dataSource) 
         long? targetModuleId,
         string? metadata)
     {
+        // ::jsonb caste le paramètre texte côté Postgres — Dapper ne sait pas binder un
+        // NpgsqlParameter typé directement dans un objet anonyme.
         const string sql = """
             INSERT INTO tools_core.notifications (title, body, type, target_user_id, target_module_id, metadata)
-            VALUES (@Title, @Body, @Type, @TargetUserId, @TargetModuleId, @Metadata)
+            VALUES (@Title, @Body, @Type, @TargetUserId, @TargetModuleId, @Metadata::jsonb)
             RETURNING id
             """;
 
@@ -33,8 +34,7 @@ public sealed class PostgresNotificationRepository(NpgsqlDataSource dataSource) 
             Type = type,
             TargetUserId = targetUserId,
             TargetModuleId = targetModuleId,
-            // metadata est de type jsonb : sans ce typage explicite, Npgsql enverrait du texte.
-            Metadata = metadata is null ? null : new NpgsqlParameter { NpgsqlDbType = NpgsqlDbType.Jsonb, Value = metadata }
+            Metadata = metadata
         }));
     }
 

@@ -1,9 +1,6 @@
 package fr.huiitre.tools.modules.core.notification.infrastructure.persistence;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -30,52 +27,6 @@ public class PostgresNotificationRepository implements NotificationRepository {
             rs.getTimestamp("created_at").toLocalDateTime(),
             rs.getBoolean("is_read")
     );
-
-    @Override
-    public Notification save(Notification notification) {
-        final String sql = """
-                    INSERT INTO tools_core.notifications (title, body, type, target_user_id, target_role_id, target_module_id, metadata)
-                    VALUES (?, ?, ?, ?, ?, ?, ?::jsonb)
-                    RETURNING id, created_at
-                """;
-
-        return jdbcTemplate.queryForObject(
-                sql,
-                (rs, rowNum) -> new Notification(
-                        rs.getLong("id"),
-                        notification.title(),
-                        notification.body(),
-                        notification.type(),
-                        notification.targetUserId(),
-                        notification.targetRoleId(),
-                        notification.targetModuleId(),
-                        notification.metadata(),
-                        rs.getTimestamp("created_at").toLocalDateTime(),
-                        false),
-                notification.title(),
-                notification.body(),
-                notification.type().name(),
-                notification.targetUserId(),
-                notification.targetRoleId(),
-                notification.targetModuleId(),
-                notification.metadata());
-    }
-
-    @Override
-    public void createUserEntries(Long notificationId, List<Long> userIds) {
-        final String sql = "INSERT INTO tools_core.user_notifications (user_id, notification_id) VALUES (?, ?)";
-        List<Object[]> batchArgs = userIds.stream()
-                .map(userId -> new Object[]{userId, notificationId})
-                .toList();
-        jdbcTemplate.batchUpdate(sql, batchArgs);
-    }
-
-    @Override
-    public Optional<Notification> findById(Long id) {
-        final String sql = "SELECT n.*, FALSE as is_read FROM tools_core.notifications n WHERE n.id = ?";
-        List<Notification> results = jdbcTemplate.query(sql, NOTIFICATION_ROW_MAPPER, id);
-        return results.stream().findFirst();
-    }
 
     @Override
     public List<Notification> findActiveForUser(Long userId) {

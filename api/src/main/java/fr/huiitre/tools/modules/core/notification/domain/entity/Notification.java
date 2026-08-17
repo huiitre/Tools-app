@@ -13,27 +13,4 @@ public record Notification(
     String metadata,
     LocalDateTime createdAt,
     boolean read
-) {
-    public static Notification create(
-        String title,
-        String body,
-        NotificationType type,
-        Long targetUserId,
-        Long targetRoleId,
-        Long targetModuleId,
-        String metadata
-    ) {
-        return new Notification(
-            null,
-            title,
-            body,
-            type,
-            targetUserId,
-            targetRoleId,
-            targetModuleId,
-            metadata,
-            LocalDateTime.now(),
-            false
-        );
-    }
-}
+) {}
