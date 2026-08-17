@@ -76,6 +76,14 @@
   .line:hover { background: #ffffff08; }
   .line.system { color: var(--dim); font-style: italic; background: #ffffff05; }
 
+  .load-more {
+    display: none; margin: 0 .6rem .4rem; padding: .3rem .5rem; text-align: center;
+    background: var(--panel); border: 1px solid var(--border); border-radius: .3rem;
+    color: var(--accent); cursor: pointer; font-size: .9em;
+  }
+  .load-more:hover { border-color: var(--accent); }
+  .load-more.show { display: block; }
+
   #empty { color: var(--dim); padding: 1rem; grid-column: 1 / -1; }
 </style>
 </head>
@@ -101,6 +109,12 @@
   var HIDDEN_BY_DEFAULT = { system: true, tunnel: true };
   var HAS_PROCESS = { system: false }; // tout le reste (tunnel/api/core/web) a un vrai process
   var PRIMARY = { api: true, core: true, web: true }; // les 3 avec clear/copy/reload dédiés
+
+  // Le DOM ne garde qu'une fenêtre de WINDOW_SIZE lignes (au-delà, ça finit par planter le
+  // navigateur) ; l'historique complet reste dans un simple tableau JS (quasi gratuit en texte),
+  // plafonné à MAX_STORED comme filet de sécurité pur pour une session de plusieurs jours.
+  var WINDOW_SIZE = 1000;
+  var MAX_STORED = 20000;
 
   var hidden = {}; // name -> true si la colonne est masquée
   var cols = {};   // name -> {root, body, dot}
@@ -132,7 +146,7 @@
       var clearBtn = document.createElement('button');
       clearBtn.textContent = '␡';
       clearBtn.title = 'Effacer ' + name;
-      clearBtn.addEventListener('click', function () { body.innerHTML = ''; });
+      clearBtn.addEventListener('click', function () { clearColumn(name); });
       head.appendChild(clearBtn);
 
       var copyBtn = document.createElement('button');
@@ -163,8 +177,13 @@
     body.className = 'col-body';
     root.appendChild(body);
 
+    var loadMoreBtn = document.createElement('div');
+    loadMoreBtn.className = 'load-more';
+    loadMoreBtn.addEventListener('click', function () { loadMore(name); });
+    body.appendChild(loadMoreBtn);
+
     columnsEl.appendChild(root);
-    cols[name] = { root: root, body: body, dot: dot };
+    cols[name] = { root: root, body: body, dot: dot, loadMoreBtn: loadMoreBtn, all: [], renderedStart: 0 };
 
     // toggle dans la barre du haut
     var wrap = document.createElement('div');
@@ -196,16 +215,73 @@
     return body.scrollHeight - body.scrollTop - body.clientHeight < 60;
   }
 
+  function makeLineEl(entry) {
+    var line = document.createElement('div');
+    line.className = 'line' + (entry.kind === 'system' ? ' system' : '');
+    line.textContent = entry.text;
+    return line;
+  }
+
+  function updateBanner(col) {
+    var hiddenCount = col.renderedStart;
+    if (hiddenCount > 0) {
+      col.loadMoreBtn.textContent = '▲ Afficher ' + Math.min(WINDOW_SIZE, hiddenCount) + ' logs précédents (' + hiddenCount + ' au total)';
+      col.loadMoreBtn.classList.add('show');
+    } else {
+      col.loadMoreBtn.classList.remove('show');
+    }
+  }
+
   function appendLine(entry) {
     var col = ensureColumn(entry.name);
     var stick = isNearBottom(col.body);
 
-    var line = document.createElement('div');
-    line.className = 'line' + (entry.kind === 'system' ? ' system' : '');
-    line.textContent = entry.text;
-    col.body.appendChild(line);
+    col.all.push(entry);
+    if (col.all.length > MAX_STORED) {
+      col.all.shift();
+      if (col.renderedStart > 0) col.renderedStart--;
+    }
 
+    col.body.appendChild(makeLineEl(entry));
+
+    // Fenêtre pleine : on retire la plus vieille ligne affichée (elle reste dans col.all).
+    var renderedCount = col.all.length - col.renderedStart;
+    if (renderedCount > WINDOW_SIZE) {
+      var oldest = col.body.querySelector('.line');
+      if (oldest) oldest.remove();
+      col.renderedStart++;
+    }
+
+    updateBanner(col);
     if (stick) col.body.scrollTop = col.body.scrollHeight;
+  }
+
+  function loadMore(name) {
+    var col = cols[name];
+    if (!col || col.renderedStart === 0) return;
+
+    var chunk = Math.min(WINDOW_SIZE, col.renderedStart);
+    var newStart = col.renderedStart - chunk;
+    var frag = document.createDocumentFragment();
+    for (var i = newStart; i < col.renderedStart; i++) frag.appendChild(makeLineEl(col.all[i]));
+
+    var heightBefore = col.body.scrollHeight;
+    col.loadMoreBtn.after(frag);
+    // Compense l'insertion en haut pour ne pas faire sauter la vue visuellement.
+    col.body.scrollTop += col.body.scrollHeight - heightBefore;
+
+    col.renderedStart = newStart;
+    updateBanner(col);
+  }
+
+  function clearColumn(name) {
+    var col = cols[name];
+    if (!col) return;
+    col.all = [];
+    col.renderedStart = 0;
+    var lines = col.body.querySelectorAll('.line');
+    lines.forEach(function (l) { l.remove(); });
+    updateBanner(col);
   }
 
   function handleEntry(entry) {
@@ -225,7 +301,7 @@
 
   document.getElementById('clear').addEventListener('click', function () {
     for (var name in cols) {
-      if (!hidden[name]) cols[name].body.innerHTML = '';
+      if (!hidden[name]) clearColumn(name);
     }
   });
 
