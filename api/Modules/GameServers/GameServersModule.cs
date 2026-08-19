@@ -1,6 +1,8 @@
 using Tools.Api.Modules.GameServers.Application;
 using Tools.Api.Modules.GameServers.Application.Ports;
 using Tools.Api.Modules.GameServers.Infrastructure;
+using Tools.Api.Modules.Common.Infrastructure;
+using Microsoft.Extensions.Options;
 
 namespace Tools.Api.Modules.GameServers;
 
@@ -12,6 +14,12 @@ public static class GameServersModule
     {
         builder.Services.AddScoped<IGameServerRepository, PostgresGameServerRepository>();
         builder.Services.AddSingleton<IGameServerImageUrlBuilder, GameServerImageUrlBuilder>();
+        builder.Services.AddHttpClient<IGameServersManifestProvider, GameServersManifestProvider>((services, client) =>
+        {
+            var appOptions = services.GetRequiredService<IOptions<AppOptions>>().Value;
+            client.BaseAddress = new Uri($"{appOptions.AssetsBaseUrl.TrimEnd('/')}/");
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
         builder.Services.AddHttpClient<ISteamAppDetailsProvider, SteamAppDetailsProvider>(client =>
         {
             client.BaseAddress = new Uri("https://store.steampowered.com/");

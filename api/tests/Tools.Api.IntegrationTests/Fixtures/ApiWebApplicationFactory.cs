@@ -69,6 +69,9 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<ISteamAppDetailsProvider>();
             services.AddSingleton<FakeSteamAppDetailsProvider>();
             services.AddSingleton<ISteamAppDetailsProvider>(provider => provider.GetRequiredService<FakeSteamAppDetailsProvider>());
+            services.RemoveAll<IGameServersManifestProvider>();
+            services.AddSingleton<FakeGameServersManifestProvider>();
+            services.AddSingleton<IGameServersManifestProvider>(provider => provider.GetRequiredService<FakeGameServersManifestProvider>());
 
             // L'administration est testée sans PostgreSQL : ces doubles sont des singletons
             // pour que le test puisse relire l'état laissé par la requête.

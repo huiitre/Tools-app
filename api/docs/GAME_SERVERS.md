@@ -7,7 +7,8 @@ nombre de joueurs. Il lit exclusivement PostgreSQL : aucun chargement du
 dashboard ne contacte un serveur de jeu ou Steam.
 
 La configuration vient des manifests scannés sur le NAS par
-`tools_gameserver_extractor`. L'API C# ne lit jamais `/data/docker/games`.
+`tools_gameserver_extractor`, qui publie un fichier JSON consolidé dans les assets.
+L'API C# ne lit jamais `/data/docker/games`.
 
 ## Frontières retenues
 
@@ -17,16 +18,17 @@ La configuration vient des manifests scannés sur le NAS par
   frontière de responsabilités et de composition, pas un module fonctionnel
   visible ni soumis à un droit. Cela préserve l'organisation module-local de
   l'API sans transformer le widget en page produit.
-- La synchronisation est une route service-à-service
+- La synchronisation est une route service-à-service de déclenchement,
   `POST /internal/gameservers/sync`, protégée par `[InternalApi]` :
   `X-Internal-Token` doit correspondre à `INTERNAL_API_TOKEN`. Ce n'est pas un
   JWT. Le secret est injecté dans la configuration Docker de l'API. L'extractor
   NAS reste un script lancé par cron : son shell charge un fichier `.env` local
   non versionné avant d'appeler l'API. Le secret n'est jamais commité, placé
   dans Bruno ou écrit dans un shell interactif.
-- Le payload est validé entièrement avant écriture. Dans une transaction, le
-  sync upsert les manifests par `slug` puis supprime les lignes absentes du
-  scan, sans modifier les colonnes de statut.
+- La route ne reçoit aucun body. Le use case charge
+  `tools_core/gameservers/gameservers.json` depuis le CDN d'assets, valide le
+  tableau entier puis, dans une transaction, upsert les manifests par `slug`
+  et supprime les lignes absentes du scan, sans modifier les colonnes de statut.
 - Le poll écrit uniquement `online`, `num_players`, `max_players` et
   `checked_at`. Une erreur ou un timeout est isolé par serveur et se traduit
   par `online = false` pour ce serveur seulement.
@@ -74,6 +76,7 @@ est ajoutée à `bruno/` dans le même changement.
 - Un sync retourne `created`, `updated`, `unchanged` et `deleted`. Il rafraîchit
   toujours `last_synced_at`, mais ne compte pas cette date seule comme une mise à
   jour de configuration.
-- `pictureFile` est l'autorité de l'extractor : non nul, il produit l'URL
-  `{App:AssetsBaseUrl}/tools_core/gameservers/img/<fichier>` ; nul, Steam fournit
+- `pictureFile` est l'autorité de l'extractor : il désigne le fichier copié sous
+  `img/` (par exemple `img/palworld.png`) et produit l'URL
+  `{App:AssetsBaseUrl}/tools_core/gameservers/<pictureFile>` ; nul, Steam fournit
   l'image de repli. Une panne Steam conserve les métadonnées déjà enregistrées.

@@ -6,12 +6,14 @@ namespace Tools.Api.Modules.GameServers.Application;
 
 public sealed class GameServersSyncUseCase(
     IGameServerRepository gameServerRepository,
+    IGameServersManifestProvider gameServersManifestProvider,
     ISteamAppDetailsProvider steamAppDetailsProvider,
     IGameServerImageUrlBuilder imageUrlBuilder,
     ITransactionManager transactionManager)
 {
-    public async Task<GameServersSyncReport> Execute(IReadOnlyList<GameServerSyncDto> gameServers)
+    public async Task<GameServersSyncReport> Execute()
     {
+        var gameServers = await gameServersManifestProvider.FetchAsync();
         Validate(gameServers);
 
         var entries = new List<GameServerSyncEntry>(gameServers.Count);
@@ -100,11 +102,24 @@ public sealed class GameServersSyncUseCase(
                 throw AppException.Validation("INVALID_PROTOCOL_CONFIG", "protocolConfig doit être un objet JSON.");
             }
 
-            if (!string.IsNullOrWhiteSpace(gameServer.PictureFile)
-                && Path.GetFileName(gameServer.PictureFile) != gameServer.PictureFile)
+            if (!string.IsNullOrWhiteSpace(gameServer.PictureFile) && !IsLocalPicturePath(gameServer.PictureFile))
             {
-                throw AppException.Validation("INVALID_PICTURE_FILE", "pictureFile doit être un nom de fichier du dossier img.");
+                throw AppException.Validation("INVALID_PICTURE_FILE", "pictureFile doit désigner un fichier direct du dossier img.");
             }
         }
+    }
+
+    private static bool IsLocalPicturePath(string pictureFile)
+    {
+        const string imageDirectory = "img/";
+        if (!pictureFile.StartsWith(imageDirectory, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var fileName = pictureFile[imageDirectory.Length..];
+        return !string.IsNullOrWhiteSpace(fileName)
+               && Path.GetFileName(fileName) == fileName
+               && !fileName.Contains("..", StringComparison.Ordinal);
     }
 }

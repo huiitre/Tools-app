@@ -11,5 +11,5 @@ public sealed class GameServerImageUrlBuilder(IOptions<AppOptions> options) : IG
     private readonly string assetsBaseUrl = options.Value.AssetsBaseUrl.TrimEnd('/');
 
     public string Build(string pictureFile) =>
-        $"{assetsBaseUrl}/tools_core/gameservers/img/{Uri.EscapeDataString(pictureFile)}";
+        $"{assetsBaseUrl}/tools_core/gameservers/{string.Join('/', pictureFile.Split('/').Select(Uri.EscapeDataString))}";
 }
