@@ -1,3 +1,4 @@
+using Tools.Api.Modules.GameServers.Application.Dto;
 using Tools.Api.Modules.GameServers.Application.Ports;
 
 namespace Tools.Api.IntegrationTests.Fakes;

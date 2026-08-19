@@ -1,5 +1,6 @@
 using Tools.Api.Modules.Common.Application.Exceptions;
 using Tools.Api.Modules.Common.Application.Ports;
+using Tools.Api.Modules.GameServers.Application.Dto;
 using Tools.Api.Modules.GameServers.Application.Ports;
 
 namespace Tools.Api.Modules.GameServers.Application;

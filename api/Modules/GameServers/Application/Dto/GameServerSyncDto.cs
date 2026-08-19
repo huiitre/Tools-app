@@ -1,10 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Tools.Api.Modules.GameServers.Application.Ports;
+namespace Tools.Api.Modules.GameServers.Application.Dto;
 
-// Données de configuration reçues par le flux de synchronisation.
-// Le statut de poll reste volontairement hors de ce contrat.
+// Forme lue dans gameservers.json, produit consolidé de l'extractor NAS.
 public sealed record GameServerSyncDto(
     string Slug,
     string GameCode,

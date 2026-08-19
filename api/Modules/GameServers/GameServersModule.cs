@@ -1,18 +1,23 @@
 using Tools.Api.Modules.GameServers.Application;
 using Tools.Api.Modules.GameServers.Application.Ports;
 using Tools.Api.Modules.GameServers.Infrastructure;
+using Tools.Api.Modules.GameServers.Infrastructure.Polling;
+using Tools.Api.Modules.GameServers.Infrastructure.Status;
 using Tools.Api.Modules.Common.Infrastructure;
 using Microsoft.Extensions.Options;
 
 namespace Tools.Api.Modules.GameServers;
 
-// Composition du flux interne de manifests : aucun poll de statut n'est enregistré ici pour
-// l'instant. Il viendra avec les adapters de protocol_type dans un second lot.
+// Composition du flux de manifest et du poll de statut. Les adapters sont choisis uniquement par
+// protocol_type, jamais par gameCode.
 public static class GameServersModule
 {
     public static IHostApplicationBuilder AddGameServersModule(this IHostApplicationBuilder builder)
     {
-        builder.Services.AddScoped<IGameServerRepository, PostgresGameServerRepository>();
+        builder.Services.AddScoped<PostgresGameServerRepository>();
+        builder.Services.AddScoped<IGameServerRepository>(services => services.GetRequiredService<PostgresGameServerRepository>());
+        builder.Services.AddScoped<IGameServerPollingRepository>(services => services.GetRequiredService<PostgresGameServerRepository>());
+        builder.Services.AddScoped<IGameServerDashboardRepository>(services => services.GetRequiredService<PostgresGameServerRepository>());
         builder.Services.AddSingleton<IGameServerImageUrlBuilder, GameServerImageUrlBuilder>();
         builder.Services.AddHttpClient<IGameServersManifestProvider, GameServersManifestProvider>((services, client) =>
         {
@@ -27,6 +32,17 @@ public static class GameServersModule
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Tools-GameServers/1.0");
         });
         builder.Services.AddScoped<GameServersSyncUseCase>();
+        builder.Services.AddHttpClient<PalworldRestStatusProvider>(client => client.Timeout = TimeSpan.FromSeconds(10));
+        builder.Services.AddSingleton<IGameServerStatusProvider, SteamA2sStatusProvider>();
+        builder.Services.AddTransient<IGameServerStatusProvider, PalworldRestStatusProvider>();
+        builder.Services.AddSingleton<IGameServerStatusProvider, SourceRconStatusProvider>();
+        builder.Services.AddScoped<PollGameServersUseCase>();
+        builder.Services.AddScoped<GetGameServersUseCase>();
+
+        if (!builder.Environment.IsEnvironment("Testing"))
+        {
+            builder.Services.AddHostedService<GameServersPollingService>();
+        }
 
         return builder;
     }

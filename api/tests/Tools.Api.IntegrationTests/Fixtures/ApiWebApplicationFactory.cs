@@ -66,6 +66,13 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IGameServerRepository>();
             services.AddSingleton<InMemoryGameServerRepository>();
             services.AddSingleton<IGameServerRepository>(provider => provider.GetRequiredService<InMemoryGameServerRepository>());
+            services.RemoveAll<IGameServerPollingRepository>();
+            services.AddSingleton<IGameServerPollingRepository>(provider => provider.GetRequiredService<InMemoryGameServerRepository>());
+            services.RemoveAll<IGameServerDashboardRepository>();
+            services.AddSingleton<IGameServerDashboardRepository>(provider => provider.GetRequiredService<InMemoryGameServerRepository>());
+            services.RemoveAll<IGameServerStatusProvider>();
+            services.AddSingleton<FakeGameServerStatusProvider>();
+            services.AddSingleton<IGameServerStatusProvider>(provider => provider.GetRequiredService<FakeGameServerStatusProvider>());
             services.RemoveAll<ISteamAppDetailsProvider>();
             services.AddSingleton<FakeSteamAppDetailsProvider>();
             services.AddSingleton<ISteamAppDetailsProvider>(provider => provider.GetRequiredService<FakeSteamAppDetailsProvider>());

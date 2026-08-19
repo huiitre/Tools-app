@@ -1,3 +1,5 @@
+using Tools.Api.Modules.GameServers.Application.Dto;
+
 namespace Tools.Api.Modules.GameServers.Application.Ports;
 
 // Le sync lit le fichier consolidé produit par l'extractor. La route interne ne transporte pas

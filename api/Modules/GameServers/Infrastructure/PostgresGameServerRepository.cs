@@ -1,5 +1,6 @@
 using Dapper;
 using Tools.Api.Modules.Common.Infrastructure;
+using Tools.Api.Modules.GameServers.Application.Dto;
 using Tools.Api.Modules.GameServers.Application.Ports;
 
 namespace Tools.Api.Modules.GameServers.Infrastructure;
@@ -7,7 +8,9 @@ namespace Tools.Api.Modules.GameServers.Infrastructure;
 // Adaptateur PostgreSQL/Dapper du sync. Toutes ses méthodes exigent la transaction ouverte par
 // le use case afin qu'un payload invalide ou une erreur Steam ne puisse jamais provoquer un
 // demi-sync suivi de suppressions.
-public sealed class PostgresGameServerRepository(PostgresSession session) : IGameServerRepository
+public sealed class PostgresGameServerRepository(
+    PostgresSession session,
+    Npgsql.NpgsqlDataSource dataSource) : IGameServerRepository, IGameServerPollingRepository, IGameServerDashboardRepository
 {
     public async Task<GameServerUpsertResult> UpsertAsync(GameServerSyncEntry gameServer)
     {
@@ -101,6 +104,56 @@ public sealed class PostgresGameServerRepository(PostgresSession session) : IGam
             WHERE NOT (slug = ANY(CAST(@Slugs AS text[])))
             """,
             new { Slugs = slugs.ToArray() }, session.Transaction));
+
+    public async Task<IReadOnlyList<GameServerPollTarget>> FindAllForPollingAsync()
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+        var gameServers = await connection.QueryAsync<GameServerPollTarget>(
+            """
+            SELECT id AS Id,
+                   protocol_type AS ProtocolType,
+                   host AS Host,
+                   port AS Port,
+                   protocol_config::text AS ProtocolConfig
+            FROM tools_core.game_servers
+            ORDER BY id
+            """);
+        return gameServers.AsList();
+    }
+
+    public async Task UpdateStatusAsync(long id, GameServerStatus status)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await connection.ExecuteAsync(
+            """
+            UPDATE tools_core.game_servers
+            SET online = @Online,
+                num_players = @NumPlayers,
+                max_players = @MaxPlayers,
+                checked_at = now()
+            WHERE id = @Id
+            """,
+            new { Id = id, status.Online, status.NumPlayers, status.MaxPlayers });
+    }
+
+    public async Task<IReadOnlyList<GameServerDashboardView>> FindVisibleForDashboardAsync()
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+        var gameServers = await connection.QueryAsync<GameServerDashboardView>(
+            """
+            SELECT COALESCE(game_name, game_code) AS GameName,
+                   server_name AS ServerName,
+                   picture_url AS PictureUrl,
+                   online AS Online,
+                   num_players AS NumPlayers,
+                   max_players AS MaxPlayers,
+                   checked_at AS CheckedAt
+            FROM tools_core.game_servers
+            WHERE is_visible = true
+            ORDER BY COALESCE(game_name, game_code), server_name
+            """);
+        return gameServers.AsList();
+    }
 
     private Npgsql.NpgsqlConnection Connection() => session.Connection
         ?? throw new InvalidOperationException("Aucune transaction PostgreSQL n'est ouverte.");

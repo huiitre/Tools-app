@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Tools.Api.Modules.Common.Application.Exceptions;
+using Tools.Api.Modules.GameServers.Application.Dto;
 using Tools.Api.Modules.GameServers.Application.Ports;
 
 namespace Tools.Api.Modules.GameServers.Infrastructure;

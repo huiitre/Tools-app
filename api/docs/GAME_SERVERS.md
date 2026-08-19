@@ -32,6 +32,12 @@ L'API C# ne lit jamais `/data/docker/games`.
 - Le poll écrit uniquement `online`, `num_players`, `max_players` et
   `checked_at`. Une erreur ou un timeout est isolé par serveur et se traduit
   par `online = false` pour ce serveur seulement.
+- `GameServersPollingService` lance un passage immédiatement au démarrage, puis
+  toutes les 60 secondes. Il crée un scope à chaque passage et n'appelle aucun
+  use case sécurisé : il n'existe pas d'utilisateur HTTP dans un scheduler.
+- `GET /gameservers` exige un JWT portant au moins `READ_ONLY`, lit uniquement
+  les lignes `is_visible = true`, et retourne le snapshot en base. Il n'expose
+  ni `host`, ni `port`, ni `protocol_config`.
 
 ## Images et Steam
 
@@ -55,10 +61,10 @@ peu fréquent et séparé du poll, sera décidé seulement si nécessaire.
 | 1 | Cadrage, contrat d'authentification interne et ce document | Fait le 19/08/2026 |
 | 2 | Migration `tools_core.game_servers`, ports et adaptateur PostgreSQL/Dapper | Implémenté, migration réelle à appliquer |
 | 3 | Sync interne, DTO/validation, transaction et requête Bruno | Implémenté et testé |
-| 4 | `BackgroundService` de poll et résolution par `protocol_type` | À faire |
-| 5 | Adapters : Steam A2S, Palworld REST, Source RCON | À faire |
-| 6 | Lecture dashboard, contrat Bruno et widget Vue | À faire |
-| 7 | Migration appliquée, sync réel depuis NAS, tests de pannes isolées et validation navigateur | À faire |
+| 4 | `BackgroundService` de poll et résolution par `protocol_type` | Implémenté et testé |
+| 5 | Adapters : Steam A2S, Palworld REST, Source RCON | Implémentés ; tests réseau réels à faire sur QA |
+| 6 | Lecture dashboard, contrat Bruno et widget Vue | Endpoint + Bruno implémentés ; widget Vue à faire |
+| 7 | Migration appliquée, sync réel depuis NAS, tests de pannes isolées et validation navigateur | À terminer |
 
 Les étapes 2 à 7 sont réalisées dans cet ordre. Toute route ajoutée ou modifiée
 est ajoutée à `bruno/` dans le même changement.
@@ -71,6 +77,9 @@ est ajoutée à `bruno/` dans le même changement.
 - `port` désigne le port de poll, jamais implicitement le port de jeu.
 - `SOURCE_RCON` utilise `listplayers` et `maxPlayersOverride`; il ne tente pas
   A2S pour ARK: Survival Ascended.
+- `STEAM_A2S` envoie une requête A2S_INFO UDP et gère la réponse challenge ;
+  `PALWORLD_REST` appelle `/v1/api/metrics` avec Basic Auth ; `SOURCE_RCON`
+  s'authentifie puis exécute `listplayers` sur TCP.
 - L'absence d'un manifest est autoritaire : elle entraîne le hard delete de la
   ligne correspondante.
 - Un sync retourne `created`, `updated`, `unchanged` et `deleted`. Il rafraîchit

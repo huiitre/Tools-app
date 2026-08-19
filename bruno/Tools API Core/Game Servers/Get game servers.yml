@@ -1,0 +1,23 @@
+info:
+  name: Get game servers
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{apiCoreUrl}}/gameservers"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: >-
+  Retourne le snapshot dashboard des serveurs visibles. Un JWT avec au moins le rôle READ_ONLY
+  est requis. Cette route ne contacte aucun serveur : online, numPlayers, maxPlayers et checkedAt
+  sont écrits par le scheduler toutes les 60 secondes. Host, port et protocolConfig ne sont jamais
+  exposés.

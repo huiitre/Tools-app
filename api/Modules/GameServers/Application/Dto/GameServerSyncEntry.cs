@@ -1,4 +1,4 @@
-namespace Tools.Api.Modules.GameServers.Application.Ports;
+namespace Tools.Api.Modules.GameServers.Application.Dto;
 
 // Manifest enrichi avant persistance. La disponibilité Steam permet de conserver les
 // métadonnées connues pendant une panne réseau, sans confondre cette panne avec une valeur null.

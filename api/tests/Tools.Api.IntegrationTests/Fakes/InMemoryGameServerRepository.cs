@@ -1,14 +1,21 @@
+using Tools.Api.Modules.GameServers.Application.Dto;
 using Tools.Api.Modules.GameServers.Application.Ports;
 
 namespace Tools.Api.IntegrationTests.Fakes;
 
-public sealed class InMemoryGameServerRepository : IGameServerRepository
+public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameServerPollingRepository, IGameServerDashboardRepository
 {
     private readonly Dictionary<string, StoredGameServer> gameServers = new(StringComparer.Ordinal);
+    private readonly Dictionary<long, GameServerStatus> statuses = [];
 
     public IReadOnlyCollection<StoredGameServer> GameServers => gameServers.Values;
+    public IReadOnlyDictionary<long, GameServerStatus> Statuses => statuses;
 
-    public void Clear() => gameServers.Clear();
+    public void Clear()
+    {
+        gameServers.Clear();
+        statuses.Clear();
+    }
 
     public Task<GameServerUpsertResult> UpsertAsync(GameServerSyncEntry gameServer)
     {
@@ -37,6 +44,44 @@ public sealed class InMemoryGameServerRepository : IGameServerRepository
         }
 
         return Task.FromResult(missing.Length);
+    }
+
+    public Task<IReadOnlyList<GameServerPollTarget>> FindAllForPollingAsync()
+    {
+        IReadOnlyList<GameServerPollTarget> targets = gameServers.Values
+            .Select((gameServer, index) => new GameServerPollTarget(
+                index + 1,
+                gameServer.ProtocolType,
+                gameServer.Host,
+                gameServer.Port,
+                gameServer.ProtocolConfig))
+            .ToArray();
+        return Task.FromResult(targets);
+    }
+
+    public Task UpdateStatusAsync(long id, GameServerStatus status)
+    {
+        statuses[id] = status;
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<GameServerDashboardView>> FindVisibleForDashboardAsync()
+    {
+        IReadOnlyList<GameServerDashboardView> views = gameServers.Values
+            .Select((gameServer, index) =>
+            {
+                statuses.TryGetValue(index + 1, out var status);
+                return new GameServerDashboardView(
+                    gameServer.GameName ?? gameServer.GameCode,
+                    gameServer.ServerName,
+                    gameServer.PictureUrl,
+                    status?.Online,
+                    status?.NumPlayers,
+                    status?.MaxPlayers,
+                    status is null ? null : DateTimeOffset.UtcNow);
+            })
+            .ToArray();
+        return Task.FromResult(views);
     }
 }
 

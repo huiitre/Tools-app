@@ -1,4 +1,4 @@
-namespace Tools.Api.Modules.GameServers.Application.Ports;
+namespace Tools.Api.Modules.GameServers.Application.Dto;
 
 public enum GameServerUpsertResult
 {
