@@ -17,6 +17,7 @@ using Tools.Api.Modules.Notifications.Application.Ports;
 using Tools.Api.Modules.Realtime.Application.Ports;
 using Tools.Api.Modules.Security.Application.Ports;
 using Tools.Api.Modules.Users.Application;
+using Tools.Api.Modules.GameServers.Application.Ports;
 
 namespace Tools.Api.IntegrationTests.Fixtures;
 
@@ -61,6 +62,13 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IEmailVerificationRepository, InMemoryEmailVerificationRepository>();
             services.RemoveAll<ITransactionManager>();
             services.AddScoped<ITransactionManager, NoOpTransactionManager>();
+
+            services.RemoveAll<IGameServerRepository>();
+            services.AddSingleton<InMemoryGameServerRepository>();
+            services.AddSingleton<IGameServerRepository>(provider => provider.GetRequiredService<InMemoryGameServerRepository>());
+            services.RemoveAll<ISteamAppDetailsProvider>();
+            services.AddSingleton<FakeSteamAppDetailsProvider>();
+            services.AddSingleton<ISteamAppDetailsProvider>(provider => provider.GetRequiredService<FakeSteamAppDetailsProvider>());
 
             // L'administration est testée sans PostgreSQL : ces doubles sont des singletons
             // pour que le test puisse relire l'état laissé par la requête.
@@ -121,4 +129,3 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
         return client;
     }
 }
-

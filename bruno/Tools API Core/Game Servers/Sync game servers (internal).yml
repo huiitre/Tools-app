@@ -1,0 +1,39 @@
+info:
+  name: Sync game servers (internal)
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiCoreUrl}}/internal/gameservers/sync"
+  headers:
+    - name: X-Internal-Token
+      value: "{{internalApiToken}}"
+  body:
+    type: json
+    data: |-
+      [
+        {
+          "slug": "rust",
+          "gameCode": "RUST",
+          "protocolType": "STEAM_A2S",
+          "name": "Huiitre Rust Server PvE",
+          "steamAppId": 252490,
+          "pictureFile": null,
+          "host": "172.19.0.7",
+          "port": 28017,
+          "protocolConfig": {}
+        }
+      ]
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: >-
+  Synchronise les manifests de serveurs depuis l'extractor NAS. X-Internal-Token est le secret
+  partagé INTERNAL_API_TOKEN, jamais un JWT. Une réponse 200 retourne created, updated, unchanged
+  et deleted. Un pictureFile non nul construit l'URL assets prioritaire ; son absence utilise
+  Steam si steamAppId est renseigné.
