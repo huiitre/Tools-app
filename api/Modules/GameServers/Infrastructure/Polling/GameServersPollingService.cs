@@ -12,16 +12,32 @@ public sealed class GameServersPollingService(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(Interval);
+        logger.LogInformation("GameServersPollingService démarré, intervalle {IntervalSeconds}s.", Interval.TotalSeconds);
 
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            await PollAsync(stoppingToken);
+            using var timer = new PeriodicTimer(Interval);
 
-            if (!await timer.WaitForNextTickAsync(stoppingToken))
+            while (!stoppingToken.IsCancellationRequested)
             {
-                break;
+                await PollAsync(stoppingToken);
+
+                if (!await timer.WaitForNextTickAsync(stoppingToken))
+                {
+                    break;
+                }
             }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Arrêt propre de l'application.
+        }
+        catch (Exception exception)
+        {
+            // BackgroundService avale silencieusement une exception non rattrapée qui sort
+            // d'ExecuteAsync (le host ne s'arrête pas par défaut) : sans ce catch, le service
+            // mourrait à la première itération sans laisser aucune trace.
+            logger.LogError(exception, "GameServersPollingService s'est arrêté suite à une erreur inattendue.");
         }
     }
 
