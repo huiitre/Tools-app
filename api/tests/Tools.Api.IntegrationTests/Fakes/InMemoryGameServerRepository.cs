@@ -51,6 +51,7 @@ public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameS
         IReadOnlyList<GameServerPollTarget> targets = gameServers.Values
             .Select((gameServer, index) => new GameServerPollTarget(
                 index + 1,
+                gameServer.Slug,
                 gameServer.ProtocolType,
                 gameServer.Host,
                 gameServer.Port,
