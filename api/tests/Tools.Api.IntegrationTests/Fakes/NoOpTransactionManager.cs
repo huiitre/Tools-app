@@ -1,4 +1,4 @@
-using Tools.Api.Modules.Common.Application.Ports;
+using Tools.Api.Modules.Core.Common.Application.Ports;
 
 namespace Tools.Api.IntegrationTests.Fakes;
 

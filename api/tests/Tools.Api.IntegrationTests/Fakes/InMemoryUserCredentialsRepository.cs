@@ -1,5 +1,5 @@
-using Tools.Api.Modules.Auth.Application.Ports;
-using Tools.Api.Modules.Auth.Application.Ports.Password;
+using Tools.Api.Modules.Core.Auth.Application.Ports;
+using Tools.Api.Modules.Core.Auth.Application.Ports.Password;
 
 namespace Tools.Api.IntegrationTests.Fakes;
 

@@ -76,7 +76,7 @@ En QA et Production, le Compose fournit `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USE
 
 ## DI, DDD et PostgreSQL
 
-Le dossier `Modules/Users` a été copié depuis le prototype pour servir de support d'apprentissage. Il est organisé en :
+Le dossier `Modules/Core/Users` a été copié depuis le prototype pour servir de support d'apprentissage. Il est organisé en :
 
 ```text
 Api / Application / Domain / Infrastructure
@@ -361,7 +361,7 @@ l'architecture du monorepo.
 ### Système de droits sur les use cases
 
 Le contrôle des droits est porté par les use cases, jamais par les routes, comme
-dans l'API Java. Le module `Modules/Security` a été créé pour cela, et
+dans l'API Java. Le module `Modules/Core/Security` a été créé pour cela, et
 `SendMailUseCase` est le premier use case restreint (`ADMIN` minimum).
 
 Le fonctionnement, la hiérarchie des rôles et les différences assumées avec le

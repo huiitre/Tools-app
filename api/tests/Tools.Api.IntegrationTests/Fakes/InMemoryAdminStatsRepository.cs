@@ -1,5 +1,5 @@
-using Tools.Api.Modules.Admin.Application.Dto;
-using Tools.Api.Modules.Admin.Application.Ports;
+using Tools.Api.Modules.Core.Admin.Application.Dto;
+using Tools.Api.Modules.Core.Admin.Application.Ports;
 
 namespace Tools.Api.IntegrationTests.Fakes;
 

@@ -1,5 +1,5 @@
-using Tools.Api.Modules.Users.Application;
-using Tools.Api.Modules.Users.Application.Dto;
+using Tools.Api.Modules.Core.Users.Application;
+using Tools.Api.Modules.Core.Users.Application.Dto;
 
 namespace Tools.Api.IntegrationTests.Fakes;
 

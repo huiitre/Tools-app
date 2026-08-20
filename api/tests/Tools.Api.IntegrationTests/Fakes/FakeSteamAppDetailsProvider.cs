@@ -1,5 +1,5 @@
-using Tools.Api.Modules.GameServers.Application.Dto;
-using Tools.Api.Modules.GameServers.Application.Ports;
+using Tools.Api.Modules.Core.GameServers.Application.Dto;
+using Tools.Api.Modules.Core.GameServers.Application.Ports;
 
 namespace Tools.Api.IntegrationTests.Fakes;
 

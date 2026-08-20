@@ -1,4 +1,4 @@
-using Tools.Api.Modules.Realtime.Application.Ports;
+using Tools.Api.Modules.Core.Realtime.Application.Ports;
 
 namespace Tools.Api.IntegrationTests.Fakes;
 
