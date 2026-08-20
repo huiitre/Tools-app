@@ -10,6 +10,13 @@ public sealed class PollGameServersUseCase(
     IEnumerable<IGameServerStatusProvider> statusProviders,
     ILogger<PollGameServersUseCase> logger)
 {
+    // SteamA2sStatusProvider (UDP) et SourceRconStatusProvider (TCP) n'ont pas de timeout propre
+    // et ne dépendent que du token reçu ici : sans cette borne, un seul serveur qui ne répond
+    // jamais (paquet droppé, firewall silencieux) fige indéfiniment cet appel — et comme la
+    // boucle ci-dessous est séquentielle, ça gèle aussi tous les serveurs suivants et tous les
+    // passages futurs, sans jamais lever d'exception ni loguer quoi que ce soit.
+    private static readonly TimeSpan PerServerTimeout = TimeSpan.FromSeconds(15);
+
     private readonly IReadOnlyDictionary<string, IGameServerStatusProvider> providers = statusProviders
         .ToDictionary(provider => provider.ProtocolType, StringComparer.Ordinal);
 
@@ -31,7 +38,10 @@ public sealed class PollGameServersUseCase(
                     continue;
                 }
 
-                var status = await provider.FetchAsync(gameServer, cancellationToken);
+                using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeoutSource.CancelAfter(PerServerTimeout);
+
+                var status = await provider.FetchAsync(gameServer, timeoutSource.Token);
                 await gameServerPollingRepository.UpdateStatusAsync(gameServer.Id, status);
 
                 logger.LogInformation(
