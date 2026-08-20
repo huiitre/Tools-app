@@ -13,7 +13,7 @@ public sealed class AdminStatsTests(ApiWebApplicationFactory factory)
     [Fact]
     public async Task Stats_return_the_dashboard_indicators()
     {
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.GetAsync("/admin/stats");
 
@@ -38,7 +38,7 @@ public sealed class AdminStatsTests(ApiWebApplicationFactory factory)
     [InlineData("TECH")]
     public async Task Stats_are_refused_below_the_administration_level(string role)
     {
-        var client = factory.CreateClientWithRoles(role);
+        var client = factory.CreateClientWithRole(role);
 
         using var response = await client.GetAsync("/admin/stats");
 

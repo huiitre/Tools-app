@@ -17,7 +17,7 @@ public sealed class RoleCatalogTests(ApiWebApplicationFactory factory)
     [Fact]
     public async Task Listing_roles_returns_the_catalog()
     {
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.GetAsync("/roles");
 
@@ -34,7 +34,7 @@ public sealed class RoleCatalogTests(ApiWebApplicationFactory factory)
     [InlineData("TECH")]
     public async Task Listing_roles_is_refused_below_the_administration_level(string role)
     {
-        var client = factory.CreateClientWithRoles(role);
+        var client = factory.CreateClientWithRole(role);
 
         using var response = await client.GetAsync("/roles");
 

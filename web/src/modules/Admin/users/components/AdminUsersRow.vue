@@ -21,41 +21,25 @@ const avatarError = ref(false)
 const isOpen = computed(() => store.editingRoleUserId === props.user.id)
 const saving = ref(false)
 
-const resolvedRoles = computed(() =>
-  (props.user.roles ?? [])
-    .map(r => store.roles.find(sr => sr.code === String(r) || String(sr.id) === String(r)))
-    .filter((r): r is NonNullable<typeof r> => r !== undefined)
-)
+const role = computed(() => store.roleOf(props.user))
 
-const HIERARCHY = ['READ_ONLY', 'USER', 'MODERATOR', 'ADMIN', 'TECH', 'OWNER']
+const roleModifier = computed(() => role.value?.code.toLowerCase() ?? null)
 
-const topCode = computed(() => {
-  if (!resolvedRoles.value.length) return null
-  const top = resolvedRoles.value.reduce((best, r) =>
-    HIERARCHY.indexOf(r.code) > HIERARCHY.indexOf(best.code) ? r : best
-  )
-  return top.code.toLowerCase()
-})
-
-const roleNames = computed(() =>
-  resolvedRoles.value.length
-    ? resolvedRoles.value.map(r => r.name).join(', ')
-    : '—'
-)
+const roleName = computed(() => role.value?.name ?? '—')
 
 const openPopup = (e: MouseEvent) => {
   e.stopPropagation()
   store.openRoleEdit(props.user.id)
 }
 
-const selectRole = async (e: MouseEvent, roleId: number, roleCode: string) => {
+const selectRole = async (e: MouseEvent, roleId: number) => {
   e.stopPropagation()
   if (saving.value) return
   saving.value = true
   store.closeRoleEdit()
   try {
     await updateUserRole(props.user.id, roleId)
-    store.updateUserRoleLocally(props.user.id, roleCode)
+    store.updateUserRoleLocally(props.user.id, roleId)
     toast.success('Rôle mis à jour')
   } catch {
     toast.error('Erreur lors de la mise à jour du rôle')
@@ -103,8 +87,8 @@ const getCellValue = (key: string): string => {
 
       <!-- ROLE -->
       <div v-if="col.key === 'role'" class="cell role-cell" @click="openPopup">
-        <span class="role-badge" :class="topCode ? `role-badge--${topCode}` : ''"  >
-          {{ roleNames }}
+        <span class="role-badge" :class="roleModifier ? `role-badge--${roleModifier}` : ''">
+          {{ roleName }}
         </span>
 
         <div v-if="isOpen" ref="popupRef" class="role-popup" @click.stop>
@@ -112,11 +96,11 @@ const getCellValue = (key: string): string => {
             v-for="r in store.roles"
             :key="r.id"
             class="role-row"
-            :class="{ selected: props.user.roles.includes(r.code) }"
-            @click="selectRole($event, r.id, r.code)"
+            :class="{ selected: r.id === props.user.roleId }"
+            @click="selectRole($event, r.id)"
           >
             <span class="role-row-name">{{ r.name }}</span>
-            <i v-if="props.user.roles.includes(r.code)" class="mdi mdi-check" />
+            <i v-if="r.id === props.user.roleId" class="mdi mdi-check" />
           </div>
         </div>
       </div>

@@ -21,7 +21,7 @@ public sealed class MailControllerTests(ApiWebApplicationFactory factory)
     [Fact]
     public async Task Send_passes_the_message_to_the_mail_service()
     {
-        var client = factory.CreateClientWithRoles("TECH");
+        var client = factory.CreateClientWithRole("TECH");
 
         using var response = await client.PostAsJsonAsync("/mail", new
         {
@@ -55,7 +55,7 @@ public sealed class MailControllerTests(ApiWebApplicationFactory factory)
     [InlineData("OWNER")]
     public async Task Send_is_allowed_from_the_technical_level(string role)
     {
-        var client = factory.CreateClientWithRoles(role);
+        var client = factory.CreateClientWithRole(role);
 
         using var response = await client.PostAsJsonAsync("/mail", ValidPayload);
 
@@ -68,7 +68,7 @@ public sealed class MailControllerTests(ApiWebApplicationFactory factory)
     [InlineData("MODERATOR")]
     public async Task Send_is_refused_below_the_technical_level(string role)
     {
-        var client = factory.CreateClientWithRoles(role);
+        var client = factory.CreateClientWithRole(role);
 
         using var response = await client.PostAsJsonAsync("/mail", ValidPayload);
 

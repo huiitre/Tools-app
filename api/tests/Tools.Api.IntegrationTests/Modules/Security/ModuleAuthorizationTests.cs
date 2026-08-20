@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Xunit;
 using Tools.Api.IntegrationTests.Fixtures;
 
@@ -29,7 +31,7 @@ public sealed class ModuleAuthorizationTests : IClassFixture<ApiWebApplicationFa
     [Fact]
     public async Task The_module_role_grants_the_access()
     {
-        var client = ClientWithModuleRoles(new() { [ModuleCode] = ["USER"] });
+        var client = ClientWithModuleRoles(new() { [ModuleCode] = "USER" });
 
         using var response = await client.GetAsync(ModuleRoute);
 
@@ -43,7 +45,7 @@ public sealed class ModuleAuthorizationTests : IClassFixture<ApiWebApplicationFa
     {
         // Le cœur de la règle : un rôle global, si élevé soit-il, n'ouvre aucun module. Sans
         // cela, l'administration du site deviendrait un passe-partout métier.
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.GetAsync(ModuleRoute);
 
@@ -56,7 +58,7 @@ public sealed class ModuleAuthorizationTests : IClassFixture<ApiWebApplicationFa
     {
         // L'autre moitié de la règle : présent dans le module, l'administrateur du site y vaut
         // ce que son rôle de module dit, et rien de plus.
-        var client = ClientWithModuleRoles(new() { [ModuleCode] = ["READ_ONLY"] }, "ADMIN");
+        var client = ClientWithModuleRoles(new() { [ModuleCode] = "READ_ONLY" }, "ADMIN");
 
         using var response = await client.GetAsync(ModuleRoute);
 
@@ -65,10 +67,14 @@ public sealed class ModuleAuthorizationTests : IClassFixture<ApiWebApplicationFa
     }
 
     [Fact]
-    public async Task The_most_permissive_role_of_the_module_decides()
+    public async Task A_token_carrying_the_former_role_array_per_module_is_still_honoured()
     {
-        // Même arbitrage que pour les rôles globaux : `user_module_role` autorise le cumul.
-        var client = ClientWithModuleRoles(new() { [ModuleCode] = ["READ_ONLY", "ADMIN", "USER"] });
+        // `user_module_role` a pour clé primaire (user_id, module_id) depuis V2.4.0 : un
+        // utilisateur n'y détient qu'un rôle, et le claim ne porte plus qu'une chaîne. Les
+        // jetons émis quand il portait un tableau restent lisibles jusqu'à leur expiration.
+        var client = factory.CreateClientWithForgedClaims(
+            1,
+            new Claim("modules", $$"""{"{{ModuleCode}}":["READ_ONLY","ADMIN","USER"]}""", JsonClaimValueTypes.Json));
 
         using var response = await client.GetAsync(ModuleRoute);
 
@@ -80,7 +86,7 @@ public sealed class ModuleAuthorizationTests : IClassFixture<ApiWebApplicationFa
     [Fact]
     public async Task A_role_held_on_another_module_never_counts()
     {
-        var client = ClientWithModuleRoles(new() { ["dofus"] = ["ADMIN"] });
+        var client = ClientWithModuleRoles(new() { ["dofus"] = "ADMIN" });
 
         using var response = await client.GetAsync(ModuleRoute);
 
@@ -95,8 +101,8 @@ public sealed class ModuleAuthorizationTests : IClassFixture<ApiWebApplicationFa
         // forgé ne doit pas pouvoir se fabriquer un accès par un code que le Core ignore.
         var client = ClientWithModuleRoles(new()
         {
-            ["module_inexistant"] = ["ADMIN"],
-            [ModuleCode] = ["SUPER_ADMIN"]
+            ["module_inexistant"] = "ADMIN",
+            [ModuleCode] = "SUPER_ADMIN"
         });
 
         using var response = await client.GetAsync(ModuleRoute);
@@ -106,9 +112,9 @@ public sealed class ModuleAuthorizationTests : IClassFixture<ApiWebApplicationFa
     }
 
     private HttpClient ClientWithModuleRoles(
-        Dictionary<string, IReadOnlyList<string>> moduleRoles,
-        params string[] roles) =>
-        factory.CreateClientForUser(1, moduleRoles, roles);
+        Dictionary<string, string> moduleRoles,
+        string? role = null) =>
+        factory.CreateClientForUser(1, moduleRoles, role);
 
     private static async Task<string?> ReadCode(HttpResponseMessage response)
     {

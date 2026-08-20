@@ -3,17 +3,14 @@ using Npgsql;
 using Tools.Api.Modules.Access.Application.Dto;
 using Tools.Api.Modules.Access.Application.Ports;
 using Tools.Api.Modules.Common.Infrastructure;
-using Tools.Api.Modules.Security.Domain;
 
 namespace Tools.Api.Modules.Access.Infrastructure;
 
 // Adaptateur PostgreSQL/Dapper du port IModuleMembershipRepository.
 //
-// La clé primaire de user_module_role est (user_id, module_id, role_id) : la table autorise
-// donc plusieurs rôles pour une même paire, alors que le frontend n'en attribue qu'un et que
-// tout le code suppose l'unicité. En lecture, c'est le rôle le plus permissif qui est retenu ;
-// en écriture, les lignes existantes sont supprimées avant l'insertion, si bien que le Core ne
-// crée jamais de doublon. La contrainte sera rendue explicite par une migration ultérieure.
+// La clé primaire de user_module_role est (user_id, module_id) depuis V2.4.0 : un utilisateur
+// détient au plus un rôle par module. Ni la lecture ni l'écriture n'ont donc de cumul à
+// arbitrer.
 public sealed class PostgresModuleMembershipRepository(
     NpgsqlDataSource dataSource,
     PostgresSession session) : IModuleMembershipRepository
@@ -34,16 +31,7 @@ public sealed class PostgresModuleMembershipRepository(
         var rows = await connection.QueryAsync<ModuleMemberDto>(
             new CommandDefinition(sql, new { ModuleId = moduleId }));
 
-        // Le tri se fait sur RoleCode et jamais sur role_id : les identifiants suivent l'ordre
-        // d'insertion du référentiel, où ADMIN précède TECH, alors que la hiérarchie place
-        // TECH en dessous d'ADMIN. Trier par identifiant inverserait ces deux rôles.
-        return rows
-            .GroupBy(member => new { member.UserId, member.Email, member.Name })
-            .Select(group => group
-                .OrderByDescending(member => RoleCodes.Parse(member.RoleCode) ?? 0)
-                .First())
-            .OrderBy(member => member.Name)
-            .ToList();
+        return rows.AsList();
     }
 
     public async Task<bool> HasAccessAsync(long moduleId, long userId)
@@ -81,28 +69,19 @@ public sealed class PostgresModuleMembershipRepository(
             session.Transaction));
     }
 
-    // Un seul rôle par paire (utilisateur, module) : les lignes existantes disparaissent avant
-    // l'insertion. Un UPDATE ne conviendrait pas — s'il en existait deux, il les amènerait
-    // toutes deux sur le même role_id et violerait la clé primaire.
+    // (user_id, module_id) étant la clé primaire, accorder un accès et changer un rôle sont la
+    // même opération : un upsert. Le couple DELETE + INSERT d'avant ne servait qu'à effacer un
+    // éventuel cumul.
     private async Task ReplaceRoleAsync(long moduleId, long userId, long roleId)
     {
-        const string deleteSql = """
-            DELETE FROM tools_core.user_module_role
-            WHERE module_id = @ModuleId AND user_id = @UserId
-            """;
-
-        const string insertSql = """
+        const string sql = """
             INSERT INTO tools_core.user_module_role (user_id, module_id, role_id)
             VALUES (@UserId, @ModuleId, @RoleId)
+            ON CONFLICT (user_id, module_id) DO UPDATE SET role_id = EXCLUDED.role_id
             """;
 
-        var connection = Connection();
-        await connection.ExecuteAsync(new CommandDefinition(
-            deleteSql,
-            new { ModuleId = moduleId, UserId = userId },
-            session.Transaction));
-        await connection.ExecuteAsync(new CommandDefinition(
-            insertSql,
+        await Connection().ExecuteAsync(new CommandDefinition(
+            sql,
             new { ModuleId = moduleId, UserId = userId, RoleId = roleId },
             session.Transaction));
     }

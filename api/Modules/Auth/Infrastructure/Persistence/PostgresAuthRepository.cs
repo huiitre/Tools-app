@@ -44,21 +44,20 @@ public sealed class PostgresAuthRepository(NpgsqlDataSource dataSource) : IAuthR
         return await connection.QuerySingleOrDefaultAsync<AuthUser>(new CommandDefinition(sql, new { Email = email }));
     }
 
-    public async Task<IReadOnlyList<string>> FindGlobalRolesAsync(long userId)
+    public async Task<string?> FindGlobalRoleAsync(long userId)
     {
-        // Seuls les rôles encore actifs sont mis dans le token.
+        // Au plus une ligne : `user_role` a pour clé primaire (user_id). Un rôle désactivé au
+        // référentiel ne va pas dans le token, et l'utilisateur se retrouve alors sans rôle.
         const string sql = "SELECT r.code FROM tools_core.user_role ur INNER JOIN tools_core.role r ON r.id = ur.role_id WHERE ur.user_id = @UserId AND r.is_active = true";
         await using var connection = await dataSource.OpenConnectionAsync();
-        return (await connection.QueryAsync<string>(new CommandDefinition(sql, new { UserId = userId }))).AsList();
+        return await connection.QuerySingleOrDefaultAsync<string>(new CommandDefinition(sql, new { UserId = userId }));
     }
 
-    public async Task<IReadOnlyDictionary<string, IReadOnlyList<string>>> FindModuleRolesAsync(long userId)
+    public async Task<IReadOnlyDictionary<string, string>> FindModuleRolesAsync(long userId)
     {
-        // Chaque entrée associe un code module aux rôles actifs qu'y détient cet utilisateur.
-        // Le regroupement est nécessaire et pas seulement défensif : `user_module_role` n'a pas
-        // de contrainte d'unicité sur (user_id, module_id), deux lignes pour un même module
-        // sont donc possibles. Les arbitrer ici reviendrait à décider d'un droit dans un
-        // adaptateur SQL — et l'ordre hiérarchique n'est de toute façon pas celui des `role.id`.
+        // Chaque entrée associe un code module au rôle actif qu'y détient cet utilisateur.
+        // Une seule ligne par module : (user_id, module_id) est la clé primaire de
+        // `user_module_role` depuis V2.4.0.
         const string sql = """
             SELECT m.code AS ModuleCode, r.code AS RoleCode
             FROM tools_core.user_module_role umr
@@ -68,12 +67,10 @@ public sealed class PostgresAuthRepository(NpgsqlDataSource dataSource) : IAuthR
             """;
         await using var connection = await dataSource.OpenConnectionAsync();
         var rows = await connection.QueryAsync<ModuleRoleRow>(new CommandDefinition(sql, new { UserId = userId }));
-        return rows
-            .GroupBy(row => row.ModuleCode, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(
-                group => group.Key,
-                group => (IReadOnlyList<string>)group.Select(row => row.RoleCode).ToList(),
-                StringComparer.OrdinalIgnoreCase);
+        return rows.ToDictionary(
+            row => row.ModuleCode,
+            row => row.RoleCode,
+            StringComparer.OrdinalIgnoreCase);
     }
 
     private sealed record LoginRow(long Id, string Email, bool IsActive, string UserType, string PasswordHash);

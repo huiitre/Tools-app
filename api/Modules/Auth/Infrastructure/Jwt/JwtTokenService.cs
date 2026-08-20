@@ -22,11 +22,11 @@ public sealed class JwtTokenService(
 
     public string CreateAccessToken(
         AuthUser user,
-        IReadOnlyList<string> roles,
-        IReadOnlyDictionary<string, IReadOnlyList<string>> modules)
+        string? role,
+        IReadOnlyDictionary<string, string> modules)
     {
         // Claims que l'API Java connaît déjà, puis rôles/droits pour la migration progressive.
-        // "modules" porte un objet { code_module: [codes_rôle] } : c'est ce claim qui permet de
+        // "modules" porte un objet { code_module: code_rôle } : c'est ce claim qui permet de
         // décider d'un droit contextuel sans lire `tools_core.user_module_role`, et donc à un
         // service tiers de le faire sans accéder au schéma du Core (voir docs/SECURITY.md).
         var claims = new List<Claim>
@@ -34,9 +34,15 @@ public sealed class JwtTokenService(
             new("tokenType", "ACCESS"),
             new("isActive", user.IsActive ? "true" : "false", ClaimValueTypes.Boolean),
             new("userType", user.UserType),
-            new("roles", JsonSerializer.Serialize(roles), JsonClaimValueTypes.JsonArray),
             new("modules", JsonSerializer.Serialize(modules), JsonClaimValueTypes.Json)
         };
+
+        // Un compte sans rôle n'a pas de claim `role` du tout : une chaîne vide serait un code
+        // à parser, donc une valeur à interpréter, là où l'absence ne s'interprète pas.
+        if (role is not null)
+        {
+            claims.Add(new Claim("role", role));
+        }
 
         // Un access token est volontairement court : 10 minutes par défaut.
         return Write(user.Id, claims, DateTimeOffset.UtcNow.AddSeconds(options.AccessTokenTtlSeconds));
@@ -63,8 +69,7 @@ public sealed class JwtTokenService(
                 throw AppException.Unauthorized("INVALID_ACCESS_TOKEN", "Session invalide ou expirée.");
             }
 
-            // Le claim "roles" est un tableau JSON, déplié en un claim par valeur à la lecture.
-            return new AccessTokenData(userId, principal.FindAll("roles").Select(claim => claim.Value).ToArray());
+            return new AccessTokenData(userId);
         }
         catch (SecurityTokenException exception)
         {

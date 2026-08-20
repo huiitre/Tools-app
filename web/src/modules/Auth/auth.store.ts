@@ -1,12 +1,12 @@
 import { resetSessionStores } from '@/stores/reset'
 import { defineStore } from 'pinia'
-import { RoleCode } from '@/modules/Auth/types/auth.types'
+import { RoleCode, hasAtLeast } from '@/modules/Auth/types/auth.types'
 
 /* ======================
    TYPES MÉTIER
 ====================== */
 
-type Role = {
+export type Role = {
   id: string
   code: string
   name: string
@@ -14,13 +14,15 @@ type Role = {
   active: boolean
 }
 
+// Un utilisateur ne détient qu'un rôle par module : (user_id, module_id) est la clé primaire
+// de tools_core.user_module_role.
 export type ModuleType = {
   id: string
   code: string
   name: string
   description: string
   active: boolean
-  roles: Role[]
+  role: Role
 }
 
 type User = {
@@ -30,7 +32,9 @@ type User = {
   userType: string
   active: boolean
   avatarUrl: string
-  roles: Role[]
+  // Rôle global, nul si l'utilisateur n'en a aucun. Au plus un : (user_id) est la clé
+  // primaire de tools_core.user_role.
+  role: Role | null
   modules: ModuleType[]
 }
 
@@ -55,35 +59,22 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (s) => !!s.user,
 
     isAdmin: (s): boolean => {
-      if (!s.user) return false
+      const role = s.user?.role
+      if (!role?.active) return false
       const adminLevel: string[] = [RoleCode.ADMIN, RoleCode.TECH, RoleCode.OWNER]
-      return s.user.roles.some(r => r.active && adminLevel.includes(r.code))
+      return adminLevel.includes(role.code)
     },
 
+    // Le rôle global ne participe pas : un administrateur du site absent d'un module n'y
+    // entre pas, et présent il y vaut ce que son rôle de module dit. Même règle que
+    // UseCaseAuthorizer côté API.
     hasModuleAccess: (s) => (moduleCode: string, minRole: RoleCode) => {
-
       if (!s.user) return false
 
       const module = s.user.modules.find(m => m.code === moduleCode.toLowerCase() && m.active)
-      if (!module) return false
+      if (!module?.role.active) return false
 
-      const hierarchy = [
-        RoleCode.READ_ONLY,
-        RoleCode.USER,
-        RoleCode.MODERATOR,
-        RoleCode.ADMIN,
-        RoleCode.TECH,
-        RoleCode.OWNER
-      ]
-
-      const userMaxRole = module.roles
-        .filter(r => r.active)
-        .map(r => hierarchy.indexOf(r.code as RoleCode))
-        .reduce((max, current) => Math.max(max, current), -1)
-
-      const minIndex = hierarchy.indexOf(minRole)
-
-      return userMaxRole >= minIndex
+      return hasAtLeast(module.role.code, minRole)
     }
   },
 

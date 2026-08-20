@@ -11,6 +11,10 @@ import fr.huiitre.tools.modules.core.security.application.ports.UserRoleProvider
 import fr.huiitre.tools.modules.core.module.domain.ModuleCode;
 import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 
+// Lit le rôle de l'utilisateur dans tools_core. Les deux requêtes ne peuvent ramener qu'une
+// ligne : (user_id) est la clé primaire de user_role et (user_id, module_id) celle de
+// user_module_role. Elles portaient un LIMIT 1 sans ORDER BY du temps où le cumul était
+// possible en base — ce qui revenait à laisser Postgres choisir le droit accordé.
 public class PostgresUserRoleProvider implements UserRoleProvider {
 
     private final DataSource dataSource;
@@ -30,7 +34,6 @@ public class PostgresUserRoleProvider implements UserRoleProvider {
                     FROM tools_core.user_role ur
                     JOIN tools_core.role r ON r.id = ur.role_id
                     WHERE ur.user_id = ?
-                    LIMIT 1
                 """;
 
         final String sqlModule = """
@@ -40,7 +43,6 @@ public class PostgresUserRoleProvider implements UserRoleProvider {
                     JOIN tools_core.module m ON m.id = umr.module_id
                     WHERE umr.user_id = ?
                       AND m.code = ?
-                    LIMIT 1
                 """;
 
         try (

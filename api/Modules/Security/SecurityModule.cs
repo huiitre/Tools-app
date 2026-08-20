@@ -60,7 +60,7 @@ public sealed class ModuleAuthorizationProbe(UseCaseAuthorizer authorizer)
     {
         return Task.FromResult(new ModuleAuthorizationProbeResult(
             CurrentUser.UserId,
-            CurrentUser.HighestRoleIn(ModuleCode.Todolist)?.ToCode()));
+            CurrentUser.RoleIn(ModuleCode.Todolist)?.ToCode()));
     }
 }
 

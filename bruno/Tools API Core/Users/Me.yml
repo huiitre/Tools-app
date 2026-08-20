@@ -10,6 +10,12 @@ http:
     type: bearer
     token: "{{authToken}}"
 
+docs: |-
+  Profil de l'utilisateur connecté.
+
+  `role` est un objet unique (ou null) et non une liste : un utilisateur ne détient qu'un
+  rôle global. Chaque entrée de `modules` porte de même un `role` unique.
+
 settings:
   encodeUrl: true
   timeout: 0

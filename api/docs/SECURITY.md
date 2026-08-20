@@ -70,8 +70,8 @@ C'est la règle à ne pas réinventer :
 
 | Use case | Rôle comparé |
 |---|---|
-| sans module | le plus permissif des rôles globaux |
-| avec module | le plus permissif des rôles **détenus dans ce module** |
+| sans module | le rôle global |
+| avec module | le rôle **détenu dans ce module** |
 
 Un administrateur du site absent d'un module ne peut pas y entrer ; présent en `READ_ONLY`, il y est `READ_ONLY`. Sans cette règle, un rôle global élevé serait un passe-partout métier et un droit de module ne voudrait plus rien dire pour les personnes qu'il vise en premier. C'est aussi le comportement de l'API Java, à laquelle le Core reste ici identique.
 
@@ -92,10 +92,12 @@ Identique à l'API Java. Le niveau est porté par la valeur de l'énumération `
 
 1. `ICurrentUserProvider` fournit l'appelant : identifiant et rôles. L'implémentation HTTP se contente de traduire les claims de `HttpContext.User` — la validation du jeton a déjà eu lieu dans le middleware d'authentification, une seule fois pour la requête.
 2. Sans utilisateur identifié : `401 UNAUTHENTICATED`. Avec un token invalide ou expiré : `401 INVALID_ACCESS_TOKEN`. Sur une route protégée, ces refus viennent désormais du middleware, avant même d'atteindre le contrôleur ; `UseCaseAuthorizer` conserve le sien pour les appels hors HTTP.
-3. Les rôles proviennent des claims `roles` (global) et `modules` (par module) de l'access token, gravés à l'émission par `AuthSessionService`. **Aucune requête n'est faite lors de l'autorisation.**
+3. Les rôles proviennent des claims `role` (global) et `modules` (par module) de l'access token, gravés à l'émission par `AuthSessionService`. **Aucune requête n'est faite lors de l'autorisation.**
 4. Rôle insuffisant ou inexistant : `403 INSUFFICIENT_ROLE`, ou `403 NO_MODULE_ACCESS` si le use case appartient à un module auquel l'appelant n'a aucun accès. La réponse ne révèle pas le rôle attendu ; la tentative est journalisée.
 
-Un utilisateur peut cumuler plusieurs rôles, globalement comme à l'intérieur d'un module : c'est **le plus permissif** qui détermine son niveau effectif. La table `user_module_role` n'a pas de contrainte d'unicité sur `(user_id, module_id)` — ce cumul n'est donc pas théorique. Un code de rôle ou de module inconnu de l'énumération est ignoré plutôt que d'accorder un droit.
+**Un utilisateur détient au plus un rôle global et au plus un rôle par module.** C'est la base qui l'impose : `(user_id)` est la clé primaire de `tools_core.user_role` depuis `V2.69.0`, `(user_id, module_id)` celle de `tools_core.user_module_role` depuis `V2.4.0`. Il n'y a donc aucun arbitrage « le plus permissif l'emporte » nulle part — un rôle est présent ou il ne l'est pas. Un code de rôle ou de module inconnu de l'énumération est ignoré plutôt que d'accorder un droit.
+
+La seule exception vit à la lecture du jeton, et rien qu'à cet endroit : `HttpCurrentUserProvider` accepte encore les formes plurielles héritées (claim `roles` en tableau, valeur de module en tableau) pour ne pas invalider les jetons émis avant ce resserrement. Elle est temporaire — une fois les jetons de la bascule expirés, `JwtClaims.LegacyRoles` et la méthode `Highest` disparaissent.
 
 ## Fenêtre de révocation — choix assumé
 
@@ -111,20 +113,22 @@ Ce point diverge de l'API Java, qui relit les rôles en base à chaque use case.
 
 - L'aspect Java laisse passer un appel sans utilisateur identifié, en comptant sur Spring Security en amont. Le Core refuse malgré sa propre `FallbackPolicy` : un use case sécurisé doit rester sûr **seul**, puisqu'il sera appelé depuis un hub SignalR ou une tâche de fond où aucun middleware HTTP ne s'exécute. C'est de la défense en profondeur, pas une redondance.
 - Java relit les rôles en base à chaque use case ; le Core les lit dans le token (voir la fenêtre de révocation ci-dessus).
-- `PostgresUserRoleProvider` côté Java prend le premier rôle trouvé (`LIMIT 1` sans tri), ce qui est non déterministe pour un utilisateur qui en cumule plusieurs. Le Core retient le plus élevé.
 - Le contrôle Java repose sur un aspect AOP qui intercepte `execute(..)` ; le Core le porte par héritage, sans proxy dynamique ni dépendance supplémentaire.
 
 ## Compatibilité des tokens entre les deux API
 
-Les deux API signent avec le même `JWT_SECRET`, le même issuer et le même choix d'algorithme HMAC, et écrivent les mêmes claims : `roles` en tableau JSON, `modules` en objet. La bascule vers la lecture des rôles dans le token n'a touché que la **lecture** côté Core : un token émis par l'une reste lisible par l'autre.
+Les deux API signent avec le même `JWT_SECRET`, le même issuer et le même choix d'algorithme HMAC. **Le Core est aujourd'hui le seul émetteur** : `JwtProvider.generateAccessToken` existe encore côté Java mais n'est plus appelé par personne.
 
-Le claim `modules` associe un code module aux rôles qu'y détient l'utilisateur :
+Les claims d'autorisation sont `role` et `modules`, tous deux à valeur unique :
 
 ```json
-"modules": { "todolist": ["USER"], "palworld": ["ADMIN"] }
+"role": "ADMIN",
+"modules": { "todolist": "USER", "palworld": "ADMIN" }
 ```
 
-La valeur est un tableau parce que le cumul est possible en base ; le Core accepte aussi la forme antérieure, un rôle unique en chaîne, le temps qu'un jeton déjà émis expire. Personne d'autre ne lit ce claim aujourd'hui — l'API Java relit `tools_core.user_module_role` à chaque use case et le frontend prend ses droits sur `/users/me`.
+Personne d'autre ne les lit aujourd'hui — l'API Java relit `tools_core.user_module_role` à chaque use case et le frontend prend ses droits sur `/users/me`. C'est ce qui a permis de resserrer le format sans coordination : le seul risque était les jetons en vol, couvert par la tolérance en lecture.
+
+Formes antérieures encore acceptées **en lecture seule**, le temps qu'un jeton émis avant la bascule expire (10 minutes) : `"roles": ["ADMIN"]` en tableau, et `"modules": { "todolist": ["USER"] }` avec des valeurs en tableau. Quand les deux coexistent, `role` gagne — sinon la tolérance héritée pourrait accorder un droit que le rôle actuel ne donne plus. Deux tests l'attestent dans `AuthorizationTests`.
 
 ### Contrat de vérification pour un service tiers
 
@@ -154,8 +158,8 @@ Règles applicatives (`JwtAuthenticationExtensions.EnforceAccessTokenRules`) :
 
 Décision de droits, une fois le jeton accepté :
 
-- rôle global : claim `roles`, le plus permissif l'emporte ;
-- rôle dans le module servi par le satellite : claim `modules`, le plus permissif l'emporte ;
+- rôle global : claim `role`, une chaîne unique ;
+- rôle dans le module servi par le satellite : claim `modules`, une chaîne par module ;
 - un use case rattaché à un module se juge **sur le rôle du module seul** — le rôle global n'y
   ajoute rien, y compris pour un administrateur du site.
 
@@ -235,9 +239,9 @@ aujourd'hui par `ITokenService.ReadAccessToken` doivent être explicitement reco
   expiration.
 
 Deux pièges techniques accompagnent le changement : `JwtBearerOptions.MapInboundClaims`
-doit valoir `false` pour lire le `sub` standard, et le claim `roles` — écrit comme tableau
-JSON — doit continuer d'être déplié en claims multiples par le handler du middleware, qui
-n'est pas forcément celui utilisé par `JwtTokenService`.
+doit valoir `false` pour lire le `sub` standard, et le claim hérité `roles` — écrit comme
+tableau JSON — doit continuer d'être déplié en claims multiples par le handler du middleware,
+qui n'est pas forcément celui utilisé par `JwtTokenService`.
 
 Enfin, les 401 et 403 émis par le middleware passent par `ApiProblemDetailsFactory`
 (`OnChallenge`, `OnForbidden`) : aucun second format JSON d'erreur n'existe. `OnChallenge`
@@ -259,11 +263,12 @@ répondait donc 401 au lieu de 404. Ce n'est pas cosmétique : le front interpr�
 une session expirée et déclencherait un refresh sur une faute de frappe. Une garde placée
 entre `UseAuthentication` et `UseAuthorization` renvoie 404 quand `GetEndpoint()` est nul.
 
-**Le claim `roles` peut arriver sous deux formes.** Écrit comme tableau JSON, il est déplié
-en un claim par valeur par les handlers actuels — mais `HttpCurrentUserProvider` accepte
-aussi le claim unique contenant le tableau brut. Faire dépendre les droits d'un détail
-d'implémentation de la bibliothèque JWT serait un risque disproportionné au coût de la
-double lecture.
+**Le claim hérité `roles` peut arriver sous deux formes.** Écrit comme tableau JSON, il est
+déplié en un claim par valeur par les handlers actuels — mais `HttpCurrentUserProvider`
+accepte aussi le claim unique contenant le tableau brut. Faire dépendre les droits d'un
+détail d'implémentation de la bibliothèque JWT serait un risque disproportionné au coût de la
+double lecture. Le claim `role` émis aujourd'hui est une chaîne simple et ne pose pas la
+question.
 
 ### Paramètres cryptographiques
 

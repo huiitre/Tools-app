@@ -104,7 +104,7 @@ public sealed class InternalMailTests : IClassFixture<ApiWebApplicationFactory>
     [Fact]
     public async Task A_technical_token_does_not_open_the_internal_route()
     {
-        var client = factory.CreateClientWithRoles("TECH");
+        var client = factory.CreateClientWithRole("TECH");
 
         using var response = await client.PostAsJsonAsync("/internal/mail", ValidPayload);
 

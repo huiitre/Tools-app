@@ -40,7 +40,7 @@ public sealed class GameServersDashboardTests : IClassFixture<ApiWebApplicationF
         using var rejected = await anonymous.GetAsync("/gameservers");
         Assert.Equal(HttpStatusCode.Unauthorized, rejected.StatusCode);
 
-        using var client = factory.CreateClientWithRoles("READ_ONLY");
+        using var client = factory.CreateClientWithRole("READ_ONLY");
         using var response = await client.GetAsync("/gameservers");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 

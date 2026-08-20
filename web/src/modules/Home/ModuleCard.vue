@@ -43,25 +43,16 @@ const onClick = () => {
         {{ module.description }}
       </p>
 
-      <!-- Roles -->
-      <section
-        v-if="module.roles.length"
-        class="module-roles"
-      >
-        <h5 class="roles-title">Rôles</h5>
+      <!-- Rôle -->
+      <section class="module-roles">
+        <h5 class="roles-title">Rôle</h5>
 
-        <ul class="roles-list">
-          <li
-            v-for="role in module.roles"
-            :key="role.id"
-            class="role-item"
-          >
-            <strong class="role-name">{{ role.name }}</strong>
-            <p class="role-description">
-              {{ role.description }}
-            </p>
-          </li>
-        </ul>
+        <div class="role-item">
+          <strong class="role-name">{{ module.role.name }}</strong>
+          <p class="role-description">
+            {{ module.role.description }}
+          </p>
+        </div>
       </section>
     </div>
   </article>
@@ -169,24 +160,9 @@ const onClick = () => {
   letter-spacing: 0.04em;
 }
 
-/* Roles list */
-.roles-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-
-  & li::marker {
-    content: none;
-  }
-}
-
 /* Role item */
 .role-item {
   padding: 0.75rem 0;
-}
-
-.role-item + .role-item {
-  border-top: 1px solid var(--pico-muted-border-color);
 }
 
 /* Role name */

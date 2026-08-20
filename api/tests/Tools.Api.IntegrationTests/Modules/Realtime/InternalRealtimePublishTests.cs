@@ -120,7 +120,7 @@ public sealed class InternalRealtimePublishTests : IClassFixture<ApiWebApplicati
     [Fact]
     public async Task An_administrator_token_does_not_open_the_internal_route()
     {
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.PostAsJsonAsync("/internal/realtime/publish", ValidPayload);
 
