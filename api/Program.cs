@@ -4,6 +4,7 @@ using Tools.Api.Modules.Admin;
 using Tools.Api.Modules.Auth;
 using Tools.Api.Modules.Common;
 using Tools.Api.Modules.Health;
+using Tools.Api.Modules.GameServers;
 using Tools.Api.Modules.Mail;
 using Tools.Api.Modules.Notifications;
 using Tools.Api.Modules.Realtime;
@@ -27,7 +28,8 @@ builder.AddCommonModule()
     .AddUsersModule()
     .AddAccessModule()
     .AddAdminModule()
-    .AddHealthModule();
+    .AddHealthModule()
+    .AddGameServersModule();
 
 var app = builder.Build();
 

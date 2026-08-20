@@ -1,0 +1,23 @@
+info:
+  name: Sync game servers (internal)
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiCoreUrl}}/internal/gameservers/sync"
+  headers:
+    - name: X-Internal-Token
+      value: "{{internalApiToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: >-
+  Déclenche le sync : l'API lit elle-même le fichier consolidé
+  https://assets.tools.huiitre.fr/tools_core/gameservers/gameservers.json produit par l'extractor.
+  Cette route n'accepte aucun body. X-Internal-Token est le secret partagé INTERNAL_API_TOKEN,
+  jamais un JWT. Une réponse 200 retourne created, updated, unchanged et deleted.
