@@ -12,6 +12,11 @@ namespace Tools.Api.Modules.Security.Infrastructure;
 // du compte sont vérifiés une seule fois par requête par le middleware d'authentification ;
 // tout ce qui arrive ici a déjà été accepté. Un ClaimsPrincipal non authentifié signifie
 // donc simplement « appel anonyme », jamais « jeton refusé ».
+//
+// C'est le seul endroit qui tolère encore la forme plurielle des claims. Un utilisateur ne
+// porte qu'un rôle global et qu'un rôle par module, mais des jetons émis avant ce
+// resserrement restent valides le temps de leur durée de vie : la tolérance vit à la
+// frontière, et le domaine derrière ne connaît qu'une valeur unique.
 public sealed class HttpCurrentUserProvider(IHttpContextAccessor httpContextAccessor) : ICurrentUserProvider
 {
     public CurrentUser? Current
@@ -30,24 +35,25 @@ public sealed class HttpCurrentUserProvider(IHttpContextAccessor httpContextAcce
                 return null;
             }
 
-            // Un code de rôle inconnu de l'énumération est ignoré plutôt que d'accorder un droit.
-            var roles = ReadRoles(principal)
-                .Select(RoleCodes.Parse)
-                .Where(role => role is not null)
-                .Select(role => role!.Value)
-                .ToArray();
-
-            return new CurrentUser(userId, roles, ReadModuleRoles(principal));
+            return new CurrentUser(userId, ReadGlobalRole(principal), ReadModuleRoles(principal));
         }
     }
 
-    // Le claim "roles" est écrit comme tableau JSON. Selon le handler qui a lu le jeton, il
-    // arrive soit déplié en un claim par valeur, soit en un claim unique contenant le tableau
-    // brut. Les deux formes sont acceptées : s'en remettre à une seule reviendrait à faire
-    // dépendre les droits d'un détail d'implémentation de la bibliothèque JWT.
-    private static IEnumerable<string> ReadRoles(ClaimsPrincipal principal)
+    // Rôle global. Le claim `role` porte une chaîne unique ; `roles`, un tableau, est la forme
+    // antérieure et n'est lu que si le premier est absent. Un code inconnu de l'énumération est
+    // ignoré plutôt que d'accorder un droit.
+    private static RoleCode? ReadGlobalRole(ClaimsPrincipal principal)
     {
-        foreach (var claim in principal.FindAll(JwtClaims.Roles))
+        var role = RoleCodes.Parse(principal.FindFirstValue(JwtClaims.Role));
+        return role ?? Highest(ReadLegacyRoles(principal));
+    }
+
+    // Le claim `roles` était écrit comme tableau JSON. Selon le handler qui a lu le jeton, il
+    // arrive soit déplié en un claim par valeur, soit en un claim unique contenant le tableau
+    // brut : les deux formes sont acceptées.
+    private static IEnumerable<string> ReadLegacyRoles(ClaimsPrincipal principal)
+    {
+        foreach (var claim in principal.FindAll(JwtClaims.LegacyRoles))
         {
             var value = claim.Value;
             if (!value.StartsWith('['))
@@ -73,18 +79,17 @@ public sealed class HttpCurrentUserProvider(IHttpContextAccessor httpContextAcce
         }
     }
 
-    // Le claim "modules" est un objet JSON { code_module: [codes_rôle] } : les droits qui ne
+    // Le claim `modules` est un objet JSON { code_module: code_rôle } : les droits qui ne
     // valent qu'à l'intérieur d'un module. Une entrée dont le module ou le rôle est inconnu de
-    // l'énumération est écartée — comme pour les rôles globaux, un code que le Core ne connaît
-    // pas ne peut pas valoir un droit.
+    // l'énumération est écartée — comme pour le rôle global, un code que l'API ne connaît pas
+    // ne peut pas valoir un droit.
     //
-    // La valeur d'un module est acceptée en chaîne ou en tableau : le claim a d'abord porté un
-    // rôle unique par module, et un jeton de la forme précédente reste en circulation le temps
-    // de sa validité.
-    private static IReadOnlyDictionary<ModuleCode, IReadOnlyCollection<RoleCode>> ReadModuleRoles(
-        ClaimsPrincipal principal)
+    // La valeur d'un module est acceptée en chaîne ou en tableau : le claim a porté un tableau
+    // le temps où la base autorisait le cumul, et un jeton de cette forme reste en circulation
+    // jusqu'à son expiration.
+    private static IReadOnlyDictionary<ModuleCode, RoleCode> ReadModuleRoles(ClaimsPrincipal principal)
     {
-        var moduleRoles = new Dictionary<ModuleCode, IReadOnlyCollection<RoleCode>>();
+        var moduleRoles = new Dictionary<ModuleCode, RoleCode>();
 
         foreach (var claim in principal.FindAll(JwtClaims.Modules))
         {
@@ -106,15 +111,10 @@ public sealed class HttpCurrentUserProvider(IHttpContextAccessor httpContextAcce
                     continue;
                 }
 
-                var roles = ReadModuleRoleCodes(value)
-                    .Select(RoleCodes.Parse)
-                    .Where(role => role is not null)
-                    .Select(role => role!.Value)
-                    .ToArray();
-
-                if (roles.Length > 0)
+                var role = Highest(ReadModuleRoleCodes(value));
+                if (role is not null)
                 {
-                    moduleRoles[module.Value] = roles;
+                    moduleRoles[module.Value] = role.Value;
                 }
             }
         }
@@ -142,13 +142,34 @@ public sealed class HttpCurrentUserProvider(IHttpContextAccessor httpContextAcce
                 break;
         }
     }
+
+    // Départage les formes plurielles héritées. Un jeton émis aujourd'hui ne porte jamais
+    // qu'un code : cette méthode ne sert qu'à ne pas dégrader un droit déjà accordé.
+    private static RoleCode? Highest(IEnumerable<string> codes)
+    {
+        RoleCode? highest = null;
+        foreach (var code in codes)
+        {
+            var role = RoleCodes.Parse(code);
+            if (role is not null && (highest is null || role > highest))
+            {
+                highest = role;
+            }
+        }
+
+        return highest;
+    }
 }
 
 public static class JwtClaims
 {
     public const string Subject = "sub";
-    public const string Roles = "roles";
+    public const string Role = "role";
     public const string Modules = "modules";
     public const string TokenType = "tokenType";
     public const string IsActive = "isActive";
+
+    // Forme antérieure du rôle global, tableau JSON. Lue en repli tant que des jetons émis
+    // avant le passage au rôle unique n'ont pas expiré ; à retirer ensuite.
+    public const string LegacyRoles = "roles";
 }

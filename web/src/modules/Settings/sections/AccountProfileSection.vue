@@ -1,13 +1,5 @@
 <script setup lang="ts">
-import type { ModuleType } from '@/modules/Auth/auth.store'
-
-type Role = {
-  id: string
-  code: string
-  name: string
-  description: string
-  active: boolean
-}
+import type { ModuleType, Role } from '@/modules/Auth/auth.store'
 
 type User = {
   id: string
@@ -16,7 +8,7 @@ type User = {
   userType: string
   active: boolean
   avatarUrl: string | null
-  roles: Role[]
+  role: Role | null
   modules: ModuleType[]
 }
 
@@ -84,19 +76,15 @@ function initials(name: string) {
         </dl>
       </div>
 
-      <!-- ── Rôles ──────────────────────────────────────────────── -->
-      <div v-if="user.roles.length" class="card roles-card">
-        <div class="card-title">Rôles</div>
+      <!-- ── Rôle ───────────────────────────────────────────────── -->
+      <div v-if="user.role?.active" class="card roles-card">
+        <div class="card-title">Rôle</div>
         <div class="roles-list">
-          <div
-            v-for="role in user.roles.filter(r => r.active)"
-            :key="role.id"
-            class="role-item"
-          >
+          <div class="role-item">
             <i class="mdi mdi-shield-check-outline role-icon" />
             <div>
-              <div class="role-name">{{ role.name }}</div>
-              <div class="role-desc">{{ role.description }}</div>
+              <div class="role-name">{{ user.role.name }}</div>
+              <div class="role-desc">{{ user.role.description }}</div>
             </div>
           </div>
         </div>

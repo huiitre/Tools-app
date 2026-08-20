@@ -14,13 +14,13 @@ public sealed class InMemoryUserRepository : IUserRepository
 
     public Task<UserProfileDto?> FindProfileAsync(long userId) =>
         Task.FromResult<UserProfileDto?>(userId == ExistingUserId
-            ? new UserProfileDto(userId, "admin@example.com", "Admin", "HUMAN", true, null, [], [])
+            ? new UserProfileDto(userId, "admin@example.com", "Admin", "HUMAN", true, null, null, [])
             : null);
 
     public Task<IReadOnlyList<UserAdminDto>> FindAllForAdminAsync() =>
         Task.FromResult<IReadOnlyList<UserAdminDto>>(
         [
-            new(ExistingUserId, "admin@example.com", "Admin", true, DateTime.UtcNow, null, [4])
+            new(ExistingUserId, "admin@example.com", "Admin", true, DateTime.UtcNow, null, 4)
         ]);
 
     public Task<bool> ExistsAsync(long userId) => Task.FromResult(userId == ExistingUserId);

@@ -189,7 +189,7 @@ Panel réservé aux utilisateurs avec le rôle ADMIN, TECH ou OWNER.
 
 - Bouton "Admin" dans le header principal (`src/components/Header/Header.vue`), visible uniquement si `auth.isAdmin`. Stylisé comme les boutons de thème (hauteur 2.25rem, border, sans icône).
 - Route guard dans `src/router/router.ts` : `if (to.meta.requireAdmin && !auth.isAdmin) return '/'`
-- `isAdmin` getter dans `src/modules/Auth/auth.store.ts` : vérifie que l'utilisateur possède un rôle actif parmi `ADMIN`, `TECH`, `OWNER`.
+- `isAdmin` getter dans `src/modules/Auth/auth.store.ts` : vérifie que le rôle global actif de l'utilisateur est `ADMIN`, `TECH` ou `OWNER`. Un utilisateur n'a **qu'un** rôle global (`user.role`, nullable) — plus de tableau.
 
 ### Structure
 
@@ -229,9 +229,9 @@ src/modules/Admin/
 
 - **Colonnes** : avatar (fixe 36px), nom, email, rôle, statut, date d'inscription. Même système de `gridTemplateColumns` dynamique que le catalogue Dofus.
 - **Avatar** : affiche `<img>` si `avatarUrl` existe et se charge correctement, sinon initiales (2 premières lettres du nom). `@error` sur l'img bascule sur les initiales (URLs Google qui expirent). Clic → `openPreview(url, name, 200)` (min 200px dans la modale).
-- **Rôles** : l'API retourne `roles: number[]` (IDs). Le store charge `GET /roles` séparément. La résolution se fait dans `resolvedRoles` computed : `store.roles.find(sr => sr.code === String(r) || String(sr.id) === String(r))`. La hiérarchie `['READ_ONLY', 'USER', 'MODERATOR', 'ADMIN', 'TECH', 'OWNER']` détermine le badge affiché.
+- **Rôle** : l'API retourne `roleId: number | null` (un seul rôle global par utilisateur). Le store charge `GET /roles` séparément et expose `roleOf(user)` pour résoudre l'identifiant en `AdminRole`. La hiérarchie vient de `ROLE_HIERARCHY` / `roleRank` dans `@/modules/Auth/types/auth.types` — source unique, **ne pas en recopier une locale** : les anciennes copies plaçaient TECH au-dessus d'ADMIN, à l'inverse de l'API.
 - **Édition de rôle** : clic sur la colonne rôle → popup inline (même pattern que les tags workshop). `store.editingRoleUserId` gère "un seul popup ouvert à la fois". Clic sur un rôle → `PUT /users/:id/role` + mise à jour locale + fermeture.
-- **`updateUserRoleLocally`** : stocke le `roleCode` (string) dans `user.roles` après un changement.
+- **`updateUserRoleLocally`** : stocke le `roleId` (number) dans `user.roleId` après un changement.
 
 ### Page Modules — points clés
 

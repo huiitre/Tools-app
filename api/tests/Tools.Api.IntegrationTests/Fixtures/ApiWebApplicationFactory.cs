@@ -1,4 +1,10 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Tools.Api.Modules.Auth.Infrastructure.Jwt;
 using Tools.Api.Modules.Auth.Application.Ports.Registration;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -114,25 +120,59 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
 
     public InMemoryAuthStore Store => Services.GetRequiredService<InMemoryAuthStore>();
 
-    // Le token est produit par le vrai ITokenService : émission et lecture des rôles
-    // sont donc testées ensemble, exactement comme en production.
-    public HttpClient CreateClientWithRoles(params string[] roles) => CreateClientForUser(1, roles);
+    // Le token est produit par le vrai ITokenService : émission et lecture du rôle sont donc
+    // testées ensemble, exactement comme en production.
+    public HttpClient CreateClientWithRole(string? role) => CreateClientForUser(1, role);
 
-    public HttpClient CreateClientForUser(long userId, params string[] roles) =>
-        CreateClientForUser(userId, new Dictionary<string, IReadOnlyList<string>>(), roles);
+    public HttpClient CreateClientForUser(long userId, string? role = null) =>
+        CreateClientForUser(userId, new Dictionary<string, string>(), role);
 
     // Variante avec des rôles de module, sous la forme portée par le claim : un module associé
-    // aux rôles que l'utilisateur y détient.
+    // au rôle que l'utilisateur y détient.
     public HttpClient CreateClientForUser(
         long userId,
-        IReadOnlyDictionary<string, IReadOnlyList<string>> moduleRoles,
-        params string[] roles)
+        IReadOnlyDictionary<string, string> moduleRoles,
+        string? role = null)
     {
         var token = Services.GetRequiredService<ITokenService>().CreateAccessToken(
             new AuthUser(userId, "admin@example.com", true, "HUMAN"),
-            roles,
+            role,
             moduleRoles);
 
+        return ClientWithToken(token);
+    }
+
+    // Client porteur d'un jeton forgé de toutes pièces. Sert à éprouver les formes de claims
+    // que l'API accepte encore en lecture sans plus jamais les émettre : un jeton émis avant
+    // le passage au rôle unique reste valide le temps de sa durée de vie, et ne peut donc pas
+    // être reproduit par ITokenService.
+    public HttpClient CreateClientWithForgedClaims(long userId, params Claim[] claims)
+    {
+        var issuer = Services.GetRequiredService<IOptions<JwtOptions>>().Value.Issuer;
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestJwtSecret));
+
+        Claim[] allClaims =
+        [
+            new("tokenType", "ACCESS"),
+            new("isActive", "true", ClaimValueTypes.Boolean),
+            new("userType", "HUMAN"),
+            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            .. claims
+        ];
+
+        var token = new JwtSecurityToken(
+            issuer,
+            null,
+            allClaims,
+            DateTime.UtcNow,
+            DateTime.UtcNow.AddMinutes(5),
+            new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256));
+
+        return ClientWithToken(new JwtSecurityTokenHandler().WriteToken(token));
+    }
+
+    private HttpClient ClientWithToken(string token)
+    {
         var client = CreateClient();
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);

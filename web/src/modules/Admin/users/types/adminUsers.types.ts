@@ -30,5 +30,7 @@ export type AdminUser = {
   active: boolean
   createdAt: string
   avatarUrl: string | null
-  roles: string[]
+  // Identifiant du rôle global, nul si l'utilisateur n'en a aucun. L'API n'envoie qu'un
+  // identifiant : le catalogue des rôles est chargé à part par GET /roles.
+  roleId: number | null
 }

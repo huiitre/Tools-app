@@ -31,8 +31,8 @@ public sealed class UseCaseAuthorizer(
         }
 
         var actualRole = requiredModule is null
-            ? currentUser.HighestRole
-            : currentUser.HighestRoleIn(requiredModule.Value);
+            ? currentUser.Role
+            : currentUser.RoleIn(requiredModule.Value);
 
         if (actualRole is null || !actualRole.Value.HasAtLeast(requiredRole))
         {

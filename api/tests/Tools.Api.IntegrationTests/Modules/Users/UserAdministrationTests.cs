@@ -22,7 +22,7 @@ public sealed class UserAdministrationTests(ApiWebApplicationFactory factory)
     [Fact]
     public async Task Listing_users_returns_the_administration_rows()
     {
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.GetAsync("/users");
 
@@ -36,7 +36,7 @@ public sealed class UserAdministrationTests(ApiWebApplicationFactory factory)
     [InlineData("OWNER")]
     public async Task Listing_users_is_allowed_from_the_administration_level(string role)
     {
-        var client = factory.CreateClientWithRoles(role);
+        var client = factory.CreateClientWithRole(role);
 
         using var response = await client.GetAsync("/users");
 
@@ -53,7 +53,7 @@ public sealed class UserAdministrationTests(ApiWebApplicationFactory factory)
     [InlineData("TECH")]
     public async Task Listing_users_is_refused_below_the_administration_level(string role)
     {
-        var client = factory.CreateClientWithRoles(role);
+        var client = factory.CreateClientWithRole(role);
 
         using var response = await client.GetAsync("/users");
 
@@ -64,7 +64,7 @@ public sealed class UserAdministrationTests(ApiWebApplicationFactory factory)
     [Fact]
     public async Task Setting_a_global_role_replaces_the_previous_one()
     {
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.PutAsJsonAsync($"/users/{ExistingUserId}/role", AdminRole);
 
@@ -82,7 +82,7 @@ public sealed class UserAdministrationTests(ApiWebApplicationFactory factory)
     [InlineData("TECH")]
     public async Task Setting_a_global_role_is_refused_below_the_administration_level(string role)
     {
-        var client = factory.CreateClientWithRoles(role);
+        var client = factory.CreateClientWithRole(role);
 
         using var response = await client.PutAsJsonAsync($"/users/{ExistingUserId}/role", AdminRole);
 
@@ -93,7 +93,7 @@ public sealed class UserAdministrationTests(ApiWebApplicationFactory factory)
     [Fact]
     public async Task Setting_a_role_on_an_unknown_user_is_not_found()
     {
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.PutAsJsonAsync("/users/999/role", AdminRole);
 
@@ -104,7 +104,7 @@ public sealed class UserAdministrationTests(ApiWebApplicationFactory factory)
     [Fact]
     public async Task Setting_an_unknown_role_is_not_found()
     {
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.PutAsJsonAsync(
             $"/users/{ExistingUserId}/role", new { roleId = 999 });

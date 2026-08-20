@@ -24,7 +24,7 @@ public sealed class ModuleAccessTests(ApiWebApplicationFactory factory)
     [Fact]
     public async Task Listing_modules_returns_the_catalog()
     {
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.GetAsync("/modules");
 
@@ -36,7 +36,7 @@ public sealed class ModuleAccessTests(ApiWebApplicationFactory factory)
     [Fact]
     public async Task A_created_module_starts_inactive()
     {
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.PostAsJsonAsync("/modules", new
         {
@@ -56,7 +56,7 @@ public sealed class ModuleAccessTests(ApiWebApplicationFactory factory)
     [Fact]
     public async Task Creating_a_module_with_an_existing_code_conflicts()
     {
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.PostAsJsonAsync("/modules", new
         {
@@ -72,7 +72,7 @@ public sealed class ModuleAccessTests(ApiWebApplicationFactory factory)
     public async Task Granting_access_gives_the_read_only_role()
     {
         Memberships.Reset();
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.PostAsync($"/modules/{ModuleId}/users/{UserId}", null);
 
@@ -86,7 +86,7 @@ public sealed class ModuleAccessTests(ApiWebApplicationFactory factory)
     public async Task Granting_an_access_twice_conflicts()
     {
         Memberships.Reset();
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var first = await client.PostAsync($"/modules/{ModuleId}/users/{UserId}", null);
         using var second = await client.PostAsync($"/modules/{ModuleId}/users/{UserId}", null);
@@ -100,7 +100,7 @@ public sealed class ModuleAccessTests(ApiWebApplicationFactory factory)
     public async Task Changing_a_role_requires_an_existing_access()
     {
         Memberships.Reset();
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.PutAsJsonAsync(
             $"/modules/{ModuleId}/users/{UserId}/role", new { roleId = 2 });
@@ -113,7 +113,7 @@ public sealed class ModuleAccessTests(ApiWebApplicationFactory factory)
     public async Task Changing_a_role_replaces_the_previous_one()
     {
         Memberships.Reset();
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
         await client.PostAsync($"/modules/{ModuleId}/users/{UserId}", null);
 
         using var response = await client.PutAsJsonAsync(
@@ -127,7 +127,7 @@ public sealed class ModuleAccessTests(ApiWebApplicationFactory factory)
     public async Task Revoking_an_access_removes_the_membership()
     {
         Memberships.Reset();
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
         await client.PostAsync($"/modules/{ModuleId}/users/{UserId}", null);
 
         using var response = await client.DeleteAsync($"/modules/{ModuleId}/users/{UserId}");
@@ -139,7 +139,7 @@ public sealed class ModuleAccessTests(ApiWebApplicationFactory factory)
     [Fact]
     public async Task Listing_members_of_an_unknown_module_is_not_found()
     {
-        var client = factory.CreateClientWithRoles("ADMIN");
+        var client = factory.CreateClientWithRole("ADMIN");
 
         using var response = await client.GetAsync("/modules/999/users");
 
@@ -156,7 +156,7 @@ public sealed class ModuleAccessTests(ApiWebApplicationFactory factory)
     [InlineData("TECH")]
     public async Task Every_route_is_refused_below_the_administration_level(string role)
     {
-        var client = factory.CreateClientWithRoles(role);
+        var client = factory.CreateClientWithRole(role);
 
         var responses = new[]
         {

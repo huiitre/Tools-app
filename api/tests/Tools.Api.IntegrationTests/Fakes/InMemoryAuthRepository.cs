@@ -14,10 +14,9 @@ public sealed class InMemoryAuthRepository(InMemoryAuthStore store) : IAuthRepos
     public Task<AuthUser?> FindByEmailAsync(string email) =>
         Task.FromResult(store.Users.Values.FirstOrDefault(user => user.Email == email));
 
-    public Task<IReadOnlyList<string>> FindGlobalRolesAsync(long userId) =>
-        Task.FromResult<IReadOnlyList<string>>([]);
+    public Task<string?> FindGlobalRoleAsync(long userId) =>
+        Task.FromResult<string?>(null);
 
-    public Task<IReadOnlyDictionary<string, IReadOnlyList<string>>> FindModuleRolesAsync(long userId) =>
-        Task.FromResult<IReadOnlyDictionary<string, IReadOnlyList<string>>>(
-            new Dictionary<string, IReadOnlyList<string>>());
+    public Task<IReadOnlyDictionary<string, string>> FindModuleRolesAsync(long userId) =>
+        Task.FromResult<IReadOnlyDictionary<string, string>>(new Dictionary<string, string>());
 }

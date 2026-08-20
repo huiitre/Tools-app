@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { roleRank } from '@/modules/Auth/types/auth.types'
 import type { AdminUser, AdminRole, AdminUserColumn, AdminSortDir, AdminPageSize } from '../types/adminUsers.types'
-
-const ROLE_HIERARCHY = ['READ_ONLY', 'USER', 'MODERATOR', 'ADMIN', 'TECH', 'OWNER']
 
 const AVATAR_WIDTH = 36
 
@@ -13,13 +12,6 @@ const INITIAL_COLUMNS: AdminUserColumn[] = [
   { key: 'active',    label: 'Statut',       description: 'Compte actif ou non',   visible: true,  sortable: true, userToggle: true,  minSize: 80,  maxSize: 100, grow: 0 },
   { key: 'createdAt', label: 'Inscription',  description: 'Date d\'inscription',   visible: true,  sortable: true, userToggle: true,  minSize: 110, maxSize: 140, grow: 0 },
 ]
-
-export function getTopRoleCode(roleCodes: string[]): string | null {
-  if (!roleCodes?.length) return null
-  return roleCodes.reduce((best, code) =>
-    ROLE_HIERARCHY.indexOf(code) > ROLE_HIERARCHY.indexOf(best) ? code : best
-  )
-}
 
 export const useAdminUsersStore = defineStore('adminUsers', () => {
   const users = ref<AdminUser[]>([])
@@ -34,6 +26,12 @@ export const useAdminUsersStore = defineStore('adminUsers', () => {
   const pageSize = ref<AdminPageSize>(20)
 
   const visibleColumns = computed(() => columns.value.filter(c => c.visible))
+
+  // Le rôle d'un utilisateur n'arrive qu'en identifiant : le résoudre contre le catalogue est
+  // le seul moyen d'obtenir son code et son libellé.
+  const roleOf = computed(() => (user: AdminUser): AdminRole | null =>
+    user.roleId === null ? null : roles.value.find(r => r.id === user.roleId) ?? null
+  )
 
   const gridTemplateColumns = computed(() => {
     const dynamic = visibleColumns.value.map(col => {
@@ -67,8 +65,8 @@ export const useAdminUsersStore = defineStore('adminUsers', () => {
       else if (key === 'active') { av = a.active ? 1 : 0; bv = b.active ? 1 : 0 }
       else if (key === 'createdAt') { av = a.createdAt; bv = b.createdAt }
       else if (key === 'role') {
-        av = ROLE_HIERARCHY.indexOf(getTopRoleCode(a.roles) ?? '')
-        bv = ROLE_HIERARCHY.indexOf(getTopRoleCode(b.roles) ?? '')
+        av = roleRank(roleOf.value(a)?.code)
+        bv = roleRank(roleOf.value(b)?.code)
       }
 
       if (av < bv) return dir.value === 'ASC' ? -1 : 1
@@ -114,15 +112,15 @@ export const useAdminUsersStore = defineStore('adminUsers', () => {
   function openRoleEdit(userId: string) { editingRoleUserId.value = userId }
   function closeRoleEdit() { editingRoleUserId.value = null }
 
-  function updateUserRoleLocally(userId: string, roleCode: string) {
+  function updateUserRoleLocally(userId: string, roleId: number) {
     const user = users.value.find(u => u.id === userId)
-    if (user) user.roles = [roleCode]
+    if (user) user.roleId = roleId
   }
 
   return {
     users, roles, columns, loading, error,
     q, sort, dir, page, pageSize,
-    visibleColumns, gridTemplateColumns,
+    visibleColumns, gridTemplateColumns, roleOf,
     filtered, sorted, paginated, total, lastPage,
     editingRoleUserId,
     setQuery, setSort, toggleSort, setPage, setPageSize,

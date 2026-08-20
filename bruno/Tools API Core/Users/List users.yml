@@ -16,7 +16,8 @@ docs: |-
   Rôle minimum : ADMIN. Attention, ADMIN est *au-dessus* de TECH dans la hiérarchie :
   un jeton TECH reçoit un 403 INSUFFICIENT_ROLE.
 
-  `roles` ne contient que des identifiants, à résoudre contre GET /roles.
+  `roleId` est l'identifiant du rôle global, à résoudre contre GET /roles. Nul si
+  l'utilisateur n'a aucun rôle : un utilisateur n'en détient qu'un au plus.
 
 settings:
   encodeUrl: true

@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Xunit;
 using Tools.Api.IntegrationTests.Fixtures;
 
@@ -52,7 +54,7 @@ public sealed class AuthorizationTests : IClassFixture<ApiWebApplicationFactory>
     {
         // Un code absent de l'énumération est ignoré, jamais interprété favorablement :
         // un jeton forgé avec un rôle inventé ne vaut pas mieux qu'un jeton sans rôle.
-        var client = factory.CreateClientWithRoles("SUPER_ADMIN");
+        var client = factory.CreateClientWithRole("SUPER_ADMIN");
 
         using var response = await client.PostAsJsonAsync(TechnicalRequirementRoute, MailPayload);
 
@@ -61,15 +63,36 @@ public sealed class AuthorizationTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
-    public async Task The_most_permissive_role_of_the_token_decides()
+    public async Task A_token_carrying_the_former_roles_array_is_still_honoured()
     {
-        // Un utilisateur qui cumule des rôles est jugé sur le plus élevé, et l'ordre dans
-        // lequel ils apparaissent dans le jeton n'a aucune importance.
-        var client = factory.CreateClientWithRoles("USER", "ADMIN", "READ_ONLY");
+        // Un utilisateur ne porte qu'un rôle global, et l'API n'émet plus que le claim `role`.
+        // Les jetons émis avant ce changement portent un claim `roles` en tableau et restent
+        // valides jusqu'à leur expiration : les refuser déconnecterait tout le monde au
+        // déploiement. La tolérance vit ici, à la lecture du jeton, et nulle part ailleurs.
+        var client = factory.CreateClientWithForgedClaims(
+            1,
+            new Claim("roles", """["TECH"]""", JsonClaimValueTypes.JsonArray));
 
         using var response = await client.PostAsJsonAsync(TechnicalRequirementRoute, MailPayload);
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task The_current_role_claim_wins_over_the_former_array()
+    {
+        // Cas de bascule : un jeton peut théoriquement porter les deux formes. C'est la forme
+        // actuelle qui décide, sans quoi la tolérance héritée pourrait accorder un droit que le
+        // rôle actuel ne donne plus.
+        var client = factory.CreateClientWithForgedClaims(
+            1,
+            new Claim("role", "READ_ONLY"),
+            new Claim("roles", """["TECH"]""", JsonClaimValueTypes.JsonArray));
+
+        using var response = await client.PostAsJsonAsync(TechnicalRequirementRoute, MailPayload);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal("INSUFFICIENT_ROLE", await ReadCode(response));
     }
 
     private static async Task<string?> ReadCode(HttpResponseMessage response)

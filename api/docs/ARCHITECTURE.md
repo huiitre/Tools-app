@@ -85,9 +85,7 @@ L’API Java fait cette vérification en base à chaque use case :
 Deux détails du Java n’ont pas été repris, parce qu’ils tiennent à sa manière de lire et non à la règle :
 
 - l’étape 1 est presque redondante avec l’étape 2, qui échoue déjà en l’absence de ligne ; côté Core, un module absent des claims est un refus, sans lecture séparée ;
-- `LIMIT 1` sans tri rend le rôle retenu arbitraire quand `user_module_role` en contient plusieurs pour une même paire `(user, module)` — sa clé primaire `(user_id, module_id, role_id)` l’autorise. Le Core retient le plus permissif, comme il le fait déjà pour les rôles globaux, plutôt que de dépendre d’une contrainte d’unicité qui n’existe pas.
-
-Reste ouvert : décider si le modèle veut vraiment un rôle unique par `(user, module)` et poser la contrainte. Tant qu’elle n’est pas là, l’arbitrage ci-dessus est la seule chose qui rende le comportement déterministe.
+- le `LIMIT 1` sans tri du Java rendait le rôle retenu arbitraire du temps où `user_module_role` pouvait en contenir plusieurs pour une même paire `(user, module)`. Ce n’est plus le cas : la clé primaire est `(user_id, module_id)` depuis `V2.4.0`, et `LIMIT 1` a été retiré côté Java — la requête ne peut plus ramener qu’une ligne.
 
 ## Realtime / WebSocket
 
@@ -860,31 +858,57 @@ l'inverse, mais l'ordre de déclaration ne sert à rien : `RoleHierarchy` donne 
 `ADMIN = 5`, et c'est lui qui décide. Le `RoleCode` du Core est fidèle à cette hiérarchie. Un
 test vérifie explicitement qu'un compte TECH est refusé sur chacune de ces routes.
 
-> Le frontend, lui, ordonne `[…, ADMIN, TECH, OWNER]` dans `auth.store.ts` : son
-> `hasModuleAccess` place TECH au-dessus d'ADMIN, à l'inverse des deux APIs. Cela ne concerne
-> que l'affichage — le backend tranche en dernier ressort — mais la divergence existe et
-> mériterait d'être résolue un jour.
+> Le frontend ordonnait `[…, ADMIN, TECH, OWNER]` dans `auth.store.ts`, plaçant TECH
+> au-dessus d'ADMIN à l'inverse des deux APIs. Corrigé avec le passage au rôle unique : la
+> hiérarchie vit désormais dans une constante unique, `ROLE_HIERARCHY` de
+> `Auth/types/auth.types.ts`, et toute comparaison passe par `roleRank` / `hasAtLeast`. Les
+> copies locales du tableau ont disparu — c'étaient elles qui rendaient la divergence
+> possible sans que rien ne la signale.
 
-### Plusieurs rôles pour une même paire : le plus permissif gagne
+### Un utilisateur = un rôle (2026-08-20)
 
-La clé primaire de `user_module_role` est `(user_id, module_id, role_id)` et celle de
-`user_role` autorise également le cumul : plusieurs rôles sont donc possibles là où tout le code
-suppose l'unicité. L'API Java s'en remet à un `LIMIT 1`, c'est-à-dire à un rôle arbitraire.
+Un utilisateur détient **au plus un rôle global et au plus un rôle par module**. Ce n'est pas
+une convention applicative, c'est la base : `(user_id)` est la clé primaire de `user_role`
+depuis `V2.69.0__single_role_per_user.sql`, et `(user_id, module_id)` celle de
+`user_module_role` depuis `V2.4.0`.
 
-Le Core retient **le rôle le plus permissif**, ce qui est déterministe et cohérent avec
-`CurrentUser.HighestRole`, qui fait déjà ce choix pour les rôles du jeton. La règle vaut
-désormais aussi à l'intérieur d'un module (`CurrentUser.HighestRoleIn`) : le claim `modules`
-porte la liste des rôles détenus par module, précisément parce que l'unicité n'est pas garantie
-en base. En écriture, les
-lignes existantes sont supprimées avant l'insertion : le Core ne crée donc jamais de doublon,
-et un `UPDATE` aurait de toute façon violé la clé primaire s'il en existait deux.
+**La décision était déjà prise, seule la contrainte manquait.** Rien n'a jamais attribué
+plusieurs rôles : `ReplaceGlobalRoleAsync` supprimait avant d'insérer, le frontend ne proposait
+qu'un rôle, l'API Java lisait avec un `LIMIT 1`. Le cumul ne survivait que dans le schéma des
+rôles globaux — et son coût était partout ailleurs : `GroupBy` défensifs à chaque lecture de
+profil et de membres de module, arbitrage « le plus permissif l'emporte » recalculé à chaque
+autorisation, listes de rôles dans les DTO et dans le claim `modules`. Un arbitrage payé à
+chaque requête pour départager des lignes que rien ne créait.
 
-**Le tri se fait sur le code du rôle, jamais sur `role_id`.** Les identifiants suivent l'ordre
-d'insertion du référentiel — `ADMIN = 4`, `TECH = 5` — soit l'inverse de la hiérarchie. Trier
-par identifiant intervertirait ces deux rôles.
+Ce que la contrainte a permis de supprimer :
 
-La migration rendant l'unicité explicite reste à faire ; elle est volontairement séparée de
-cette bascule.
+- `CurrentUser.HighestRole` / `HighestRoleIn` → `Role` et `RoleIn(module)`, de simples lectures ;
+- les `GroupBy` de `PostgresUserRepository`, `PostgresAuthRepository` et
+  `PostgresModuleMembershipRepository` ;
+- les couples `DELETE` + `INSERT` d'attribution de rôle, devenus des upserts `ON CONFLICT` ;
+- `UserProfileDto.Roles` / `UserModuleDto.Roles` / `UserAdminDto.Roles` → une valeur unique ;
+- `AccessTokenData.Roles`, qui n'était lu par personne ;
+- le `LIMIT 1` sans `ORDER BY` de `PostgresUserRoleProvider` côté Java, qui laissait Postgres
+  choisir le droit accordé ;
+- les trois copies de la hiérarchie des rôles côté frontend, dont une était mal ordonnée.
+
+**Le claim `role` remplace `roles`.** Le tableau n'existait que parce que le cumul était
+possible ; sa raison d'être disparaissant, le claim devient une chaîne, et les valeurs de
+`modules` aussi. Le Core étant le seul émetteur et le seul lecteur (Java relit la base, le
+frontend lit `/users/me`), le changement n'a demandé aucune coordination — seuls les jetons en
+vol comptaient, couverts par une tolérance en lecture décrite dans `SECURITY.md`.
+
+**La migration échoue s'il existe un doublon, et c'est voulu.** Une reprise silencieuse
+choisirait un droit à la place d'un humain. Le contrôle à passer avant de la jouer :
+
+```sql
+SELECT user_id, count(*) FROM tools_core.user_role GROUP BY user_id HAVING count(*) > 1;
+```
+
+`V2.69.0` en profite pour supprimer `tools_core.config` et `tools_core.user_config_override`,
+créées par `V2.3.0` et jamais lues ni écrites par aucun code. Le système de paramètres qui les
+remplace tient son catalogue en dur dans l'API et ne persiste que les valeurs surchargées : une
+table de catalogue en base n'y a plus de rôle.
 
 ### `PUT /modules/{id}` est un vrai remplacement
 
