@@ -1,5 +1,5 @@
-using Tools.Api.Modules.Mail.Application;
-using Tools.Api.Modules.Mail.Application.Ports;
+using Tools.Api.Modules.Core.Mail.Application;
+using Tools.Api.Modules.Core.Mail.Application.Ports;
 
 namespace Tools.Api.IntegrationTests.Fakes;
 

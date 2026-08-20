@@ -1,5 +1,5 @@
-using Tools.Api.Modules.Security.Application.Dto;
-using Tools.Api.Modules.Security.Application.Ports;
+using Tools.Api.Modules.Core.Security.Application.Dto;
+using Tools.Api.Modules.Core.Security.Application.Ports;
 
 namespace Tools.Api.IntegrationTests.Fakes;
 

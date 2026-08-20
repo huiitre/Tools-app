@@ -193,7 +193,7 @@ POST  /auth/password/reset
 PATCH /auth/password
 ```
 
-Le code le disait déjà : `SetUserPasswordUseCase` vit dans `Modules/Auth/Application/Usecases/Password/`.
+Le code le disait déjà : `SetUserPasswordUseCase` vit dans `Modules/Core/Auth/Application/Usecases/Password/`.
 L'exposer depuis `UsersController` faisait qu'un module publiait le use case d'un autre.
 
 `PATCH /auth/password` ne porte aucun identifiant, comme `/auth/logout` : l'identité vient
@@ -202,11 +202,42 @@ d'un autre.
 
 ## Namespaces et organisation du code
 
+### `Modules/Core/` et les modules métier (2026-08-20)
+
+`Modules/` porte deux natures de modules qui ne se ressemblent pas, et un seul niveau les
+mélangeait :
+
+```text
+Modules/
+  Core/           la plateforme : Access, Admin, Auth, Common, GameServers, Health,
+                  Mail, Notifications, Realtime, Security, Users
+  <Métier>/       Dofus, Riot, Palworld… à mesure qu'ils sont repris de l'API Java
+```
+
+Le critère est **la dépendance, pas le schéma SQL** : un module du Core ne dépend d'aucun
+métier, alors que tout métier dépend du Core. Dofus peut disparaître, Security non.
+
+C'est le découpage de l'API Java (`modules/core/…` d'un côté, `modules/dofus`,
+`modules/palworld` de l'autre), repris pour que les deux se lisent pareil. Il a été fait
+**avant** le premier module métier, précisément parce que chaque module ajouté ensuite aurait
+renchéri le déplacement.
+
+Deux cas valent d'être notés, parce que le nom seul induit en erreur :
+
+- **`Health`** n'est pas le module fonctionnel « santé » de l'API Java. C'est la sonde de
+  readiness (`SELECT 1`), de l'infrastructure — d'où sa place dans le Core, à l'inverse de
+  `modules/health` côté Java. Si le module métier arrive un jour, il prendra
+  `Modules/Health/`, et celui-ci devra être renommé.
+- **`GameServers`** est un cas limite assumé : c'est une fonctionnalité visible, mais
+  transverse à plusieurs jeux et adossée à `tools_core.game_servers`. Le mettre dans un module
+  métier obligerait à choisir lequel. S'il devient un module à part entière, il se déplacera
+  seul — il ne dépend d'aucun autre module que Common et Security.
+
 Chaque fichier déclare un **file-scoped namespace** dérivé de son chemin :
 
 ```csharp
-// Modules/Auth/Application/Usecases/LoginUseCase.cs
-namespace Tools.ApiCore.Modules.Auth.Application.Usecases;
+// Modules/Core/Auth/Application/Usecases/LoginUseCase.cs
+namespace Tools.Api.Modules.Core.Auth.Application.Usecases;
 ```
 
 `Program.cs` fait exception : un fichier à top-level statements ne peut pas déclarer de
@@ -215,7 +246,7 @@ modules — c'est la racine de composition, elle câble tout, donc elle voit tou
 
 Les `using` entre modules sont **explicites**, jamais globaux. C'est la raison d'être des
 namespaces ici : rendre le couplage inter-modules lisible en tête de fichier. Un
-`using Tools.ApiCore.Modules.Mail.Application;` dans un fichier du module Auth signale
+`using Tools.Api.Modules.Core.Mail.Application;` dans un fichier du module Auth signale
 immédiatement une dépendance entre modules, qu'on peut alors questionner. Un
 `GlobalUsings.cs` qui importerait les modules annulerait ce bénéfice ; il est réservé, le
 cas échéant, aux namespaces techniques externes.
@@ -231,7 +262,7 @@ Quand l'infrastructure d'un module dépasse la dizaine de fichiers, elle se déc
 sous-dossiers. Exemple du module Auth :
 
 ```text
-Modules/Auth/Infrastructure/
+Modules/Core/Auth/Infrastructure/
   Google/       client OAuth, options, store d'état, vérification OIDC
   Jwt/          émission, validation, options, paramètres cryptographiques, cookie de refresh
   Password/     hachage, options de réinitialisation, nettoyage planifié
@@ -262,7 +293,7 @@ Même principe côté Application, avec un découpage par **méthode d'identific
 répond en miroir à celui de l'Infrastructure :
 
 ```text
-Modules/Auth/Application/
+Modules/Core/Auth/Application/
   Ports/
     IAuthRepository.cs        transverse : lu par les trois flux
     Google/                   client OAuth, vérification d'identité, store d'état, comptes Google
@@ -293,12 +324,12 @@ pose — *de quoi cette application est-elle faite ?*
 **Chaque module porte sa propre composition**, dans un fichier `<Module>Module.cs` à sa racine :
 
 ```text
-Modules/Auth/AuthModule.cs          AddAuthModule()
-Modules/Common/CommonModule.cs      AddCommonModule()
-Modules/Health/HealthModule.cs      AddHealthModule()
-Modules/Mail/MailModule.cs          AddMailModule()
-Modules/Security/SecurityModule.cs  AddSecurityModule()
-Modules/Users/UsersModule.cs        AddUsersModule()
+Modules/Core/Auth/AuthModule.cs          AddAuthModule()
+Modules/Core/Common/CommonModule.cs      AddCommonModule()
+Modules/Core/Health/HealthModule.cs      AddHealthModule()
+Modules/Core/Mail/MailModule.cs          AddMailModule()
+Modules/Core/Security/SecurityModule.cs  AddSecurityModule()
+Modules/Core/Users/UsersModule.cs        AddUsersModule()
 ```
 
 Ce fichier vit **à la racine du module**, pas dans une couche : il câble `Api`, `Application`
@@ -311,12 +342,18 @@ de l'environnement, et le type de retour rend l'enchaînement lisible. `Program.
 alors à une trentaine de lignes, dont la partie qui compte :
 
 ```csharp
-builder.AddCommonModule()
-    .AddSecurityModule()
-    .AddAuthModule()
-    .AddMailModule()
-    .AddUsersModule()
-    .AddHealthModule();
+builder.AddCoreModules();
+```
+
+`Modules/Core/CoreModule.cs` enchaîne les onze modules de plateforme dans l'ordre qu'ils
+exigent — Common en premier, les autres dépendant de son contrat d'erreur et de son accès
+PostgreSQL. Ce n'est pas une couche supplémentaire : chaque module garde son
+`<Module>Module.cs` et reste enregistrable seul. Les modules métier s'ajouteront à la suite,
+un appel par module :
+
+```csharp
+builder.AddCoreModules()
+    .AddDofusModule();
 ```
 
 `Common` vient en premier parce que les autres dépendent de son contrat d'erreur et de son
@@ -418,14 +455,15 @@ les unitaires sans eux.
 ```text
 tests/
   Tools.Api.IntegrationTests/
-    Fixtures/    ApiCoreWebApplicationFactory
-    Fakes/       doubles mémoire des ports, une classe par fichier
-    Modules/     miroir des modules du code source
-      Auth/      AuthenticationTests, PasswordTests
-      Common/    ErrorContractTests
-      Mail/      MailControllerTests
-      Security/  AuthorizationTests
-  Tools.ApiCore.UnitTests/
+    Fixtures/         ApiWebApplicationFactory
+    Fakes/            doubles mémoire des ports, une classe par fichier
+    Modules/          miroir des modules du code source, Core/ compris
+      Core/
+        Auth/         AuthenticationTests, PasswordTests
+        Common/       ErrorContractTests
+        Mail/         MailControllerTests
+        Security/     AuthorizationTests, ModuleAuthorizationTests
+  Tools.Api.UnitTests/
 ```
 
 Les tests d'intégration démarrent l'application en mémoire, sans port ni PostgreSQL, et
@@ -831,7 +869,7 @@ GET    /admin/stats                          Admin
 
 **Deux nouveaux modules.** `Access` porte les modules *fonctionnels* de l'application (Dofus,
 Palworld…) et les accès des utilisateurs à ces modules. Il ne s'appelle pas « Modules » pour ne
-pas produire `Modules/Modules` et un namespace `Tools.ApiCore.Modules.Modules`, où le même mot
+pas produire `Modules/Core/Modules` et un namespace `Tools.Api.Modules.Core.Modules`, où le même mot
 désignerait deux choses sans rapport ; `Access` nomme la responsabilité réelle. `Admin` ne
 détient aucune ressource — il agrège en lecture ce que possèdent Users et Access, d'où un
 module qui ne fait que lire.
@@ -1130,7 +1168,7 @@ coupant tous les hôtes du proxy.
   configuration invalide et n'échoue qu'à la première requête. Proposé, non fait.
 - **`UseForwardedHeaders`** — nécessaire si la limitation de débit revient un jour
   (voir `REGISTRATION.md`).
-- **`Modules/Users/Domain/User.cs`** est orphelin depuis la suppression du bac à sable de
+- **`Modules/Core/Users/Domain/User.cs`** est orphelin depuis la suppression du bac à sable de
   création : plus aucun appelant.
 - **`SmtpMailOptions` est déclarée dans `SmtpMailSender.cs`**, contrairement à la règle « une
   classe publique est un fichier portant son nom ».

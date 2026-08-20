@@ -1,5 +1,5 @@
-using Tools.Api.Modules.Notifications.Application.Ports;
-using Tools.Api.Modules.Notifications.Application.Views;
+using Tools.Api.Modules.Core.Notifications.Application.Ports;
+using Tools.Api.Modules.Core.Notifications.Application.Views;
 
 namespace Tools.Api.IntegrationTests.Fakes;
 

@@ -1,6 +1,6 @@
 using Serilog;
 using Serilog.Events;
-using Tools.Api.Modules.Common.Api.Errors;
+using Tools.Api.Modules.Core.Common.Api.Errors;
 
 namespace Tools.Api.Composition;
 

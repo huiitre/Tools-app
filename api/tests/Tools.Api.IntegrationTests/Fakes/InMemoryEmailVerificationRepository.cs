@@ -1,4 +1,4 @@
-using Tools.Api.Modules.Auth.Application.Ports.Registration;
+using Tools.Api.Modules.Core.Auth.Application.Ports.Registration;
 
 namespace Tools.Api.IntegrationTests.Fakes;
 

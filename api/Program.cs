@@ -1,35 +1,21 @@
 using Tools.Api.Composition;
-using Tools.Api.Modules.Access;
-using Tools.Api.Modules.Admin;
-using Tools.Api.Modules.Auth;
-using Tools.Api.Modules.Common;
-using Tools.Api.Modules.Health;
-using Tools.Api.Modules.GameServers;
-using Tools.Api.Modules.Mail;
-using Tools.Api.Modules.Notifications;
-using Tools.Api.Modules.Realtime;
-using Tools.Api.Modules.Security;
-using Tools.Api.Modules.Users;
+using Tools.Api.Modules.Core;
+using Tools.Api.Modules.Core.Auth;
+using Tools.Api.Modules.Core.Common;
+using Tools.Api.Modules.Core.Health;
+using Tools.Api.Modules.Core.Realtime;
+using Tools.Api.Modules.Core.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddCoreHost();
 
 // Racine de composition : elle voit tous les modules, et rien d'autre. Chaque module déclare
-// lui-même ses ports, ses use cases et ses options — voir Modules/<Module>/<Module>Module.cs.
-// Common vient en premier : les autres dépendent de son contrat d'erreur et de son accès
-// PostgreSQL, jamais l'inverse.
-builder.AddCommonModule()
-    .AddSecurityModule()
-    .AddAuthModule()
-    .AddMailModule()
-    .AddRealtimeModule()
-    .AddNotificationsModule()
-    .AddUsersModule()
-    .AddAccessModule()
-    .AddAdminModule()
-    .AddHealthModule()
-    .AddGameServersModule();
+// lui-même ses ports, ses use cases et ses options — voir Modules/<...>/<Module>Module.cs.
+//
+// La plateforme est enregistrée en bloc ; les modules métier viendront à la suite, un appel
+// par module, à mesure qu'ils sont repris de l'API Java.
+builder.AddCoreModules();
 
 var app = builder.Build();
 
