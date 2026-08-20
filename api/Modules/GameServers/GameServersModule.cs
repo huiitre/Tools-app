@@ -36,6 +36,7 @@ public static class GameServersModule
         builder.Services.AddSingleton<IGameServerStatusProvider, SteamA2sStatusProvider>();
         builder.Services.AddTransient<IGameServerStatusProvider, PalworldRestStatusProvider>();
         builder.Services.AddSingleton<IGameServerStatusProvider, SourceRconStatusProvider>();
+        builder.Services.AddSingleton<IGameServerStatusProvider, HumanitZRconStatusProvider>();
         builder.Services.AddScoped<PollGameServersUseCase>();
         builder.Services.AddScoped<GetGameServersUseCase>();
 

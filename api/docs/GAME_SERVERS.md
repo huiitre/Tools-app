@@ -81,7 +81,21 @@ est ajoutée à `bruno/` dans le même changement.
   choisit l'adapter.
 - `port` désigne le port de poll, jamais implicitement le port de jeu.
 - `SOURCE_RCON` utilise `listplayers` et `maxPlayersOverride`; il ne tente pas
-  A2S pour ARK: Survival Ascended.
+  A2S pour ARK: Survival Ascended. C'est un protocole RCON conforme au spec Valve
+  standard — un jeu dont le RCON dévie de ce spec obtient son propre
+  `protocolType` et son propre adapter plutôt que des cas particuliers dans
+  `SourceRconStatusProvider` (voir `HUMANITZ_RCON` ci-dessous).
+- `HUMANITZ_RCON` (vérifié en direct le 20/08/2026, serveur réel) : même framing
+  TCP que le RCON Source, mais une auth non conforme au spec Valve — succès =
+  deux paquets reçus (le premier `type=0`/body `"None"` à ignorer, le second
+  `type=2`), `request_id` toujours à `0` côté serveur donc jamais comparé, échec
+  = aucun paquet, juste une fermeture TCP après un délai (pas de paquet
+  d'échec explicite). Aucune commande `listplayers` : la commande est `info`,
+  qui renvoie un texte libre dont seule la ligne `"<N> connected."` est
+  exploitée pour le nombre de joueurs ; le reste (season/weather/AI/FPS) n'est
+  pas parsé. Format de la liste nominative des joueurs non vérifié (jamais eu
+  de joueur connecté pendant les tests) — à faire si l'API doit un jour
+  afficher les noms/SteamID plutôt que le seul total.
 - `STEAM_A2S` envoie une requête A2S_INFO UDP et gère la réponse challenge ;
   `PALWORLD_REST` appelle `/v1/api/metrics` avec Basic Auth ; `SOURCE_RCON`
   s'authentifie puis exécute `listplayers` sur TCP.
