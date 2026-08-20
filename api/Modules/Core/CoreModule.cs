@@ -8,6 +8,7 @@ using Tools.Api.Modules.Core.Mail;
 using Tools.Api.Modules.Core.Notifications;
 using Tools.Api.Modules.Core.Realtime;
 using Tools.Api.Modules.Core.Security;
+using Tools.Api.Modules.Core.Settings;
 using Tools.Api.Modules.Core.Users;
 
 namespace Tools.Api.Modules.Core;
@@ -35,6 +36,7 @@ public static class CoreModule
             .AddRealtimeModule()
             .AddNotificationsModule()
             .AddUsersModule()
+            .AddSettingsModule()
             .AddAccessModule()
             .AddAdminModule()
             .AddHealthModule()
