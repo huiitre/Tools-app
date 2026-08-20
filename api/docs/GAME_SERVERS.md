@@ -37,7 +37,11 @@ L'API C# ne lit jamais `/data/docker/games`.
   use case sécurisé : il n'existe pas d'utilisateur HTTP dans un scheduler.
 - `GET /gameservers` exige un JWT portant au moins `READ_ONLY`, lit uniquement
   les lignes `is_visible = true`, et retourne le snapshot en base. Il n'expose
-  ni `host`, ni `port`, ni `protocol_config`.
+  ni `host`, ni `port`, ni `protocol_config` — ce sont les coordonnées internes
+  du poll, potentiellement une IP LAN et des credentials. `clientHost`/
+  `clientPort`, à l'inverse, sont l'adresse publique destinée aux joueurs et
+  sont volontairement exposés : c'est ce que le widget affiche et permet de
+  copier.
 
 ## Images et Steam
 
@@ -59,12 +63,13 @@ peu fréquent et séparé du poll, sera décidé seulement si nécessaire.
 |---|---|---|
 | 0 | Vérifier Steam AppDetails et la stratégie image | Fait le 19/08/2026 |
 | 1 | Cadrage, contrat d'authentification interne et ce document | Fait le 19/08/2026 |
-| 2 | Migration `tools_core.game_servers`, ports et adaptateur PostgreSQL/Dapper | Implémenté, migration réelle à appliquer |
+| 2 | Migration `tools_core.game_servers`, ports et adaptateur PostgreSQL/Dapper | Implémenté ; migration appliquée sur `tools_dev` uniquement, QA/prod à faire |
 | 3 | Sync interne, DTO/validation, transaction et requête Bruno | Implémenté et testé |
 | 4 | `BackgroundService` de poll et résolution par `protocol_type` | Implémenté et testé |
 | 5 | Adapters : Steam A2S, Palworld REST, Source RCON | Implémentés ; tests réseau réels à faire sur QA |
-| 6 | Lecture dashboard, contrat Bruno et widget Vue | Endpoint + Bruno implémentés ; widget Vue à faire |
-| 7 | Migration appliquée, sync réel depuis NAS, tests de pannes isolées et validation navigateur | À terminer |
+| 6 | Lecture dashboard, contrat Bruno et widget Vue | Fait le 20/08/2026 : widget Home + indicateur header, validés en navigateur |
+| 7 | `client_host`/`client_port` (adresse publique affichée aux joueurs) | Fait le 20/08/2026 : migration `V2.68.0`, sync, dashboard et widget |
+| 8 | Migration QA/prod, sync réel depuis NAS en continu, tests de pannes isolées | À terminer |
 
 Les étapes 2 à 7 sont réalisées dans cet ordre. Toute route ajoutée ou modifiée
 est ajoutée à `bruno/` dans le même changement.
@@ -89,3 +94,10 @@ est ajoutée à `bruno/` dans le même changement.
   `img/` (par exemple `img/palworld.png`) et produit l'URL
   `{App:AssetsBaseUrl}/tools_core/gameservers/<pictureFile>` ; nul, Steam fournit
   l'image de repli. Une panne Steam conserve les métadonnées déjà enregistrées.
+- `clientHost`/`clientPort` sont l'adresse à laquelle un joueur se connecte
+  réellement, distincte de `host`/`port` qui ne servent qu'au poll interne
+  (IP LAN, port RCON/REST de statut). Le manifest les fournit toujours ; la
+  validation du sync les exige (`clientHost` non vide, `clientPort` entre 1 et
+  65535). Les colonnes `client_host`/`client_port` restent nullable en base
+  (pas de contrainte `NOT NULL`) : le widget doit donc afficher un état "port
+  inconnu" plutôt que de supposer leur présence.

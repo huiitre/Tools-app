@@ -13,4 +13,6 @@ public sealed record GameServerSyncDto(
     string? PictureFile,
     string Host,
     int Port,
+    string ClientHost,
+    int ClientPort,
     JsonElement ProtocolConfig);
