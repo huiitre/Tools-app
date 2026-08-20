@@ -119,6 +119,7 @@ public sealed class PostgresGameServerRepository(
         var gameServers = await connection.QueryAsync<GameServerPollTarget>(
             """
             SELECT id AS Id,
+                   slug AS Slug,
                    protocol_type AS ProtocolType,
                    host AS Host,
                    port AS Port,

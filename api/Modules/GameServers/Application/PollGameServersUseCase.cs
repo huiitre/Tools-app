@@ -24,15 +24,23 @@ public sealed class PollGameServersUseCase(
                 if (!providers.TryGetValue(gameServer.ProtocolType, out var provider))
                 {
                     logger.LogError(
-                        "Aucun adapter de statut n'est enregistré pour le protocole {ProtocolType} (serveur {GameServerId}).",
+                        "Aucun adapter de statut n'est enregistré pour le protocole {ProtocolType} (serveur {Slug}).",
                         gameServer.ProtocolType,
-                        gameServer.Id);
+                        gameServer.Slug);
                     await gameServerPollingRepository.UpdateStatusAsync(gameServer.Id, GameServerStatus.Offline);
                     continue;
                 }
 
                 var status = await provider.FetchAsync(gameServer, cancellationToken);
                 await gameServerPollingRepository.UpdateStatusAsync(gameServer.Id, status);
+
+                logger.LogInformation(
+                    "Poll {Slug} ({ProtocolType}) : connexion {ConnectionResult}, {NumPlayers}/{MaxPlayers} joueurs.",
+                    gameServer.Slug,
+                    gameServer.ProtocolType,
+                    status.Online ? "réussie" : "échouée",
+                    status.NumPlayers?.ToString() ?? "?",
+                    status.MaxPlayers?.ToString() ?? "?");
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
