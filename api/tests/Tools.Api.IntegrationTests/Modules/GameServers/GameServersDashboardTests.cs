@@ -20,7 +20,7 @@ public sealed class GameServersDashboardTests : IClassFixture<ApiWebApplicationF
         Servers.Clear();
         ManifestProvider.Manifests = [new GameServerSyncDto(
             "rust", "RUST", "STEAM_A2S", "Huiitre Rust Server PvE", 252490, null,
-            "172.19.0.7", 28017, JsonDocument.Parse("{}").RootElement.Clone())];
+            "172.19.0.7", 28017, "games.huiitre.fr", 28015, JsonDocument.Parse("{}").RootElement.Clone())];
         Steam.Set(252490, "Rust", "https://steam.example/rust-header.jpg");
     }
 

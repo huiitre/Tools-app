@@ -127,6 +127,8 @@ public sealed class GameServersSyncTests : IClassFixture<ApiWebApplicationFactor
         pictureFile,
         "172.19.0.7",
         slug == "rust" ? 28017 : 8212,
+        "games.huiitre.fr",
+        slug == "rust" ? 28015 : 8211,
         JsonDocument.Parse("{}").RootElement.Clone());
 
     private static async Task AssertReport(

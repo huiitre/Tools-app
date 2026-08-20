@@ -8,7 +8,7 @@ http:
   url: "{{apiCoreUrl}}/gameservers"
   auth:
     type: bearer
-    token: "{{accessToken}}"
+    token: "{{authToken}}"
 
 settings:
   encodeUrl: true
@@ -16,8 +16,4 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: >-
-  Retourne le snapshot dashboard des serveurs visibles. Un JWT avec au moins le rôle READ_ONLY
-  est requis. Cette route ne contacte aucun serveur : online, numPlayers, maxPlayers et checkedAt
-  sont écrits par le scheduler toutes les 60 secondes. Host, port et protocolConfig ne sont jamais
-  exposés.
+docs: "Retourne le snapshot dashboard des serveurs visibles. Un JWT avec au moins le rôle READ_ONLY est requis. Cette route ne contacte aucun serveur : online, numPlayers, maxPlayers et checkedAt sont écrits par le scheduler toutes les 60 secondes. Host, port et protocolConfig ne sont jamais exposés. clientHost/clientPort (adresse publique de connexion, nullable) le sont volontairement."

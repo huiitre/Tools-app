@@ -30,10 +30,12 @@ public sealed class PostgresGameServerRepository(
                 """
                 INSERT INTO tools_core.game_servers (
                     slug, game_code, protocol_type, server_name, steam_app_id,
-                    game_name, picture_url, host, port, protocol_config, last_synced_at)
+                    game_name, picture_url, host, port, client_host, client_port,
+                    protocol_config, last_synced_at)
                 VALUES (
                     @Slug, @GameCode, @ProtocolType, @ServerName, @SteamAppId,
-                    @GameName, @PictureUrl, @Host, @Port, CAST(@ProtocolConfig AS jsonb), now())
+                    @GameName, @PictureUrl, @Host, @Port, @ClientHost, @ClientPort,
+                    CAST(@ProtocolConfig AS jsonb), now())
                 """,
                 gameServer, session.Transaction));
             return GameServerUpsertResult.Created;
@@ -55,6 +57,8 @@ public sealed class PostgresGameServerRepository(
                 picture_url = @PictureUrl,
                 host = @Host,
                 port = @Port,
+                client_host = @ClientHost,
+                client_port = @ClientPort,
                 protocol_config = CAST(@ProtocolConfig AS jsonb),
                 last_synced_at = now()
             WHERE slug = @Slug
@@ -67,6 +71,8 @@ public sealed class PostgresGameServerRepository(
                   OR picture_url IS DISTINCT FROM @PictureUrl
                   OR host IS DISTINCT FROM @Host
                   OR port IS DISTINCT FROM @Port
+                  OR client_host IS DISTINCT FROM @ClientHost
+                  OR client_port IS DISTINCT FROM @ClientPort
                   OR protocol_config IS DISTINCT FROM CAST(@ProtocolConfig AS jsonb)
               )
             """,
@@ -81,6 +87,8 @@ public sealed class PostgresGameServerRepository(
                 PictureUrl = pictureUrl,
                 gameServer.Host,
                 gameServer.Port,
+                gameServer.ClientHost,
+                gameServer.ClientPort,
                 gameServer.ProtocolConfig
             }, session.Transaction));
 
@@ -147,7 +155,9 @@ public sealed class PostgresGameServerRepository(
                    online AS Online,
                    num_players AS NumPlayers,
                    max_players AS MaxPlayers,
-                   checked_at AS CheckedAt
+                   checked_at AS CheckedAt,
+                   client_host AS ClientHost,
+                   client_port AS ClientPort
             FROM tools_core.game_servers
             WHERE is_visible = true
             ORDER BY COALESCE(game_name, game_code), server_name

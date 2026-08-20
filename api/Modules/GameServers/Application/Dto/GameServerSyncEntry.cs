@@ -14,4 +14,6 @@ public sealed record GameServerSyncEntry(
     string? GameName,
     string? PictureUrl,
     bool HasLocalPicture,
-    bool SteamMetadataAvailable);
+    bool SteamMetadataAvailable,
+    string ClientHost,
+    int ClientPort);

@@ -37,7 +37,9 @@ public sealed class GameServersSyncUseCase(
                 steamDetails.GameName,
                 hasLocalPicture ? imageUrlBuilder.Build(gameServer.PictureFile!) : steamDetails.HeaderImageUrl,
                 hasLocalPicture,
-                steamDetails.IsAvailable));
+                steamDetails.IsAvailable,
+                gameServer.ClientHost,
+                gameServer.ClientPort));
         }
 
         var created = 0;
@@ -96,6 +98,11 @@ public sealed class GameServersSyncUseCase(
             if (gameServer.SteamAppId is <= 0 || gameServer.Port is < 1 or > 65535)
             {
                 throw AppException.Validation("INVALID_GAME_SERVER", "steamAppId doit être positif et port doit être entre 1 et 65535.");
+            }
+
+            if (string.IsNullOrWhiteSpace(gameServer.ClientHost) || gameServer.ClientPort is < 1 or > 65535)
+            {
+                throw AppException.Validation("INVALID_GAME_SERVER", "clientHost est obligatoire et clientPort doit être entre 1 et 65535.");
             }
 
             if (gameServer.ProtocolConfig.ValueKind is not System.Text.Json.JsonValueKind.Object)

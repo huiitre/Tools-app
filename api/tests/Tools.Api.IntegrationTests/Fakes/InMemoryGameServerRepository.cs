@@ -78,7 +78,9 @@ public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameS
                     status?.Online,
                     status?.NumPlayers,
                     status?.MaxPlayers,
-                    status is null ? null : DateTimeOffset.UtcNow);
+                    status is null ? null : DateTime.UtcNow,
+                    gameServer.ClientHost,
+                    gameServer.ClientPort);
             })
             .ToArray();
         return Task.FromResult(views);
@@ -95,6 +97,8 @@ public sealed record StoredGameServer(
     string? PictureUrl,
     string Host,
     int Port,
+    string ClientHost,
+    int ClientPort,
     string ProtocolConfig)
 {
     public static StoredGameServer From(GameServerSyncEntry entry, StoredGameServer? existing = null) => new(
@@ -109,5 +113,7 @@ public sealed record StoredGameServer(
             : entry.SteamMetadataAvailable ? entry.PictureUrl : existing?.PictureUrl,
         entry.Host,
         entry.Port,
+        entry.ClientHost,
+        entry.ClientPort,
         entry.ProtocolConfig);
 }
