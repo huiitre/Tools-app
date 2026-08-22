@@ -242,6 +242,34 @@ async function restartAsync(name, spec) {
   spawnLogged(name, spec.command, spec.args, spec.envOverrides);
 }
 
+// Coupe un process sans le relancer : libère son port pour un lancement externe (typiquement
+// l'API démarrée depuis VS Code avec des breakpoints). Le spec est conservé, donc le bouton
+// de redémarrage du même panneau sait le relancer.
+function stop(name) {
+  if (!specs.has(name)) return false;
+  stopAsync(name).catch((err) => pushLine(name, `--- erreur à l'arrêt : ${err.message} ---`, 'system'));
+  return true;
+}
+
+async function stopAsync(name) {
+  pushLine(name, '--- arrêt manuel ---', 'system');
+  const existing = children.get(name);
+  if (existing) {
+    killChild(existing, 'SIGTERM');
+    await sleep(1200);
+    killChild(existing, 'SIGKILL');
+    killTree(existing.pid, 'SIGKILL');
+  }
+
+  // Le process du panneau db n'est qu'un `docker compose logs -f` : couper le suivi des logs
+  // ne coupe pas la base. Le volume, lui, est conservé.
+  if (name === 'db') {
+    await runLogged('db', 'docker', [...composeArgs('stop', DB_SERVICE), '-t', '5'], specs.get(name).envOverrides);
+  }
+
+  pushStatus(name, 'stopped');
+}
+
 // Les 3 process applicatifs (ou juste web en mode qa). La base en est exclue : la redémarrer
 // couperait les connexions des API alors que « tout relancer » vise le code, pas l'infra.
 function restartAll() {
@@ -292,7 +320,7 @@ async function main() {
   spawnLogged('web', 'npm', ['run', 'web:dev']);
 }
 
-// ---- Serveur HTTP : page + flux SSE + restart ----
+// ---- Serveur HTTP : page + flux SSE + restart/stop ----
 
 const indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'));
 
@@ -333,6 +361,14 @@ const server = http.createServer((req, res) => {
   const restartMatch = url.pathname.match(/^\/restart\/([a-z]+)$/);
   if (restartMatch && req.method === 'POST') {
     const ok = restart(restartMatch[1]);
+    res.writeHead(ok ? 200 : 404, { 'Content-Type': 'text/plain' });
+    res.end(ok ? 'ok' : 'unknown process');
+    return;
+  }
+
+  const stopMatch = url.pathname.match(/^\/stop\/([a-z]+)$/);
+  if (stopMatch && req.method === 'POST') {
+    const ok = stop(stopMatch[1]);
     res.writeHead(ok ? 200 : 404, { 'Content-Type': 'text/plain' });
     res.end(ok ? 'ok' : 'unknown process');
     return;

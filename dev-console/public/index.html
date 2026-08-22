@@ -68,6 +68,7 @@
     padding: 0 .2rem;
   }
   .col-header button:hover { color: var(--accent); }
+  .col-header button.stop:hover { color: var(--ko); }
 
   .col-body { flex: 1; min-height: 0; overflow-y: auto; padding: .3rem 0; }
   .line {
@@ -150,7 +151,7 @@
 
     if (PRIMARY[name]) {
       var clearBtn = document.createElement('button');
-      clearBtn.textContent = '␡';
+      clearBtn.textContent = '🗑';
       clearBtn.title = 'Effacer ' + name;
       clearBtn.addEventListener('click', function () { clearColumn(name); });
       head.appendChild(clearBtn);
@@ -175,6 +176,15 @@
         fetch('/restart/' + encodeURIComponent(name), { method: 'POST' });
       });
       head.appendChild(restartBtn);
+
+      var stopBtn = document.createElement('button');
+      stopBtn.textContent = '■';
+      stopBtn.className = 'stop';
+      stopBtn.title = 'Couper ' + name;
+      stopBtn.addEventListener('click', function () {
+        fetch('/stop/' + encodeURIComponent(name), { method: 'POST' });
+      });
+      head.appendChild(stopBtn);
     }
 
     root.appendChild(head);

@@ -40,7 +40,8 @@ public static class GameServersModule
         builder.Services.AddScoped<PollGameServersUseCase>();
         builder.Services.AddScoped<GetGameServersUseCase>();
 
-        if (!builder.Environment.IsEnvironment("Testing"))
+        // Le poll écrase les lignes de game_servers : en dev on garde la main sur la table.
+        if (!builder.Environment.IsEnvironment("Testing") && !builder.Environment.IsDevelopment())
         {
             builder.Services.AddHostedService<GameServersPollingService>();
         }
