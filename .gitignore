@@ -12,3 +12,6 @@ Thumbs.db
 *.log
 node_modules
 .env
+
+# Dumps de base locaux, jamais versionnés
+.local/

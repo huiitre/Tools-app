@@ -2,9 +2,8 @@
 // Lance l'environnement de dev (API Java, API Core, Web) et sert leurs logs en temps réel
 // sur une page locale (SSE) : scroll natif, filtre par process, clear, copier.
 //
-// Résout l'accès Postgres dans cet ordre : tunnel local déjà ouvert -> réutilisé ; sinon
-// LAN_DB_HOST (.env) joignable en direct -> pas de tunnel ; sinon tunnel SSH (identifiants
-// dans .env, voir .env.example).
+// Postgres tourne en local dans docker-compose.dev.yml : la console le démarre, suit ses logs
+// comme n'importe quel autre process, et l'arrête en même temps que le reste.
 //
 // `node dev-console/server.js qa` : ne lance que le web (mode qa), pas de détection DB.
 'use strict';
@@ -16,11 +15,13 @@ const http = require('http');
 const { spawn } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
-// Le shell (ex. ~/.bashrc.d/*.sh) peut déjà exporter SSH_HOST/LAN_DB_HOST/etc. — .env ne fait
+// Le shell (ex. ~/.bashrc.d/*.sh) peut déjà exporter DB_NAME/DB_USERNAME/etc. — .env ne fait
 // que surcharger par-dessus pour une machine qui ne les a pas déjà, jamais les masquer.
 const ENV = { ...process.env, ...loadEnvFile(path.join(ROOT, '.env')) };
 const QA = process.argv.includes('qa');
 const LOCAL_DB_PORT = 5433;
+const COMPOSE_FILE = 'docker-compose.dev.yml';
+const DB_SERVICE = 'postgres';
 const CONSOLE_PORT = Number(ENV.DEV_CONSOLE_PORT) || 4488;
 const MAX_BUFFER = 3000;
 
@@ -147,6 +148,34 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+function composeArgs(...args) {
+  return ['compose', '-f', COMPOSE_FILE, ...args];
+}
+
+// Commande courte dont on veut la sortie dans un panneau, et dont on attend la fin — par
+// opposition à spawnLogged, réservé aux process longs qu'on peut redémarrer.
+function runLogged(name, command, args, envOverrides = {}) {
+  return new Promise((resolve) => {
+    pushLine(name, `$ ${command} ${args.join(' ')}`, 'system');
+    const child = spawn(command, args, { cwd: ROOT, env: { ...process.env, ...envOverrides } });
+    const onData = (chunk) => {
+      chunk
+        .toString('utf8')
+        .split(/\r?\n/)
+        .forEach((line) => {
+          if (line.length) pushLine(name, line, 'log');
+        });
+    };
+    child.stdout.on('data', onData);
+    child.stderr.on('data', onData);
+    child.on('exit', (code) => resolve(code === 0));
+    child.on('error', (err) => {
+      pushLine(name, `--- échec du lancement : ${err.message} ---`, 'system');
+      resolve(false);
+    });
+  });
+}
+
 function spawnLogged(name, command, args, envOverrides = {}) {
   specs.set(name, { command, args, envOverrides });
   pushLine(name, `$ ${command} ${args.join(' ')}`, 'system');
@@ -202,10 +231,19 @@ async function restartAsync(name, spec) {
     await sleep(300);
   }
   pushLine(name, '--- redémarrage manuel ---', 'system');
+
+  // Le process du panneau db n'est qu'un `docker compose logs -f` : le relancer seul ne
+  // redémarrerait rien. C'est le conteneur que le bouton doit redémarrer.
+  if (name === 'db') {
+    await runLogged('db', 'docker', composeArgs('restart', DB_SERVICE), spec.envOverrides);
+    await waitForPort('127.0.0.1', LOCAL_DB_PORT, 30000);
+  }
+
   spawnLogged(name, spec.command, spec.args, spec.envOverrides);
 }
 
-// Les 3 process de dev (ou juste web en mode qa) — pas le tunnel, qui n'en fait pas partie.
+// Les 3 process applicatifs (ou juste web en mode qa). La base en est exclue : la redémarrer
+// couperait les connexions des API alors que « tout relancer » vise le code, pas l'infra.
 function restartAll() {
   const names = QA ? ['web'] : ['api', 'java', 'web'];
   for (const name of names) restart(name);
@@ -224,48 +262,27 @@ async function main() {
   // java) : un seul et même override pour les deux, pas la peine de les traiter séparément.
   // DB_NAME/USERNAME/PASSWORD ne sont PAS touchés ici : soit déjà exportés globalement (setup
   // existant de ce poste), soit à renseigner dans .env pour une machine qui ne les a pas.
-  let dbEnv = {};
   const credentialsFromEnv = {};
   if (ENV.DB_NAME) credentialsFromEnv.DB_NAME = ENV.DB_NAME;
   if (ENV.DB_USERNAME) credentialsFromEnv.DB_USERNAME = ENV.DB_USERNAME;
   if (ENV.DB_PASSWORD) credentialsFromEnv.DB_PASSWORD = ENV.DB_PASSWORD;
 
-  if (await checkPort('127.0.0.1', LOCAL_DB_PORT)) {
-    pushLine('system', `port ${LOCAL_DB_PORT} déjà ouvert (tunnel existant réutilisé).`, 'system');
-    dbEnv = { DB_HOST: '127.0.0.1', DB_PORT: String(LOCAL_DB_PORT), ...credentialsFromEnv };
-  } else if (ENV.LAN_DB_HOST && (await checkPort(ENV.LAN_DB_HOST, Number(ENV.LAN_DB_PORT || 5432)))) {
-    const host = ENV.LAN_DB_HOST;
-    const port = ENV.LAN_DB_PORT || '5432';
-    pushLine('system', `Postgres joignable en direct sur ${host} — pas de tunnel.`, 'system');
-    dbEnv = { DB_HOST: host, DB_PORT: String(port), ...credentialsFromEnv };
-  } else {
-    const { SSH_HOST, SSH_USER, SSH_PORT } = ENV;
-    if (!SSH_HOST || !SSH_USER || !SSH_PORT) {
-      pushLine(
-        'system',
-        'Postgres injoignable et SSH_HOST/SSH_USER/SSH_PORT absents de .env (copie .env.example vers .env). Abandon.',
-        'system'
-      );
-      process.exitCode = 1;
-      return;
-    }
-    pushLine('system', `Postgres injoignable en direct — tunnel SSH vers ${SSH_HOST}.`, 'system');
-    spawnLogged('tunnel', 'ssh', [
-      '-N',
-      '-o',
-      'ExitOnForwardFailure=yes',
-      '-L',
-      `${LOCAL_DB_PORT}:127.0.0.1:5432`,
-      '-p',
-      SSH_PORT,
-      `${SSH_USER}@${SSH_HOST}`,
-    ]);
-    const ok = await waitForPort('127.0.0.1', LOCAL_DB_PORT, 15000);
-    if (!ok) {
-      pushLine('system', 'tunnel toujours pas up après 15s, lancement quand même — voir le panneau tunnel.', 'system');
-    }
-    dbEnv = { DB_HOST: '127.0.0.1', DB_PORT: String(LOCAL_DB_PORT), ...credentialsFromEnv };
+  await runLogged('db', 'docker', composeArgs('up', '-d'), credentialsFromEnv);
+
+  // Le conteneur peut répondre « démarré » avant que Postgres n'accepte les connexions : les API
+  // partiraient alors sur une base injoignable. On attend le port avant de les lancer.
+  if (!(await waitForPort('127.0.0.1', LOCAL_DB_PORT, 30000))) {
+    pushLine(
+      'db',
+      `Postgres toujours injoignable sur 127.0.0.1:${LOCAL_DB_PORT} après 30s — les API vont échouer à se connecter.`,
+      'system'
+    );
   }
+
+  // Le panneau db suit les logs du conteneur. Son bouton ⟳ redémarre le conteneur (cf. restartAsync).
+  spawnLogged('db', 'docker', composeArgs('logs', '-f', '--tail', '50', DB_SERVICE), credentialsFromEnv);
+
+  const dbEnv = { DB_HOST: '127.0.0.1', DB_PORT: String(LOCAL_DB_PORT), ...credentialsFromEnv };
 
   // Un enfant Node n'hérite pas de ~/.bashrc : sans ça, `mvn` peut retomber sur le Java par
   // défaut de SDKMAN (peut différer de la version utilisée dans un terminal interactif).
@@ -339,6 +356,19 @@ function shutdown() {
   shuttingDown = true;
   const toKill = Array.from(children.values());
   for (const child of toKill) killChild(child, 'SIGTERM');
+
+  // Le conteneur Postgres n'est pas un enfant de ce process : sans ça, il survivrait au Ctrl+C
+  // et resterait debout sans que personne ne l'ait demandé. Le volume, lui, est conservé.
+  if (!QA) {
+    try {
+      require('child_process').spawnSync('docker', [...composeArgs('stop'), '-t', '5'], {
+        cwd: ROOT,
+        stdio: 'ignore',
+      });
+    } catch (e) {
+      // docker absent ou déjà arrêté
+    }
+  }
   // Filet de sécurité : dotnet watch (et parfois npm) laissent un petit-fils hors du groupe
   // de temps en temps — SIGKILL le groupe entier si toujours là après 1.5s.
   setTimeout(() => {
