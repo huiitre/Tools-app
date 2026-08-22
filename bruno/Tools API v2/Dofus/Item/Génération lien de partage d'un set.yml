@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}dofus/set/61/share"
+  url: "{{apiJavaUrl}}dofus/set/61/share"
   body:
     type: json
     data: ""

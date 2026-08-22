@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/palworld/server/save"
+  url: "{{apiJavaUrl}}/palworld/server/save"
   auth: inherit
 
 settings:

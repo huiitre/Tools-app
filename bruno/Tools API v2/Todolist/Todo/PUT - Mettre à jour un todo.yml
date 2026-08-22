@@ -5,7 +5,7 @@ info:
 
 http:
   method: PUT
-  url: "{{apiUrl}}todolist/todo/{{idtodo}}/update"
+  url: "{{apiJavaUrl}}todolist/todo/{{idtodo}}/update"
   headers:
     - name: Content-Type
       value: application/json

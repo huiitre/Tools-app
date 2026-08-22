@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/dofus/workshops/{{workshopId}}/items/{{workshopItemId}}/ingredients/{{workshopItemIngredientId}}/craft"
+  url: "{{apiJavaUrl}}/dofus/workshops/{{workshopId}}/items/{{workshopItemId}}/ingredients/{{workshopItemIngredientId}}/craft"
   auth: inherit
 
 settings:

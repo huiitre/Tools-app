@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiCoreUrl}}/internal/realtime/publish"
+  url: "{{apiUrl}}/internal/realtime/publish"
   headers:
     - name: X-Internal-Token
       value: "{{internalApiToken}}"

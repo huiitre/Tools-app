@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/dofus/catalogue/search?q=gelano&sort=asset_id&dir=DESC&page=1&pageSize=10"
+  url: "{{apiJavaUrl}}/dofus/catalogue/search?q=gelano&sort=asset_id&dir=DESC&page=1&pageSize=10"
   headers:
     - name: ""
       value: "4"

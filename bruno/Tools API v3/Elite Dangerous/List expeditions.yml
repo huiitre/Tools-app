@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/elite-dangerous/r2r/expeditions"
+  url: "{{apiJavaUrl}}/elite-dangerous/r2r/expeditions"
   auth: inherit
 
 settings:

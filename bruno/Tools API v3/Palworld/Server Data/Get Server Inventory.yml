@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/palworld/server-data/inventory"
+  url: "{{apiJavaUrl}}/palworld/server-data/inventory"
   auth: inherit
 
 settings:

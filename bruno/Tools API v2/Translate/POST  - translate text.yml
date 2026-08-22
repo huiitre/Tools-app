@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}translate"
+  url: "{{apiJavaUrl}}translate"
   body:
     type: json
     data: "{\r

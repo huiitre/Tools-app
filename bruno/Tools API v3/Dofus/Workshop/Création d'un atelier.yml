@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/dofus/workshops"
+  url: "{{apiJavaUrl}}/dofus/workshops"
   body:
     type: json
     data: "{\r

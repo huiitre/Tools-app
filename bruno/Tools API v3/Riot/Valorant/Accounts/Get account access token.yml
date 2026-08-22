@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/riot/valorant/accounts/:accountId/refresh"
+  url: "{{apiJavaUrl}}/riot/valorant/accounts/:accountId/refresh"
   params:
     - name: accountId
       value: "1"

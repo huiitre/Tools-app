@@ -5,7 +5,7 @@ info:
 
 http:
   method: PUT
-  url: "{{apiUrl}}/users/{{userId}}/role"
+  url: "{{apiJavaUrl}}/users/{{userId}}/role"
   body:
     type: json
     data: '{ "roleId": 3 }'

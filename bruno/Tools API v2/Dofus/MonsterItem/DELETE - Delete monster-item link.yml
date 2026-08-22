@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiUrl}}dofus/monster-item/31/362"
+  url: "{{apiJavaUrl}}dofus/monster-item/31/362"
   auth: inherit
 
 settings:

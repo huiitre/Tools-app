@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}health/weight-log/4"
+  url: "{{apiJavaUrl}}health/weight-log/4"
   auth: inherit
 
 settings:

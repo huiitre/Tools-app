@@ -5,7 +5,7 @@ info:
 
 http:
   method: PUT
-  url: "{{apiUrl}}dofus/monster-item/31/362"
+  url: "{{apiJavaUrl}}dofus/monster-item/31/362"
   headers:
     - name: Content-Type
       value: application/json

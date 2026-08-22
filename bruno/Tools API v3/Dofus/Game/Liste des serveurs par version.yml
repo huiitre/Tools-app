@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/dofus/game-servers"
+  url: "{{apiJavaUrl}}/dofus/game-servers"
   body:
     type: text
     data: ""

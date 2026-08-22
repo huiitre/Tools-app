@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/dofus/almanax/subscriptions"
+  url: "{{apiJavaUrl}}/dofus/almanax/subscriptions"
   headers:
     - name: Authorization
       value: Bearer {{authToken}}

@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiCoreUrl}}/auth/logout"
+  url: "{{apiUrl}}/auth/logout"
   auth:
     type: none
 

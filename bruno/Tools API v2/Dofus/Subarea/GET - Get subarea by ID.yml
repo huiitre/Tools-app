@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}dofus/subarea/1"
+  url: "{{apiJavaUrl}}dofus/subarea/1"
   auth: inherit
 
 settings:

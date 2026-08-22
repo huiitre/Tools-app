@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/todolists/{{todolistId}}/todos"
+  url: "{{apiJavaUrl}}/todolists/{{todolistId}}/todos"
   body:
     type: json
     data: "{\r

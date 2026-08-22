@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/todolists/{{todolistId}}/todos"
+  url: "{{apiJavaUrl}}/todolists/{{todolistId}}/todos"
   body:
     type: text
     data: "{\r

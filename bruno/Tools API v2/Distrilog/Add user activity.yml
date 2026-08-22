@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}dtl/user-activity/add?iduser=18&token=qsd5qs4d5q5s64dqs56d4qsd4q5d&login=TOTO"
+  url: "{{apiJavaUrl}}dtl/user-activity/add?iduser=18&token=qsd5qs4d5q5s64dqs56d4qsd4q5d&login=TOTO"
   params:
     - name: iduser
       value: "18"

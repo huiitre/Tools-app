@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}dofus/monster-item"
+  url: "{{apiJavaUrl}}dofus/monster-item"
   headers:
     - name: Content-Type
       value: application/json

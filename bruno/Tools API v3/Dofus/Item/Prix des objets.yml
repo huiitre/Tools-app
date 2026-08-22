@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/dofus/item/prices"
+  url: "{{apiJavaUrl}}/dofus/item/prices"
   body:
     type: json
     data: "{\r\n    \"itemIds\": [211521]\r\n}"

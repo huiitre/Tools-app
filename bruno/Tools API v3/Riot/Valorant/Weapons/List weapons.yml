@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/riot/valorant/weapons"
+  url: "{{apiJavaUrl}}/riot/valorant/weapons"
   auth: inherit
 
 settings:

@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiUrl}}/elite-dangerous/r2r/expeditions/{{expedition_id}}"
+  url: "{{apiJavaUrl}}/elite-dangerous/r2r/expeditions/{{expedition_id}}"
   auth: inherit
 
 settings:

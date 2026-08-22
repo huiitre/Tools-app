@@ -5,7 +5,7 @@ info:
 
 http:
   method: PATCH
-  url: "{{apiUrl}}/todolists/{{todolistId}}/todos/{{todoId}}"
+  url: "{{apiJavaUrl}}/todolists/{{todolistId}}/todos/{{todoId}}"
   body:
     type: json
     data: "{\r\n    \"name\": \"audrey\"\r\n}"

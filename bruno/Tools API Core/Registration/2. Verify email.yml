@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiCoreUrl}}/auth/verify-email?token=cLW_h4SLSSZKkf1fFlmmJtHN0JtVuQERJFONAfOgF-k"
+  url: "{{apiUrl}}/auth/verify-email?token=cLW_h4SLSSZKkf1fFlmmJtHN0JtVuQERJFONAfOgF-k"
   params:
     - name: token
       value: cLW_h4SLSSZKkf1fFlmmJtHN0JtVuQERJFONAfOgF-k

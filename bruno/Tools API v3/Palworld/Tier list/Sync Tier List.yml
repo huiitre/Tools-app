@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/palworld/tierlist/admin/sync"
+  url: "{{apiJavaUrl}}/palworld/tierlist/admin/sync"
   auth: inherit
 
 settings:

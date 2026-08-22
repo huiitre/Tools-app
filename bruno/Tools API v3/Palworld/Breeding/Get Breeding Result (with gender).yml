@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/palworld/breeding/result?parentA=1&parentB=2&genderA=Male&genderB=Female"
+  url: "{{apiJavaUrl}}/palworld/breeding/result?parentA=1&parentB=2&genderA=Male&genderB=Female"
   auth: inherit
 
 settings:

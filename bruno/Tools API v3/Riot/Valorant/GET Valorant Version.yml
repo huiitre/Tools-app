@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/riot/valorant/version"
+  url: "{{apiJavaUrl}}/riot/valorant/version"
   headers:
     - name: Authorization
       value: Bearer {{authToken}}

@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/dofus/{{gameVersionId}}/sync"
+  url: "{{apiJavaUrl}}/dofus/{{gameVersionId}}/sync"
   body:
     type: text
     data: ""

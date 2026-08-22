@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}dofus/set/53/item/delete"
+  url: "{{apiJavaUrl}}dofus/set/53/item/delete"
   body:
     type: json
     data: "{\r

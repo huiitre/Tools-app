@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}dofus/query-lab/query/8/run"
+  url: "{{apiJavaUrl}}dofus/query-lab/query/8/run"
   body:
     type: json
     data: ""

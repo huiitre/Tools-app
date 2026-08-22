@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}dofus/set/add"
+  url: "{{apiJavaUrl}}dofus/set/add"
   body:
     type: json
     data: ""

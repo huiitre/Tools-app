@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}dofus/set/shared/6fd4d833138d"
+  url: "{{apiJavaUrl}}dofus/set/shared/6fd4d833138d"
   body:
     type: json
     data: ""

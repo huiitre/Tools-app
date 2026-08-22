@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/feedbacks/admin"
+  url: "{{apiJavaUrl}}/feedbacks/admin"
   auth: inherit
 
 settings:

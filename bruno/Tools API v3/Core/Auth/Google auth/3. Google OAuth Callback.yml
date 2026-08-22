@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/auth/callback/google?code=CODE_ICI&state=STATE_ICI"
+  url: "{{apiJavaUrl}}/auth/callback/google?code=CODE_ICI&state=STATE_ICI"
   params:
     - name: code
       value: CODE_ICI

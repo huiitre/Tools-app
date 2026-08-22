@@ -5,7 +5,7 @@ info:
 
 http:
   method: PUT
-  url: "{{apiUrl}}dofus/set/81/recipe/905/2"
+  url: "{{apiJavaUrl}}dofus/set/81/recipe/905/2"
   body:
     type: json
     data: ""

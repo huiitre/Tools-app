@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}core/user/getusermodule"
+  url: "{{apiJavaUrl}}core/user/getusermodule"
   body:
     type: json
     data: ""

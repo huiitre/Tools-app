@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiCoreUrl}}/auth/refresh"
+  url: "{{apiUrl}}/auth/refresh"
   auth:
     type: none
 

@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/dofus/almanax/subscriptions/admin/sync"
+  url: "{{apiJavaUrl}}/dofus/almanax/subscriptions/admin/sync"
   headers:
     - name: Authorization
       value: Bearer {{authToken}}

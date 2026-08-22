@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiUrl}}/riot/valorant/accounts/:accountId"
+  url: "{{apiJavaUrl}}/riot/valorant/accounts/:accountId"
   params:
     - name: accountId
       value: "1"

@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/temtem/sync"
+  url: "{{apiJavaUrl}}/temtem/sync"
   body:
     type: text
     data: ""

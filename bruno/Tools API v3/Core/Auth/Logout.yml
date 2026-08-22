@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/auth/logout"
+  url: "{{apiJavaUrl}}/auth/logout"
   auth: inherit
 
 runtime:

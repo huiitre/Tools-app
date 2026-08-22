@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/auth/google/url?source=electron"
+  url: "{{apiJavaUrl}}/auth/google/url?source=electron"
   params:
     - name: source
       value: electron

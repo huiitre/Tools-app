@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiUrl}}/modules/{{moduleId}}"
+  url: "{{apiJavaUrl}}/modules/{{moduleId}}"
   auth: inherit
 
 settings:

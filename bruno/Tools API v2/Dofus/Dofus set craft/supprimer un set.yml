@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiUrl}}dofus/set/81/delete"
+  url: "{{apiJavaUrl}}dofus/set/81/delete"
   body:
     type: json
     data: ""

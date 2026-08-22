@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiUrl}}/todolists/{{todolistId}}/todos/{{todoId}}"
+  url: "{{apiJavaUrl}}/todolists/{{todolistId}}/todos/{{todoId}}"
   body:
     type: text
     data: "{\r

@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/modules"
+  url: "{{apiJavaUrl}}/modules"
   body:
     type: json
     data: "{\r

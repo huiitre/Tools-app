@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiUrl}}todolist/todo/{{idtodo}}/delete"
+  url: "{{apiJavaUrl}}todolist/todo/{{idtodo}}/delete"
   auth: inherit
 
 settings:

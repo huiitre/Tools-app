@@ -1,9 +1,9 @@
 name: Tools QA
 color: "#C77A0F"
 variables:
-  - name: apiCoreUrl
-    value: https://qa.api.tools.huiitre.fr/api/core
   - name: apiUrl
+    value: https://qa.api.tools.huiitre.fr/api/core
+  - name: apiJavaUrl
     value: https://qa.api.tools.huiitre.fr/api/v3
   - secret: true
     name: authToken

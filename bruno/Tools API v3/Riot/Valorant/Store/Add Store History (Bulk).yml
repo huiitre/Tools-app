@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/riot/valorant/store-history"
+  url: "{{apiJavaUrl}}/riot/valorant/store-history"
   body:
     type: json
     data: |-

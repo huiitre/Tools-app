@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/riot/valorant/sync"
+  url: "{{apiJavaUrl}}/riot/valorant/sync"
   auth: inherit
 
 settings:

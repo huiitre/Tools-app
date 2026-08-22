@@ -5,7 +5,7 @@ info:
 
 http:
   method: PATCH
-  url: "{{apiCoreUrl}}/notifications/read?ids=1,2"
+  url: "{{apiUrl}}/notifications/read?ids=1,2"
   auth:
     type: bearer
     token: "{{authToken}}"

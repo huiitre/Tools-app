@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiCoreUrl}}/modules/1/users"
+  url: "{{apiUrl}}/modules/1/users"
   auth:
     type: bearer
     token: "{{authToken}}"

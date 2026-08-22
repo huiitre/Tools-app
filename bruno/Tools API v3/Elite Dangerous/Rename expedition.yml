@@ -5,7 +5,7 @@ info:
 
 http:
   method: PATCH
-  url: "{{apiUrl}}/elite-dangerous/r2r/expeditions/{{expedition_id}}/name"
+  url: "{{apiJavaUrl}}/elite-dangerous/r2r/expeditions/{{expedition_id}}/name"
   headers:
     - name: Content-Type
       value: application/json

@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/riot/valorant/store?accountId=1"
+  url: "{{apiJavaUrl}}/riot/valorant/store?accountId=1"
   headers:
     - name: X-Riot-Token
       value: "{{riotAccessToken}}"

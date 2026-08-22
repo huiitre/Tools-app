@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/auth/google"
+  url: "{{apiJavaUrl}}/auth/google"
   body:
     type: json
     data: |-

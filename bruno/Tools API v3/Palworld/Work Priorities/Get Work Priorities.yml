@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/palworld/work-priorities"
+  url: "{{apiJavaUrl}}/palworld/work-priorities"
   auth: inherit
 
 settings:

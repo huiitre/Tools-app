@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/palworld/server/shutdown"
+  url: "{{apiJavaUrl}}/palworld/server/shutdown"
   headers:
     - name: Content-Type
       value: application/json

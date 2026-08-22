@@ -5,7 +5,7 @@ info:
 
 http:
   method: PUT
-  url: "{{apiUrl}}/modules/{{moduleId}}/users/{{userId}}/role"
+  url: "{{apiJavaUrl}}/modules/{{moduleId}}/users/{{userId}}/role"
   headers:
     - name: Content-Type
       value: application/json

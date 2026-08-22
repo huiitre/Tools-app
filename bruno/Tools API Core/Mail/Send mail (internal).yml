@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiCoreUrl}}/internal/mail"
+  url: "{{apiUrl}}/internal/mail"
   headers:
     - name: X-Internal-Token
       value: "{{internalApiToken}}"
