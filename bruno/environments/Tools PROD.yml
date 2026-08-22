@@ -3,9 +3,10 @@ color: "#CE4F3B"
 variables:
   - name: apiUrl
     value: https://api.tools.huiitre.fr/api/core
+    description: ""
   - name: apiJavaUrl
     value: https://api.tools.huiitre.fr/api/v3
+    description: ""
   - secret: true
     name: internalApiToken
-  - name: authToken
-    value: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblR5cGUiOiJBQ0NFU1MiLCJpc0FjdGl2ZSI6dHJ1ZSwidXNlclR5cGUiOiJIVU1BTiIsInJvbGVzIjpbIk9XTkVSIl0sIm1vZHVsZXMiOnsiZWxpdGVfZGFuZ2Vyb3VzIjpbIkFETUlOIl0sInJpb3QiOlsiQURNSU4iXSwicGFsd29ybGQiOlsiVEVDSCJdLCJkb2Z1cyI6WyJPV05FUiJdfSwic3ViIjoiMiIsIm5iZiI6MTc4NzIxMTg0OCwiZXhwIjoxNzg3MjEyNDQ4LCJpc3MiOiJ0b29scy1hcGkifQ.yxOayxGQtwTDPpGIbZpYeaFrNztvoU_E5M3HuG2VhfQtvGwiIXRirM17cLSTGv7bR5jq0zPdhegwSxnpJml53Q
+    description: ""

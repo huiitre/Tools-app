@@ -3,11 +3,9 @@ color: "#2E8A54"
 variables:
   - name: apiUrl
     value: http://localhost:5090
+    description: ""
   - name: apiJavaUrl
     value: http://localhost:8083/api/v3
-  - name: authToken
-    value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblR5cGUiOiJBQ0NFU1MiLCJpc0FjdGl2ZSI6dHJ1ZSwidXNlclR5cGUiOiJIVU1BTiIsIm1vZHVsZXMiOnsiZG9mdXMiOiJPV05FUiIsInJpb3QiOiJBRE1JTiIsImVsaXRlX2Rhbmdlcm91cyI6IkFETUlOIiwicGFsd29ybGQiOiJURUNIIn0sInJvbGUiOiJPV05FUiIsInN1YiI6IjIiLCJuYmYiOjE3ODc0MzY1NDcsImV4cCI6MTc4NzQzNzE0NywiaXNzIjoidG9vbHMtYXBpIn0.qhbRlMbGF451dh2PWq6XbsEV7Zf83YEKVnc2MiwMsGA
+    description: ""
   - secret: true
     name: internalApiToken
-  - secret: true
-    name: authToken
