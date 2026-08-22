@@ -24,6 +24,8 @@ onBeforeUnmount(() => {
 
 const onlineServers = computed(() => store.servers.filter(server => server.online === true))
 
+const totalPlayersCount = computed(() => store.servers.reduce((acc, item) => acc + (item.numPlayers ?? 0), 0))
+
 const toggle = () => { open.value = !open.value }
 
 const close = (e: MouseEvent) => {
@@ -59,7 +61,7 @@ const copyConnection = (server: GameServer) => {
       @click="toggle"
     >
       <i class="mdi mdi-controller-classic" aria-hidden="true"></i>
-      <span class="game-servers-badge">{{ onlineServers.length }}</span>
+      <span v-if="totalPlayersCount > 0" class="game-servers-badge">{{ totalPlayersCount }}</span>
     </button>
 
     <Transition name="notif-popover">
