@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
 using Tools.Api.Modules.Core.Vpn.Application.Dto;
@@ -26,7 +27,15 @@ public sealed class WireGuardVpnGateway(
 
     public async Task<VpnPeerDto> AddPeerAsync(string name)
     {
-        using var created = await CallAsync(() => httpClient.PostAsJsonAsync("peers", new { name }));
+        // Corps sérialisé d'avance : wg_api ne lit que Content-Length, et un JsonContent part en
+        // Transfer-Encoding: chunked — le nom arriverait vide et serait refusé comme invalide.
+        using var content = new StringContent(
+            JsonSerializer.Serialize(new { name }),
+            Encoding.UTF8,
+            "application/json"
+        );
+
+        using var created = await CallAsync(() => httpClient.PostAsync("peers", content));
 
         // La création ne renvoie que { name, ip, config, qrcodePngBase64 } : de quoi écrire un
         // fichier client, pas de quoi remplir un VpnPeerDto. Seule la liste porte l'état réel.
