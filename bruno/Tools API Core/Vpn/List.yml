@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/vpn"
+  url: "{{apiUrl}}/vpn/peers"
   auth: inherit
 
 settings:

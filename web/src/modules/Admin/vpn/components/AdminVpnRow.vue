@@ -5,6 +5,7 @@ import { deleteVpnPeer, downloadVpnPeerConfig } from '../fetch/adminVpn.fetch'
 import type { VpnPeer, VpnPeerStatus } from '../types/adminVpn.types'
 import { formatRelativeTime } from '@/utils/formatRelativeTime'
 import { formatBytes } from '@/utils/formatBytes'
+import { ApiException } from '@/services/ApiException'
 import toast from '@/services/toast'
 
 const props = defineProps<{ peer: VpnPeer }>()
@@ -86,8 +87,8 @@ const confirmDelete = async () => {
     await deleteVpnPeer(props.peer.name)
     store.removeLocally(props.peer.name)
     toast.success(`Peer « ${props.peer.name} » supprimé`)
-  } catch {
-    toast.error('Erreur lors de la suppression du peer')
+  } catch (e) {
+    toast.error(e instanceof ApiException ? e.message : 'Erreur lors de la suppression du peer')
   } finally {
     deleting.value = false
     showConfirm.value = false

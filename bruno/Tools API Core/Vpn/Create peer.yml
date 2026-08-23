@@ -1,0 +1,40 @@
+info:
+  name: Create peer
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/vpn/peers"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "yumiie"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Crée un peer WireGuard. Rôle ADMIN.
+
+  `name` : alphanumérique, tiret ou underscore, 31 caractères max, premier caractère
+  alphanumérique — c'est la contrainte du script `wg-users.sh`, qui refuse le reste.
+
+  409 `VPN_PEER_EXISTS` si le nom est déjà pris.
+
+  Renvoie le peer créé. Un peer neuf est en `never`, compteurs à zéro et `handshakeSecondsAgo`
+  nul : il est chargé sur l'interface mais aucune poignée de main n'a encore eu lieu.
+
+  Sans `WG_API_HOST` / `WG_API_TOKEN` (dev), c'est `InMemoryVpnGateway` qui répond : le peer est
+  ajouté à la liste en mémoire, mais le gateway étant enregistré en Scoped, l'instance est jetée
+  à la fin de la requête et l'ajout n'apparaît pas dans le `GET` suivant.
+
+  ⚠️ `WireGuardVpnGateway` n'implémente pas encore cette opération : contre le vrai service, la
+  route n'est pas fonctionnelle.

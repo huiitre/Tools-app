@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { createVpnPeer } from '../fetch/adminVpn.fetch'
 import { VPN_PEER_NAME_PATTERN } from '../types/adminVpn.types'
+import { ApiException } from '@/services/ApiException'
 import toast from '@/services/toast'
 
 const emit = defineEmits<{
@@ -31,8 +32,9 @@ const submit = async () => {
     await createVpnPeer(value)
     toast.success(`Peer « ${value} » créé`)
     emit('created')
-  } catch {
-    error.value = 'Erreur lors de la création du peer'
+  } catch (e) {
+    // Un nom déjà pris ou refusé est un cas métier : le message de l'API est plus utile que le nôtre.
+    error.value = e instanceof ApiException ? e.message : 'Erreur lors de la création du peer'
   } finally {
     saving.value = false
   }

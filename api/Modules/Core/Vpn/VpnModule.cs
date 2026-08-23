@@ -10,6 +10,8 @@ public static class VpnModule
     public static IHostApplicationBuilder AddVpnModule(this IHostApplicationBuilder builder)
     {
         builder.Services.AddScoped<ListVpnPeersUseCase>();
+        builder.Services.AddScoped<CreateVpnPeerUseCase>();
+        builder.Services.AddScoped<DeleteVpnPeerUseCase>();
 
         var host = builder.Configuration["WG_API_HOST"];
         var token = builder.Configuration["WG_API_TOKEN"];
@@ -23,7 +25,7 @@ public static class VpnModule
                 );
             }
 
-            builder.Services.AddScoped<IVpnGateway, InMemoryVpnGateway>();
+            builder.Services.AddSingleton<IVpnGateway, InMemoryVpnGateway>();
             return builder;
         }
 
