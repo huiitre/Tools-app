@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Text;
 using Tools.Api.Modules.Core.Vpn.Application.Dto;
 using Tools.Api.Modules.Core.Vpn.Application.Usecases;
 
@@ -24,6 +25,19 @@ public class VpnController : ControllerBase
     )
     {
         return createVpnPeerUseCase.Execute(request.Name);
+    }
+
+    // Servi en fichier plutôt qu'en JSON : le navigateur l'enregistre tel quel, et le QR code
+    // aura sa propre route le jour où il servira.
+    [HttpGet("{name}/config")]
+    public async Task<IActionResult> Config(
+        [FromServices] GetVpnPeerConfigUseCase getVpnPeerConfigUseCase,
+        [FromRoute] string name
+    )
+    {
+        var config = await getVpnPeerConfigUseCase.Execute(name);
+
+        return File(Encoding.UTF8.GetBytes(config), "text/plain", $"{name}.conf");
     }
 
     [HttpDelete("{name}")]

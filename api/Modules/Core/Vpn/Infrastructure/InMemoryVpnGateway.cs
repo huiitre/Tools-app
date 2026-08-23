@@ -162,6 +162,32 @@ public sealed class InMemoryVpnGateway : IVpnGateway
         return Task.FromResult(peer);
     }
 
+    // Même forme que le fichier généré par wg-users.sh, avec des clés jetables : de quoi
+    // vérifier que le téléchargement fonctionne sans jamais servir un vrai secret.
+    public Task<string> FindPeerConfigAsync(string name)
+    {
+        var peer = Peers.FirstOrDefault(peer => peer.Name == name)
+            ?? throw AppException.NotFound("VPN_PEER_NOT_FOUND", $"Le peer « {name} » est introuvable.");
+
+        var privateKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        var presharedKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        var serverKey = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+
+        return Task.FromResult(
+            $"""
+            [Interface]
+            Address = {peer.Ip}/24
+            PrivateKey = {privateKey}
+
+            [Peer]
+            PublicKey = {serverKey}
+            PresharedKey = {presharedKey}
+            Endpoint = huiitre.fr:51820
+            AllowedIPs = 10.13.13.0/24
+            PersistentKeepalive = 25
+            """);
+    }
+
     public Task RemovePeerAsync(string name)
     {
         var peer = Peers.FirstOrDefault(peer => peer.Name == name)

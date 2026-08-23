@@ -52,6 +52,19 @@ public sealed class WireGuardVpnGateway(
         using var response = await CallAsync(() => httpClient.DeleteAsync($"peers/{Uri.EscapeDataString(name)}"));
     }
 
+    public async Task<string> FindPeerConfigAsync(string name)
+    {
+        using var response = await CallAsync(
+            () => httpClient.GetAsync($"peers/{Uri.EscapeDataString(name)}"));
+
+        var detail = await ReadAsync<WgApiPeerDetail>(response);
+
+        return detail.Config ?? throw AppException.Unavailable(
+            "VPN_GATEWAY_INVALID_RESPONSE",
+            $"Le service WireGuard n'a retourné aucune configuration pour « {name} »."
+        );
+    }
+
     private static async Task<HttpResponseMessage> CallAsync(Func<Task<HttpResponseMessage>> call)
     {
         HttpResponseMessage response;

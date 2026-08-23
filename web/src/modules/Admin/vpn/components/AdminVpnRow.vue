@@ -17,6 +17,19 @@ const deleting = ref(false)
 const downloading = ref(false)
 const showConfirm = ref(false)
 
+const readErrorMessage = async (error: unknown, fallback: string): Promise<string> => {
+  if (error instanceof ApiException) return error.message
+  const data = (error as { response?: { data?: unknown } })?.response?.data
+  if (data instanceof Blob) {
+    try {
+      return JSON.parse(await data.text())?.message ?? fallback
+    } catch {
+      return fallback
+    }
+  }
+  return fallback
+}
+
 const STATUS_LABELS: Record<VpnPeerStatus, string> = {
   connected: 'Connecté',
   idle: 'Inactif',
@@ -73,8 +86,10 @@ const download = async () => {
     a.download = `${props.peer.name}.conf`
     a.click()
     URL.revokeObjectURL(url)
-  } catch {
-    toast.error('Erreur lors du téléchargement de la configuration')
+  } catch (e) {
+    // La réponse étant demandée en blob, une erreur arrive en Blob et non en objet : l'intercepteur
+    // n'a pas pu en tirer d'ApiException, il faut la relire soi-même pour retrouver le message.
+    toast.error(await readErrorMessage(e, 'Erreur lors du téléchargement de la configuration'))
   } finally {
     downloading.value = false
   }

@@ -12,6 +12,7 @@ public static class VpnModule
         builder.Services.AddScoped<ListVpnPeersUseCase>();
         builder.Services.AddScoped<CreateVpnPeerUseCase>();
         builder.Services.AddScoped<DeleteVpnPeerUseCase>();
+        builder.Services.AddScoped<GetVpnPeerConfigUseCase>();
 
         var host = builder.Configuration["WG_API_HOST"];
         var token = builder.Configuration["WG_API_TOKEN"];

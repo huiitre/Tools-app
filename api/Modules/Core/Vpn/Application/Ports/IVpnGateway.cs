@@ -7,4 +7,5 @@ public interface IVpnGateway
     Task<IReadOnlyList<VpnPeerDto>> FindPeersAsync();
     Task<VpnPeerDto> AddPeerAsync(string name);
     Task RemovePeerAsync(string name);
+    Task<string> FindPeerConfigAsync(string name);
 }
