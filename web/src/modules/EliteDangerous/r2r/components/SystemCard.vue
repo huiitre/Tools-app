@@ -174,6 +174,8 @@ async function copy(text: string, e: Event) {
 
 <style lang="scss" scoped>
 .system-card {
+  // Item d'une colonne flex : sans cela, la carte se laisse comprimer par le conteneur.
+  flex-shrink: 0;
   background: var(--pico-card-background-color);
   border: 1px solid var(--pico-card-border-color);
   border-radius: var(--pico-border-radius);

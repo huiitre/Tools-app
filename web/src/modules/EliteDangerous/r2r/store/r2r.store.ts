@@ -44,9 +44,9 @@ export const useR2rStore = defineStore('r2r', () => {
   }
 
   async function importExpedition(formData: FormData): Promise<string> {
-    const { data: id } = await r2rFetch.importExpedition(formData)
+    const { data } = await r2rFetch.importExpedition(formData)
     await fetchExpeditions()
-    return id
+    return data.id
   }
 
   async function renameExpedition(id: string, name: string) {

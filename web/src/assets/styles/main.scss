@@ -12,6 +12,25 @@
   outline: none !important;
 }
 
+// La règle ci-dessus ne couvre pas les listes déroulantes : Chrome tient `:focus-visible` pour vrai
+// sur un select même après un clic souris, si bien que `:not(:focus-visible)` ne matche jamais, et
+// le select garde le focus quand on clique en dehors. Pico pose deux effets distincts — l'anneau
+// (`--pico-box-shadow`) et la bordure (`--pico-border-color`) — il faut donc neutraliser les deux.
+select:not([readonly]):focus {
+  --pico-box-shadow: none !important;
+  box-shadow: none !important;
+  --pico-border-color: var(--pico-form-element-border-color) !important;
+}
+
+// La bordure ne revient que pendant que le menu est déroulé : `:open` est vraie tant que la liste
+// est ouverte et redevient fausse dès sa fermeture, là où `:focus` persiste. Déclarée après la règle
+// ci-dessus, à poids égal, elle l'emporte. Navigateur sans `:open` : aucune bordure, comme avant.
+select:not([readonly]):open {
+  --pico-border-color: var(--pico-form-element-active-border-color) !important;
+  --pico-box-shadow: 0 0 0 var(--pico-outline-width) var(--pico-form-element-focus-color) !important;
+  box-shadow: var(--pico-box-shadow) !important;
+}
+
 /* App layout */
 body {
   background-color: var(--pico-background-color);

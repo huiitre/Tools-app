@@ -5,6 +5,7 @@ using Tools.Api.Modules.Core.Common;
 using Tools.Api.Modules.Core.Health;
 using Tools.Api.Modules.Core.Realtime;
 using Tools.Api.Modules.Core.Security;
+using Tools.Api.Modules.EliteDangerous;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,7 @@ builder.AddCoreHost();
 // La plateforme est enregistrée en bloc ; les modules métier viendront à la suite, un appel
 // par module, à mesure qu'ils sont repris de l'API Java.
 builder.AddCoreModules();
+builder.AddEliteDangerousModule();
 
 var app = builder.Build();
 
