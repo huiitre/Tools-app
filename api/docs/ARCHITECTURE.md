@@ -287,6 +287,31 @@ que `Postgres/`, pour qu'un changement d'implémentation ne rende pas le dossier
 Une classe publique reste **un fichier portant son nom** — les dossiers ne dispensent pas de
 cette règle.
 
+### Un environnement sans accès à la ressource (2026-08-23)
+
+Certaines ressources ne sont joignables que depuis l'endroit où elles tournent. Le service
+WireGuard du module Vpn en est le premier cas : il vit dans la pile réseau du conteneur
+WireGuard, sur le NAS. Aucun poste de développement ne peut l'atteindre, et le rapatrier
+localement n'a pas de sens — contrairement aux assets, ce n'est pas un fichier mais une
+interface réseau.
+
+La réponse est le port lui-même. `IVpnGateway` a deux implémentations, et **c'est
+`VpnModule` qui tranche**, sur `builder.Environment` : un adapter en mémoire en Development
+et en QA, l'adapter HTTP réel ailleurs. Le use case ne sait rien de ce choix.
+
+Deux conséquences assumées :
+
+- **la sélection se fait sur l'environnement, pas sur la présence de la configuration.** Une
+  variable manquante en production fait donc échouer le module au lieu de le faire basculer
+  silencieusement sur des données inventées. C'est le comportement voulu.
+- **le vrai adapter n'est exécuté dans aucun environnement de test.** Le premier passage réel
+  a lieu au déploiement. Le fake déplace ce risque, il ne le supprime pas : la validation de
+  l'adapter reste manuelle.
+
+Enfin, un adapter de ce type **échoue bruyamment**. Rendre une liste vide quand le service
+est injoignable afficherait « aucun peer » à un administrateur, ce qui est faux et alarmant —
+même raisonnement que le manifest des serveurs de jeux.
+
 ### Découper les use cases et les ports
 
 Même principe côté Application, avec un découpage par **méthode d'identification** qui

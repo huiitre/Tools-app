@@ -1,0 +1,9 @@
+info:
+  name: Vpn
+  type: folder
+  seq: 12
+
+request:
+  auth:
+    type: bearer
+    token: "{{authToken}}"
