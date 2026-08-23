@@ -211,7 +211,8 @@ mélangeait :
 Modules/
   Core/           la plateforme : Access, Admin, Auth, Common, GameServers, Health,
                   Mail, Notifications, Realtime, Security, Users
-  <Métier>/       Dofus, Riot, Palworld… à mesure qu'ils sont repris de l'API Java
+  <Métier>/       EliteDangerous ; Dofus, Riot, Palworld à venir, à mesure qu'ils sont
+                  repris de l'API Java
 ```
 
 Le critère est **la dépendance, pas le schéma SQL** : un module du Core ne dépend d'aucun
@@ -232,6 +233,32 @@ Deux cas valent d'être notés, parce que le nom seul induit en erreur :
   transverse à plusieurs jeux et adossée à `tools_core.game_servers`. Le mettre dans un module
   métier obligerait à choisir lequel. S'il devient un module à part entière, il se déplacera
   seul — il ne dépend d'aucun autre module que Common et Security.
+
+
+### Elite Dangerous, premier module métier (2026-08-24)
+
+`Modules/EliteDangerous/RoadToRiches/` est le premier module repris de l'API Java, dont le module
+correspondant a été supprimé dans la foulée. Il a été choisi pour sa taille — une table, sept
+routes, aucun ordonnanceur, aucun appel sortant — afin que ce soit la **forme** de la migration qui
+soit éprouvée, pas son volume.
+
+Trois décisions valent pour les modules suivants :
+
+- **La route ne reprend pas les abréviations internes.** `/elite-dangerous/expeditions`, et non
+  `/elite-dangerous/r2r/expeditions` : la ressource, ce sont les expéditions. La table conserve son
+  nom (`tools_elite_dangerous.r2r_expedition`) — renommer une URL ne renomme pas un schéma.
+- **Le module métier déclare son `RequiredModule`.** Les sept use cases exigent `RoleCode.User`
+  **dans** `ModuleCode.EliteDangerous`, jamais dans le rôle global : un administrateur du site
+  absent du module n'y entre pas.
+- **Les statuts HTTP sont ceux du sens, pas ceux de l'API Java.** Une expédition introuvable rend
+  404 là où le Java rendait 400 — ses `*NotFoundException` étendent `IllegalArgumentException`, que
+  son gestionnaire mappe uniformément sur 400. La migration est l'occasion de retrouver les statuts
+  justes, `AppException` les portant déjà.
+
+Le domaine lève `AppException.Validation(...)` et dépend donc de
+`Core.Common.Application.Exceptions`. C'est une dépendance vers un type d'exception, pas vers de la
+logique : l'alternative — une `ArgumentException` de la BCL — finirait en 500 avec son message
+masqué, `ApiExceptionHandler` ne connaissant qu'`AppException`.
 
 Chaque fichier déclare un **file-scoped namespace** dérivé de son chemin :
 
