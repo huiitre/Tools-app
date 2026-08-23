@@ -25,6 +25,12 @@ export const routes = [
         meta: { label: 'Modules' },
       },
       {
+        name: 'admin-vpn',
+        path: 'vpn',
+        component: () => import('@/modules/Admin/vpn/views/AdminVpn.vue'),
+        meta: { label: 'VPN' },
+      },
+      {
         name: 'admin-feedbacks',
         path: 'feedbacks',
         component: () => import('@/modules/Admin/feedbacks/views/AdminFeedbacks.vue'),
