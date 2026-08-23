@@ -106,14 +106,17 @@ const sorted = computed(() =>
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   border-radius: var(--pico-border-radius);
-  background: var(--pico-primary-background);
-  color: var(--pico-primary-inverse);
-  border: none;
+  background: var(--pico-form-element-background-color);
+  color: var(--pico-form-element-color);
+  border: 1px solid var(--pico-form-element-border-color);
   cursor: pointer;
   font-weight: 500;
-  transition: background 0.2s;
+  transition: border-color 0.2s, color 0.2s;
 
-  &:hover { background: var(--pico-primary-hover); }
+  &:hover {
+    border-color: var(--pico-primary);
+    color: var(--pico-primary);
+  }
 }
 
 .empty-state {

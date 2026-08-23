@@ -525,6 +525,9 @@ async function doRename() {
 /* ── SYSTEMS LIST ─── */
 .systems-list {
   flex: 1;
+  // Sans cette ligne, la liste ne peut pas descendre sous la hauteur de son contenu : elle ne
+  // scrolle pas et ce sont les cartes qui s'écrasent. Même règle que Page.vue et le module Palworld.
+  min-height: 0;
   overflow-y: auto;
   padding: 1rem 1.5rem;
   display: flex;
