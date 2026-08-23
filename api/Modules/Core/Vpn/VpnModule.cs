@@ -11,28 +11,28 @@ public static class VpnModule
     {
         builder.Services.AddScoped<ListVpnPeersUseCase>();
 
-        if (builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("QA"))
+        var host = builder.Configuration["WG_API_HOST"];
+        var token = builder.Configuration["WG_API_TOKEN"];
+
+        if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(token))
         {
-            builder.Services.AddScoped<IVpnGateway, InMemoryVpnGateway>();
-        }
-        else
-        {
-            builder.Services.AddHttpClient<IVpnGateway, WireGuardVpnGateway>(client =>
+            if (builder.Environment.IsProduction())
             {
-                var host = builder.Configuration["WG_API_HOST"];
-                var token = builder.Configuration["WG_API_TOKEN"];
+                throw new InvalidOperationException(
+                    "Les variables WG_API_HOST et WG_API_TOKEN doivent être renseignées en production."
+                );
+            }
 
-                if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(token))
-                {
-                    throw new InvalidOperationException(
-                        "Les variables WG_API_HOST et WG_API_TOKEN doivent être renseignées.");
-                }
-
-                client.BaseAddress = new Uri($"{host.TrimEnd('/')}/");
-                client.Timeout = TimeSpan.FromSeconds(10);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            });
+            builder.Services.AddScoped<IVpnGateway, InMemoryVpnGateway>();
+            return builder;
         }
+
+        builder.Services.AddHttpClient<IVpnGateway, WireGuardVpnGateway>(client =>
+        {
+            client.BaseAddress = new Uri($"{host.TrimEnd('/')}/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        });
 
         return builder;
     }
