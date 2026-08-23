@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/user/me"
+  url: "{{apiJavaUrl}}/user/me"
   body:
     type: text
     data: "{\r

@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}core/version"
+  url: "{{apiJavaUrl}}core/version"
   auth:
     type: bearer
     token: "{{token}}"

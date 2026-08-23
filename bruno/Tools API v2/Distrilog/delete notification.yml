@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiUrl}}dtl/user-activity/9999/delete/368"
+  url: "{{apiJavaUrl}}dtl/user-activity/9999/delete/368"
   auth: inherit
 
 settings:

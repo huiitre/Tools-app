@@ -1,0 +1,28 @@
+# Postgres local pour le dev. Les process applicatifs (API, web) restent sur l'hôte :
+# ce compose ne porte que l'infra.
+#
+#   npm run db:up      démarre (le volume est conservé entre deux arrêts)
+#   npm run db:down    arrête
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: tools_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      # 5433 : le port sur lequel dev-console fait pointer les API en dev.
+      - "${LOCAL_DB_PORT:-5433}:5432"
+    volumes:
+      - tools_postgres_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  tools_postgres_dev:

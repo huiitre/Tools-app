@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}dofus/monster-subarea/31/173"
+  url: "{{apiJavaUrl}}dofus/monster-subarea/31/173"
   auth: inherit
 
 settings:

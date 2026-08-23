@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}todolist/todo/{{idtodolist}}/get"
+  url: "{{apiJavaUrl}}todolist/todo/{{idtodolist}}/get"
   auth: inherit
 
 settings:

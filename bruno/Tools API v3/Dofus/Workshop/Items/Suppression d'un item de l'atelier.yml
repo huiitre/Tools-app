@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiUrl}}/dofus/workshops/{{workshopId}}/items/{{workshopItemId}}"
+  url: "{{apiJavaUrl}}/dofus/workshops/{{workshopId}}/items/{{workshopItemId}}"
   auth: inherit
 
 settings:

@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}core/auth/me"
+  url: "{{apiJavaUrl}}core/auth/me"
   body:
     type: json
     data: ""

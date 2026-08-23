@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/palworld/tierlist"
+  url: "{{apiJavaUrl}}/palworld/tierlist"
   auth: inherit
 
 settings:

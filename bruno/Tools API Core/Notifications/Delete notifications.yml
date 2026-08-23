@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiCoreUrl}}/notifications?ids=1,2"
+  url: "{{apiUrl}}/notifications?ids=1,2"
   auth:
     type: bearer
     token: "{{authToken}}"

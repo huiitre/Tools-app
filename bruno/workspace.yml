@@ -1,5 +1,4 @@
 opencollection: 1.0.0
-
 info:
   name: "Tools"
   type: workspace
@@ -9,8 +8,6 @@ collections:
     path: "Tools API v3"
   - name: "Tools API Core"
     path: "Tools API Core"
-  - name: "Tools API v2"
-    path: "Tools API v2"
   - name: "Tools Services (API Nodejs)"
     path: "Tools Services (API Nodejs)"
   - name: "DISCORD API"
@@ -19,3 +16,7 @@ collections:
     path: "api.dofusdb"
   - name: "valorant-api"
     path: "valorant-api"
+
+specs:
+
+docs: ''

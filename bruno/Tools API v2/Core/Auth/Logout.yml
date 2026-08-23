@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}core/auth/logout"
+  url: "{{apiJavaUrl}}core/auth/logout"
   body:
     type: json
     data: ""

@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiCoreUrl}}/mail"
+  url: "{{apiUrl}}/mail"
   body:
     type: json
     data: |-

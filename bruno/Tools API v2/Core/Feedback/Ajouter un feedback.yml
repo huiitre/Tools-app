@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}core/feedback/add"
+  url: "{{apiJavaUrl}}core/feedback/add"
   body:
     type: json
     data: "{\r\n    \"message\": \"test 1\"\r\n}"

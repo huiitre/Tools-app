@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/riot/valorant/watchlist/admin/sync"
+  url: "{{apiJavaUrl}}/riot/valorant/watchlist/admin/sync"
   headers:
     - name: Authorization
       value: Bearer {{YOUR_JWT_TOKEN}}

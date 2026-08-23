@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiUrl}}todolist/{{idtodolist}}/delete"
+  url: "{{apiJavaUrl}}todolist/{{idtodolist}}/delete"
   headers:
     - name: Authorization
       value: Bearer {{token}}

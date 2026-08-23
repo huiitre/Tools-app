@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiCoreUrl}}/internal/notifications"
+  url: "{{apiUrl}}/internal/notifications"
   headers:
     - name: X-Internal-Token
       value: "{{internalApiToken}}"

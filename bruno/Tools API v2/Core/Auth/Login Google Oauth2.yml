@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}core/auth/login-with-google"
+  url: "{{apiJavaUrl}}core/auth/login-with-google"
   body:
     type: json
     data: "{\r

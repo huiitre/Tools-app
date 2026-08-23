@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}dofus/query-lab/query/1"
+  url: "{{apiJavaUrl}}dofus/query-lab/query/1"
   auth: inherit
 
 settings:

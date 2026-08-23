@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/riot/valorant/watchlist?accountId=1"
+  url: "{{apiJavaUrl}}/riot/valorant/watchlist?accountId=1"
   params:
     - name: accountId
       value: "1"

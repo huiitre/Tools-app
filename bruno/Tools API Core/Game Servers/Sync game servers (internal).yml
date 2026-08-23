@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiCoreUrl}}/internal/gameservers/sync"
+  url: "{{apiUrl}}/internal/gameservers/sync"
   headers:
     - name: X-Internal-Token
       value: "{{internalApiToken}}"

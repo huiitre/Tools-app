@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/modules/users/{{userId}}"
+  url: "{{apiJavaUrl}}/modules/users/{{userId}}"
   auth: inherit
 
 settings:

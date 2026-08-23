@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}dofus/configuration/update-items?token={{token}}"
+  url: "{{apiJavaUrl}}dofus/configuration/update-items?token={{token}}"
   params:
     - name: token
       value: "{{token}}"

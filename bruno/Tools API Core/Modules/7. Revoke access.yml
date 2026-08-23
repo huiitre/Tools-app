@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiCoreUrl}}/modules/1/users/1"
+  url: "{{apiUrl}}/modules/1/users/1"
   auth:
     type: bearer
     token: "{{authToken}}"

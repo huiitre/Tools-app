@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/riot/valorant/my-skins"
+  url: "{{apiJavaUrl}}/riot/valorant/my-skins"
   headers:
     - name: Content-Type
       value: application/json

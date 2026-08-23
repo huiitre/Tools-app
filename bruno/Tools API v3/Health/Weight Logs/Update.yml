@@ -5,7 +5,7 @@ info:
 
 http:
   method: PATCH
-  url: "{{apiUrl}}/weight-logs/{{weightlogId}}"
+  url: "{{apiJavaUrl}}/weight-logs/{{weightlogId}}"
   body:
     type: json
     data: "{\r

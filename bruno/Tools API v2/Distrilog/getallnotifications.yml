@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}dtl/user-activity/1238"
+  url: "{{apiJavaUrl}}dtl/user-activity/1238"
   auth: inherit
 
 settings:

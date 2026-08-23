@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiCoreUrl}}/auth/login"
+  url: "{{apiUrl}}/auth/login"
   body:
     type: json
     data: |-
@@ -19,7 +19,7 @@ runtime:
     - type: after-response
       code: |-
         const json = res.getBody();
-        bru.setGlobalEnvVar('authToken', json.accessToken);
+        bru.setVar('authToken', json.accessToken);
 
 settings:
   encodeUrl: true

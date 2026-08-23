@@ -6,9 +6,6 @@ using Tools.Api.Modules.Core.GameServers.Application.Ports;
 
 namespace Tools.Api.Modules.Core.GameServers.Infrastructure;
 
-// Lit le résultat atomique de l'extractor sur le serveur d'assets. Contrairement à Steam,
-// l'indisponibilité de ce fichier doit faire échouer le sync : un tableau inconnu ne doit jamais
-// être interprété comme un scan vide et déclencher des suppressions.
 public sealed class GameServersManifestProvider(HttpClient httpClient) : IGameServersManifestProvider
 {
     public async Task<IReadOnlyList<GameServerSyncDto>> FetchAsync()

@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/dofus/item/metadata/batch?assetIds=6486,6487,6488,6489,6490,6495,8436"
+  url: "{{apiJavaUrl}}/dofus/item/metadata/batch?assetIds=6486,6487,6488,6489,6490,6495,8436"
   params:
     - name: assetIds
       value: 6486,6487,6488,6489,6490,6495,8436

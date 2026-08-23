@@ -5,7 +5,7 @@ info:
 
 http:
   method: PUT
-  url: "{{apiUrl}}health/weight-log/23"
+  url: "{{apiJavaUrl}}health/weight-log/23"
   body:
     type: json
     data: "{\r

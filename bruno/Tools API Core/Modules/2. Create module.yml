@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiCoreUrl}}/modules"
+  url: "{{apiUrl}}/modules"
   auth:
     type: bearer
     token: "{{authToken}}"

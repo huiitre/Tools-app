@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/admin/stats"
+  url: "{{apiJavaUrl}}/admin/stats"
   body:
     type: text
     data: ""

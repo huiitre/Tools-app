@@ -1,11 +1,11 @@
 name: Tools DEV
 color: "#2E8A54"
 variables:
-  - name: apiCoreUrl
-    value: http://localhost:5090
   - name: apiUrl
+    value: http://localhost:5090
+    description: ""
+  - name: apiJavaUrl
     value: http://localhost:8083/api/v3
-  - name: authToken
-    value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblR5cGUiOiJBQ0NFU1MiLCJpc0FjdGl2ZSI6dHJ1ZSwidXNlclR5cGUiOiJIVU1BTiIsInJvbGVzIjpbIkFETUlOIl0sIm1vZHVsZXMiOnsicGFsd29ybGQiOlsiQURNSU4iXSwicmlvdCI6WyJBRE1JTiJdLCJkb2Z1cyI6WyJBRE1JTiJdfSwic3ViIjoiMSIsIm5iZiI6MTc4NzIxMTIxMywiZXhwIjoxNzg3MjExODEzLCJpc3MiOiJ0b29scy1hcGkifQ.27Y2HWlf_sJrtgYX4sY9rAFtnJd1oDYD8JLAlc_zxUM
+    description: ""
   - secret: true
     name: internalApiToken

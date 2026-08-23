@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}todolist/add"
+  url: "{{apiJavaUrl}}todolist/add"
   headers:
     - name: Authorization
       value: Bearer {{token}}

@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}dofus/query-lab/favorite/:queryId"
+  url: "{{apiJavaUrl}}dofus/query-lab/favorite/:queryId"
   params:
     - name: queryId
       value: ""

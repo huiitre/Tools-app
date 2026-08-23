@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiCoreUrl}}/roles"
+  url: "{{apiUrl}}/roles"
   auth:
     type: bearer
     token: "{{authToken}}"

@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/riot/valorant/skins/by-asset/70c97fb2-4d79-d4bb-5173-a1888cd4bfd9?accountId=1"
+  url: "{{apiJavaUrl}}/riot/valorant/skins/by-asset/70c97fb2-4d79-d4bb-5173-a1888cd4bfd9?accountId=1"
   params:
     - name: accountId
       value: "1"

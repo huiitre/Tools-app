@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/weight-logs"
+  url: "{{apiJavaUrl}}/weight-logs"
   body:
     type: json
     data: "{\r

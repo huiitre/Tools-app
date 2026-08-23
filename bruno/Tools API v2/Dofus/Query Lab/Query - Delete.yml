@@ -5,7 +5,7 @@ info:
 
 http:
   method: DELETE
-  url: "{{apiUrl}}dofus/query-lab/query/:id"
+  url: "{{apiJavaUrl}}dofus/query-lab/query/:id"
   params:
     - name: id
       value: ""

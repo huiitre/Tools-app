@@ -5,7 +5,7 @@ info:
 
 http:
   method: PATCH
-  url: "{{apiUrl}}/dofus/workshops/{{workshopId}}/items/{{workshopItemId}}/quantity/{{quantity}}"
+  url: "{{apiJavaUrl}}/dofus/workshops/{{workshopId}}/items/{{workshopItemId}}/quantity/{{quantity}}"
   body:
     type: json
     data: ""

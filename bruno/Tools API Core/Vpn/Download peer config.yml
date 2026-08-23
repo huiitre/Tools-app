@@ -1,0 +1,29 @@
+info:
+  name: Download peer config
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{apiUrl}}/vpn/peers/huiitre/config"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Télécharge la configuration WireGuard d'un peer. Rôle ADMIN.
+
+  Réponse : le fichier lui-même, en `text/plain`, nommé `<nom>.conf` par le `Content-Disposition`.
+
+  404 `VPN_PEER_NOT_FOUND` si le nom n'existe pas.
+
+  ⚠️ **Le contenu porte la clé privée du client.** Quiconque l'obtient devient ce peer : ne pas le
+  coller ailleurs, ne pas le journaliser, ne pas le mettre en cache. Le QR code produit par
+  `wg-users.sh` encode exactement le même secret — il aura sa propre route s'il devient utile.
+
+  En dev, `InMemoryVpnGateway` renvoie un fichier de même forme avec des clés jetables tirées au
+  hasard à chaque appel : de quoi vérifier le téléchargement sans exposer quoi que ce soit.

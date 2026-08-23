@@ -10,6 +10,7 @@ using Tools.Api.Modules.Core.Realtime;
 using Tools.Api.Modules.Core.Security;
 using Tools.Api.Modules.Core.Settings;
 using Tools.Api.Modules.Core.Users;
+using Tools.Api.Modules.Core.Vpn;
 
 namespace Tools.Api.Modules.Core;
 
@@ -40,6 +41,7 @@ public static class CoreModule
             .AddAccessModule()
             .AddAdminModule()
             .AddHealthModule()
-            .AddGameServersModule();
+            .AddGameServersModule()
+            .AddVpnModule();
     }
 }

@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}dofus/query-lab/execution/:queryId"
+  url: "{{apiJavaUrl}}dofus/query-lab/execution/:queryId"
   params:
     - name: queryId
       value: ""

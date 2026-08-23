@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiCoreUrl}}/auth/password/reset"
+  url: "{{apiUrl}}/auth/password/reset"
   auth:
     type: none
   body:

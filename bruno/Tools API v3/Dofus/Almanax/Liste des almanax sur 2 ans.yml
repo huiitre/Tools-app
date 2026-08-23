@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/dofus/almanax"
+  url: "{{apiJavaUrl}}/dofus/almanax"
   body:
     type: text
     data: "{\r

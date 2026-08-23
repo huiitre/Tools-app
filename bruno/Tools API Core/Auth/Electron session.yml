@@ -5,7 +5,7 @@ info:
 
 http:
   method: POST
-  url: "{{apiCoreUrl}}/auth/electron/session"
+  url: "{{apiUrl}}/auth/electron/session"
   auth: inherit
 
 settings:

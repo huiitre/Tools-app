@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/roles"
+  url: "{{apiJavaUrl}}/roles"
   auth: inherit
 
 settings:

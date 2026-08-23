@@ -1,0 +1,29 @@
+info:
+  name: Delete peer
+  type: http
+  seq: 3
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/vpn/peers/poste-fddfggdfg"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Supprime un peer WireGuard. Rôle ADMIN.
+
+  404 `VPN_PEER_NOT_FOUND` si le nom n'existe pas.
+
+  **Irréversible et immédiat contre le vrai service** : le peer est retiré de l'interface vivante
+  (`wg set … remove`), sa route supprimée, son bloc retiré de `wg0.conf` et son dossier détruit —
+  clé privée comprise. Un client connecté est éjecté sur-le-champ, et recréer le même nom génère
+  de nouvelles clés et une nouvelle adresse.
+
+  ⚠️ `WireGuardVpnGateway` n'implémente pas encore cette opération : contre le vrai service, la
+  route n'est pas fonctionnelle.
