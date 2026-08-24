@@ -1,0 +1,22 @@
+info:
+  name: Delete expedition
+  type: http
+  seq: 7
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/elite-dangerous/expeditions/00000000-0000-0000-0000-000000000000"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Supprime l'expédition et sa route. 204 sans corps.
+
+  Rôle minimum : USER.

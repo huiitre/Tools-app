@@ -1,0 +1,36 @@
+info:
+  name: Update progress
+  type: http
+  seq: 4
+
+http:
+  method: PATCH
+  url: "{{apiUrl}}/elite-dangerous/expeditions/00000000-0000-0000-0000-000000000000/progress"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "currentSystemIndex": 3,
+        "currentBodiesDone": [1, 2]
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Enregistre l'avancement dans la route. 204 sans corps.
+
+  - `currentSystemIndex` — index du système courant dans la route.
+  - `currentBodiesDone` — corps déjà scannés dans ce système. **Champ absent ou `null` = aucun
+    corps fait** : la colonne est NOT NULL, le contrôleur substitue un tableau vide.
+
+  Rôle minimum : USER.

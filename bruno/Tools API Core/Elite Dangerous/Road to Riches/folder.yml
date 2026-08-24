@@ -1,0 +1,9 @@
+info:
+  name: Road to Riches
+  type: folder
+  seq: 1
+
+request:
+  auth:
+    type: bearer
+    token: "{{authToken}}"
