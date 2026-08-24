@@ -37,10 +37,20 @@ http:
         "targetModuleId": 5            // Tous les membres d'un module
       }
       */
+      // Pour tester un affichage correct dans la cloche de notifications, le payload doit
+      // respecter le contrat consommé par le front (voir NotificationService.cs:46-56) :
+      // { id, title, body, type, metadata, createdAt, read }. Un id fixe/omis fait que le
+      // dédoublonnage du store (comparaison par id) rejette tout envoi après le premier.
       {
-        "eventType": "test.event",
+        "eventType": "ReceiveNotification",
         "payload": {
-          "message": "Envoi de test depuis Bruno via la route de service à service."
+          "id": 999002,
+          "title": "Test Bruno",
+          "body": "Envoi de test depuis Bruno via la route de service à service.",
+          "type": "INFO",
+          "metadata": null,
+          "createdAt": "2026-08-24T12:00:00Z",
+          "read": false
         },
         "targetMinRole": "READ_ONLY"
       }
