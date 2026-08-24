@@ -1,0 +1,29 @@
+info:
+  name: Create feedback
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}/feedbacks"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "message": "Mon premier feedback via l'API !"
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  201 sans corps. Rôle minimum : READ_ONLY.

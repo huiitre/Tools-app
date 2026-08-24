@@ -1,0 +1,9 @@
+info:
+  name: Feedback
+  type: folder
+  seq: 13
+
+request:
+  auth:
+    type: bearer
+    token: "{{authToken}}"

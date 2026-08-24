@@ -12,7 +12,7 @@ export interface CreateFeedbackRequest {
 }
 
 export interface BatchDeleteRequest {
-  ids: number[];
+  feedbackIds: number[];
 }
 
 export interface UpdateReadStatusRequest {

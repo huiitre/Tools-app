@@ -2,6 +2,7 @@ using Tools.Api.Modules.Core.Access;
 using Tools.Api.Modules.Core.Admin;
 using Tools.Api.Modules.Core.Auth;
 using Tools.Api.Modules.Core.Common;
+using Tools.Api.Modules.Core.Feedback;
 using Tools.Api.Modules.Core.GameServers;
 using Tools.Api.Modules.Core.Health;
 using Tools.Api.Modules.Core.Mail;
@@ -36,6 +37,7 @@ public static class CoreModule
             .AddMailModule()
             .AddRealtimeModule()
             .AddNotificationsModule()
+            .AddFeedbackModule()
             .AddUsersModule()
             .AddSettingsModule()
             .AddAccessModule()

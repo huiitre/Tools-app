@@ -148,6 +148,23 @@ function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+// Port de chaque process applicatif — sert de dernier filet en cas de kill raté (cf. killPort).
+const PORTS = { java: 8083, api: 5090, web: 5173 };
+
+// Dernier filet au-delà de killChild + killTree : un grand-enfant peut échapper à l'arbre
+// reconstruit (observé avec le fork JVM de `spring-boot:run`, qui semble démarrer hors du
+// groupe/session suivi). `fuser` retrouve le process par port directement, peu importe sa
+// filiation — et n'a pas besoin de sudo puisque ce sont nos propres processus.
+function killPort(name) {
+  const port = PORTS[name];
+  if (!port) return;
+  try {
+    require('child_process').spawnSync('fuser', ['-k', `${port}/tcp`], { stdio: 'ignore' });
+  } catch (e) {
+    // fuser absent du système
+  }
+}
+
 function composeArgs(...args) {
   return ['compose', '-f', COMPOSE_FILE, ...args];
 }
@@ -228,6 +245,7 @@ async function restartAsync(name, spec) {
     // process peut se prendre un conflit de port avec l'ancien encore agonisant.
     killChild(existing, 'SIGKILL');
     killTree(existing.pid, 'SIGKILL');
+    killPort(name);
     await sleep(300);
   }
   pushLine(name, '--- redémarrage manuel ---', 'system');
@@ -259,6 +277,7 @@ async function stopAsync(name) {
     await sleep(1200);
     killChild(existing, 'SIGKILL');
     killTree(existing.pid, 'SIGKILL');
+    killPort(name);
   }
 
   // Le process du panneau db n'est qu'un `docker compose logs -f` : couper le suivi des logs

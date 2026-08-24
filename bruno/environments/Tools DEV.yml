@@ -3,9 +3,7 @@ color: "#2E8A54"
 variables:
   - name: apiUrl
     value: http://localhost:5090
-    description: ""
   - name: apiJavaUrl
     value: http://localhost:8083/api/v3
-    description: ""
   - secret: true
     name: internalApiToken
