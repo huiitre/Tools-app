@@ -1,0 +1,49 @@
+info:
+  name: Import expedition
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{apiUrl}}/elite-dangerous/expeditions"
+  body:
+    type: multipartForm
+    data:
+      - name: File
+        type: file
+        value:
+          - /chemin/vers/route-spansh.json
+      - name: Source
+        type: text
+        value: spansh
+      - name: Name
+        type: text
+        value: Road to Riches - test
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Import d'une route au format JSON. **Requête multipart** : le fichier est le seul contenu
+  qui transite, l'analyse qui suit ne travaille que sur des octets déjà en mémoire.
+
+  Champs du formulaire :
+
+  - `File` — obligatoire, le JSON exporté depuis le planificateur.
+  - `Source` — obligatoire. Seule valeur reconnue aujourd'hui : `spansh`
+    (`SpanshJsonRouteImporter.Source`). Toute autre valeur donne 400 : « La source « … »
+    n'est pas reconnue ».
+  - `Name` — facultatif. Sans nom, l'expédition en reçoit un par défaut.
+
+  201 avec `{ "id": "<guid>" }` et un en-tête `Location` vers « Get expedition ».
+
+  Rôle minimum : USER.
+
+  ⚠️ Avant de jouer la requête, remplacer le chemin de `File` par un fichier existant de la
+  machine — Bruno lit le fichier au moment de l'envoi.

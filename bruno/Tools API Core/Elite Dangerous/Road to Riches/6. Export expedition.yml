@@ -1,0 +1,26 @@
+info:
+  name: Export expedition
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{apiUrl}}/elite-dangerous/expeditions/00000000-0000-0000-0000-000000000000/export"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Renvoie la route brute telle qu'elle a été importée, en `application/json`, servie comme
+  fichier : `expedition-<guid>.json`.
+
+  Ce n'est pas la vue de détail — c'est le contenu d'origine, réutilisable tel quel dans le
+  planificateur.
+
+  Rôle minimum : USER.

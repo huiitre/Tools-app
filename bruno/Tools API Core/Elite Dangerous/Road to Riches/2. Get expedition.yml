@@ -1,0 +1,26 @@
+info:
+  name: Get expedition
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{apiUrl}}/elite-dangerous/expeditions/00000000-0000-0000-0000-000000000000"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Détail d'une expédition (`ExpeditionDetailView`) : la route complète et l'avancement.
+
+  Remplacer le GUID de l'URL par un identifiant renvoyé par « List expeditions » ou par
+  l'import. Un identifiant qui n'est pas un GUID ne matche pas la route (`:guid`) et donne
+  404 avant même d'atteindre le use case.
+
+  Rôle minimum : USER.

@@ -1,0 +1,25 @@
+info:
+  name: List expeditions
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiUrl}}/elite-dangerous/expeditions"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Expéditions de l'appelant, en résumé (`ExpeditionSummaryView`).
+
+  Rôle minimum : USER. Sans jeton : 401 `UNAUTHENTICATED`. Avec un compte sans rôle :
+  403 `INSUFFICIENT_ROLE`.
+
+  Le propriétaire n'est pas un paramètre : il vient de l'appelant validé (`CurrentUser`).
