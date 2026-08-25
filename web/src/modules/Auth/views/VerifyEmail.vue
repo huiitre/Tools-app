@@ -16,8 +16,9 @@ onMounted(async () => {
   }
 
   try {
-    const { data } = await useFetchVerifyEmail(token)
-    toast.success(data.message)
+    // 204 No Content côté API : rien à lire dans la réponse, le message est fixe.
+    await useFetchVerifyEmail(token)
+    toast.success('Adresse email confirmée, vous pouvez vous connecter.')
   } catch (error: any) {
     toast.error(error?.message || 'Lien de validation invalide ou expiré.')
   }
