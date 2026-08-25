@@ -31,9 +31,12 @@ public sealed class PostgresGoogleAuthRepository(PostgresSession session) : IGoo
 
     public async Task<AuthUser> CreateGoogleUserAsync(GoogleIdentity identity)
     {
+        // email_verified_at à now() : Google a déjà confirmé l'adresse, et sans ça le compte
+        // est supprimé sous 30 min par EmailVerificationCleanupService (qui le traite comme une
+        // inscription classique abandonnée, faute de jeton de vérification).
         const string userSql = """
-            INSERT INTO tools_core.users (name, email, is_active, user_type, avatar_source)
-            VALUES (@Name, @Email, true, 'HUMAN', 'GOOGLE')
+            INSERT INTO tools_core.users (name, email, is_active, user_type, avatar_source, email_verified_at)
+            VALUES (@Name, @Email, true, 'HUMAN', 'GOOGLE', now())
             RETURNING id AS Id, email AS Email, is_active AS IsActive, user_type AS UserType
             """;
         var connection = Connection();
