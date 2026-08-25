@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import toast from '@/services/toast'
 import { useFetchVerifyEmail } from '@/modules/Auth/fetch/auth.fetch'
@@ -18,11 +18,15 @@ onMounted(async () => {
   try {
     const { data } = await useFetchVerifyEmail(token)
     toast.success(data.message)
-    router.push('/login')
   } catch (error: any) {
     toast.error(error?.message || 'Lien de validation invalide ou expiré.')
-    router.push('/login')
   }
+
+  // Laisse le flush DOM du montage courant (et du toast) se terminer avant de
+  // déclencher la transition de route : sinon <Transition mode="out-in"> peut
+  // enchaîner sur le composant async suivant avant que ce montage soit committé.
+  await nextTick()
+  router.push('/login')
 })
 </script>
 

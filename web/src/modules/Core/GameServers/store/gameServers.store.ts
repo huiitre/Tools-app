@@ -38,5 +38,12 @@ export const useGameServersStore = defineStore('gameServers', {
       if (this.refreshTimer) return
       this.refreshTimer = setInterval(() => this.load(), REFRESH_INTERVAL_MS)
     },
+
+    stopAutoRefresh() {
+      if (this.refreshTimer) {
+        clearInterval(this.refreshTimer)
+        this.refreshTimer = null
+      }
+    },
   },
 })
