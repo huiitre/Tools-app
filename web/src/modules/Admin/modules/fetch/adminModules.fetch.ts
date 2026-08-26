@@ -16,9 +16,8 @@ export async function createModule(payload: CreateModulePayload): Promise<AdminM
   return data
 }
 
-export async function updateModule(moduleId: number, payload: UpdateModulePayload): Promise<AdminModule> {
-  const { data } = await clientCore.put<AdminModule>(`/modules/${moduleId}`, payload)
-  return data
+export async function updateModule(moduleId: number, payload: UpdateModulePayload): Promise<void> {
+  await clientCore.put(`/modules/${moduleId}`, payload)
 }
 
 export async function fetchModuleUsers(moduleId: number): Promise<ModuleUser[]> {

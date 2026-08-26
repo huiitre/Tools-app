@@ -16,9 +16,9 @@ const saving = ref(false)
 const save = async () => {
   saving.value = true
   try {
-    const updated = await updateModule(props.module.id, form.value)
+    await updateModule(props.module.id, form.value)
     toast.success('Module mis à jour')
-    emit('updated', updated)
+    emit('updated', { ...form.value })
   } catch {
     toast.error('Erreur lors de la mise à jour du module')
   } finally {
