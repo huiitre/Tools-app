@@ -203,5 +203,5 @@ Fait : le Domain complet, la résolution et ses tests, le port, `SettingReader`,
 PostgreSQL, la composition.
 
 Reste : les use cases d'écriture (poser sa valeur, réinitialiser, administrer), le contrôleur,
-les entrées Bruno, et le frontend — où `web/src/modules/Settings/settingsConfigMock.ts` attend
-d'être remplacé par un vrai store.
+les entrées Bruno, et le frontend — dont `web/src/modules/Settings/settingsConfigMock.ts`,
+maquette jamais branchée, a été supprimé le 26/08/2026 ; un vrai store reste à écrire.
