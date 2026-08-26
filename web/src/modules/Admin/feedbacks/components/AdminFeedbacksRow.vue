@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { Feedback } from '@/modules/Core/Feedback/feedback.types'
+import type { Feedback } from '@/modules/Core/Feedback/types/feedback.types'
 import { useAdminFeedbacksStore } from '../store/adminFeedbacks.store'
-import { feedbackService } from '@/modules/Core/Feedback/feedback.service'
+import { batchDeleteFeedbacks, batchUpdateFeedbacksReadStatus } from '@/modules/Core/Feedback/fetch/feedback.fetch'
 import toast from '@/services/toast'
 
 const props = defineProps<{ feedback: Feedback }>()
@@ -23,7 +23,7 @@ const toggleRead = async () => {
   marking.value = true
   const next = !props.feedback.isRead
   try {
-    await feedbackService.batchUpdateReadStatus([props.feedback.id], next)
+    await batchUpdateFeedbacksReadStatus([props.feedback.id], next)
     store.markReadLocally(props.feedback.id, next)
   } catch {
     toast.error('Erreur lors de la mise à jour')
@@ -36,7 +36,7 @@ const confirmDelete = async () => {
   if (deleting.value) return
   deleting.value = true
   try {
-    await feedbackService.batchDelete([props.feedback.id])
+    await batchDeleteFeedbacks([props.feedback.id])
     store.removeLocally(props.feedback.id)
   } catch {
     toast.error('Erreur lors de la suppression')
