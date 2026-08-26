@@ -1,49 +1,13 @@
-using Tools.Api.Modules.Core.Common.Application.Exceptions;
-using Tools.Api.Modules.Core.Realtime.Application.Ports;
-using Tools.Api.Modules.Core.Security.Domain;
+using Tools.Api.Modules.Core.Realtime.Application.Services;
 
 namespace Tools.Api.Modules.Core.Realtime.Application.Usecases;
 
-// Action déclenchée par un appel de service à service, sans utilisateur à autoriser.
-public sealed class PublishRealtimeEventUseCase(
-    IRecipientResolver recipientResolver,
-    IRealtimePublisher realtimePublisher)
+// Action déclenchée par un appel de service à service, sans utilisateur à autoriser. La
+// résolution des destinataires et le push vivent dans RealtimeEventService — un use case ne
+// doit rester qu'un point d'entrée, jamais reporter cette logique dans le contrôleur qui
+// l'appelle ni la dupliquer ici.
+public sealed class PublishRealtimeEventUseCase(RealtimeEventService realtimeEventService)
 {
-    public async Task Execute(PublishRealtimeEventCommand command)
-    {
-        var recipients = await ResolveRecipients(command);
-        if (recipients.Count == 0)
-        {
-            return;
-        }
-
-        await realtimePublisher.PublishAsync(recipients, command.EventType, command.Payload);
-    }
-
-    private async Task<IReadOnlyList<long>> ResolveRecipients(PublishRealtimeEventCommand command)
-    {
-        if (command.TargetUserIds is { Count: > 0 } userIds)
-        {
-            return userIds.ToList();
-        }
-
-        if (command.TargetUserId is { } userId)
-        {
-            return await recipientResolver.UserExistsAsync(userId) ? [userId] : [];
-        }
-
-        if (command.TargetMinRole is { } minRole)
-        {
-            return await recipientResolver.FindByRoleCodesAsync(RoleCodes.CodesAtOrAbove(minRole));
-        }
-
-        if (command.TargetModuleId is { } moduleId)
-        {
-            return await recipientResolver.FindByModuleIdAsync(moduleId);
-        }
-
-        throw AppException.Validation(
-            "MISSING_REALTIME_TARGET",
-            "Un destinataire, un rôle minimum, un module ou une liste d'utilisateurs est obligatoire.");
-    }
+    public Task Execute(PublishRealtimeEventCommand command) =>
+        realtimeEventService.PublishAsync(command);
 }

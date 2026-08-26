@@ -1,5 +1,7 @@
 using Tools.Api.Modules.Core.Access.Application.Ports;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
+using Tools.Api.Modules.Core.Realtime.Application;
+using Tools.Api.Modules.Core.Realtime.Application.Services;
 using Tools.Api.Modules.Core.Security.Application.Ports;
 using Tools.Api.Modules.Core.Security.Application.Services;
 using Tools.Api.Modules.Core.Security.Application.Usecases;
@@ -11,7 +13,8 @@ namespace Tools.Api.Modules.Core.Access.Application.Usecases;
 public sealed class UpdateModuleUseCase(
     UseCaseAuthorizer authorizer,
     IModuleRepository moduleRepository,
-    ILogger<UpdateModuleUseCase> logger
+    ILogger<UpdateModuleUseCase> logger,
+    RealtimeEventService realtimeEventService
 ) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
@@ -46,6 +49,18 @@ public sealed class UpdateModuleUseCase(
             CurrentUser.UserId,
             command.ModuleId,
             code,
-            command.Active);
+            command.Active
+        );
+
+        try
+        {
+            // Toucher le module lui-même concerne tous ses membres, pas un seul utilisateur —
+            // TargetModuleId résout la liste, on ne la connaît pas ici.
+            await realtimeEventService.PublishAsync(
+                PublishRealtimeEventCommand.ForModule(command.ModuleId, "Core.ModuleUpdated"));
+        } catch(Exception ex)
+        {
+            logger.LogWarning(ex, "Push temps réel de la mise à jour du module échoué pour moduleId={ModuleId}", command.ModuleId);
+        }
     }
 }

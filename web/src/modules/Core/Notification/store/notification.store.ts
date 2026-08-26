@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 import { AppNotification } from '../domain/notification.types';
 import { SignalRNotificationTransport } from '../infrastructure/notification.transport';
-import { clientCore, CORE_BASE_URL, refreshSession } from '@/services/axiosInstance';
+import { clientCore } from '@/services/axiosInstance';
 import { useAuthStore } from '@/modules/Auth/auth.store';
 
 const log = (...args: unknown[]) => console.log('[Realtime]', ...args);
@@ -14,25 +14,6 @@ export const useNotificationStore = defineStore('notifications', () => {
   const authStore = useAuthStore();
 
   let pendingReconnect = false;
-
-  // Le hub est le seul appel qui ne traverse pas l'intercepteur axios : personne ne renouvelle
-  // son jeton sur un 401. C'est donc ici qu'on garantit sa fraîcheur, à chaque tentative de
-  // connexion — au plus un renouvellement par minute, pour qu'une API indisponible ne déclenche
-  // pas un refresh toutes les cinq secondes. Le jeton n'est jamais décodé côté front.
-  let lastHubTokenRefresh = Date.now();
-
-  async function hubAccessToken(): Promise<string> {
-    if (Date.now() - lastHubTokenRefresh > 60_000) {
-      lastHubTokenRefresh = Date.now();
-      try {
-        await refreshSession();
-      } catch (e) {
-        // Session irrécupérable : on présente le jeton courant, le hub retentera.
-      }
-    }
-
-    return authStore.accessToken ?? '';
-  }
 
   const unreadCount = computed(() => notifications.value.filter(n => !n.read).length);
   const hasUnread = computed(() => unreadCount.value > 0);
@@ -49,11 +30,13 @@ export const useNotificationStore = defineStore('notifications', () => {
       await fetchHistory();
 
       if (authStore.accessToken) {
-        const hubUrl = `${CORE_BASE_URL}/hub`;
+        // L'URL et le jeton du hub sont désormais gérés par coreHubConnection (connexion
+        // partagée entre tous les modules temps réel) — ce transport ne fait plus que s'y
+        // abonner, ces deux paramètres ne servent plus qu'aux transports SSE/WS dormants.
         log('Connexion au hub temps réel...');
         transport.connect(
-          hubUrl,
-          hubAccessToken,
+          '',
+          () => authStore.accessToken ?? '',
           () => {
             isConnected.value = true;
             log('Hub connecté');

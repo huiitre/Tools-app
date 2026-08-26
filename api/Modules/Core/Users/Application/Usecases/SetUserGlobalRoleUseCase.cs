@@ -1,5 +1,7 @@
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
 using Tools.Api.Modules.Core.Common.Application.Ports;
+using Tools.Api.Modules.Core.Realtime.Application;
+using Tools.Api.Modules.Core.Realtime.Application.Services;
 using Tools.Api.Modules.Core.Security.Application.Ports;
 using Tools.Api.Modules.Core.Security.Application.Services;
 using Tools.Api.Modules.Core.Security.Application.Usecases;
@@ -16,7 +18,8 @@ public sealed class SetUserGlobalRoleUseCase(
     IUserRepository userRepository,
     IRoleRepository roleRepository,
     ITransactionManager transactionManager,
-    ILogger<SetUserGlobalRoleUseCase> logger
+    ILogger<SetUserGlobalRoleUseCase> logger,
+    RealtimeEventService realtimeEventService
 ) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
@@ -49,5 +52,14 @@ public sealed class SetUserGlobalRoleUseCase(
             CurrentUser.UserId,
             command.UserId,
             command.RoleId);
+
+        try
+        {
+            await realtimeEventService.PublishAsync(
+                PublishRealtimeEventCommand.ForUser(command.UserId, "Core.UserGlobalRoleChanged"));
+        } catch(Exception ex)
+        {
+            logger.LogWarning(ex, "Push temps réel du changement de rôle échoué pour userId={UserId}", command.UserId);
+        }
     }
 }

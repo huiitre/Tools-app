@@ -1,6 +1,8 @@
 using Tools.Api.Modules.Core.Access.Application.Ports;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
 using Tools.Api.Modules.Core.Common.Application.Ports;
+using Tools.Api.Modules.Core.Realtime.Application;
+using Tools.Api.Modules.Core.Realtime.Application.Services;
 using Tools.Api.Modules.Core.Security.Application.Ports;
 using Tools.Api.Modules.Core.Security.Application.Services;
 using Tools.Api.Modules.Core.Security.Application.Usecases;
@@ -20,7 +22,8 @@ public sealed class GrantModuleAccessUseCase(
     IUserRepository userRepository,
     IRoleRepository roleRepository,
     ITransactionManager transactionManager,
-    ILogger<GrantModuleAccessUseCase> logger
+    ILogger<GrantModuleAccessUseCase> logger,
+    RealtimeEventService realtimeEventService
 ) : SecuredUseCase(authorizer)
 {
     private const string DefaultRoleCode = "READ_ONLY";
@@ -60,6 +63,16 @@ public sealed class GrantModuleAccessUseCase(
             CurrentUser.UserId,
             command.ModuleId,
             command.UserId,
-            DefaultRoleCode);
+            DefaultRoleCode
+        );
+
+        try
+        {
+            await realtimeEventService.PublishAsync(
+                PublishRealtimeEventCommand.ForUser(command.UserId, "Core.UserModuleAccessGranted"));
+        } catch(Exception ex)
+        {
+            logger.LogWarning(ex, "Push temps réel de l'octroi d'accès échoué pour userId={UserId}", command.UserId);
+        }
     }
 }

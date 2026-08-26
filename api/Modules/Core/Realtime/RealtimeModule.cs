@@ -1,4 +1,5 @@
 using Tools.Api.Modules.Core.Realtime.Application.Ports;
+using Tools.Api.Modules.Core.Realtime.Application.Services;
 using Tools.Api.Modules.Core.Realtime.Application.Usecases;
 using Tools.Api.Modules.Core.Realtime.Infrastructure;
 
@@ -16,6 +17,7 @@ public static class RealtimeModule
 
         builder.Services.AddScoped<IRecipientResolver, PostgresRecipientResolver>();
         builder.Services.AddScoped<IRealtimePublisher, SignalRRealtimePublisher>();
+        builder.Services.AddScoped<RealtimeEventService>();
         builder.Services.AddScoped<PublishRealtimeEventUseCase>();
 
         return builder;

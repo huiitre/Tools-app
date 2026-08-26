@@ -1,6 +1,6 @@
-import * as signalR from '@microsoft/signalr';
 import { AppNotification } from '../domain/notification.types';
 import { socketService } from '../../Socket/infrastructure/socket.service';
+import { coreHubConnection } from '../../Realtime/infrastructure/coreHubConnection';
 
 // `getToken` est une fonction et non une chaîne : le transport doit pouvoir redemander un jeton
 // à chaque tentative de connexion. Une reconnexion survient parfois bien après l'établissement
@@ -103,40 +103,22 @@ export class WebSocketNotificationTransport implements NotificationTransport {
   }
 }
 
-// Point de connexion réel de l'API Core (voir CoreHub) : notifications, et demain tout autre
-// événement temps réel, sur la même connexion.
+// Point de connexion réel de l'API Core (voir CoreHub) : notifications, et tout autre événement
+// temps réel (ex: changement de rôle, cf. Core/Realtime), sur la même connexion partagée —
+// `coreHubConnection` la possède, ce transport ne fait que s'y abonner à son event.
 export class SignalRNotificationTransport implements NotificationTransport {
-  private connection: signalR.HubConnection | null = null;
-
   connect(
-    url: string,
-    getToken: () => string | Promise<string>,
+    _url: string,
+    _getToken: () => string | Promise<string>,
     onConnect: () => void,
     onMessage: (notif: AppNotification) => void,
     onError: () => void
   ): void {
-    if (this.connection) this.disconnect();
-
-    this.connection = new signalR.HubConnectionBuilder()
-      // SignalR rappelle cette fabrique à chaque tentative, y compris lors des reconnexions :
-      // le jeton présenté est donc toujours celui du moment, jamais celui de la connexion initiale.
-      .withUrl(url, { accessTokenFactory: () => getToken() })
-      // La politique par défaut abandonne après quatre essais (0, 2, 10 et 30 s), soit quarante
-      // secondes — moins que le redémarrage d'un conteneur. Le hub restait alors mort jusqu'au
-      // prochain rafraîchissement de la page. Ici, on retente indéfiniment.
-      .withAutomaticReconnect({ nextRetryDelayInMilliseconds: () => 5000 })
-      .build();
-
-    this.connection.on('ReceiveNotification', onMessage);
-    this.connection.onreconnected(() => onConnect());
-    this.connection.onreconnecting(() => onError());
-    this.connection.onclose(() => onError());
-
-    this.connection.start().then(onConnect).catch(() => onError());
+    coreHubConnection.on<AppNotification>('Core.ReceiveNotification', onMessage);
+    coreHubConnection.connect(onConnect, onError);
   }
 
   disconnect(): void {
-    this.connection?.stop();
-    this.connection = null;
+    coreHubConnection.disconnect();
   }
 }

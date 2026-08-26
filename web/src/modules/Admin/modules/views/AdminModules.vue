@@ -5,14 +5,22 @@ import {
   fetchModules, fetchAllUsers, fetchRoles,
   fetchModuleUsers, addUserToModule, removeUserFromModule, updateUserModuleRole,
 } from '../fetch/adminModules.fetch'
-import type { ModuleUser } from '../types/adminModules.types'
+import type { AdminModule, ModuleUser } from '../types/adminModules.types'
 import type { AdminRole, AdminUser } from '../../users/types/adminUsers.types'
 import ModuleCreateModal from '../components/ModuleCreateModal.vue'
 import ModuleEditModal from '../components/ModuleEditModal.vue'
 import ModuleRolePickerModal from '../components/ModuleRolePickerModal.vue'
 import toast from '@/services/toast'
+import { useAuthStore } from '@/modules/Auth/auth.store'
 
 const store = useAdminModulesStore()
+const auth = useAuthStore()
+
+//* Un admin qui touche ses propres accès module doit voir son /home à jour tout de suite,
+//* sans attendre le prochain refresh de token (cf. refreshUser() dans auth.store.ts).
+const refreshUserIfSelf = (userId: string) => {
+  if (auth.user?.id === userId) auth.refreshUser()
+}
 
 /* ── Init ─────────────────────────────────────────────────── */
 const closePopups = () => { editingRoleUserId.value = null }
@@ -85,6 +93,7 @@ const onDrop = async (target: 'available' | 'members') => {
     try {
       await removeUserFromModule(store.selectedModuleId, uid)
       store.removeMemberLocally(uid)
+      refreshUserIfSelf(uid)
     } catch {
       toast.error('Erreur lors du retrait de l\'utilisateur')
     }
@@ -106,6 +115,7 @@ const onRolePicked = async (role: AdminRole) => {
     await addUserToModule(moduleId, userId)
     await updateUserModuleRole(moduleId, userId, role.id)
     store.addMemberLocally(pendingUser.value, role.id, role.code)
+    refreshUserIfSelf(userId)
     toast.success(`${pendingUser.value.name} ajouté au module`)
   } catch {
     toast.error('Erreur lors de l\'ajout de l\'utilisateur')
@@ -124,6 +134,7 @@ const selectMemberRole = async (member: ModuleUser, role: AdminRole) => {
   try {
     await updateUserModuleRole(store.selectedModuleId, String(member.userId), role.id)
     store.updateMemberRoleLocally(member.userId, role.code)
+    refreshUserIfSelf(String(member.userId))
   } catch {
     toast.error('Erreur lors de la mise à jour du rôle')
   }
@@ -132,6 +143,15 @@ const selectMemberRole = async (member: ModuleUser, role: AdminRole) => {
 /* ── Modales module ───────────────────────────────────────── */
 const createOpen = ref(false)
 const editOpen = ref(false)
+
+const onModuleUpdated = (updated: AdminModule) => {
+  store.updateModuleLocally(updated)
+  editOpen.value = false
+  //* Contrairement à un add/remove/rôle ciblé sur un user précis, éditer le module lui-même
+  //* (actif/inactif, description…) concerne potentiellement tous ses membres dont l'admin
+  //* courant — action rare, donc pas besoin de conditionner sur sa présence dans la liste.
+  auth.refreshUser()
+}
 </script>
 
 <template>
@@ -292,7 +312,7 @@ const editOpen = ref(false)
     <ModuleEditModal
       v-if="editOpen && store.selectedModule"
       :module="store.selectedModule"
-      @updated="m => { store.updateModuleLocally(m); editOpen = false }"
+      @updated="onModuleUpdated"
       @cancel="editOpen = false"
     />
 

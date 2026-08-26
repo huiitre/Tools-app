@@ -42,7 +42,7 @@ http:
       // { id, title, body, type, metadata, createdAt, read }. Un id fixe/omis fait que le
       // dédoublonnage du store (comparaison par id) rejette tout envoi après le premier.
       {
-        "eventType": "ReceiveNotification",
+        "eventType": "Core.ReceiveNotification",
         "payload": {
           "id": 999002,
           "title": "Test Bruno",
