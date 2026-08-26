@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useAdminFeedbacksStore } from '../store/adminFeedbacks.store'
-import { feedbackService } from '@/modules/Core/Feedback/feedback.service'
+import { fetchAdminFeedbacks } from '@/modules/Core/Feedback/fetch/feedback.fetch'
 import AdminFeedbacksToolbar from '../components/AdminFeedbacksToolbar.vue'
 import AdminFeedbacksHeader from '../components/AdminFeedbacksHeader.vue'
 import AdminFeedbacksRow from '../components/AdminFeedbacksRow.vue'
@@ -12,7 +12,7 @@ const store = useAdminFeedbacksStore()
 onMounted(async () => {
   store.loading = true
   try {
-    store.feedbacks = await feedbackService.getAllAdmin()
+    store.feedbacks = await fetchAdminFeedbacks()
   } catch {
     toast.error('Impossible de charger les feedbacks')
   } finally {

@@ -1,6 +1,8 @@
 using Tools.Api.Modules.Core.Access.Application.Ports;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
 using Tools.Api.Modules.Core.Common.Application.Ports;
+using Tools.Api.Modules.Core.Realtime.Application;
+using Tools.Api.Modules.Core.Realtime.Application.Services;
 using Tools.Api.Modules.Core.Security.Application.Ports;
 using Tools.Api.Modules.Core.Security.Application.Services;
 using Tools.Api.Modules.Core.Security.Application.Usecases;
@@ -17,7 +19,8 @@ public sealed class ChangeModuleRoleUseCase(
     IModuleMembershipRepository membershipRepository,
     IRoleRepository roleRepository,
     ITransactionManager transactionManager,
-    ILogger<ChangeModuleRoleUseCase> logger
+    ILogger<ChangeModuleRoleUseCase> logger,
+    RealtimeEventService realtimeEventService
 ) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
@@ -47,6 +50,16 @@ public sealed class ChangeModuleRoleUseCase(
             CurrentUser.UserId,
             command.ModuleId,
             command.UserId,
-            command.RoleId);
+            command.RoleId
+        );
+
+        try
+        {
+            await realtimeEventService.PublishAsync(
+                PublishRealtimeEventCommand.ForUser(command.UserId, "Core.UserModuleRoleChanged"));
+        } catch(Exception ex)
+        {
+            logger.LogWarning(ex, "Push temps réel du changement de rôle échoué pour userId={UserId}", command.UserId);
+        }
     }
 }

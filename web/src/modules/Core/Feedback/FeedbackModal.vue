@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { feedbackService } from './feedback.service';
+import { createFeedback } from './fetch/feedback.fetch';
 import toast from '@/services/toast';
 
 const emit = defineEmits(['close']);
@@ -25,7 +25,7 @@ const submitFeedback = async () => {
 
   isSubmitting.value = true;
   try {
-    await feedbackService.create(message.value.trim());
+    await createFeedback(message.value.trim());
     toast.success('Merci pour votre retour !');
     emit('close');
   } catch (error) {

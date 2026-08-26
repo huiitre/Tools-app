@@ -61,7 +61,7 @@ public sealed class InternalNotificationsTests : IClassFixture<ApiWebApplication
 
         var push = RealtimePublisher.LastPublish;
         Assert.NotNull(push);
-        Assert.Equal("ReceiveNotification", push!.EventType);
+        Assert.Equal("Core.ReceiveNotification", push!.EventType);
         Assert.Equal([InMemoryNotificationRepository.AdminUserId], push.UserIds);
     }
 

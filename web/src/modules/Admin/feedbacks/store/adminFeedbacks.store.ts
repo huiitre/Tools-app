@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Feedback } from '@/modules/Core/Feedback/feedback.types'
+import type { Feedback } from '@/modules/Core/Feedback/types/feedback.types'
 import type { AdminFeedbackColumn, AdminSortDir, AdminFeedbackPageSize } from '../types/adminFeedbacks.types'
 
 export const COLUMNS: AdminFeedbackColumn[] = [

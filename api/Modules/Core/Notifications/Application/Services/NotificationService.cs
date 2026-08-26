@@ -14,7 +14,7 @@ public sealed class NotificationService(
     IRealtimePublisher realtimePublisher,
     ILogger<NotificationService> logger)
 {
-    private const string PushEventType = "ReceiveNotification";
+    private const string PushEventType = "Core.ReceiveNotification";
 
     // Retourne l'identifiant créé, nul si aucun destinataire n'a été trouvé.
     public async Task<long?> Send(SendNotificationCommand command)

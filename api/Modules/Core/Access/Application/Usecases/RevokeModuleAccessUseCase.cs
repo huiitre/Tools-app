@@ -1,6 +1,8 @@
 using Tools.Api.Modules.Core.Access.Application.Ports;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
 using Tools.Api.Modules.Core.Common.Application.Ports;
+using Tools.Api.Modules.Core.Realtime.Application;
+using Tools.Api.Modules.Core.Realtime.Application.Services;
 using Tools.Api.Modules.Core.Security.Application.Ports;
 using Tools.Api.Modules.Core.Security.Application.Services;
 using Tools.Api.Modules.Core.Security.Application.Usecases;
@@ -13,7 +15,8 @@ public sealed class RevokeModuleAccessUseCase(
     UseCaseAuthorizer authorizer,
     IModuleMembershipRepository membershipRepository,
     ITransactionManager transactionManager,
-    ILogger<RevokeModuleAccessUseCase> logger
+    ILogger<RevokeModuleAccessUseCase> logger,
+    RealtimeEventService realtimeEventService
 ) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
@@ -37,6 +40,16 @@ public sealed class RevokeModuleAccessUseCase(
             "Accès module révoqué par userId={ActorId} : moduleId={ModuleId} cible={TargetUserId}",
             CurrentUser.UserId,
             command.ModuleId,
-            command.UserId);
+            command.UserId
+        );
+
+        try
+        {
+            await realtimeEventService.PublishAsync(
+                PublishRealtimeEventCommand.ForUser(command.UserId, "Core.UserModuleAccessRevoked"));
+        } catch(Exception ex)
+        {
+            logger.LogWarning(ex, "Push temps réel du retrait d'accès échoué pour userId={UserId}", command.UserId);
+        }
     }
 }
