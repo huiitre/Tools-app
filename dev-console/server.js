@@ -5,6 +5,9 @@
 // Postgres tourne en local dans docker-compose.dev.yml : la console le démarre, suit ses logs
 // comme n'importe quel autre process, et l'arrête en même temps que le reste.
 //
+// Elle ouvre aussi un tunnel SSH unique vers le NAS (cf. TUNNELS) : les serveurs de jeu ne sont
+// joignables que depuis le réseau docker distant, ce tunnel les ramène sur 127.0.0.1.
+//
 // `node dev-console/server.js qa` : ne lance que le web (mode qa), pas de détection DB.
 'use strict';
 
@@ -24,6 +27,22 @@ const COMPOSE_FILE = 'docker-compose.dev.yml';
 const DB_SERVICE = 'postgres';
 const CONSOLE_PORT = Number(ENV.DEV_CONSOLE_PORT) || 4488;
 const MAX_BUFFER = 3000;
+
+// Redirections du tunnel SSH vers le NAS. Les serveurs de jeu vivent dans la netns du conteneur
+// wireguard-games et leurs ports d'administration ne sont pas publiés sur l'hôte : sans tunnel,
+// rien n'est joignable depuis le poste. Une seule connexion SSH porte toutes les redirections.
+// Le port local est le port distant : seul le host change en dev (172.19.0.x -> 127.0.0.1).
+// Pour en ajouter un : une ligne ici, host et port repris du manifest gameservers.json du NAS.
+// Absents volontairement : 7dtd et rust, interrogés en A2S qui est de l'UDP — `ssh -L` ne
+// transporte que du TCP. Leurs ports RCON, eux, auraient leur place ici.
+const TUNNELS = [
+  { label: 'palworld', host: '172.19.0.7', port: 8212 }, // API REST d'administration
+  { label: 'ark', host: '172.19.0.7', port: 27020 }, // RCON
+  // humanitz est un conteneur à part sur network_tools (pas dans la netns de wireguard-games,
+  // seul son relay socat y est), démarré à la demande. Son IP est attribuée dynamiquement :
+  // celle-ci est valable tant qu'il la retrouve, à revérifier s'il a été recréé entre-temps.
+  { label: 'humanitz', host: '172.19.0.13', port: 8888 }, // RCON
+];
 
 function loadEnvFile(filePath) {
   const result = {};
@@ -149,19 +168,22 @@ function sleep(ms) {
 }
 
 // Port de chaque process applicatif — sert de dernier filet en cas de kill raté (cf. killPort).
-const PORTS = { java: 8083, api: 5090, web: 5173 };
+// Le tunnel en détient plusieurs : un seul process ssh écoute tous les ports redirigés.
+const PORTS = { java: 8083, api: 5090, web: 5173, tunnel: TUNNELS.map((t) => t.port) };
 
 // Dernier filet au-delà de killChild + killTree : un grand-enfant peut échapper à l'arbre
 // reconstruit (observé avec le fork JVM de `spring-boot:run`, qui semble démarrer hors du
 // groupe/session suivi). `fuser` retrouve le process par port directement, peu importe sa
 // filiation — et n'a pas besoin de sudo puisque ce sont nos propres processus.
 function killPort(name) {
-  const port = PORTS[name];
-  if (!port) return;
-  try {
-    require('child_process').spawnSync('fuser', ['-k', `${port}/tcp`], { stdio: 'ignore' });
-  } catch (e) {
-    // fuser absent du système
+  const ports = PORTS[name];
+  if (!ports) return;
+  for (const port of [].concat(ports)) {
+    try {
+      require('child_process').spawnSync('fuser', ['-k', `${port}/tcp`], { stdio: 'ignore' });
+    } catch (e) {
+      // fuser absent du système
+    }
   }
 }
 
@@ -289,14 +311,61 @@ async function stopAsync(name) {
   pushStatus(name, 'stopped');
 }
 
-// Les 3 process applicatifs (ou juste web en mode qa). La base en est exclue : la redémarrer
-// couperait les connexions des API alors que « tout relancer » vise le code, pas l'infra.
+// Les 3 process applicatifs (ou juste web en mode qa). La base et le tunnel en sont exclus :
+// les redémarrer couperait les connexions des API alors que « tout relancer » vise le code, pas
+// l'infra. Chacun garde son propre bouton de redémarrage.
 function restartAll() {
   const names = QA ? ['web'] : ['api', 'java', 'web'];
   for (const name of names) restart(name);
 }
 
-// ---- Orchestration : DB puis les 3 process (ou juste web en mode qa) ----
+// ---- Tunnel SSH vers le NAS ----
+
+function tunnelArgs() {
+  const args = [
+    '-N', // aucune commande distante : la connexion ne sert qu'aux redirections
+    '-p', String(ENV.SSH_PORT || 22),
+    '-o', 'BatchMode=yes', // jamais de prompt : un process sans TTY resterait bloqué dessus
+    '-o', 'ConnectTimeout=10',
+    '-o', 'ExitOnForwardFailure=yes', // échec franc si un port local est pris, plutôt qu'un tunnel muet
+    // Sans keepalive le tunnel meurt en silence derrière le NAT : les API se mettent à échouer
+    // sans que rien n'ait bougé côté code.
+    '-o', 'ServerAliveInterval=30',
+    '-o', 'ServerAliveCountMax=3',
+  ];
+  for (const tunnel of TUNNELS) args.push('-L', `${tunnel.port}:${tunnel.host}:${tunnel.port}`);
+  args.push(`${ENV.SSH_USER}@${ENV.SSH_HOST}`);
+  return args;
+}
+
+async function startTunnel() {
+  if (!ENV.SSH_HOST || !ENV.SSH_USER) {
+    pushLine('tunnel', 'SSH_HOST/SSH_USER absents du .env — tunnel non démarré, les serveurs de jeu resteront injoignables.', 'system');
+    pushStatus('tunnel', 'stopped');
+    return;
+  }
+
+  // ExitOnForwardFailure fait échouer la connexion entière dès qu'un seul port local est pris :
+  // le dire ici évite de chercher la cause dans le message ssh, qui ne nomme que le port fautif.
+  for (const tunnel of TUNNELS) {
+    if (await checkPort('127.0.0.1', tunnel.port, 300)) {
+      pushLine('tunnel', `port local ${tunnel.port} (${tunnel.label}) déjà occupé — ssh refusera d'ouvrir les redirections.`, 'system');
+    }
+  }
+
+  spawnLogged('tunnel', 'ssh', tunnelArgs());
+
+  // `ssh -N` n'écrit rien quand tout se passe bien : sans cette vérification le panneau resterait
+  // muet, sans moyen de distinguer un tunnel établi d'un tunnel mort-né.
+  const [first] = TUNNELS;
+  if (first && (await waitForPort('127.0.0.1', first.port, 10000))) {
+    pushLine('tunnel', `établi — ${TUNNELS.map((t) => `${t.label}:${t.port}`).join(', ')}`, 'system');
+  } else {
+    pushLine('tunnel', 'aucune redirection active après 10s — voir les erreurs ssh ci-dessus.', 'system');
+  }
+}
+
+// ---- Orchestration : DB, tunnel, puis les 3 process (ou juste web en mode qa) ----
 
 async function main() {
   if (QA) {
@@ -328,6 +397,9 @@ async function main() {
 
   // Le panneau db suit les logs du conteneur. Son bouton ⟳ redémarre le conteneur (cf. restartAsync).
   spawnLogged('db', 'docker', composeArgs('logs', '-f', '--tail', '50', DB_SERVICE), credentialsFromEnv);
+
+  // Avant les API : elles interrogent les serveurs de jeu sur 127.0.0.1, via ces redirections.
+  await startTunnel();
 
   const dbEnv = { DB_HOST: '127.0.0.1', DB_PORT: String(LOCAL_DB_PORT), ...credentialsFromEnv };
 

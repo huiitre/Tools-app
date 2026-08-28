@@ -108,8 +108,8 @@
   var connEl = document.getElementById('conn');
 
   var HIDDEN_BY_DEFAULT = { system: true };
-  var HAS_PROCESS = { system: false }; // tout le reste (db/api/java/web) a un vrai process
-  var PRIMARY = { db: true, api: true, java: true, web: true }; // clear/copy/reload dédiés
+  var HAS_PROCESS = { system: false }; // tout le reste (db/tunnel/api/java/web) a un vrai process
+  var PRIMARY = { db: true, tunnel: true, api: true, java: true, web: true }; // clear/copy/reload dédiés
 
   // Le DOM ne garde que DISPLAY_SIZE lignes après un nettoyage, mais on laisse grossir jusqu'à
   // TRIM_AT avant d'en faire un — un seul nettoyage par paquet de (TRIM_AT - DISPLAY_SIZE), pas

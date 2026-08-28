@@ -16,6 +16,8 @@ collections:
     path: "api.dofusdb"
   - name: "valorant-api"
     path: "valorant-api"
+  - name: "Recherche Entreprises (API Gouv)"
+    path: "Recherche Entreprises (API Gouv)"
 
 specs:
 

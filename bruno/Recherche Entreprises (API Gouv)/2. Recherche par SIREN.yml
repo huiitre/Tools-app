@@ -1,0 +1,30 @@
+info:
+  name: 2. Recherche par SIREN
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: https://recherche-entreprises.api.gouv.fr/search?q=883847014
+  params:
+    - name: q
+      value: "883847014"
+      type: query
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Le même paramètre `q` accepte un SIREN (9 chiffres) ou un SIRET (14 chiffres). Pas d'endpoint
+  séparé, pas de syntaxe particulière.
+
+  C'est ce qui permet de relire une entreprise déjà connue pour vérifier son `etat_administratif`
+  (`A` active, `C` cessée) sans passer par l'API Sirene de l'INSEE.
+
+  ⚠️ Sur une recherche par SIREN, `matching_etablissements` revient **toujours vide** — c'est
+  documenté et voulu. Les champs peuplés ne sont donc pas les mêmes qu'en recherche par nom.
+
+  Exemple ici : 883847014 = WORKSOFT, Aix-en-Provence, NAF 62.02A.

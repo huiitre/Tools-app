@@ -1,0 +1,44 @@
+info:
+  name: 4. Filtres (code postal, NAF, effectif)
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: https://recherche-entreprises.api.gouv.fr/search?q=developpeur&code_postal=69003&etat_administratif=A
+  params:
+    - name: q
+      value: developpeur
+      type: query
+    - name: code_postal
+      value: "69003"
+      type: query
+    - name: etat_administratif
+      value: A
+      type: query
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Les filtres se cumulent avec `q`. Tous vérifiés contre l'API réelle le 25/08/2026 :
+
+  | Paramètre | Exemple | Effet |
+  |---|---|---|
+  | `code_postal` | `69003` | restreint à un code postal |
+  | `activite_principale` | `62.02A` | code NAF — `62.01Z` programmation, `62.02A` conseil en systèmes informatiques |
+  | `etat_administratif` | `A` | `A` active, `C` cessée |
+  | `tranche_effectif_salarie` | `41` | tranche d'effectif salarié |
+
+  Variantes à essayer en changeant l'URL :
+
+  ```text
+  ?q=octo&activite_principale=62.02A
+  ?q=octo&tranche_effectif_salarie=41
+  ```
+
+  Il existe aussi un second endpoint, `GET /near_point`, pour la recherche par coordonnées
+  géographiques plutôt que par code postal.
