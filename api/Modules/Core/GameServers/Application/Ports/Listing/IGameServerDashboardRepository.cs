@@ -5,5 +5,5 @@ namespace Tools.Api.Modules.Core.GameServers.Application.Ports.Listing;
 // Lecture dédiée au dashboard : elle ne projette jamais les credentials techniques.
 public interface IGameServerDashboardRepository
 {
-    Task<IReadOnlyList<GameServerDashboardView>> FindVisibleForDashboardAsync();
+    Task<IReadOnlyList<GameServerListRow>> FindVisibleForDashboardAsync();
 }

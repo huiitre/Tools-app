@@ -10,11 +10,6 @@ http:
     type: bearer
     token: "{{authToken}}"
 
-runtime:
-  variables:
-    - name: gameCode
-      value: ark-survival-ascended
-
 settings:
   encodeUrl: true
   timeout: 0

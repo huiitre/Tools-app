@@ -26,14 +26,17 @@ public sealed class FakeGameServerDashboardProvider : IGameServerProvider, IGame
             target.PictureUrl,
             Version: null,
             Description: null,
-            WorldId: null));
+            WorldId: null,
+            Settings: null,
+            Actions: []));
     }
 
     public Task<GameServerLiveView> FetchLiveAsync(GameServerTarget target, CancellationToken cancellationToken)
     {
         return Task.FromResult(new GameServerLiveView(
             1, 12, null, null, null, null, null, null,
-            [new GameServerLivePlayer("Huiitre", "abc", null, null, null, null, null, null, null, null)],
+            [new GameServerLivePlayer("Huiitre", "abc", null, null, null, null, null, null, null, null, null, null, null)],
+            [],
             [],
             []));
     }

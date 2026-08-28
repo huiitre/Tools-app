@@ -155,12 +155,43 @@ Deux pièges vérifiés en direct sur les serveurs réels :
   dashboard doit afficher. C'est la raison d'être d'une méthode de statut
   séparée et minimale.
 
+### Joindre les serveurs depuis un poste de dev
+
+Le manifest porte les IP docker du NAS : injoignables depuis une machine de
+développement. `dev-console` ouvre un tunnel SSH qui les ramène sur `127.0.0.1`
+en conservant les ports (voir `AGENTS.md`), et l'option `GameServers:HostOverride`
+d'`appsettings.Development.json` y redirige les cibles — un décorateur des ports
+de lecture, jamais enregistré quand l'option est absente, donc invisible en QA et
+en production.
+
+Le scheduler suit la même option : il ne tourne en Development **que si**
+`HostOverride` est renseigné. Sans lui, chaque passage écraserait les statuts
+clonés par des « hors ligne » sans valeur.
+
+`ssh -L` ne transportant que du TCP, les serveurs interrogés en A2S resteront
+hors ligne en local quoi qu'il arrive.
+
 L'identité affichée (nom du serveur, jeu, image) vient toujours de
 `game_servers`, pour tous les jeux, afin que la popup et la carte du widget
 concordent. Le provider n'ajoute que ce que la base n'a pas : version,
 description, identifiant de monde.
 
-Le DTO ne porte **ni la liste des actions d'administration, ni la configuration
-du serveur** : aucune route ne permet aujourd'hui de déclencher une action, et un
-champ qui annonce une capacité inexistante rend le contrat trompeur. Les deux
-seront ajoutés avec les commandes d'admin, pas avant.
+### Actions d'administration
+
+Troisième contrat optionnel, `IGameServerActions`, à côté de `IGameServerDashboard` :
+
+- le jeu **déclare** ses actions (`Actions`) — code, libellé, icône, rôle exigé,
+  caractère dangereux, et la liste de ses paramètres (nom, libellé, type
+  `text`/`number`/`player`, obligatoire ou non) ;
+- il sait les **exécuter** (`ExecuteAsync`).
+
+Aucun code d'action n'est connu du module ni du front : celui-ci construit un
+formulaire à partir de la description. Palworld en déclare sept (announce, save,
+kick, ban, unban, shutdown, stop), Ark quatre — son RCON n'a ni `unban` ni arrêt
+différé. Un jeu qui n'implémente pas ce contrat n'affiche aucune section Actions.
+
+`GET /details` ne renvoie que les actions **autorisées par le rôle de
+l'appelant** ; `POST /gameservers/{slug}/actions/{code}` revérifie ce rôle avant
+d'exécuter, puis contrôle les paramètres obligatoires. Ce que le front affiche
+n'autorise donc rien par lui-même. Les rôles reprennent ceux de l'API Java :
+MODERATOR pour announce/save/kick, ADMIN pour ban/unban/shutdown/stop.

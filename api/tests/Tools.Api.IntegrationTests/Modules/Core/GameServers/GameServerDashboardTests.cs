@@ -6,6 +6,7 @@ using Tools.Api.IntegrationTests.Fakes;
 using Tools.Api.IntegrationTests.Fixtures;
 using Tools.Api.Modules.Core.Common.Api.Internal;
 using Tools.Api.Modules.Core.GameServers.Application.Dto.Games;
+using Tools.Api.Modules.Core.GameServers.Application.Dto.Listing;
 using Tools.Api.Modules.Core.GameServers.Application.Dto.Sync;
 using Xunit;
 
@@ -70,6 +71,19 @@ public sealed class GameServerDashboardTests : IClassFixture<ApiWebApplicationFa
         using var client = factory.CreateClientWithRole("READ_ONLY");
         using var response = await client.GetAsync("/gameservers/rust/live");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Listing_says_which_servers_have_a_dashboard()
+    {
+        await SyncAsync();
+
+        using var client = factory.CreateClientWithRole("READ_ONLY");
+        var gameServers = await client.GetFromJsonAsync<IReadOnlyList<GameServerDashboardView>>("/gameservers");
+        Assert.NotNull(gameServers);
+
+        Assert.True(gameServers.Single(gameServer => gameServer.Slug == "ark-survival-ascended").HasDashboard);
+        Assert.False(gameServers.Single(gameServer => gameServer.Slug == "rust").HasDashboard);
     }
 
     [Fact]

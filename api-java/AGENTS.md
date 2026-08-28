@@ -382,11 +382,13 @@ UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + r
   chaque ligne valide de breeding.json, intégrité des références invalides connues, cohérence calcul
   direct ↔ index sur l'intégralité des paires.
 
-  **Pas encore fait** : variante "Pals possédés" (nécessite d'ajouter `gender` à `pal_instance`, actuellement
-  absent) — prévue par l'utilisateur mais explicitement hors scope pour l'instant. Voir aussi la spec frontend
+  **Pas encore fait** : variante "Pals possédés" — prévue par l'utilisateur mais explicitement hors
+  scope pour l'instant. (La colonne `gender` de `pal_instance`, annoncée absente ici jusqu'au
+  29/08/2026, existe bien : elle est lue par `PostgresServerInventoryQueryRepository` et exposée
+  dans `ServerPalInventoryView.gender`.) Voir aussi la spec frontend
   dans `web/AGENTS.md` (page Breeding Calculator, pas commencée).
 
-9c. Module Palworld — Format des guildId direct ↔ snapshot (2026-08-16)
+9c. Module Palworld — Format des guildId direct ↔ snapshot (2026-08-16, code déplacé le 29/08/2026)
 
   **Le direct et le persisté n'écrivaient pas le même GUID de la même façon.** `/v1/api/game-data`
   renvoie `8F05C04606C64CB3B895E84AD4E9D13D` (hexadécimal majuscule, sans tirets) là où l'extracteur
@@ -400,8 +402,12 @@ UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + r
   écarter les bases détruites les supprimait toutes ; les noms de joueurs en ligne n'étaient jamais
   rattachés à une base.
 
-  Correction : `PalworldRestAdapter.toCanonicalGuildId` normalise le `GuildID` en UUID canonique aux
-  trois sorties du direct (joueurs, bases, pals de base). La fonction est idempotente — un identifiant
+  **Le dashboard serveur a quitté cette API le 29/08/2026** (voir le Discovery Log) : la
+  normalisation vit désormais côté front, dans `palworldMapAdapter.ts`, qui apparie les
+  identifiants du direct avec ceux du snapshot. Le piège reste entier, seul l'endroit change.
+
+  Correction d'origine : `PalworldRestAdapter.toCanonicalGuildId` normalisait le `GuildID` en UUID
+  canonique aux trois sorties du direct (joueurs, bases, pals de base). La fonction est idempotente — un identifiant
   déjà canonique ressort inchangé — et laisse passer tel quel ce qui n'est pas 32 caractères
   hexadécimaux (identifiants du `PalworldMockAdapter`). **La normalisation appartient à
   l'infrastructure** : le reste de l'application n'a pas à connaître les conventions d'écriture de
@@ -481,3 +487,18 @@ soit à jour, comme lors de la mise en production du 15/08.
 - Authentification : Chiffrement AES-256 du refresh token en base. Rotation auto via ValorantAuthService (utilisable hors contexte de sécurité).
 - Scheduler : Synchronisation auto de la watchlist et de l'historique shop à 6h00 (ValorantWatchlistScheduler).
 - Trigger Manuel : POST /api/v3/riot/valorant/watchlist/admin/sync (Rôle ADMIN requis).
+
+## Module Palworld — Dashboard serveur retiré (2026-08-29)
+
+Le dashboard serveur est passé sur l'API C# (`Core/GameServers`), sous forme d'une popup ouverte
+depuis le widget des serveurs de jeux. Tout ce qui le servait ici a été supprimé : les 12 routes
+`/palworld/server/*` de `PalworldServerController`, leurs use cases, commandes et vues,
+`PalworldServerPort`, `PalworldRestAdapter`, `PalworldMockAdapter`, `PalworldCoord`,
+`PalworldConfig`, la propriété `palworld.api.base-url` des trois profils, et le dossier Bruno
+`Tools API v3/Palworld/Server/`. **Cette API n'expose plus aucune route `/palworld/server/*`.**
+
+**Ce qui reste et ne doit pas être confondu avec ça** : tout `serverdata/`
+(`/palworld/server-data/*`), qui importe les snapshots de l'extracteur toutes les 5 minutes et
+alimente l'élevage, le Paldex, « Mes Pals » et la carte du nouveau dashboard. Vérifié avant
+suppression : aucun script du NAS n'appelle `/palworld/server/*` — les seules routes qu'ils
+utilisent sont `palworld/sync`, `dofus/*/sync`, `riot/valorant/sync` et `notifications`.

@@ -5,3 +5,5 @@ variables:
     value: admin@huiitre.fr
   - secret: true
     name: authPassword
+  - name: gameCode
+    value: ark-survival-ascended

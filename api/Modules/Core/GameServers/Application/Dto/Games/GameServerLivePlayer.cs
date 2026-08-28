@@ -9,7 +9,13 @@ public sealed record GameServerLivePlayer(
     int? Level,
     int? Health,
     int? MaxHealth,
+    string? GroupId,
     string? GroupName,
+    // Coordonnées lisibles, telles que le jeu les affiche à ses joueurs.
     double? MapX,
     double? MapY,
+    // Coordonnées brutes du monde. Elles ne servent qu'à la projection sur une carte, faite par
+    // le front : lui seul connaît les images et leurs bornes.
+    double? PositionX,
+    double? PositionY,
     GameServerLiveCompanion? Companion);

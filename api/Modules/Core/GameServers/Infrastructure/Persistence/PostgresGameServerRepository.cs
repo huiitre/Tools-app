@@ -173,12 +173,14 @@ public sealed class PostgresGameServerRepository(
             new { Id = id, status.Online, status.NumPlayers, status.MaxPlayers });
     }
 
-    public async Task<IReadOnlyList<GameServerDashboardView>> FindVisibleForDashboardAsync()
+    public async Task<IReadOnlyList<GameServerListRow>> FindVisibleForDashboardAsync()
     {
         await using var connection = await dataSource.OpenConnectionAsync();
-        var gameServers = await connection.QueryAsync<GameServerDashboardView>(
+        var gameServers = await connection.QueryAsync<GameServerListRow>(
             """
-            SELECT COALESCE(game_name, game_code) AS GameName,
+            SELECT slug AS Slug,
+                   game_code AS GameCode,
+                   COALESCE(game_name, game_code) AS GameName,
                    server_name AS ServerName,
                    picture_url AS PictureUrl,
                    online AS Online,

@@ -2,6 +2,8 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useGameServersStore } from '../store/gameServers.store'
 import GameServerCard from './GameServerCard.vue'
+import GameServerDashboardModal from './GameServerDashboardModal.vue'
+import type { GameServer } from '../types/gameServers.types'
 
 const HIDE_OFFLINE_STORAGE_KEY = 'gameServers.hideOffline'
 
@@ -17,6 +19,8 @@ onMounted(() => {
   store.ensureLoaded()
   store.startAutoRefresh()
 })
+
+const dashboardServer = ref<GameServer | null>(null)
 
 const visibleServers = computed(() =>
   hideOffline.value ? store.servers.filter(server => server.online === true) : store.servers
@@ -37,11 +41,18 @@ const visibleServers = computed(() =>
     <div v-if="visibleServers.length" class="game-servers-grid">
       <GameServerCard
         v-for="server in visibleServers"
-        :key="`${server.gameName}-${server.serverName}`"
+        :key="server.slug"
         :server="server"
+        @open-dashboard="dashboardServer = server"
       />
     </div>
     <p v-else class="game-servers-empty">Aucun serveur en ligne pour le moment.</p>
+
+    <GameServerDashboardModal
+      v-if="dashboardServer"
+      :server="dashboardServer"
+      @close="dashboardServer = null"
+    />
   </section>
 </template>
 

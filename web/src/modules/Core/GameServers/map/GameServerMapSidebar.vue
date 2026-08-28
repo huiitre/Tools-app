@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 
-const STORAGE_KEY = 'palworld.map.sidebarOpen'
+const STORAGE_KEY = 'gameServers.map.sidebarOpen'
 const open = ref(localStorage.getItem(STORAGE_KEY) !== 'false')
 
 watch(open, value => localStorage.setItem(STORAGE_KEY, String(value)))

@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Tools.Api.Modules.Core.GameServers.Application.Dto.Games;
 using Tools.Api.Modules.Core.GameServers.Application.Ports.Games;
 using Tools.Api.Modules.Core.GameServers.Infrastructure.Clients;
+using Tools.Api.Modules.Core.Security.Domain;
 
 namespace Tools.Api.Modules.Core.GameServers.Infrastructure.Games;
 
@@ -9,11 +10,57 @@ namespace Tools.Api.Modules.Core.GameServers.Infrastructure.Games;
 // ni FPS, ni uptime, ni position : le dashboard affichera « indisponible » pour tout cela. Les
 // commandes vérifiées sur le serveur sont ListPlayers et GetGameLog ; GetChat, GetTimeOfDay,
 // GetServerInfo et ListActiveMods répondent « Server received, But no response!! ».
-public sealed partial class ArkProvider : IGameServerProvider, IGameServerDashboard
+public sealed partial class ArkProvider : IGameServerProvider, IGameServerDashboard, IGameServerActions
 {
     private const string NoPlayers = "No Players Connected";
 
     public string GameCode => "ARK_SA";
+
+    // Ark n'a ni « unban » ni arrêt différé par RCON : sa liste est plus courte que celle de
+    // Palworld, et le front s'y adapte sans rien savoir du jeu.
+    public IReadOnlyList<GameServerActionDefinition> Actions { get; } =
+    [
+        new("announce", "Annoncer un message", "mdi-bullhorn-outline", RoleCode.Moderator, false,
+            [new("message", "Message", "text", true, "Message à diffuser")]),
+        new("save", "Sauvegarder le monde", "mdi-content-save-outline", RoleCode.Moderator, false, []),
+        new("kick", "Expulser un joueur", "mdi-account-remove-outline", RoleCode.Moderator, false,
+            [new("playerId", "Joueur", "player", true, null)]),
+        new("ban", "Bannir un joueur", "mdi-account-cancel-outline", RoleCode.Admin, true,
+            [new("playerId", "Joueur", "player", true, null)]),
+    ];
+
+    public async Task ExecuteAsync(
+        GameServerTarget target,
+        string actionCode,
+        IReadOnlyDictionary<string, string> parameters,
+        CancellationToken cancellationToken)
+    {
+        var command = actionCode switch
+        {
+            "announce" => $"Broadcast {Parameter(parameters, "message")}",
+            "save" => "SaveWorld",
+            "kick" => $"KickPlayer {Parameter(parameters, "playerId")}",
+            "ban" => $"BanPlayer {Parameter(parameters, "playerId")}",
+            _ => throw new InvalidOperationException($"Action inconnue : {actionCode}."),
+        };
+
+        var password = GameServerProtocolConfig.GetString(target.ProtocolConfig, "rconPassword");
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            throw new InvalidOperationException("Aucun mot de passe RCON n'est configuré pour ce serveur.");
+        }
+
+        await using var client = new SourceRconClient();
+        if (!await client.ConnectAsync(target.Host, target.Port, password, cancellationToken))
+        {
+            throw new InvalidOperationException("L'authentification RCON a échoué.");
+        }
+
+        await client.ExecuteAsync(command, cancellationToken);
+    }
+
+    private static string Parameter(IReadOnlyDictionary<string, string> parameters, string name) =>
+        parameters.TryGetValue(name, out var value) ? value : string.Empty;
 
     public async Task<GameServerStatus> FetchStatusAsync(GameServerTarget target, CancellationToken cancellationToken)
     {
@@ -63,7 +110,11 @@ public sealed partial class ArkProvider : IGameServerProvider, IGameServerDashbo
             target.PictureUrl,
             Version: null,
             Description: null,
-            WorldId: null));
+            WorldId: null,
+            // Le RCON n'expose aucune configuration serveur.
+            Settings: null,
+            // Rempli par le use case, qui seul connaît les droits de l'appelant.
+            Actions: []));
     }
 
     public async Task<GameServerLiveView> FetchLiveAsync(GameServerTarget target, CancellationToken cancellationToken)
@@ -101,6 +152,8 @@ public sealed partial class ArkProvider : IGameServerProvider, IGameServerDashbo
             InGameDay: null,
             BaseCount: null,
             Players: parsedPlayers,
+            // Ark n'expose aucune construction par RCON.
+            Structures: [],
             Log: ParseLog(log),
             Unavailable: unavailable);
     }
@@ -129,9 +182,12 @@ public sealed partial class ArkProvider : IGameServerProvider, IGameServerDashbo
                 Level: null,
                 Health: null,
                 MaxHealth: null,
+                GroupId: null,
                 GroupName: null,
                 MapX: null,
                 MapY: null,
+                PositionX: null,
+                PositionY: null,
                 Companion: null));
         }
 
@@ -153,7 +209,7 @@ public sealed partial class ArkProvider : IGameServerProvider, IGameServerDashbo
     }
 
     private static GameServerLiveView Unavailable(params string[] sections) => new(
-        null, null, null, null, null, null, null, null, [], [], sections);
+        null, null, null, null, null, null, null, null, [], [], [], sections);
 
     [GeneratedRegex(@"(?m)^\s*\d+\.\s+(?<entry>.+?)\s*$")]
     private static partial Regex PlayerLine();

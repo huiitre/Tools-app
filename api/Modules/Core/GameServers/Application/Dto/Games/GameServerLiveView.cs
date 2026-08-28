@@ -14,6 +14,8 @@ public sealed record GameServerLiveView(
     int? InGameDay,
     int? BaseCount,
     IReadOnlyList<GameServerLivePlayer> Players,
+    // Constructions des joueurs. Vide quand le jeu n'en expose pas.
+    IReadOnlyList<GameServerLiveStructure> Structures,
     // Journal du serveur, des plus anciennes lignes aux plus récentes. Vide quand le jeu n'en
     // expose pas — et attention, certains le vident à la lecture (Ark).
     IReadOnlyList<string> Log,

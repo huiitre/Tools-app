@@ -93,13 +93,15 @@ public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameS
             gameServer.ProtocolConfig));
     }
 
-    public Task<IReadOnlyList<GameServerDashboardView>> FindVisibleForDashboardAsync()
+    public Task<IReadOnlyList<GameServerListRow>> FindVisibleForDashboardAsync()
     {
-        IReadOnlyList<GameServerDashboardView> views = gameServers.Values
+        IReadOnlyList<GameServerListRow> views = gameServers.Values
             .Select((gameServer, index) =>
             {
                 statuses.TryGetValue(index + 1, out var status);
-                return new GameServerDashboardView(
+                return new GameServerListRow(
+                    gameServer.Slug,
+                    gameServer.GameCode,
                     gameServer.GameName ?? gameServer.GameCode,
                     gameServer.ServerName,
                     gameServer.PictureUrl,

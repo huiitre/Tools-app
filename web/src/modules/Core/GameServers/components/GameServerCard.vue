@@ -8,6 +8,8 @@ const props = defineProps<{
   server: GameServer
 }>()
 
+const emit = defineEmits<{ openDashboard: [] }>()
+
 const { copy } = useClipboard()
 
 const statusClass = computed(() => {
@@ -75,6 +77,17 @@ const copyConnection = () => {
 
       <p class="game-server-checked">{{ checkedLabel }}</p>
     </div>
+
+    <!-- Absente tant qu'aucun provider de jeu ne sait alimenter un dashboard pour ce serveur. -->
+    <button
+      v-if="server.hasDashboard"
+      type="button"
+      class="game-server-dashboard"
+      @click="emit('openDashboard')"
+    >
+      <i class="mdi mdi-view-dashboard-outline" aria-hidden="true" />
+      Dashboard
+    </button>
   </article>
 </template>
 
@@ -218,5 +231,30 @@ const copyConnection = () => {
   font-size: 0.72rem;
   color: var(--pico-muted-color);
   opacity: 0.7;
+}
+
+.game-server-dashboard {
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem;
+  border: none;
+  border-top: 1px solid var(--pico-muted-border-color);
+  border-radius: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+
+  background: var(--pico-muted-background-color);
+  color: var(--pico-color);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+  }
 }
 </style>

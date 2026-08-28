@@ -597,3 +597,49 @@ ex. `WorkshopCreateBar.vue`) sans avoir à les corriger un par un. Ne touche pas
   l'eau — plusieurs itérations déjà faites sur ce retour (scroll, grille, devise, focus, recherche, catalogue).
 - Pas de géolocalisation des marchands (abandonné, cf. recherche du 06/08 : position hors DataTable,
   mécanisme spawner non percé).
+
+## Module Core/GameServers — widget et dashboard serveur (2026-08-29)
+
+`src/modules/Core/GameServers/` sert deux écrans : le **widget** de la home (liste des serveurs,
+lue en base par l'API, rafraîchie toutes les 60 s) et le **dashboard**, une popup centrée ouverte
+au clic sur la bannière d'une carte — il n'y a **aucune route front**, la popup est montée par
+`GameServersWidget`.
+
+```
+components/  GameServerCard.vue            bannière « Dashboard » si server.hasDashboard
+             GameServerDashboardModal.vue  la popup : details une fois, live toutes les 5 s
+             GameServerActionCard.vue      un formulaire par action déclarée
+map/         GameServerMapPanel.vue        onglets, colonne latérale, marqueurs
+             GameServerMapFrame.vue        rendu canvas (zoom/pan), déplacé depuis Palworld
+             GameServerMapSidebar.vue      colonne repliable, idem
+             GameServerMapLayerSection.vue calques décochables, idem
+             mapAdapter.ts                 le contrat que remplit chaque jeu
+             mapRegistry.ts                gameCode → adaptateur
+```
+
+**Le front ne connaît aucun jeu, sauf en un point.** `hasDashboard` vient de l'API (elle sait quels
+providers existent), les actions sont décrites par l'API et rendues telles quelles, et les données
+manquantes s'affichent « Indisponible » plutôt que de masquer un bloc — le dashboard a la même
+forme pour tous les jeux, Ark laissant simplement la plupart des tuiles vides.
+
+L'exception est `mapRegistry.ts`, **seul endroit du Core qui importe un module de jeu** :
+`@/modules/Palworld/server/map/palworldMapAdapter`. L'adaptateur y implémente `resolve()` (bornes
+des deux cartes Palworld, projection en pourcentage) et `loadGroups()`, qui appelle
+`/palworld/server-data/guilds` pour connaître les membres d'une guilde **même déconnectés** — le
+direct ne donne que les connectés. Il y fait aussi la conversion d'identifiant de guilde entre les
+deux sources (`8B72…` sans tirets côté direct, UUID canonique côté snapshot) : sans elle, aucune
+base ne retrouve ses joueurs. Cet import disparaîtra quand `serverdata` sera migré en C#.
+
+`loadGroups()` part dans le **même `Promise.all`** que le live : un seul cycle, une seule gestion
+d'erreur.
+
+**La page `/palworld/server` a été supprimée le 29/08/2026** au profit de cette popup, avec ses
+composants (`PalworldServerDashboard`, `PalworldOverviewMap`, `PalworldPlayerDetailsModal`),
+`palworldServer.fetch.ts`, ses types et `utils/palworldMap.ts`. **Rien de tout `serverdata` n'a
+bougé** : `serverData.store`, `palworldServerData.fetch` et `PalworldServerPlayerSelector` (qui vit
+dans la nav, pas dans le dashboard) alimentent toujours l'élevage, le Paldex et « Mes Pals ».
+`/palworld` redirige désormais vers `palworld-inventory`.
+
+Deux manques assumés par rapport à l'ancienne page : pas de popup de détails au clic sur un joueur,
+et les **bases n'affichent que les pals du direct** — le décompte vient de `game-data`, pas du
+snapshot.

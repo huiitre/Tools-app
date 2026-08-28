@@ -19,6 +19,24 @@ public class GameServerDashboardController : ControllerBase
         return getGameServerDashboardUseCase.ExecuteDetails(slug, cancellationToken);
     }
 
+    // Les paramètres sont libres : chaque jeu déclare les siens, le contrôleur ne les connaît pas.
+    [HttpPost("actions/{actionCode}")]
+    public async Task<IActionResult> ExecuteAction(
+        string slug,
+        string actionCode,
+        [FromBody] Dictionary<string, string>? parameters,
+        [FromServices] GetGameServerDashboardUseCase getGameServerDashboardUseCase,
+        CancellationToken cancellationToken)
+    {
+        await getGameServerDashboardUseCase.ExecuteAction(
+            slug,
+            actionCode,
+            parameters ?? [],
+            cancellationToken);
+
+        return NoContent();
+    }
+
     [HttpGet("live")]
     public Task<GameServerLiveView> GetLive(
         string slug,
