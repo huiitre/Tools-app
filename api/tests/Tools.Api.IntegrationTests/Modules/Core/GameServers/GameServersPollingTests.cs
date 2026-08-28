@@ -1,8 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Tools.Api.IntegrationTests.Fakes;
 using Tools.Api.IntegrationTests.Fixtures;
-using Tools.Api.Modules.Core.GameServers.Application;
-using Tools.Api.Modules.Core.GameServers.Application.Dto;
+using Tools.Api.Modules.Core.GameServers.Application.Usecases;
+using Tools.Api.Modules.Core.GameServers.Application.Dto.Games;
+using Tools.Api.Modules.Core.GameServers.Application.Dto.Sync;
 using Xunit;
 
 namespace Tools.Api.IntegrationTests.Modules.Core.GameServers;
@@ -20,7 +21,7 @@ public sealed class GameServersPollingTests : IClassFixture<ApiWebApplicationFac
     }
 
     private InMemoryGameServerRepository Servers => factory.Services.GetRequiredService<InMemoryGameServerRepository>();
-    private FakeGameServerStatusProvider Provider => factory.Services.GetRequiredService<FakeGameServerStatusProvider>();
+    private FakeGameServerProvider Provider => factory.Services.GetRequiredService<FakeGameServerProvider>();
 
     [Fact]
     public async Task Polling_uses_the_protocol_provider_and_writes_only_its_status()

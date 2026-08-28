@@ -1,4 +1,4 @@
-using Tools.Api.Modules.Core.GameServers.Application;
+using Tools.Api.Modules.Core.GameServers.Application.Usecases;
 
 namespace Tools.Api.Modules.Core.GameServers.Infrastructure.Polling;
 

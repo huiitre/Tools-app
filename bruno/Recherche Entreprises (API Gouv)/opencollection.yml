@@ -1,0 +1,90 @@
+opencollection: 1.0.0
+
+info:
+  name: Recherche Entreprises (API Gouv)
+
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git
+
+docs: |-
+  # API Recherche d'entreprises
+
+  Recherche d'une entreprise française par dénomination, adresse, dirigeant ou position
+  géographique. Utilisée par le module Job Tracker pour retrouver l'entreprise réelle derrière le
+  nom affiché sur une annonce.
+
+  - **Base URL** : `https://recherche-entreprises.api.gouv.fr`
+  - **Authentification** : aucune. Pas de compte, pas de clé, pas d'en-tête.
+  - **Producteur** : Direction interministérielle du numérique (DINUM)
+  - **Sources** : INSEE (base Sirene) + INPI (RNE / RNCS)
+  - **Limite de débit** : 7 appels / seconde, l'administration se réservant de l'abaisser en cas
+    de surcharge.
+
+  ## Endpoints
+
+  ```text
+  GET /search       recherche textuelle
+  GET /near_point   recherche géographique par coordonnées
+  ```
+
+  ## Paramètres de /search
+
+  Tous vérifiés le 25/08/2026 contre l'API réelle.
+
+  | Paramètre | Rôle |
+  |---|---|
+  | `q` | terme recherché : dénomination, adresse, dirigeant — ou un SIREN / SIRET directement |
+  | `page` | page de résultats |
+  | `per_page` | résultats par page. **Entre 1 et 25**, défaut 10. Au-delà : HTTP 400 |
+  | `code_postal` | filtre par code postal |
+  | `activite_principale` | filtre par code NAF / APE (ex. `62.02A`) |
+  | `etat_administratif` | `A` actif, `C` cessé |
+  | `tranche_effectif_salarie` | filtre par tranche d'effectif |
+
+  D'autres filtres existent (entreprises individuelles notamment) — voir le Swagger officiel.
+
+  ## Réponse
+
+  Enveloppe : `results`, `total_results`, `page`, `per_page`, `total_pages`.
+
+  Chaque résultat porte notamment :
+
+  ```text
+  siren                     identifiant de l'unité légale
+  nom_complet               dénomination construite
+  nom_raison_sociale        raison sociale des personnes morales
+  sigle
+  activite_principale       code NAF / APE
+  categorie_entreprise      PME | ETI | GE
+  tranche_effectif_salarie
+  date_creation
+  date_fermeture
+  etat_administratif        A | C
+  statut_diffusion          O diffusible | P diffusion partielle
+  nature_juridique
+  dirigeants[]              nom, prénoms, qualité (source INPI)
+  finances                  bilans par année, couverture inégale
+  siege{}                   siret, adresse, commune, code_postal, latitude, longitude…
+  matching_etablissements[] établissements ayant contribué au résultat
+  complements{}             liste_idcc (convention collective), tva, dizaines d'indicateurs est_*
+  ```
+
+  ## Pièges
+
+  - **`matching_etablissements` est toujours vide** sur une recherche directe par SIREN. Une
+    recherche par nom et un rafraîchissement par SIREN ne peuplent donc pas les mêmes champs.
+  - **`per_page` au-delà de 25** renvoie HTTP 400, pas un résultat tronqué.
+  - **Les entreprises non diffusibles sont absentes de l'API**, elles ne remontent pas en fiche
+    partielle. Une recherche infructueuse ne veut pas dire que l'entreprise n'existe pas.
+  - Les entreprises dont l'immatriculation au RCS a été refusée sont également absentes, de même
+    que les prédécesseurs / successeurs d'établissement.
+  - `finances` est souvent périmé ou vide selon les entreprises — donnée d'appoint, pas fiable.
+
+  ## Documentation officielle
+
+  - Swagger : `https://recherche-entreprises.api.gouv.fr/docs/`
+  - Fiche api.gouv.fr : `https://api.gouv.fr/les-api/api-recherche-entreprises`

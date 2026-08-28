@@ -23,7 +23,11 @@ using Tools.Api.Modules.Core.Notifications.Application.Ports;
 using Tools.Api.Modules.Core.Realtime.Application.Ports;
 using Tools.Api.Modules.Core.Security.Application.Ports;
 using Tools.Api.Modules.Core.Users.Application;
-using Tools.Api.Modules.Core.GameServers.Application.Ports;
+using Tools.Api.Modules.Core.GameServers.Application.Ports.Games;
+using Tools.Api.Modules.Core.GameServers.Application.Ports.Listing;
+using Tools.Api.Modules.Core.GameServers.Application.Ports.Games;
+using Tools.Api.Modules.Core.GameServers.Application.Ports.Polling;
+using Tools.Api.Modules.Core.GameServers.Application.Ports.Sync;
 
 namespace Tools.Api.IntegrationTests.Fixtures;
 
@@ -76,9 +80,15 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
             services.AddSingleton<IGameServerPollingRepository>(provider => provider.GetRequiredService<InMemoryGameServerRepository>());
             services.RemoveAll<IGameServerDashboardRepository>();
             services.AddSingleton<IGameServerDashboardRepository>(provider => provider.GetRequiredService<InMemoryGameServerRepository>());
-            services.RemoveAll<IGameServerStatusProvider>();
-            services.AddSingleton<FakeGameServerStatusProvider>();
-            services.AddSingleton<IGameServerStatusProvider>(provider => provider.GetRequiredService<FakeGameServerStatusProvider>());
+            services.RemoveAll<IGameServerTargetRepository>();
+            services.AddSingleton<IGameServerTargetRepository>(provider => provider.GetRequiredService<InMemoryGameServerRepository>());
+            // Le fake se substitue à tous les providers de jeu : aucun test n'ouvre de connexion
+            // vers un vrai serveur. Il répond pour le gameCode que le test lui donne.
+            services.RemoveAll<IGameServerProvider>();
+            services.AddSingleton<FakeGameServerProvider>();
+            services.AddSingleton<IGameServerProvider>(provider => provider.GetRequiredService<FakeGameServerProvider>());
+            services.AddSingleton<FakeGameServerDashboardProvider>();
+            services.AddSingleton<IGameServerProvider>(provider => provider.GetRequiredService<FakeGameServerDashboardProvider>());
             services.RemoveAll<ISteamAppDetailsProvider>();
             services.AddSingleton<FakeSteamAppDetailsProvider>();
             services.AddSingleton<ISteamAppDetailsProvider>(provider => provider.GetRequiredService<FakeSteamAppDetailsProvider>());

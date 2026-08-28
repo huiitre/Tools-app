@@ -1,4 +1,3 @@
-import { serverRoutes } from '@/modules/Palworld/server/palworld.server.routes'
 import { tierlistRoutes } from '@/modules/Palworld/tierlist/tierlist.routes'
 import { paldexRoutes } from '@/modules/Palworld/paldex/paldex.routes'
 import { breedingRoutes } from '@/modules/Palworld/breeding/breeding.routes'
@@ -12,12 +11,11 @@ export const routes = [
     path: '/palworld',
     component: () => import('@/modules/Palworld/Palworld.vue'),
     meta: { requireAuth: true },
-    redirect: { name: 'palworld-server' },
+    redirect: { name: 'palworld-tierlist' },
     children: [
-      ...serverRoutes,
-      ...inventoryRoutes,
       ...tierlistRoutes,
       ...paldexRoutes,
+      ...inventoryRoutes,
       ...breedingRoutes,
       ...catalogRoutes,
       ...shopRoutes,

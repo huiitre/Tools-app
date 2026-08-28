@@ -65,11 +65,12 @@ peu fréquent et séparé du poll, sera décidé seulement si nécessaire.
 | 1 | Cadrage, contrat d'authentification interne et ce document | Fait le 19/08/2026 |
 | 2 | Migration `tools_core.game_servers`, ports et adaptateur PostgreSQL/Dapper | Implémenté ; migration appliquée sur `tools_dev` uniquement, QA/prod à faire |
 | 3 | Sync interne, DTO/validation, transaction et requête Bruno | Implémenté et testé |
-| 4 | `BackgroundService` de poll et résolution par `protocol_type` | Implémenté et testé |
-| 5 | Adapters : Steam A2S, Palworld REST, Source RCON | Implémentés ; tests réseau réels à faire sur QA |
+| 4 | `BackgroundService` de poll et résolution par `protocol_type` | Remplacé le 28/08/2026 par une résolution par `gameCode` (voir « Un provider par jeu ») |
+| 5 | Adapters : Steam A2S, Palworld REST, Source RCON | Devenus des clients de transport, sans connaissance des jeux |
 | 6 | Lecture dashboard, contrat Bruno et widget Vue | Fait le 20/08/2026 : widget Home + indicateur header, validés en navigateur |
 | 7 | `client_host`/`client_port` (adresse publique affichée aux joueurs) | Fait le 20/08/2026 : migration `V2.68.0`, sync, dashboard et widget |
 | 8 | Migration QA/prod, sync réel depuis NAS en continu, tests de pannes isolées | À terminer |
+| 9 | Un provider par jeu, dashboard par serveur (`/details`, `/live`) | En cours depuis le 28/08/2026 : socle, Ark et Palworld faits, front à faire |
 
 Les étapes 2 à 7 sont réalisées dans cet ordre. Toute route ajoutée ou modifiée
 est ajoutée à `bruno/` dans le même changement.
@@ -77,14 +78,14 @@ est ajoutée à `bruno/` dans le même changement.
 ## Contrats à préserver
 
 - `slug` est le nom du dossier NAS et la clé d'upsert.
-- `gameCode` est destiné à l'identité et l'affichage ; seul `protocolType`
-  choisit l'adapter.
+- `gameCode` choisit le provider, pour le scheduler comme pour le dashboard.
+  `protocolType` reste descriptif et n'est plus utilisé pour router quoi que ce
+  soit.
 - `port` désigne le port de poll, jamais implicitement le port de jeu.
-- `SOURCE_RCON` utilise `listplayers` et `maxPlayersOverride`; il ne tente pas
-  A2S pour ARK: Survival Ascended. C'est un protocole RCON conforme au spec Valve
-  standard — un jeu dont le RCON dévie de ce spec obtient son propre
-  `protocolType` et son propre adapter plutôt que des cas particuliers dans
-  `SourceRconStatusProvider` (voir `HUMANITZ_RCON` ci-dessous).
+- ARK: Survival Ascended est interrogé en RCON conforme au spec Valve
+  (`ListPlayers`, `maxPlayersOverride`), jamais en A2S. Un jeu dont le RCON dévie
+  de ce spec reçoit son propre client de transport plutôt que des cas
+  particuliers dans `SourceRconClient` (voir `HUMANITZ_RCON` ci-dessous).
 - `HUMANITZ_RCON` (vérifié en direct le 20/08/2026, serveur réel) : même framing
   TCP que le RCON Source, mais une auth non conforme au spec Valve — succès =
   deux paquets reçus (le premier `type=0`/body `"None"` à ignorer, le second
@@ -115,3 +116,82 @@ est ajoutée à `bruno/` dans le même changement.
   65535). Les colonnes `client_host`/`client_port` restent nullable en base
   (pas de contrainte `NOT NULL`) : le widget doit donc afficher un état "port
   inconnu" plutôt que de supposer leur présence.
+
+## Un provider par jeu (28/08/2026)
+
+Le poll résolvait ses adaptateurs par `protocol_type`, et le dashboard aurait eu
+besoin des siens par jeu : le même serveur aurait été interrogé par deux fichiers
+différents, avec deux fois la même connaissance du jeu. Le module n'a donc plus
+qu'un seul mécanisme.
+
+**Un fichier par jeu dans `Infrastructure/Games/`**, résolu par `gameCode` :
+
+- `IGameServerProvider` — obligatoire, une seule méthode `FetchStatusAsync`,
+  appelée par le scheduler. C'est elle qui alimente `game_servers`, donc le
+  widget.
+- `IGameServerDashboard` — implémentée **en plus** par les jeux qui exposent
+  assez d'informations : `FetchDetailsAsync` (volet stable, chargé à l'ouverture)
+  et `FetchLiveAsync` (volet rafraîchi, un seul appel quel que soit le jeu). Un
+  jeu qui ne l'implémente pas n'a pas de dashboard — rien à déclarer ailleurs, et
+  aucune méthode à remplir de valeurs vides.
+
+Les protocoles vivent dans `Infrastructure/Clients/` (`SteamA2sClient`,
+`SourceRconClient`, `HumanitzRconClient`) et ne connaissent aucun jeu.
+
+| jeu | statut | dashboard |
+|---|---|---|
+| PALWORLD | REST `/v1/api/metrics` | oui — `/info`, `/settings`, `/metrics`, `/players`, `/game-data` |
+| ARK_SA | RCON `ListPlayers` | oui — `ListPlayers` et `GetGameLog` |
+| RUST, 7DTD | A2S | non |
+| HUMANITZ | RCON `info` | non |
+
+Deux pièges vérifiés en direct sur les serveurs réels :
+
+- **Ark émet des paquets `Keep Alive` non sollicités.** `SourceRconClient`
+  apparie donc les réponses par identifiant ; prendre le premier paquet qui
+  arrive fait lire la mauvaise réponse.
+- **`GetGameLog` vide le journal à la lecture.** Le scheduler n'appelle donc
+  jamais `FetchLiveAsync` : il consommerait toutes les 60 s les lignes que le
+  dashboard doit afficher. C'est la raison d'être d'une méthode de statut
+  séparée et minimale.
+
+### Joindre les serveurs depuis un poste de dev
+
+Le manifest porte les IP docker du NAS : injoignables depuis une machine de
+développement. `dev-console` ouvre un tunnel SSH qui les ramène sur `127.0.0.1`
+en conservant les ports (voir `AGENTS.md`), et l'option `GameServers:HostOverride`
+d'`appsettings.Development.json` y redirige les cibles — un décorateur des ports
+de lecture, jamais enregistré quand l'option est absente, donc invisible en QA et
+en production.
+
+Le scheduler suit la même option : il ne tourne en Development **que si**
+`HostOverride` est renseigné. Sans lui, chaque passage écraserait les statuts
+clonés par des « hors ligne » sans valeur.
+
+`ssh -L` ne transportant que du TCP, les serveurs interrogés en A2S resteront
+hors ligne en local quoi qu'il arrive.
+
+L'identité affichée (nom du serveur, jeu, image) vient toujours de
+`game_servers`, pour tous les jeux, afin que la popup et la carte du widget
+concordent. Le provider n'ajoute que ce que la base n'a pas : version,
+description, identifiant de monde.
+
+### Actions d'administration
+
+Troisième contrat optionnel, `IGameServerActions`, à côté de `IGameServerDashboard` :
+
+- le jeu **déclare** ses actions (`Actions`) — code, libellé, icône, rôle exigé,
+  caractère dangereux, et la liste de ses paramètres (nom, libellé, type
+  `text`/`number`/`player`, obligatoire ou non) ;
+- il sait les **exécuter** (`ExecuteAsync`).
+
+Aucun code d'action n'est connu du module ni du front : celui-ci construit un
+formulaire à partir de la description. Palworld en déclare sept (announce, save,
+kick, ban, unban, shutdown, stop), Ark quatre — son RCON n'a ni `unban` ni arrêt
+différé. Un jeu qui n'implémente pas ce contrat n'affiche aucune section Actions.
+
+`GET /details` ne renvoie que les actions **autorisées par le rôle de
+l'appelant** ; `POST /gameservers/{slug}/actions/{code}` revérifie ce rôle avant
+d'exécuter, puis contrôle les paramètres obligatoires. Ce que le front affiche
+n'autorise donc rien par lui-même. Les rôles reprennent ceux de l'API Java :
+MODERATOR pour announce/save/kick, ADMIN pour ban/unban/shutdown/stop.

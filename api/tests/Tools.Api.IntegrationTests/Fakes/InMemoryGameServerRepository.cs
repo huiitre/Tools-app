@@ -1,9 +1,14 @@
-using Tools.Api.Modules.Core.GameServers.Application.Dto;
-using Tools.Api.Modules.Core.GameServers.Application.Ports;
+using Tools.Api.Modules.Core.GameServers.Application.Dto.Games;
+using Tools.Api.Modules.Core.GameServers.Application.Dto.Listing;
+using Tools.Api.Modules.Core.GameServers.Application.Dto.Sync;
+using Tools.Api.Modules.Core.GameServers.Application.Ports.Games;
+using Tools.Api.Modules.Core.GameServers.Application.Ports.Listing;
+using Tools.Api.Modules.Core.GameServers.Application.Ports.Polling;
+using Tools.Api.Modules.Core.GameServers.Application.Ports.Sync;
 
 namespace Tools.Api.IntegrationTests.Fakes;
 
-public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameServerPollingRepository, IGameServerDashboardRepository
+public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameServerPollingRepository, IGameServerDashboardRepository, IGameServerTargetRepository
 {
     private readonly Dictionary<string, StoredGameServer> gameServers = new(StringComparer.Ordinal);
     private readonly Dictionary<long, GameServerStatus> statuses = [];
@@ -46,13 +51,16 @@ public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameS
         return Task.FromResult(missing.Length);
     }
 
-    public Task<IReadOnlyList<GameServerPollTarget>> FindAllForPollingAsync()
+    public Task<IReadOnlyList<GameServerTarget>> FindAllForPollingAsync()
     {
-        IReadOnlyList<GameServerPollTarget> targets = gameServers.Values
-            .Select((gameServer, index) => new GameServerPollTarget(
+        IReadOnlyList<GameServerTarget> targets = gameServers.Values
+            .Select((gameServer, index) => new GameServerTarget(
                 index + 1,
                 gameServer.Slug,
-                gameServer.ProtocolType,
+                gameServer.GameCode,
+                gameServer.ServerName,
+                gameServer.GameName,
+                gameServer.PictureUrl,
                 gameServer.Host,
                 gameServer.Port,
                 gameServer.ProtocolConfig))
@@ -66,13 +74,34 @@ public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameS
         return Task.CompletedTask;
     }
 
-    public Task<IReadOnlyList<GameServerDashboardView>> FindVisibleForDashboardAsync()
+    public Task<GameServerTarget?> FindBySlugAsync(string slug)
     {
-        IReadOnlyList<GameServerDashboardView> views = gameServers.Values
+        if (!gameServers.TryGetValue(slug, out var gameServer))
+        {
+            return Task.FromResult<GameServerTarget?>(null);
+        }
+
+        return Task.FromResult<GameServerTarget?>(new GameServerTarget(
+            1,
+            gameServer.Slug,
+            gameServer.GameCode,
+            gameServer.ServerName,
+            gameServer.GameName,
+            gameServer.PictureUrl,
+            gameServer.Host,
+            gameServer.Port,
+            gameServer.ProtocolConfig));
+    }
+
+    public Task<IReadOnlyList<GameServerListRow>> FindVisibleForDashboardAsync()
+    {
+        IReadOnlyList<GameServerListRow> views = gameServers.Values
             .Select((gameServer, index) =>
             {
                 statuses.TryGetValue(index + 1, out var status);
-                return new GameServerDashboardView(
+                return new GameServerListRow(
+                    gameServer.Slug,
+                    gameServer.GameCode,
                     gameServer.GameName ?? gameServer.GameCode,
                     gameServer.ServerName,
                     gameServer.PictureUrl,

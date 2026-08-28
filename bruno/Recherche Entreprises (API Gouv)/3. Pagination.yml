@@ -1,0 +1,40 @@
+info:
+  name: 3. Pagination
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: https://recherche-entreprises.api.gouv.fr/search?q=doctolib&page=1&per_page=5
+  params:
+    - name: q
+      value: doctolib
+      type: query
+    - name: page
+      value: "1"
+      type: query
+    - name: per_page
+      value: "5"
+      type: query
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Pagination classique : `page` et `per_page`.
+
+  **`per_page` doit rester entre 1 et 25**, la valeur par défaut est 10. Au-delà, l'API répond
+  HTTP 400 avec un message explicite — elle ne tronque pas silencieusement :
+
+  ```text
+  Veuillez indiquer un paramètre `per_page` entre `1` et `25`, par défaut `10`.
+  ```
+
+  L'enveloppe renvoie `total_results`, `page`, `per_page` et `total_pages` pour piloter le
+  parcours.
+
+  À noter : `total_results` plafonne à 10 000 sur les recherches très larges. Ce n'est pas le
+  nombre réel d'entreprises correspondantes.

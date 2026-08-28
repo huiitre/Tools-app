@@ -16,4 +16,4 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: "Retourne le snapshot dashboard des serveurs visibles. Un JWT avec au moins le rôle READ_ONLY est requis. Cette route ne contacte aucun serveur : online, numPlayers, maxPlayers et checkedAt sont écrits par le scheduler toutes les 60 secondes. Host, port et protocolConfig ne sont jamais exposés. clientHost/clientPort (adresse publique de connexion, nullable) le sont volontairement."
+docs: "Retourne le snapshot dashboard des serveurs visibles. Un JWT avec au moins le rôle READ_ONLY est requis. Cette route ne contacte aucun serveur : online, numPlayers, maxPlayers et checkedAt sont écrits par le scheduler toutes les 60 secondes. Host, port et protocolConfig ne sont jamais exposés. slug et hasDashboard le sont : le front en a besoin pour savoir quels serveurs ouvrent un dashboard et lequel appeler. gameCode ne sort pas — il ne sert qu'en interne, au use case, pour décider de hasDashboard. hasDashboard vaut true dès qu'un provider de jeu sait l'alimenter, il n'est déclaré nulle part à la main. clientHost/clientPort (adresse publique de connexion, nullable) le sont volontairement."

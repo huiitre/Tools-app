@@ -1,0 +1,25 @@
+info:
+  name: Execute game server action
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{apiUrl}}/gameservers/palworld/actions/announce"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+  body:
+    type: json
+    data: |
+      {
+        "message": "Test depuis Bruno"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: "Déclenche une commande d'administration sur un serveur. Le code d'action et les paramètres sont ceux que le jeu déclare : ils sont listés dans le champ actions de GET /gameservers/{slug}/details, déjà filtré sur les droits de l'appelant. Palworld accepte announce, save, kick, ban, unban, shutdown, stop ; Ark accepte announce, save, kick, ban. Le rôle exigé dépend de l'action (MODERATOR pour announce/save/kick, ADMIN pour ban/unban/shutdown/stop) et il est revérifié côté serveur. Réponse 204 sans corps. 404 si le slug est inconnu, si le jeu n'accepte aucune commande, ou si le code d'action n'existe pas pour ce jeu ; 400 GAME_SERVER_ACTION_PARAMETERS_MISSING si un paramètre obligatoire manque ; 403 si le rôle est insuffisant ; 503 GAME_SERVER_UNREACHABLE au-delà de 15 secondes."
