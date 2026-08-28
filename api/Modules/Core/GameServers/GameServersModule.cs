@@ -14,9 +14,15 @@ public static class GameServersModule
 {
     public static IHostApplicationBuilder AddGameServersModule(this IHostApplicationBuilder builder)
     {
+        builder.Services.Configure<GameServersOptions>(builder.Configuration.GetSection(GameServersOptions.SectionName));
+        var hostOverride = builder.Configuration[$"{GameServersOptions.SectionName}:{nameof(GameServersOptions.HostOverride)}"];
+        hostOverride = string.IsNullOrWhiteSpace(hostOverride) ? null : hostOverride;
+
         builder.Services.AddScoped<PostgresGameServerRepository>();
         builder.Services.AddScoped<IGameServerRepository>(services => services.GetRequiredService<PostgresGameServerRepository>());
-        builder.Services.AddScoped<IGameServerPollingRepository>(services => services.GetRequiredService<PostgresGameServerRepository>());
+        builder.Services.AddScoped<IGameServerPollingRepository>(services => hostOverride is null
+            ? services.GetRequiredService<PostgresGameServerRepository>()
+            : new HostOverridingGameServerPollingRepository(services.GetRequiredService<PostgresGameServerRepository>(), hostOverride));
         builder.Services.AddScoped<IGameServerDashboardRepository>(services => services.GetRequiredService<PostgresGameServerRepository>());
         builder.Services.AddSingleton<IGameServerImageUrlBuilder, GameServerImageUrlBuilder>();
         builder.Services.AddHttpClient<IGameServersManifestProvider, GameServersManifestProvider>((services, client) =>
@@ -40,8 +46,12 @@ public static class GameServersModule
         builder.Services.AddScoped<PollGameServersUseCase>();
         builder.Services.AddScoped<GetGameServersUseCase>();
 
-        // Le poll écrase les lignes de game_servers : en dev on garde la main sur la table.
-        if (!builder.Environment.IsEnvironment("Testing") && !builder.Environment.IsDevelopment())
+        // Les tests n'ont jamais de poll de fond. En dev il ne tourne que si un hôte de
+        // substitution est configuré : sans lui les cibles sont des IP docker injoignables depuis
+        // le poste, et chaque passage écraserait les statuts clonés par des « hors ligne ».
+        var pollingEnabled = !builder.Environment.IsEnvironment("Testing")
+                             && (!builder.Environment.IsDevelopment() || hostOverride is not null);
+        if (pollingEnabled)
         {
             builder.Services.AddHostedService<GameServersPollingService>();
         }
