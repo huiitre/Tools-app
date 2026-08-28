@@ -1,5 +1,5 @@
-using Tools.Api.Modules.Core.GameServers.Application.Dto;
-using Tools.Api.Modules.Core.GameServers.Application.Ports;
+using Tools.Api.Modules.Core.GameServers.Application.Dto.Games;
+using Tools.Api.Modules.Core.GameServers.Application.Ports.Polling;
 
 namespace Tools.Api.Modules.Core.GameServers.Infrastructure.Polling;
 
@@ -11,7 +11,7 @@ public sealed class HostOverridingGameServerPollingRepository(
     IGameServerPollingRepository inner,
     string host) : IGameServerPollingRepository
 {
-    public async Task<IReadOnlyList<GameServerPollTarget>> FindAllForPollingAsync()
+    public async Task<IReadOnlyList<GameServerTarget>> FindAllForPollingAsync()
     {
         var targets = await inner.FindAllForPollingAsync();
         return targets.Select(target => target with { Host = host }).ToList();

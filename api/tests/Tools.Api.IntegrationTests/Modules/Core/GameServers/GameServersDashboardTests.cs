@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Tools.Api.IntegrationTests.Fakes;
 using Tools.Api.IntegrationTests.Fixtures;
 using Tools.Api.Modules.Core.Common.Api.Internal;
-using Tools.Api.Modules.Core.GameServers.Application.Dto;
+using Tools.Api.Modules.Core.GameServers.Application.Dto.Sync;
 using Xunit;
 
 namespace Tools.Api.IntegrationTests.Modules.Core.GameServers;

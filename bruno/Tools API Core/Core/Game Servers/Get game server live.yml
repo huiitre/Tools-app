@@ -1,0 +1,25 @@
+info:
+  name: Get game server live
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{apiUrl}}/gameservers/{{gameCode}}/live"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+runtime:
+  variables:
+    - name: gameCode
+      value: ark-survival-ascended
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: "Volet rafraîchi du dashboard : contrairement à GET /gameservers, cette route interroge le serveur en direct à chaque appel. Un JWT avec au moins le rôle READ_ONLY est requis. Tous les champs sont optionnels — un jeu qui n'expose pas les FPS rend null, le front affiche « indisponible ». Ark ne remplit que players (nom et id) et log ; log est vidé par le serveur à chaque lecture. unavailable liste les sections en panne, à distinguer de celles que le jeu ne fournit jamais. 404 si le slug est inconnu ou si le jeu n'a pas de provider, 503 GAME_SERVER_UNREACHABLE au-delà de 15 secondes sans réponse."

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Tools.Api.Modules.Core.GameServers.Application;
-using Tools.Api.Modules.Core.GameServers.Application.Dto;
+using Tools.Api.Modules.Core.GameServers.Application.Dto.Listing;
+using Tools.Api.Modules.Core.GameServers.Application.Usecases;
 
 namespace Tools.Api.Modules.Core.GameServers.Api;
 
