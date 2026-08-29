@@ -1,0 +1,292 @@
+<mxfile host="Electron">
+  <diagram name="Core / GameServers">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="legend_Api" value="Api" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_Application" value="Application" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="150" y="0" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_Infrastructure" value="Infrastructure" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="300" y="0" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_Autre" value="Autre" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="450" y="0" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_port" value="Port (interface)" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=11;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="600" y="0" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="ArkProvider" value="ArkProvider" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="1854" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerActionDefinition" value="GameServerActionDefinition" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="301" y="738" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerActionParameter" value="GameServerActionParameter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="738" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerDashboardController" value="GameServerDashboardController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="1620" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerDashboardView" value="GameServerDashboardView" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="378" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerDetailsView" value="GameServerDetailsView" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="738" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerImageUrlBuilder" value="GameServerImageUrlBuilder" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="1278" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerListRow" value="GameServerListRow" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="306" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerLiveCompanion" value="GameServerLiveCompanion" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="666" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerLivePlayer" value="GameServerLivePlayer" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="301" y="558" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerLiveStructure" value="GameServerLiveStructure" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="301" y="630" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerLiveView" value="GameServerLiveView" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="594" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerProtocolConfig" value="GameServerProtocolConfig" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerStatus" value="GameServerStatus" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="522" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerSyncDto" value="GameServerSyncDto" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="1098" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerSyncEntry" value="GameServerSyncEntry" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="1026" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerTarget" value="GameServerTarget" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="450" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServerUpsertResult" value="GameServerUpsertResult" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="810" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServersController" value="GameServersController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="1512" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServersManifestProvider" value="GameServersManifestProvider" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="1134" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServersModule" value="GameServersModule" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="1692" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServersOptions" value="GameServersOptions" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="1170" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServersPollingService" value="GameServersPollingService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="90" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServersSyncController" value="GameServersSyncController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="1242" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServersSyncReport" value="GameServersSyncReport" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="954" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GameServersSyncUseCase" value="GameServersSyncUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="301" y="1242" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GetGameServerDashboardUseCase" value="GetGameServerDashboardUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="301" y="1620" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GetGameServersUseCase" value="GetGameServersUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="301" y="1512" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="HostOverridingGameServerPollingRepository" value="HostOverridingGameServerPollingRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="1350" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="HostOverridingGameServerTargetRepository" value="HostOverridingGameServerTargetRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="1494" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="HumanitzProvider" value="HumanitzProvider" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="1710" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="HumanitzRconClient" value="HumanitzRconClient" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1204" y="1710" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="IGameServerActions" value="IGameServerActions" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="1854" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="IGameServerDashboard" value="IGameServerDashboard" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="1782" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="IGameServerDashboardRepository" value="IGameServerDashboardRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="1494" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="IGameServerImageUrlBuilder" value="IGameServerImageUrlBuilder" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="1278" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="IGameServerPollingRepository" value="IGameServerPollingRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="1350" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="IGameServerProvider" value="IGameServerProvider" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="1638" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="IGameServerRepository" value="IGameServerRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="1422" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="IGameServerTargetRepository" value="IGameServerTargetRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="1566" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="IGameServersManifestProvider" value="IGameServersManifestProvider" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="1134" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ISteamAppDetailsProvider" value="ISteamAppDetailsProvider" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="1206" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="PalworldProvider" value="PalworldProvider" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="1782" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="PollGameServersUseCase" value="PollGameServersUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="301" y="1404" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="PostgresGameServerRepository" value="PostgresGameServerRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="1422" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="RustProvider" value="RustProvider" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="1566" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SevenDaysToDieProvider" value="SevenDaysToDieProvider" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="1638" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SourceRconClient" value="SourceRconClient" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="234" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SteamA2sClient" value="SteamA2sClient" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1204" y="1602" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SteamAppDetailsLookup" value="SteamAppDetailsLookup" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="882" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SteamAppDetailsProvider" value="SteamAppDetailsProvider" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="1206" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="ArkProvider" target="IGameServerProvider">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="ArkProvider" target="IGameServerDashboard">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="ArkProvider" target="IGameServerActions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GameServerActionDefinition" target="GameServerActionParameter">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GameServerDashboardController" target="GetGameServerDashboardUseCase">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GameServerDetailsView" target="GameServerActionDefinition">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="GameServerImageUrlBuilder" target="IGameServerImageUrlBuilder">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GameServerLiveView" target="GameServerLivePlayer">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GameServerLiveView" target="GameServerLiveStructure">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GameServersController" target="GetGameServersUseCase">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="GameServersManifestProvider" target="IGameServersManifestProvider">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GameServersSyncController" target="GameServersSyncUseCase">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GameServersSyncUseCase" target="IGameServerImageUrlBuilder">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge14" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GameServersSyncUseCase" target="IGameServerRepository">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge15" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GameServersSyncUseCase" target="IGameServersManifestProvider">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge16" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GameServersSyncUseCase" target="ISteamAppDetailsProvider">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge17" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GetGameServerDashboardUseCase" target="IGameServerProvider">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge18" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GetGameServerDashboardUseCase" target="IGameServerTargetRepository">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge19" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GetGameServersUseCase" target="IGameServerDashboardRepository">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge20" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="GetGameServersUseCase" target="IGameServerProvider">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge21" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="HostOverridingGameServerPollingRepository" target="IGameServerPollingRepository">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge22" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="HostOverridingGameServerTargetRepository" target="IGameServerTargetRepository">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge23" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="HumanitzProvider" target="HumanitzRconClient">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge24" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="HumanitzProvider" target="IGameServerProvider">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge25" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="PalworldProvider" target="IGameServerProvider">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge26" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="PalworldProvider" target="IGameServerDashboard">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge27" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="PalworldProvider" target="IGameServerActions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge28" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="PollGameServersUseCase" target="IGameServerPollingRepository">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge29" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="PollGameServersUseCase" target="IGameServerProvider">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge30" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="PostgresGameServerRepository" target="IGameServerRepository">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge31" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="PostgresGameServerRepository" target="IGameServerPollingRepository">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge32" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="PostgresGameServerRepository" target="IGameServerDashboardRepository">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge33" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="PostgresGameServerRepository" target="IGameServerTargetRepository">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge34" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="RustProvider" target="SteamA2sClient">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge35" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="RustProvider" target="IGameServerProvider">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge36" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="SevenDaysToDieProvider" target="SteamA2sClient">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge37" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="SevenDaysToDieProvider" target="IGameServerProvider">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge38" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="SteamAppDetailsProvider" target="ISteamAppDetailsProvider">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

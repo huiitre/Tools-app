@@ -1,0 +1,85 @@
+<mxfile host="Electron">
+  <diagram name="Core / Mail">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="legend_Api" value="Api" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_Application" value="Application" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="150" y="0" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_Infrastructure" value="Infrastructure" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="300" y="0" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_Autre" value="Autre" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="450" y="0" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_port" value="Port (interface)" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=11;dashed=0;" vertex="1" parent="1">
+          <mxGeometry x="600" y="0" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="IMailSender" value="IMailSender" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="414" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="InternalMailController" value="InternalMailController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="378" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="MailAttachment" value="MailAttachment" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="90" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="MailController" value="MailController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="450" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="MailModule" value="MailModule" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="522" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="MailService" value="MailService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="414" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SendInternalMailUseCase" value="SendInternalMailUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="301" y="378" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SendMailAttachmentRequest" value="SendMailAttachmentRequest" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="234" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SendMailCommand" value="SendMailCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SendMailRequest" value="SendMailRequest" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="306" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SendMailUseCase" value="SendMailUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="301" y="450" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SmtpMailOptions" value="SmtpMailOptions" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1505" y="414" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="SmtpMailSender" value="SmtpMailSender" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="1204" y="414" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="InternalMailController" target="SendInternalMailUseCase">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="MailController" target="SendMailUseCase">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="MailService" target="IMailSender">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="SendInternalMailUseCase" target="MailService">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="SendMailUseCase" target="MailService">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="SmtpMailSender" target="SmtpMailOptions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=0;exitY=0.5;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;dashed=1;" edge="1" parent="1" source="SmtpMailSender" target="IMailSender">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
