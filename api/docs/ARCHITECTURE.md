@@ -590,6 +590,30 @@ Le monorepo n’empêche pas des cycles de version indépendants par composant. 
 contrats seront suffisamment stables ; elle ne conditionne pas le démarrage de
 `api-core`.
 
+### Temtem, premier module écrit directement en C# (2026-08-30)
+
+`Modules/Temtem/` n'est pas une migration : le module n'a jamais existé côté Java, seul son
+schéma `tools_temtem` avait été créé en V2.24.0 puis laissé vide. La première livraison ne
+contient que la synchronisation du catalogue, alimentée par l'extracteur du NAS.
+
+Deux décisions le distinguent des autres modules :
+
+- **Sa sync est une route `internal/`**, pas une route TECH. Les autres extracteurs
+  (`update_palworld.sh`, `update_data_doduda.sh`) se connectent sur `/auth/login` avec un compte
+  TECH avant d'appeler leur sync ; celui de Temtem présente le secret partagé, comme pour
+  `/internal/mail`. Un extracteur n'agit au nom d'aucun utilisateur : lui faire porter un mot de
+  passe de compte était le vrai écart. `SyncTemtemCatalogueUseCase` n'est donc pas un
+  `SecuredUseCase`, pour la même raison que `SendInternalMailUseCase`.
+- **Un fichier source vide interrompt la synchronisation.** Le catalogue se recharge par upsert
+  puis suppression de ce qui a disparu de la source : une extraction ratée qui publierait un
+  tableau vide viderait la table, et emporterait le reste par cascade. Le garde-fou est dans le
+  use case, avant l'ouverture de la transaction.
+
+L'upsert distingue créé, modifié et **inchangé** : `ON CONFLICT DO UPDATE ... WHERE la ligne
+IS DISTINCT FROM excluded` empêche PostgreSQL de réécrire une ligne identique, et `RETURNING
+(xmax = 0)` dit lequel des trois s'est produit. Une synchronisation horaire sans patch du jeu
+rend donc des compteurs à zéro au lieu de prétendre avoir tout réécrit.
+
 ## Cible : une seule API C# et des satellites polyglottes
 
 > **Statut : décision prise le 16/08/2026, non planifiée.** Rien de ce qui suit n'est engagé ;

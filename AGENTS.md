@@ -7,7 +7,7 @@ Depuis le renommage du 17/08/2026 :
 | dossier | ce que c'est |
 |---|---|
 | `api/` | **l'API** — ASP.NET Core (C#). Plateforme transverse (auth, administration, notifications, realtime) et, au fur et à mesure, les modules métier. C'est ici qu'on écrit tout ce qui est nouveau. |
-| `api-java/` | l'API Spring Boot d'origine, figée et vidée module par module. Elle sert encore Dofus, Palworld et Feedback. Elite Dangerous en a été retiré le 24/08/2026 et Riot le 29/08/2026 ; leurs modules vivent désormais dans `api/`. |
+| `api-java/` | l'API Spring Boot d'origine, figée et vidée module par module. Elle sert encore Dofus, Palworld et Feedback. Elite Dangerous en a été retiré le 24/08/2026 et Riot le 29/08/2026 ; leurs modules vivent désormais dans `api/`, où Temtem est né directement le 30/08/2026 sans jamais passer par elle. |
 
 Le nommage est le même partout — dossier, image Docker et conteneur — pour qu'un nom lu quelque
 part désigne toujours la même chose :

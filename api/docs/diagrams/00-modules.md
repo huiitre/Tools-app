@@ -17,7 +17,7 @@ flowchart LR
   RoadToRiches["RoadToRiches<br/>21 types"]
   Security["Security<br/>17 types"]
   Settings["Settings<br/>18 types"]
-  Sync["Sync<br/>35 types"]
+  Sync["Sync<br/>58 types"]
   Users["Users<br/>14 types"]
   Valorant["Valorant<br/>83 types"]
   Vpn["Vpn<br/>15 types"]
