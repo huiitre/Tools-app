@@ -260,6 +260,47 @@ Le domaine lève `AppException.Validation(...)` et dépend donc de
 logique : l'alternative — une `ArgumentException` de la BCL — finirait en 500 avec son message
 masqué, `ApiExceptionHandler` ne connaissant qu'`AppException`.
 
+### Riot, deuxième module métier (2026-08-29)
+
+`Modules/Riot/` reprend le module Riot de l'API Java : deux sous-modules, `Valorant` (catalogue,
+comptes liés, boutique, skins possédés, liste de suivi, historique) et `Sync` (rafraîchissement du
+catalogue depuis les données de l'extracteur). 31 use cases, 28 routes, deux services, une passe de
+fond quotidienne. Là où Elite éprouvait la *forme* de la migration, Riot en éprouve le *volume* :
+appels sortants, chiffrement, ordonnanceur, transactions.
+
+Le module Java a été supprimé dans la foulée (119 fichiers), et le front bascule sur
+`clientCore` dans le même mouvement : le schéma `tools_riot` ne connaît plus qu'un seul écrivain.
+Seul `ModuleCode.RIOT` reste côté Java — c'est l'énumération des droits, partagée avec la base.
+
+Six décisions valent pour les modules suivants :
+
+- **Un rôle porté par la route Java doit être retrouvé, pas perdu.** L'API Java cumulait
+  `@RequiredRole` sur la route *et* un rôle dans le use case, parfois différents. Le C# n'a que le
+  second : c'est le plus strict des deux qui a été repris. Là où seule la route en portait un —
+  `POST /watchlist/admin/sync`, réservé aux administrateurs, dont le notifieur n'exige rien —, il a
+  fallu **créer** un use case sécurisé (`TriggerValorantWatchlistSyncUseCase`) ; sans lui l'action
+  serait devenue ouverte à tous. À vérifier systématiquement en migrant un contrôleur Java.
+- **Les données de l'extracteur sont lues en HTTP, plus sur disque.** L'API Java montait le NAS
+  (`tools.assets.base-path`) ; `ValorantAssetsReader` lit `AssetsBaseUrl`, comme
+  `GameServersManifestProvider`. Aucun montage à prévoir, et le poste de développement lit la même
+  source que la production.
+- **Le chiffrement des jetons est compatible octet pour octet avec Java.** `Cipher.doFinal` colle
+  le tag d'authentification GCM à la fin du chiffré ; `AesGcm` en .NET veut deux tampons séparés.
+  `AesGcmValorantTokenCipher` détache les 16 derniers octets au déchiffrement et les recolle au
+  chiffrement. Sans cela, aucun compte déjà lié n'est relisible. La clé est la même
+  (`TOOLS_ENCRYPTION_KEY`), exposée sous `Riot__EncryptionMasterKey`.
+- **Une passe de fond ne construit jamais un `SecuredUseCase`.**
+  `ValorantWatchlistSchedulerService` résout le notifieur, pas le use case de déclenchement : aucun
+  utilisateur n'étant authentifié sur ce thread, l'autorisation échouerait dès la construction.
+- **Un adaptateur PostgreSQL du module passe par `RiotDatabase`**, qui rejoint la transaction
+  ouverte par le use case s'il y en a une et ouvre sa propre connexion sinon. Les deux cas
+  existent : l'historique de boutique s'écrit par lot sous transaction depuis le front, et une
+  ligne à la fois depuis la passe de fond.
+- **Un module métier peut avoir besoin d'une capacité que le Core n'a pas encore.** Le chiffrement
+  est déclaré ici comme un port (`IValorantTokenCipher`) plutôt qu'ajouté au Core au passage : il
+  remontera le jour où un deuxième module en aura besoin, avec deux usages réels pour en dessiner
+  le contrat.
+
 Chaque fichier déclare un **file-scoped namespace** dérivé de son chemin :
 
 ```csharp

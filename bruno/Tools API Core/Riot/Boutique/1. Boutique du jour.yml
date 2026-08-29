@@ -1,0 +1,33 @@
+info:
+  name: Boutique du jour
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiUrl}}/riot/valorant/store?accountId=1"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Boutique lue chez Riot, puis résolue contre le catalogue local : offres du jour, packs en vente et
+  marché nocturne quand il est ouvert.
+
+  Deux modes :
+
+  - **compte lié** — `?accountId=1`, l'API retrouve ses jetons toute seule ;
+  - **jeton fourni** — en-tête `X-Riot-Token` + `?region=eu`, sans rien persister. Ajouter l'en-tête
+    à la main pour ce second mode ; `accountId` est alors ignoré, et rien n'est marqué possédé ni
+    suivi.
+
+  Sans l'un ni l'autre : 400 `VALORANT_ACCOUNT_REQUIRED`. Un access token périmé déclenche **une**
+  reprise automatique avec un jeton neuf.
+
+  Rôle minimum : USER.

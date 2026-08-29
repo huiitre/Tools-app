@@ -1,0 +1,23 @@
+info:
+  name: Version du client Riot
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiUrl}}/riot/valorant/version"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Bloc `data` de `version.json`, lu sur le CDN des assets. Le front n'en consomme que
+  `riotClientVersion` ; l'API s'en sert pour l'en-tête `X-Riot-ClientVersion` de chaque appel Riot.
+
+  Rôle minimum : READ_ONLY.

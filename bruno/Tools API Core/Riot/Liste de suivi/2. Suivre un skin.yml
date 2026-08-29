@@ -1,0 +1,34 @@
+info:
+  name: Suivre un skin
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/riot/valorant/watchlist"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "skinId": 1,
+        "accountId": 1
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  201 avec le skin, drapeau `watched` à jour. Déjà suivi : 409 `SKIN_ALREADY_IN_WATCHLIST`.
+
+  Un skin suivi déclenche une notification le jour où il apparaît en boutique.
+
+  Rôle minimum : USER.

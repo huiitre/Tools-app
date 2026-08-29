@@ -80,187 +80,17 @@ Routes :
 WorkshopDto et WorkshopDetailResponse exposent la liste links.
 État : Backend complet, prêt pour intégration Front.
 
-6. Module Riot — Valorant
+6. Module Riot — MIGRÉ sur l'API C# (2026-08-29)
 
-6a. Auth (Refactorisé 2026-05-10)
-  Architecture : Stockage sécurisé (Encryption AES-256-GCM) du refresh token pour automatisation.
-  
-  Routes :
-    POST /riot/valorant/refresh-token → 200 { accessToken } (USER)
-      - Lie le compte Riot : reçoit refreshToken + region.
-      - Valide auprès de Riot, extrait le PUUID du JWT.
-      - Chiffre et persiste le refresh token en DB via EncryptionService.
-      - Retourne uniquement l'accessToken frais.
-    GET /riot/valorant/refresh → 200 { accessToken } (USER)
-      - Session persistante : décrypte le refresh token de l'utilisateur en DB.
-      - Demande un nouvel accessToken à Riot (gestion de la rotation automatique du refresh).
-      - Retourne l'accessToken pour usage Front (mémoire vive uniquement).
+  Le module entier (Valorant + sync) vit désormais dans `api/Modules/Riot/`, et le front l'appelle
+  par `clientCore`. Tout ce qui le servait ici a été supprimé : `modules/riot/`, `config/riot/`
+  (RiotConfig et RiotSyncConfig) et les tests associés — 119 fichiers.
 
-  Sécurité :
-    - Zéro stockage Access Token ou Entitlements en DB (volatils).
-    - Refresh Token chiffré via MASTER_KEY (variable d'env TOOLS_ENCRYPTION_KEY).
-    - IV aléatoire stocké par ligne pour garantir l'unicité du chiffrement.
-    - Auto-nettoyage : si Riot rejette le refresh, l'entrée DB est supprimée.
+  Seul `ModuleCode.RIOT` reste : c'est l'énumération des droits, partagée avec la base et
+  l'administration, elle ne décrit pas qui sert le module.
 
-  Composants :
-    - EncryptionService : AES/GCM/NoPadding (standard sécurité).
-    - ValorantAuthRepository : Gestion de la table tools_riot.valorant_auth.
-    - RiotAuthHttpAdapter : Client Riot (extraction PUUID via JWT payload).
-
-6b. Skins — COMPLÈTE (2026-05-09)
-  Routes :
-    GET    /riot/valorant/skins                          → List<ValorantSkinView> avec levels[] (READ_ONLY)
-    GET    /riot/valorant/skins/{id}                     → ValorantSkinView (READ_ONLY)
-    GET    /riot/valorant/skins/by-asset/{assetId}       → ValorantSkinView (READ_ONLY)
-    GET    /riot/valorant/skins/by-level/{levelAssetId}  → ValorantSkinView (READ_ONLY)
-    GET    /riot/valorant/skins/by-theme/{themeUuid}     → List<ValorantSkinView> (READ_ONLY)
-    GET    /riot/valorant/my-skins                       → List<ValorantUserSkinView> (READ_ONLY)
-    POST   /riot/valorant/my-skins                       → 201 ValorantUserSkinView — body : { "skinId": Long } (USER)
-    DELETE /riot/valorant/my-skins/{skinId}              → 204 (USER)
-    GET    /riot/valorant/watchlist                      → List<ValorantWatchlistEntryView> (READ_ONLY)
-    POST   /riot/valorant/watchlist                      → 201 ValorantWatchlistEntryView — body : { "skinId": Long } (USER)
-    DELETE /riot/valorant/watchlist/{skinId}             → 204 (USER)
-
-  Tables BDD :
-    tools_riot.valorant_weapon_skins (id, asset_id UUID, name, icon_url, tier_uuid UUID, content_tier_uuid UUID,
-                                      weapon_id FK → valorant_weapons.id)
-    tools_riot.valorant_skin_levels  (id, skin_id FK, asset_id UUID, level_index INT, name, level_item,
-                                      display_icon_url, streamed_video_url, created_at, updated_at)
-
-  Note tier_uuid : stocke le themeUuid de l'API Riot (UUID du thème/collection), pas le tier de rareté.
-    Le vrai tier de rareté est content_tier_uuid. Le lien skins↔bundle se fait via l'API Riot en live,
-    pas en DB (Riot retourne les level UUIDs dans le storefront, on les résout via by-level).
-
-  ValorantSkinView : (id, assetId, name, iconUrl, tierUuid, contentTierUuid, weaponId, levels[])
-    - weaponId permet de relier directement un skin à son arme parente.
-    - by-theme/{themeUuid} retourne tous les skins d'une même collection (themeUuid = tier_uuid en base).
-
-  Ports : ValorantSkinRepository (findAll, findById, findByAssetId, findByLevelAssetId,
-                                   findAllByWeaponId, findAllByTierUuid),
-          ValorantUserSkinRepository, ValorantWatchlistRepository.
-  Config : RiotConfig wire les repos Postgres.
-
-6c. Bundles — COMPLÈTE (2026-05-09)
-  Routes :
-    GET /riot/valorant/bundles                    → List<ValorantBundleView> (READ_ONLY)
-    GET /riot/valorant/bundles/{id}               → ValorantBundleView (READ_ONLY)
-    GET /riot/valorant/bundles/by-asset/{assetId} → ValorantBundleView (READ_ONLY)
-
-  Table BDD : tools_riot.valorant_bundles (id, asset_id UUID, name, banner_url, created_at, updated_at)
-  Port : ValorantBundleRepository (findAll, findById, findByAssetId).
-  Config : RiotConfig wire PostgresValorantBundleRepository.
-
-6d. Version — COMPLÈTE (2026-05-09)
-  Route :
-    GET /riot/valorant/version → Map<String,Object> contenu de data dans version.json (READ_ONLY)
-
-  Utilité : fournit riotClientVersion (ex: "release-09.08-shipping-28-2638874")
-    à injecter dans le header X-Riot-ClientVersion des appels storefront Riot.
-  Port : ValorantVersionProvider → ValorantLocalVersionProvider (lit version.json).
-  Config : RiotConfig wire ValorantLocalVersionProvider(ValorantLocalAssetsReader).
-
-6e. Sync — COMPLÈTE (2026-05-09)
-  Route :
-    POST /riot/valorant/sync → 200 ValorantGlobalSyncReport { weapons, skins, bundles } (TECH)
-
-  Ordre d'exécution : weapons → skins (avec weaponAssetIdToDbId map) → bundles.
-
-  Architecture (modules/riot/sync/) :
-    api/         ValorantSyncController
-    application/ SyncValorantUseCase          (point d'entrée — RIOT + TECH)
-                 SyncValorantWeaponsUseCase    (RIOT + TECH — retourne ValorantWeaponSyncResult)
-                 SyncValorantSkinsUseCase      (RIOT + TECH — prend Map<UUID,Long> weaponAssetIdToDbId)
-                 SyncValorantBundlesUseCase    (RIOT + TECH)
-                 ValorantWeaponDataProvider    (port — source armes)
-                 ValorantSkinDataProvider      (port — source skins)
-                 ValorantBundleDataProvider    (port — source bundles)
-                 ValorantWeaponSyncRepository  (port DB armes)
-                 ValorantSkinSyncRepository    (port DB skins — save/update prennent Long weaponId)
-                 ValorantSkinLevelSyncRepository (port DB levels — deleteAll + save)
-                 ValorantBundleSyncRepository  (port DB bundles)
-                 ValorantWeaponSyncData
-                 ValorantWeaponSyncResult      (record : ValorantSyncReport + Map<UUID,Long>)
-                 ValorantSkinSyncData          (avec weaponAssetId + List<ValorantSkinLevelSyncData>)
-                 ValorantBundleSyncData
-                 ValorantSkinLevelSyncData
-                 ValorantSyncReport / ValorantGlobalSyncReport
-    infrastructure/
-                 ValorantLocalAssetsReader     (@Component — lit depuis tools_riot/valorant/)
-                 ValorantLocalWeaponDataProvider (lit weapons.json, itère data[], strip EEquippableCategory::)
-                 ValorantLocalSkinDataProvider (lit weapons.json, itère data[].skins[] (passe weaponAssetId)
-                 ValorantLocalBundleDataProvider (lit bundles.json)
-                 ValorantApiSkinDataProvider   (fallback — appelle valorant-api.com)
-                 PostgresValorantWeaponSyncRepository
-                 PostgresValorantSkinSyncRepository
-                 PostgresValorantSkinLevelSyncRepository
-                 PostgresValorantBundleSyncRepository
-
-  Logique sync weapons :
-    - Fetch weapons.json → itère data[] (les armes, pas les skins).
-    - Compare avec DB (clé : asset_id). Crée / met à jour / supprime.
-    - Retourne weaponAssetIdToDbId Map<UUID, Long> pour la sync skins.
-    - category : strip préfixe "EEquippableCategory::" → stocke "Rifle", "Heavy", etc.
-    - displayIconUrl : img/weapons/{uuid}/displayicon.png.
-
-  Logique sync skins :
-    - Fetch weapons.json → itère data[].skins[] (pas data[] qui sont les armes).
-    - Compare avec DB (clé : asset_id). Crée / met à jour / supprime.
-    - weapon_id résolu depuis weaponAssetIdToDbId à chaque skin.
-    - Détection de changement inclut weaponId (null → FK = trigger update).
-    - Après sync skins : deleteAll levels puis réinsère tous les levels de tous les skins.
-    - skinAssetIdToDbId map trackée pendant la boucle pour éviter un round-trip DB.
-
-  Logique sync bundles :
-    - Fetch bundles.json → itère data[].
-    - Compare avec DB (clé : asset_id). Crée / met à jour / supprime.
-
-  Assets locaux (NAS) :
-    Base : {tools.assets.base-path}/tools_riot/valorant/
-    Fichiers JSON : weapons.json, bundles.json, version.json
-    Images :
-      img/weapons/{uuid}/displayicon.png
-      img/weaponskins/{uuid}/displayicon.png
-      img/weaponskinlevels/{uuid}/displayicon.png
-      img/bundles/{uuid}/displayicon2.png
-      img/weaponskinchromas/ (non utilisé actuellement)
-    URL publique : {app.assets.base-url}/tools_riot/valorant/img/...
-    Vidéos (streamedVideo) : URL CDN Riot conservée telle quelle, non téléchargée.
-
-  Config : RiotSyncConfig (séparé de RiotConfig).
-
-6f. Weapons — COMPLÈTE (2026-05-09)
-  Routes :
-    GET /riot/valorant/weapons              → List<ValorantWeaponView> (READ_ONLY)
-    GET /riot/valorant/weapons/{id}         → ValorantWeaponView (READ_ONLY)
-    GET /riot/valorant/weapons/{id}/skins   → List<ValorantSkinView> avec levels[] (READ_ONLY)
-
-  Table BDD : tools_riot.valorant_weapons (id, asset_id UUID, name, category, default_skin_asset_id UUID,
-                                           display_icon_url, created_at, updated_at)
-    - category : valeur strippée du préfixe Unreal Engine (ex: "Rifle", "Heavy", "Sidearm").
-    - default_skin_asset_id : UUID du skin par défaut (non FK pour éviter référence circulaire).
-
-  ValorantWeaponView : (id, assetId, name, category, defaultSkinAssetId, displayIconUrl)
-  Ports : ValorantWeaponRepository (findAll, findById). Config : RiotConfig.
-
-6g. Store History — COMPLÈTE (2026-05-10)
-  Routes :
-    GET  /riot/valorant/store-history  → List<ValorantStoreHistoryView> (READ_ONLY)
-    POST /riot/valorant/store-history  → 201 — body : { "skinIds": List<Long>, "seenAt": LocalDate } (USER)
-
-  Logique Archivage Batch :
-    - Reçoit une liste d'IDs de skins et une date cible.
-    - Empêche les doublons pour un même (user, skin, date) via existsByUserIdAndSkinIdAndDate.
-    - La date transmise par le front est stabilisée sur le midpoint de la rotation (Expiration - 12h) pour éviter le jitter à minuit UTC.
-    - Réponse groupée par date décroissante dans le UseCase via agrégation des skins complets.
-
-  Table BDD : tools_riot.valorant_store_history (id, user_id, skin_id, seen_at).
-  Port : ValorantStoreHistoryRepository (findAllRawByUserId, add, existsByUserIdAndSkinIdAndDate).
-  Note : Le UseCase agrège les objets ValorantSkinView complets à partir des IDs stockés.
-
-6h. Scheduler Watchlist & Archivage auto Valorant — COMPLÈTE (2026-05-10)
-  - ValorantWatchlistScheduler : @Scheduled cron "0 0 6 * * *".
-  - ValorantWatchlistNotifier : Orchestre refresh token + fetch shop + archivage history + notification matches.
-  - POST /riot/valorant/watchlist/admin/sync : Trigger manuel (ADMIN).
+  Détail de la migration et décisions : `api/docs/ARCHITECTURE.md`, section « Riot, deuxième
+  module métier ».
 
 7. Module Admin — Gestion utilisateurs & stats
 
@@ -483,10 +313,9 @@ temps** que cette image Java. Déployée seule, l'API Java retire des routes que
 production appelle encore — neutraliser Watchtower sur `tools_api_java` le temps que `tools_web`
 soit à jour, comme lors de la mise en production du 15/08.
 
-## Module Riot/Valorant (Updates 2026-05-10)
-- Authentification : Chiffrement AES-256 du refresh token en base. Rotation auto via ValorantAuthService (utilisable hors contexte de sécurité).
-- Scheduler : Synchronisation auto de la watchlist et de l'historique shop à 6h00 (ValorantWatchlistScheduler).
-- Trigger Manuel : POST /api/v3/riot/valorant/watchlist/admin/sync (Rôle ADMIN requis).
+## Module Riot/Valorant — retiré le 29/08/2026
+
+Migré sur l'API C# (`api/Modules/Riot/`). Voir la section 6.
 
 ## Module Palworld — Dashboard serveur retiré (2026-08-29)
 

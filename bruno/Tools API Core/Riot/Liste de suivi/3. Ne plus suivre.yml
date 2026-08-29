@@ -1,0 +1,22 @@
+info:
+  name: Ne plus suivre
+  type: http
+  seq: 3
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/riot/valorant/watchlist/1?accountId=1"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  204 sans corps, idempotent.
+
+  Rôle minimum : USER.

@@ -6,6 +6,7 @@ using Tools.Api.Modules.Core.Health;
 using Tools.Api.Modules.Core.Realtime;
 using Tools.Api.Modules.Core.Security;
 using Tools.Api.Modules.EliteDangerous;
+using Tools.Api.Modules.Riot;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,7 @@ builder.AddCoreHost();
 // par module, à mesure qu'ils sont repris de l'API Java.
 builder.AddCoreModules();
 builder.AddEliteDangerousModule();
+builder.AddRiotModule();
 
 var app = builder.Build();
 

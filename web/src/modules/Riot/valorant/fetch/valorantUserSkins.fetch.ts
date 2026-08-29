@@ -1,4 +1,4 @@
-import { clientV3 } from '@/services/axiosInstance'
+import { clientCore } from '@/services/axiosInstance'
 import type { ValorantSkin, ValorantStoreHistoryView } from '../valorant.types'
 
 /* =========================
@@ -6,17 +6,17 @@ import type { ValorantSkin, ValorantStoreHistoryView } from '../valorant.types'
 ========================= */
 
 export async function fetchMySkins(accountId: number): Promise<ValorantSkin[]> {
-  const { data } = await clientV3.get<ValorantSkin[]>('/riot/valorant/my-skins', { params: { accountId } })
+  const { data } = await clientCore.get<ValorantSkin[]>('/riot/valorant/my-skins', { params: { accountId } })
   return data
 }
 
 export async function addToMySkins(skinId: number, accountId: number): Promise<ValorantSkin> {
-  const { data } = await clientV3.post<ValorantSkin>('/riot/valorant/my-skins', { skinId, accountId })
+  const { data } = await clientCore.post<ValorantSkin>('/riot/valorant/my-skins', { skinId, accountId })
   return data
 }
 
 export async function removeFromMySkins(skinId: number, accountId: number): Promise<void> {
-  await clientV3.delete(`/riot/valorant/my-skins/${skinId}`, { params: { accountId } })
+  await clientCore.delete(`/riot/valorant/my-skins/${skinId}`, { params: { accountId } })
 }
 
 /* =========================
@@ -24,17 +24,17 @@ export async function removeFromMySkins(skinId: number, accountId: number): Prom
 ========================= */
 
 export async function fetchWatchlist(accountId: number): Promise<ValorantSkin[]> {
-  const { data } = await clientV3.get<ValorantSkin[]>('/riot/valorant/watchlist', { params: { accountId } })
+  const { data } = await clientCore.get<ValorantSkin[]>('/riot/valorant/watchlist', { params: { accountId } })
   return data
 }
 
 export async function addToWatchlist(skinId: number, accountId: number): Promise<ValorantSkin> {
-  const { data } = await clientV3.post<ValorantSkin>('/riot/valorant/watchlist', { skinId, accountId })
+  const { data } = await clientCore.post<ValorantSkin>('/riot/valorant/watchlist', { skinId, accountId })
   return data
 }
 
 export async function removeFromWatchlist(skinId: number, accountId: number): Promise<void> {
-  await clientV3.delete(`/riot/valorant/watchlist/${skinId}`, { params: { accountId } })
+  await clientCore.delete(`/riot/valorant/watchlist/${skinId}`, { params: { accountId } })
 }
 
 /* =========================
@@ -42,10 +42,10 @@ export async function removeFromWatchlist(skinId: number, accountId: number): Pr
 ========================= */
 
 export async function fetchStoreHistory(accountId: number): Promise<ValorantStoreHistoryView[]> {
-  const { data } = await clientV3.get<ValorantStoreHistoryView[]>('/riot/valorant/store-history', { params: { accountId } })
+  const { data } = await clientCore.get<ValorantStoreHistoryView[]>('/riot/valorant/store-history', { params: { accountId } })
   return data
 }
 
 export async function addToStoreHistory(skinIds: number[], seenAt: string, accountId: number): Promise<void> {
-  await clientV3.post('/riot/valorant/store-history', { skinIds, seenAt, accountId })
+  await clientCore.post('/riot/valorant/store-history', { skinIds, seenAt, accountId })
 }

@@ -1,0 +1,40 @@
+info:
+  name: Archiver une rotation
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/riot/valorant/store-history"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "skinIds": [1, 2],
+        "seenAt": "2026-08-29",
+        "accountId": 1
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Archive toute la rotation du jour en un appel. 201 sans corps.
+
+  - `skinIds` — identifiants internes, pas les UUID Riot. Absent ou vide : rien à faire.
+  - `seenAt` — facultatif, aujourd'hui par défaut. Le front la calcule sur le **milieu** de la
+    rotation (expiration − 12 h) pour que la même journée de boutique porte toujours la même date,
+    minuit UTC compris.
+
+  Les doublons sont ignorés, l'appel est donc rejouable.
+
+  Rôle minimum : USER.

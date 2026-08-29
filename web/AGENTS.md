@@ -111,8 +111,8 @@ Deux APIs coexistent, et la frontière est **la capacité, pas la technologie** 
 
 | Client | Sert | Contenu |
 |---|---|---|
-| `clientCore` | API Core | identité, profil, administration, notifications (liste/lu/suppression), realtime (SignalR, `/hub`) |
-| `clientV3` (et v1/v2/v3Dofus) | API Java | métier : Dofus, Palworld, Riot |
+| `clientCore` | API Core | identité, profil, administration, notifications (liste/lu/suppression), realtime (SignalR, `/hub`), et les modules métier déjà migrés : Elite Dangerous, Riot |
+| `clientV3` (et v1/v2/v3Dofus) | API Java | métier pas encore migré : Dofus, Palworld |
 
 `auth.fetch.ts` et les trois `fetch` du module Admin (`adminUsers`, `adminModules`,
 `adminStats`) passent par `clientCore`. Aucune vue, aucun store n'a bougé : ils ne connaissent
@@ -243,86 +243,70 @@ src/modules/Admin/
 
 ## Module Riot (`src/modules/Riot/`)
 
-### Valorant — refresh token
+**Depuis le 29/08/2026, tout le module passe par `clientCore`** : Riot a été migré sur l'API C#
+(`api/Modules/Riot/`) et le module Java a été supprimé. Les URLs n'ont pas changé, seul le client
+a bougé — les trois `fetch` et `ValorantSkinCatalog.vue` sont les seuls fichiers touchés.
 
-Le refresh token ne peut pas être échangé directement depuis le navigateur (CORS bloqué par Riot). Le flux passe par le backend :
+### Valorant — comptes liés
 
-```typescript
-// valorantShop.fetch.ts
-const { data } = await clientV3.post('/riot/valorant/refresh-token', { refreshToken })
-// Réponse : { accessToken: string, refreshToken: string } (camelCase)
-```
+Un utilisateur peut lier plusieurs comptes Valorant. Le refresh token se relève dans les cookies
+du client Riot (`__Secure-refresh_token`, **HttpOnly** donc invisible pour `document.cookie` —
+`ValorantAuthCard.vue` guide l'utilisateur vers DevTools → Application → Cookies), et n'est jamais
+échangé depuis le navigateur : Riot bloque l'appel en CORS. `POST /riot/valorant/accounts` le fait
+côté API, qui le chiffre et le persiste ; la réponse porte le compte créé et un access token
+immédiatement utilisable.
 
-Les cookies `__Secure-access_token` et `__Secure-refresh_token` sont **HttpOnly** — non lisibles via `document.cookie`. L'aide utilisateur dans `ValorantDailyShop.vue` dirige vers DevTools → Application → Cookies.
+Toutes les routes qui lisent des données propres à un compte prennent `?accountId=`. Un
+`accountId` qui n'appartient pas à l'appelant rend 404, jamais 403 : le compte d'un autre est
+introuvable, pas refusé.
 
 ### Valorant — architecture des fichiers
 
-Le sous-module Valorant est découpé en 4 fichiers :
-
 ```
 valorant/
-  fetch/valorantShop.fetch.ts         # fonctions HTTP + interfaces RawBundle, ShopSkin, etc.
-  composables/useValorantShop.ts      # toute la logique métier (état, timers, renewal, auth)
-  components/ValorantAuthCard.vue     # formulaire auth (state interne : authMode, tokenInput…)
+  fetch/valorantShop.fetch.ts         # boutique, version, skin par level, armes
+  fetch/valorantAccounts.fetch.ts     # comptes liés (liste, liaison, renommage, suppression)
+  fetch/valorantUserSkins.fetch.ts    # skins possédés, liste de suivi, historique boutique
+  composables/useValorantShop.ts      # logique métier de la boutique (état, timers, renewal)
+  composables/useValorantAccounts.ts  # sélection et gestion des comptes liés
+  components/ValorantAuthCard.vue     # formulaire de liaison (état de formulaire interne)
   components/ValorantBundleCard.vue   # carte pack (props: bundle, now)
-  views/ValorantDailyShop.vue         # orchestrateur ~160 lignes (branche composable + composants)
+  views/ValorantDailyShop.vue         # orchestrateur (branche composable + composants)
+  views/ValorantSkinCatalog.vue       # catalogue complet des skins
+  valorant.types.ts                   # miroir des vues de l'API
 ```
 
-Types exportés depuis `useValorantShop.ts` : `View`, `AuthMode`, `BundleSkin`, `ShopBundle`, `REGIONS`.
+`ValorantAuthCard` gère tout son état de formulaire en interne et émet `submit(...)`.
+`ValorantBundleCard` reçoit `bundle` + `now` (mis à jour chaque seconde par le composable) et
+calcule son timer en interne.
 
-`ValorantAuthCard` gère tout son état de formulaire en interne (authMode, tokenInput, showToken, selectedRegion) et émet `submit({ token, region, mode })`. L'orchestrateur appelle simplement `handleSubmit(token, region, mode)` du composable.
+### Valorant — le front ne parle plus jamais à Riot
 
-`ValorantBundleCard` reçoit `bundle: ShopBundle` + `now: number` (valeur de `bundleNow` passée chaque seconde depuis le composable) et calcule le timer live en interne.
+Ni à `valorant-api.com`, ni au storefront. `GET /riot/valorant/store` rend une `ValorantStoreView`
+déjà résolue contre le catalogue local : offres du jour, packs et marché nocturne, chaque offre
+portant le skin complet et son prix. Le front n'a donc aucun parsing de la réponse Riot à faire,
+et `valorant.types.ts` est un simple miroir des vues de l'API.
 
-### Valorant — suppression de valorant-api.com
+**Point critique — UUIDs de levels :** le storefront Riot ne désigne les skins que par l'UUID de
+leur *niveau* (`EquippableSkinLevel`), jamais par celui du skin racine. C'est l'API qui fait le
+pont ; `GET /riot/valorant/skins/by-level/{levelUuid}` l'expose pour les cas où le front a un
+UUID de level isolé à résoudre.
 
-**valorant-api.com est entièrement supprimé du frontend.** Tous les appels passent désormais par le backend (`clientV3`) :
-
-| Ancienne fonction | Nouvelle source |
-|---|---|
-| `fetchClientVersion()` | `GET /riot/valorant/version` → `data.riotClientVersion` |
-| `fetchSkinsMap()` | `fetchSkinByLevelId(uuid)` → `GET /riot/valorant/skins/by-level/{uuid}` → `{ name: data.name, icon: data.iconUrl }` |
-| `fetchBundleMeta(uuid)` | `GET /riot/valorant/bundles/by-asset/{uuid}` → `{ name: data.name, displayIcon: data.bannerUrl }` |
-
-**Point critique — UUIDs de levels :** le storefront Riot retourne des **UUIDs de levels** (pas de skins racines) dans les offres quotidiennes et les items de bundle. `SKIN_TYPE_ID = 'e7c63390-eda7-46e0-bb7a-a6abdacd2433'` est l'ItemTypeID `EquippableSkinLevel`. Le backend expose `GET /riot/valorant/skins/by-level/{levelUuid}` pour faire le pont.
-
-**Table DB `valorant_skin_levels` :** `id BIGSERIAL, skin_id BIGINT FK (→ valorant_weapon_skins, CASCADE), asset_id UUID UNIQUE, level_index INT, name VARCHAR, level_item VARCHAR, display_icon_url TEXT, streamed_video_url TEXT, created_at, updated_at`. Index sur `skin_id` (PostgreSQL ne le crée pas automatiquement sur les FK).
-
-**Réponse `GET /riot/valorant/skins` :** inclut un tableau `levels[]` embarqué : `{ assetId, levelIndex, displayIconUrl, streamedVideoUrl }`.
+`GET /riot/valorant/skins` inclut `levels[]` et `chromas[]` embarqués, ainsi que `owned`,
+`watched` et leurs dates quand un `accountId` est fourni.
 
 ### Valorant — historique du shop (Store History)
 
-L'historique est géré en mode **bulk** pour archiver l'intégralité du shop quotidien en un seul appel.
+Archivage **en bloc** : toute la rotation du jour part en un appel.
 
-- **Flux de Sync** : Dans `useValorantShop.ts`, l'ajout se fait via `addToStoreHistory(skinIds, shopDate)`. L'appel est `awaité` avant de déclencher un `fetchStoreHistory()` pour rafraîchir l'UI.
-- **Calcul de Date stable** : Pour éviter les sauts de date à minuit UTC, la `shopDate` est calculée sur le milieu de la rotation : `expirationMs - 12h`. Cela garantit la même date pendant les 24h de validité du store.
-- **Popup d'historique** : Composant `ValorantShopHistoryPopup.vue` utilisant `@floating-ui/vue`.
-    - Affiche les skins groupés par date (format "J mois AAAA").
-    - Grille de miniatures sans interactivité (cursor default, pas de preview).
-    - Fermeture automatique au scroll ou clic extérieur.
-    - Placée à gauche du bouton "Changer de token" dans `ValorantDailyShop.vue`.
-
-### Valorant — boutique : packs en vente (FeaturedBundle)
-
-`fetchStorefront` extrait le `FeaturedBundle` de la réponse Riot et retourne `bundles: RawBundle[]` dans `StorefrontResult`.
-
-```typescript
-// valorantShop.fetch.ts
-export interface RawBundle {
-  dataAssetId: string
-  items: Array<{ itemId: string; cost: number }>  // skins filtrés par SKIN_TYPE_ID, avec prix unitaire
-  totalBaseCost: number
-  totalDiscountedCost: number
-  discountPercent: number  // décimal (0.33 = -33%)
-  remainingSeconds: number
-}
-```
-
-- `BundleSkin.cost` permet d'afficher le prix individuel de chaque skin dans le pack (badge "OFFERT" si `cost === 0`).
-- `bundleNow = ref(Date.now())` mis à jour chaque seconde dans le même `timerInterval` que le compte à rebours des skins → timer live des packs sans interval dédié.
-- `useImagePreview` est utilisé sur les images de skins (boutique) et sur la bannière + miniatures des packs (clic → modale).
-- Layout carte pack : bannière pleine largeur (`height: auto`, `object-fit: contain`), ligne info (nom + prix/remise à gauche, timer "Xj Xh Xmin" à droite), grille skins en bas (conteneurs 72px, `object-fit: contain`). Badge vert "OFFERT" pour `cost = 0`.
-- `buildBundles(rawBundles)` résout bundle meta + skins en parallèle via `Promise.all` — plus de `skinsMap` passé en paramètre. `cachedSkinsMap` supprimé du composable.
+- **Flux de sync** : dans `useValorantShop.ts`, `addToStoreHistory(skinIds, shopDate)` est
+  `awaité` avant un `fetchStoreHistory()` qui rafraîchit l'UI.
+- **Calcul de date stable** : `shopDate` est calculée sur le **milieu** de la rotation
+  (`expirationMs - 12h`), pour que la même journée de boutique porte la même date pendant ses 24 h
+  et ne saute pas à minuit UTC. L'API applique exactement le même calcul dans sa passe de fond.
+- **Popup d'historique** : `ValorantShopHistoryPopup.vue` (`@floating-ui/vue`), skins groupés par
+  date (format « J mois AAAA »), grille de miniatures sans interactivité, fermeture au scroll ou
+  au clic extérieur. Placée à gauche du bouton « Changer de token » dans `ValorantDailyShop.vue`.
 
 ## `useImagePreview` — taille minimale
 

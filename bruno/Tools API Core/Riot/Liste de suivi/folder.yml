@@ -1,0 +1,9 @@
+info:
+  name: Liste de suivi
+  type: folder
+  seq: 5
+
+request:
+  auth:
+    type: bearer
+    token: "{{authToken}}"
