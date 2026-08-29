@@ -24,6 +24,8 @@ export const useAdminModulesStore = defineStore('adminModules', () => {
   )
 
   function selectModule(id: number) {
+    if (selectedModuleId.value === id) return
+
     selectedModuleId.value = id
     moduleUsers.value = []
   }
