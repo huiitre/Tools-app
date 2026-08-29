@@ -1,0 +1,40 @@
+info:
+  name: Lier un compte
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}/riot/valorant/accounts"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "refreshToken": "REMPLACER",
+        "region": "eu",
+        "label": "Compte principal"
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Lie un compte Valorant à l'utilisateur courant. 201 avec le compte créé et un access token.
+
+  Le `refreshToken` se relève dans les cookies du client Riot (`__Secure-refresh_token`), il n'est
+  jamais lisible en JavaScript. `label` est facultatif : c'est le nom affiché quand plusieurs
+  comptes sont liés.
+
+  Riot valide le jeton avant tout enregistrement : un refresh token périmé rend 400
+  `RIOT_TOKEN_INVALID`.
+
+  Rôle minimum : USER.

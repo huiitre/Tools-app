@@ -1,0 +1,22 @@
+info:
+  name: Lister mes skins
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiUrl}}/riot/valorant/my-skins?accountId=1"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Skins marqués possédés sur ce compte. `accountId` est **obligatoire** ici.
+
+  Rôle minimum : READ_ONLY.

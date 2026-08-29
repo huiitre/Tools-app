@@ -1,0 +1,23 @@
+info:
+  name: Délier un compte
+  type: http
+  seq: 5
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/riot/valorant/accounts/1"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  204 sans corps. La suppression emporte en cascade la liste de suivi, les skins possédés et
+  l'historique de boutique de ce compte.
+
+  Rôle minimum : USER.

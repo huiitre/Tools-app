@@ -1,0 +1,23 @@
+info:
+  name: Skins d'une arme
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{apiUrl}}/riot/valorant/weapons/1/skins?accountId=1"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  `accountId` est facultatif partout dans le catalogue : sans lui, `owned` et `watched` sont faux.
+  Fourni, il doit appartenir à l'appelant — sinon 404 `VALORANT_ACCOUNT_NOT_FOUND`.
+
+  Rôle minimum : READ_ONLY.

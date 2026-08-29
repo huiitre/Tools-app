@@ -1,0 +1,32 @@
+info:
+  name: Marquer un skin possédé
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/riot/valorant/my-skins"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "skinId": 1,
+        "accountId": 1
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  201 avec le skin, drapeau `owned` à jour. Déjà possédé : 409 `SKIN_ALREADY_OWNED`.
+
+  Rôle minimum : USER.

@@ -28,6 +28,8 @@ using Tools.Api.Modules.Core.GameServers.Application.Ports.Listing;
 using Tools.Api.Modules.Core.GameServers.Application.Ports.Games;
 using Tools.Api.Modules.Core.GameServers.Application.Ports.Polling;
 using Tools.Api.Modules.Core.GameServers.Application.Ports.Sync;
+using Tools.Api.Modules.Riot.Valorant.Application.Catalog.Ports;
+using Tools.Api.Modules.Riot.Valorant.Application.Core.Ports;
 
 namespace Tools.Api.IntegrationTests.Fixtures;
 
@@ -36,6 +38,7 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
     // Secrets de test uniquement : aucun lien avec les environnements réels.
     public const string TestJwtSecret = "integration-tests-secret-key-0123456789";
     public const string TestInternalToken = "integration-tests-internal-token-0123456789";
+    public const string TestEncryptionKey = "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -47,7 +50,10 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
                 ["ConnectionStrings:Postgres"] =
                     "Host=127.0.0.1;Port=5432;Database=tests;Username=tests;Password=tests",
                 ["JWT_SECRET"] = TestJwtSecret,
-                ["INTERNAL_API_TOKEN"] = TestInternalToken
+                ["INTERNAL_API_TOKEN"] = TestInternalToken,
+                // Clé AES-256 de test : sans elle, le chiffrement des jetons Valorant refuse de
+                // se construire et tout le module Riot devient irrésolvable.
+                ["Riot:EncryptionMasterKey"] = TestEncryptionKey
             });
         });
         builder.ConfigureServices(services =>
@@ -121,6 +127,15 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
             services.AddSingleton<RecordingRealtimePublisher>();
             services.AddSingleton<IRealtimePublisher>(
                 provider => provider.GetRequiredService<RecordingRealtimePublisher>());
+            services.RemoveAll<IValorantBundleRepository>();
+            services.AddSingleton<InMemoryValorantCatalogRepository>();
+            services.AddSingleton<IValorantBundleRepository>(
+                provider => provider.GetRequiredService<InMemoryValorantCatalogRepository>());
+            services.RemoveAll<IValorantAuthRepository>();
+            services.AddSingleton<InMemoryValorantAuthRepository>();
+            services.AddSingleton<IValorantAuthRepository>(
+                provider => provider.GetRequiredService<InMemoryValorantAuthRepository>());
+
             services.RemoveAll<IRecipientResolver>();
             services.AddSingleton<InMemoryRecipientResolver>();
             services.AddSingleton<IRecipientResolver>(

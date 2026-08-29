@@ -1,0 +1,22 @@
+info:
+  name: Détail d'un pack
+  type: http
+  seq: 11
+
+http:
+  method: GET
+  url: "{{apiUrl}}/riot/valorant/bundles/1"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Pack inconnu : 404 `VALORANT_BUNDLE_NOT_FOUND`.
+
+  Rôle minimum : READ_ONLY.

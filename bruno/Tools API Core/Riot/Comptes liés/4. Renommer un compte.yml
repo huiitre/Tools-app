@@ -1,0 +1,31 @@
+info:
+  name: Renommer un compte
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{apiUrl}}/riot/valorant/accounts/1"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "label": "Smurf"
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Change le libellé d'affichage. Libellé vide ou blanc : 400 `LABEL_REQUIRED`.
+
+  Rôle minimum : USER.

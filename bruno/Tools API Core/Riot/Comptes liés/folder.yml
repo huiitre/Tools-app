@@ -1,0 +1,9 @@
+info:
+  name: Comptes liés
+  type: folder
+  seq: 1
+
+request:
+  auth:
+    type: bearer
+    token: "{{authToken}}"

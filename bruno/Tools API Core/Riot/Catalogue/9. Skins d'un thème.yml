@@ -1,0 +1,22 @@
+info:
+  name: Skins d'un thème
+  type: http
+  seq: 9
+
+http:
+  method: GET
+  url: "{{apiUrl}}/riot/valorant/skins/by-theme/00000000-0000-0000-0000-000000000000?accountId=1"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Tous les skins d'une collection (`themeUuid`), par exemple Altitude ou Glitchpop.
+
+  Rôle minimum : READ_ONLY.

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
-import { clientV3 } from '@/services/axiosInstance'
+import { clientCore } from '@/services/axiosInstance'
 import { fetchWeapons } from '@/modules/Riot/valorant/fetch/valorantShop.fetch'
 import { fetchMySkins, fetchWatchlist } from '@/modules/Riot/valorant/fetch/valorantUserSkins.fetch'
 import { useRiotStore } from '@/modules/Riot/riot.store'
@@ -202,7 +202,7 @@ function initObserver() {
 async function loadSkins() {
   try {
     riotStore.clearAccountSession()
-    const { data } = await clientV3.get<ValorantSkin[]>('/riot/valorant/skins', {
+    const { data } = await clientCore.get<ValorantSkin[]>('/riot/valorant/skins', {
       params: { accountId: riotStore.selectedAccountId ?? undefined },
     })
     skins.value = data

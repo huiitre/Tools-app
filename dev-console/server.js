@@ -187,6 +187,34 @@ function killPort(name) {
   }
 }
 
+// Une console relancée ne connaît pas les process laissés par la précédente : ils gardent les
+// ports, et tout ce qu'on démarre ensuite échoue. L'API .NET, elle, ne se contente pas d'échouer —
+// une exception non gérée au démarrage la fait abandonner sur SIGABRT, ce qui produit un core dump
+// de 12 Mo et une notification système à chaque tentative.
+function freeAllPorts() {
+  const ports = Object.values(PORTS).flat();
+  const busy = [];
+  for (const port of ports) {
+    try {
+      const result = require('child_process').spawnSync('fuser', [`${port}/tcp`], { stdio: 'pipe' });
+      if (result.status === 0) busy.push(port);
+    } catch (e) {
+      return; // fuser absent : on laisse le démarrage suivre son cours
+    }
+  }
+
+  if (!busy.length) return;
+
+  pushLine('system', `ports occupés par une session précédente, libérés : ${busy.join(', ')}`, 'system');
+  for (const port of busy) {
+    try {
+      require('child_process').spawnSync('fuser', ['-k', `${port}/tcp`], { stdio: 'ignore' });
+    } catch (e) {
+      // rien à faire de plus
+    }
+  }
+}
+
 function composeArgs(...args) {
   return ['compose', '-f', COMPOSE_FILE, ...args];
 }
@@ -368,6 +396,8 @@ async function startTunnel() {
 // ---- Orchestration : DB, tunnel, puis les 3 process (ou juste web en mode qa) ----
 
 async function main() {
+  freeAllPorts();
+
   if (QA) {
     spawnLogged('web', 'npm', ['run', 'web:dev:qa']);
     return;

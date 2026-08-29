@@ -1,0 +1,26 @@
+info:
+  name: Synchroniser le catalogue
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}/riot/valorant/sync"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Recharge tout le catalogue depuis les données de l'extracteur, lues en HTTP sur le CDN des assets.
+
+  Ordre imposé, dans une seule transaction : raretés, armes, skins (qui s'y rattachent), packs.
+  Niveaux et chromas sont purgés puis réinsérés. Rend un rapport créés/modifiés/supprimés par
+  famille.
+
+  Rôle minimum : TECH.
