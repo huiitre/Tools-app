@@ -46,6 +46,24 @@ Les pièces jointes sont toujours envoyées en Base64 : aucun appelant ne transm
 
 Les use cases internes du Core n’utilisent jamais ce use case : ils injectent `MailService` directement et ne passent donc par aucun contrôle de rôle.
 
+## Texte ou HTML
+
+`text` et `html` sont tous deux facultatifs, et **s'excluent** : `SmtpMailSender` construit son
+message avec `Body = command.Html ?? command.Text` et `IsBodyHtml = command.Html is not null`.
+
+```json
+{ "to": ["user@example.com"], "subject": "Rapport", "text": "Version texte." }
+{ "to": ["user@example.com"], "subject": "Rapport", "html": "<p>Version <b>HTML</b>.</p>" }
+```
+
+Renseigner les deux n'envoie pas un message multipart avec repli en texte : le HTML gagne et le
+texte est ignoré. Un client qui n'affiche pas le HTML n'aura donc rien à afficher. Si le repli
+devient nécessaire, c'est `SmtpMailSender` qu'il faut reprendre — en attachant une
+`AlternateView` par format — et non l'appelant.
+
+Le HTML part tel quel, sans assainissement ni mise en forme ajoutée : il doit être écrit pour un
+client mail (tables, styles inline, largeur bornée), pas pour un navigateur.
+
 ## Endpoint de service à service
 
 ```text

@@ -9,14 +9,13 @@ http:
   headers:
     - name: X-Internal-Token
       value: "{{internalApiToken}}"
-  auth: none
   body:
     type: json
     data: |-
       {
-        "to": ["{{authEmail}}"],
-        "subject": "Test API Core - route interne",
-        "text": "Envoi de test depuis Bruno via la route de service à service."
+          "to": ["{{authEmail}}"],
+          "subject": "Test API Core - route interne (HTML)",
+          "html": "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#f4f5f7;padding:32px 0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;\"><tr><td align=\"center\"><table role=\"presentation\" width=\"600\" cellpadding=\"0\" cellspacing=\"0\" style=\"width:600px;max-width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.12);\"><tr><td style=\"background:#1f2937;padding:24px 32px;\"><div style=\"color:#ffffff;font-size:18px;font-weight:600;\">Tools API Core</div><div style=\"color:#9ca3af;font-size:13px;margin-top:4px;\">Route interne, service a service</div></td></tr><tr><td style=\"padding:32px;\"><h1 style=\"margin:0 0 12px;font-size:22px;line-height:1.3;color:#111827;\">Le HTML passe bien</h1><p style=\"margin:0 0 20px;font-size:15px;line-height:1.6;color:#4b5563;\">Si tu lis ce paragraphe avec ses couleurs, ses marges et son encadre ci-dessous, alors <strong style=\"color:#111827;\">POST /internal/mail</strong> accepte un corps HTML complet avec sa mise en forme.</p><table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" style=\"margin:0 0 24px;\"><tr><td style=\"background:#ecfdf5;color:#047857;font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;\">204 No Content</td><td style=\"width:8px;\"></td><td style=\"background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:600;padding:6px 12px;border-radius:999px;\">X-Internal-Token</td></tr></table><table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background:#f9fafb;border-left:3px solid #6366f1;border-radius:6px;\"><tr><td style=\"padding:16px 20px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;color:#374151;line-height:1.7;\">POST /api/core/internal/mail<br>Content-Type: application/json<br>X-Internal-Token: &lt;secret partage&gt;</td></tr></table><p style=\"margin:24px 0 0;font-size:14px;line-height:1.6;color:#6b7280;\">Rappel : quand <code style=\"background:#f3f4f6;padding:2px 5px;border-radius:4px;font-size:13px;\">html</code> est renseigne, le champ <code style=\"background:#f3f4f6;padding:2px 5px;border-radius:4px;font-size:13px;\">text</code> n'est pas envoye.</p></td></tr><tr><td style=\"background:#f9fafb;border-top:1px solid #e5e7eb;padding:16px 32px;color:#9ca3af;font-size:12px;\">Envoi de test depuis Bruno. Aucune action requise.</td></tr></table></td></tr></table>"
       }
 
 settings:
@@ -24,3 +23,30 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Envoi de service à service, authentifié par le secret partagé `X-Internal-Token`
+  (`INTERNAL_API_TOKEN` côté conteneur). Sans lui, ou avec une valeur fausse, la route répond
+  **404 et non 401** : elle ne confirme pas son existence à qui la cherche. Un 404 sur cette
+  requête veut donc presque toujours dire « jeton absent ou faux dans l'environnement Bruno »,
+  la variable étant déclarée `secret:` et n'ayant donc aucune valeur dans le dépôt.
+
+  ## `text` ou `html`, jamais les deux
+
+  Le corps porte l'un **ou** l'autre :
+
+  - `"text": "..."` → email en texte brut ;
+  - `"html": "<table>…</table>"` → email en HTML, styles compris.
+
+  Ce n'est pas un multipart avec repli : `SmtpMailSender` fait `Body = Html ?? Text` avec
+  `IsBodyHtml = Html is not null`. **Dès que `html` est renseigné, `text` n'est pas envoyé du
+  tout** — le laisser dans le corps ne sert à rien et donnera l'illusion d'un repli qui n'existe
+  pas. Pour basculer d'un mode à l'autre, remplacer la clé, ne pas ajouter la seconde.
+
+  Le HTML doit être écrit pour un client mail, pas pour un navigateur : tables imbriquées plutôt
+  que flex ou grid, styles en `style=` inline (les balises `<style>` sont souvent supprimées),
+  largeur ~600 px. `border-radius` et `box-shadow` sont ignorés par Outlook desktop.
+
+  Réponse : `204` sans corps. `to` et `subject` sont obligatoires ; un corps qui en manque rend
+  `400` **avant** le contrôle du jeton, la validation de modèle passant en premier.
