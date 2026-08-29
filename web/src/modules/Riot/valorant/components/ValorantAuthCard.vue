@@ -173,7 +173,7 @@ label {
   width: auto;
 
   &:hover {
-    color: var(--pico-color);
+    color: inherit;
     background: transparent;
   }
 }

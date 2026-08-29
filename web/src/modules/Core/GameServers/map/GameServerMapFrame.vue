@@ -324,7 +324,7 @@ onBeforeUnmount(() => resizeObserver?.disconnect())
   border-right: 1px solid var(--pico-card-border-color);
   border-radius: 0;
   background: transparent;
-  color: var(--pico-color);
+  color: var(--app-text-color);
 }
 
 .map-frame-controls button:last-child { border-right: 0; }

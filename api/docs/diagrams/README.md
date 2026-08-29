@@ -11,7 +11,7 @@ en `ContinueOnError` : Python ou Graphviz manquants ne doivent jamais casser une
 script pose un verrou, car une compilation qui construit aussi les tests déclenche la cible deux
 fois en parallèle.
 
-À la main si besoin : `python3 api/docs/diagrams/uml.py`.
+À la main si besoin : `npm run api:diagrams`.
 
 ```
 diagrams/

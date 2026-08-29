@@ -116,7 +116,7 @@ const submit = async () => {
   border-radius: 0.35rem;
   font-size: 0.85rem;
   cursor: pointer;
-  &:hover { border-color: var(--pico-color); color: var(--pico-color); }
+  &:hover { border-color: inherit; color: inherit; }
 }
 
 .required { color: #ef4444; }

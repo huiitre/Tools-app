@@ -51,8 +51,8 @@ sous `/api/core`. La cible et le mécanisme de bascule sont décrits dans `api/d
 
 ## Diagrammes
 - Les diagrammes sont **régénérés à chaque `dotnet build`** (cible MSBuild `GenerateDiagrams`,
-  incrémentale et sans effet sur le build en cas d'échec). À la main :
-  `python3 api/docs/diagrams/uml.py` — un dossier par sous-module : un diagramme Mermaid des modules et de
+  incrémentale et sans effet sur le build en cas d'échec). À la main : `npm run api:diagrams`.
+  Un dossier par sous-module : un diagramme Mermaid des modules et de
   leurs dépendances, puis un par sous-module avec ses types et les flèches de dépendance lues dans
   les constructeurs. Deux formats par diagramme : `.drawio`
   (éditable dans VS Code) et `.md` (bloc mermaid, rendu par GitHub). Voir

@@ -164,7 +164,7 @@ footer {
 .passive-modal__search input { height: 2.15rem; margin: 0; padding: 0; border: 0; background: transparent; box-shadow: none; font-size: .78rem; }
 
 .passive-modal__list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem 1.4rem; min-height: 0; margin-top: .7rem; overflow-y: auto; padding: .15rem .25rem .15rem .15rem; }
-.passive-option { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .35rem; width: 100%; min-height: 30px; margin: 0; padding: .35rem .5rem; border: 1px solid var(--pico-muted-border-color); border-left: 3px solid var(--passive-rank-color); border-radius: 0; background: color-mix(in srgb, var(--passive-rank-color) 7%, var(--pico-card-background-color)); color: var(--pico-color); font-size: .66rem; font-weight: 600; text-align: left; }
+.passive-option { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .35rem; width: 100%; min-height: 30px; margin: 0; padding: .35rem .5rem; border: 1px solid var(--pico-muted-border-color); border-left: 3px solid var(--passive-rank-color); border-radius: 0; background: color-mix(in srgb, var(--passive-rank-color) 7%, var(--pico-card-background-color)); color: inherit; font-size: .66rem; font-weight: 600; text-align: left; }
 .passive-option:hover { background: color-mix(in srgb, var(--passive-rank-color) 18%, var(--pico-card-background-color)); box-shadow: 0 0 10px color-mix(in srgb, var(--passive-rank-color) 25%, transparent); }
 .passive-option.selected { border-color: #22c55e; border-left-color: #22c55e; background: color-mix(in srgb, #22c55e 13%, var(--pico-card-background-color)); box-shadow: 0 0 0 1px #22c55e; }
 .passive-option.disabled { opacity: .5; cursor: not-allowed; }

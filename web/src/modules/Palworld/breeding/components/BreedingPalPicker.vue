@@ -393,7 +393,7 @@ const visiblePals = computed(() => {
   border-radius: 10px;
   background: var(--pico-card-background-color);
   border: 1px solid var(--pico-card-border-color);
-  color: var(--pico-color);
+  color: inherit;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 

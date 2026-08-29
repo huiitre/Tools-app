@@ -60,7 +60,7 @@ const selectedCount = computed(() => catalogueStore.selectedItemsWithRecipe.leng
   border-radius: var(--pico-border-radius);
   cursor: pointer;
   transition: all 0.15s;
-  color: var(--pico-color);
+  color: inherit;
   font-size: 0.85rem;
   text-align: left;
   width: 100%;
