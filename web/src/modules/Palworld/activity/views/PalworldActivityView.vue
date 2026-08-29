@@ -425,7 +425,7 @@ onUnmounted(() => {
   padding: 0.5rem 1.25rem;
   border: none;
   background: transparent;
-  color: var(--pico-color);
+  color: inherit;
   font-size: 0.82rem;
   cursor: pointer;
   border-radius: 0;

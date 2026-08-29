@@ -89,7 +89,7 @@ function differenceLabel(route: BreedingPathRoute) {
 .alternatives-modal header small { margin-top: .2rem; color: var(--pico-muted-color); font-size: .66rem; }
 .alternatives-modal header button { display: grid; place-items: center; width: 2rem; height: 2rem; margin: 0; padding: 0; border-color: var(--pico-muted-border-color); background: transparent; color: var(--pico-muted-color); }
 .alternatives-modal__list { display: grid; gap: .55rem; min-height: 0; margin-top: 1rem; overflow-y: auto; padding-right: .2rem; }
-.route-option { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; margin: 0; padding: .65rem; border-color: var(--pico-muted-border-color); background: color-mix(in srgb, var(--pico-card-background-color) 92%, var(--pico-muted-color)); color: var(--pico-color); text-align: left; }
+.route-option { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; margin: 0; padding: .65rem; border-color: var(--pico-muted-border-color); background: color-mix(in srgb, var(--pico-card-background-color) 92%, var(--pico-muted-color)); color: inherit; text-align: left; }
 .route-option:hover { border-color: var(--pico-primary); background: color-mix(in srgb, var(--pico-primary) 10%, var(--pico-card-background-color)); }
 .route-option__heading { display: grid; gap: .12rem; flex: 0 0 auto; }
 .route-option__heading strong { color: var(--pico-color); font-size: .85rem; }

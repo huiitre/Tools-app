@@ -563,7 +563,7 @@ onMounted(async () => {
 .more-pals, .selected-preview > span { display: grid; place-items: center; width: 29px; height: 29px; margin-left: -7px; border-radius: 50%; background: var(--pico-secondary-background); color: var(--pico-secondary-inverse); font-size: .58rem; }
 .source-empty-icon { font-size: 1.5rem; }
 .path-arrow { font-size: 1.15rem; color: var(--pico-primary); }
-.passive-button { margin: 0; padding: .35rem; border: 1px dashed var(--pico-card-border-color); background: transparent; color: var(--pico-color); font-size: .68rem; }
+.passive-button { margin: 0; padding: .35rem; border: 1px dashed var(--pico-card-border-color); background: transparent; color: var(--app-text-color); font-size: .68rem; }
 .source-switch { display: grid; grid-template-columns: 1fr 1fr; padding: .2rem; border: 1px solid var(--pico-card-border-color); border-radius: var(--pico-border-radius); }
 .source-switch button { margin: 0; padding: .45rem .25rem; border: 0; background: transparent; color: var(--pico-muted-color); font-size: .68rem; }
 .source-switch button.active { background: var(--pico-primary-background); color: var(--pico-primary-inverse); border-radius: calc(var(--pico-border-radius) - 2px); }
@@ -581,7 +581,7 @@ onMounted(async () => {
 .selected-preview { display: flex; align-items: center; min-width: 0; }
 .selected-preview small { color: var(--pico-muted-color); font-size: .65rem; }
 .selected-pals-list { display: grid; grid-template-columns: 1fr 1fr; gap: .3rem; max-height: 105px; overflow: auto; }
-.selected-pals-list button { display: flex; align-items: center; min-width: 0; gap: .25rem; margin: 0; padding: .25rem; border: 1px solid var(--pico-card-border-color); background: var(--pico-card-background-color); color: var(--pico-color); font-size: .6rem; }
+.selected-pals-list button { display: flex; align-items: center; min-width: 0; gap: .25rem; margin: 0; padding: .25rem; border: 1px solid var(--pico-card-border-color); background: var(--pico-card-background-color); color: var(--app-text-color); font-size: .6rem; }
 .selected-pals-list img { width: 21px; height: 21px; object-fit: contain; }
 .selected-pals-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .selected-pals-list .mdi { margin-left: auto; color: var(--pico-muted-color); }
@@ -598,7 +598,7 @@ onMounted(async () => {
 .element-filters img { width: 14px; height: 14px; object-fit: contain; }
 .owned-pal-list, .target-pal-list { min-height: 0; overflow: auto; }
 .owned-pal-list { display: flex; flex: 1; flex-direction: column; gap: .35rem; padding-right: .15rem; overscroll-behavior: contain; }
-.owned-pal-list > button { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 18px; gap: .4rem; align-items: center; min-height: 46px; margin: 0; padding: .3rem .4rem; border: 1px solid var(--pico-card-border-color); background: var(--pico-card-background-color); color: var(--pico-color); text-align: left; font-size: .68rem; }
+.owned-pal-list > button { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 18px; gap: .4rem; align-items: center; min-height: 46px; margin: 0; padding: .3rem .4rem; border: 1px solid var(--pico-card-border-color); background: var(--pico-card-background-color); color: var(--app-text-color); text-align: left; font-size: .68rem; }
 .owned-pal-list .server-pal-count { position: absolute; top: .2rem; left: .2rem; z-index: 1; display: grid; place-items: center; min-width: 1rem; height: 1rem; padding: 0 .15rem; border: 1px solid var(--pico-primary); border-radius: 999px; background: var(--pico-card-background-color); color: var(--pico-primary); font-size: .55rem; font-weight: 800; }
 .owned-pal-list > button.selected { border-color: var(--pico-primary); background: color-mix(in srgb, var(--pico-primary-background) 18%, var(--pico-card-background-color)); }
 .owned-pal-list > button > img { width: 34px; height: 34px; object-fit: contain; }
@@ -612,7 +612,7 @@ onMounted(async () => {
 .owned-pal-list > p { margin: 1rem 0; color: var(--pico-muted-color); text-align: center; font-size: .7rem; }
 .target-picker-heading { display: flex; align-items: center; font-size: .76rem; }
 .target-pal-list { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: .35rem; flex: 1; padding-right: .15rem; }
-.target-pal-list button { display: flex; align-items: center; min-width: 0; gap: .35rem; min-height: 43px; margin: 0; padding: .28rem; border: 1px solid var(--pico-card-border-color); background: var(--pico-card-background-color); color: var(--pico-color); text-align: left; font-size: .65rem; }
+.target-pal-list button { display: flex; align-items: center; min-width: 0; gap: .35rem; min-height: 43px; margin: 0; padding: .28rem; border: 1px solid var(--pico-card-border-color); background: var(--pico-card-background-color); color: var(--app-text-color); text-align: left; font-size: .65rem; }
 .target-pal-list img { width: 33px; height: 33px; object-fit: contain; }
 .target-pal-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .path-result { display: flex; align-items: center; justify-content: center; min-width: 0; min-height: 0; }

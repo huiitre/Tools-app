@@ -49,6 +49,15 @@ sous `/api/core`. La cible et le mécanisme de bascule sont décrits dans `api/d
     - PicoCSS pour tout le styling (respecter `/web/doc/pico-css-variables-guide.md`).
     - Electron pour les modules Sniffer/Autofocus.
 
+## Diagrammes
+- Les diagrammes sont **régénérés à chaque `dotnet build`** (cible MSBuild `GenerateDiagrams`,
+  incrémentale et sans effet sur le build en cas d'échec). À la main : `npm run api:diagrams`.
+  Un dossier par sous-module : un diagramme Mermaid des modules et de
+  leurs dépendances, puis un par sous-module avec ses types et les flèches de dépendance lues dans
+  les constructeurs. Deux formats par diagramme : `.drawio`
+  (éditable dans VS Code) et `.md` (bloc mermaid, rendu par GitHub). Voir
+  `api/docs/diagrams/README.md`.
+
 ## Common Tasks
 - **Route API (règle immuable)** : toute route **ajoutée, modifiée ou supprimée**, quelle que soit l'API (C# `api/`, Java `api-java/`, Node), doit être répercutée dans la collection Bruno (`bruno/`) dans le même commit. C'est le seul moyen de tester les routes à la main : une route livrée sans son entrée Bruno n'est pas testable, donc pas terminée.
 - **Migration BDD** : Ajouter un script dans `database/sql/V2.x.y__nom.sql` et l'exécuter manuellement sur Postgres.

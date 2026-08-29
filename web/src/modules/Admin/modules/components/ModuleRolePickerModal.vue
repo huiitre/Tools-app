@@ -107,6 +107,6 @@ const picked = ref<AdminRole | null>(null)
   border-radius: 0.35rem;
   font-size: 0.85rem;
   cursor: pointer;
-  &:hover { border-color: var(--pico-color); color: var(--pico-color); }
+  &:hover { border-color: inherit; color: inherit; }
 }
 </style>

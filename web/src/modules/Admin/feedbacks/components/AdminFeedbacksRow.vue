@@ -228,7 +228,7 @@ const confirmDelete = async () => {
   color: var(--pico-muted-color);
   cursor: pointer;
   border-radius: 0.35rem;
-  &:hover:not(:disabled) { color: var(--pico-color); background: var(--pico-muted-border-color); }
+  &:hover:not(:disabled) { color: inherit; background: var(--pico-muted-border-color); }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 

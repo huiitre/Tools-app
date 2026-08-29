@@ -116,7 +116,7 @@ function onQuantityInput(event: Event) {
   color: var(--pico-muted-color);
   cursor: pointer;
 
-  &:hover { color: var(--pico-color); }
+  &:hover { color: inherit; }
 }
 
 .item-preview {
@@ -174,7 +174,7 @@ function onQuantityInput(event: Event) {
     border-radius: var(--pico-border-radius);
     background: var(--pico-form-element-background-color);
     border: 1px solid var(--pico-form-element-border-color);
-    color: var(--pico-color);
+    color: var(--app-text-color);
     cursor: pointer;
     flex-shrink: 0;
 

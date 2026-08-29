@@ -643,3 +643,27 @@ dans la nav, pas dans le dashboard) alimentent toujours l'élevage, le Paldex et
 Deux manques assumés par rapport à l'ancienne page : pas de popup de détails au clic sur un joueur,
 et les **bases n'affichent que les pals du direct** — le décompte vient de `game-data`, pas du
 snapshot.
+
+## Piège PicoCSS — `var(--pico-color)` dans un bouton (29/08/2026)
+
+PicoCSS **réassigne la variable** à l'intérieur de tout élément-bouton :
+
+```css
+button, [role=button], [type=button], [type=submit], [type=reset] {
+  --pico-color: var(--pico-primary-inverse);
+}
+```
+
+`var(--pico-color)` n'a donc pas le même sens selon l'endroit où on l'écrit : au niveau du
+document c'est la couleur du texte, **dans un `<button>` c'est la couleur lisible sur fond
+primaire**. Sur les thèmes à accent clair elle vaut `#000` (`pico.amber`, `pico.grey`,
+`pico.yellow`), d'où du texte noir sur un fond sombre, même en mode sombre — c'est la couleur
+d'**accent** qui décide, pas le thème clair/sombre.
+
+**Dans un `<button>`, écrire `color: inherit`** : le bouton reprend la couleur de son conteneur.
+`--pico-primary-inverse` reste réservé aux états qui posent réellement un fond primaire, typiquement
+un `&:hover { background: var(--pico-primary-background); color: var(--pico-primary-inverse); }`.
+
+23 règles étaient touchées dans tout le projet (sélecteur de joueurs Palworld, bannière du widget
+serveurs, boutons de fermeture des modales, cartes de Pal, options de passifs…). Ce n'est pas un
+défaut visible partout : il ne se voit que sur les thèmes dont l'accent est clair.

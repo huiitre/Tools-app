@@ -54,3 +54,34 @@ h1, h2, h3, h4, h5, h6
     font-weight: bold;
   }
 }
+
+// PicoCSS réassigne --pico-color dans tout élément-bouton :
+//
+//   button, [role=button], [type=button], [type=submit], [type=reset] {
+//     --pico-color: var(--pico-primary-inverse);
+//   }
+//
+// La variable n'y désigne donc plus la couleur du texte, mais celle qui reste lisible sur un fond
+// primaire — soit #000 sur les thèmes à accent clair (amber, grey, yellow). Nos boutons, eux,
+// repeignent presque tous leur fond : ils héritaient d'un texte noir sur fond sombre, et le
+// symptôme suivait la couleur d'accent, pas le mode clair/sombre.
+//
+// On mémorise la vraie couleur du texte avant que Pico ne la réassigne, puis on la rétablit dans
+// tout bouton portant une classe à nous. Un bouton Pico nu (`<button>Envoyer</button>`) garde son
+// comportement d'origine, fond primaire et texte inverse.
+:root {
+  --app-text-color: var(--pico-color);
+}
+
+button[class],
+[role="button"][class] {
+  --pico-color: var(--app-text-color);
+}
+
+// Exceptions : ces boutons posent réellement un fond primaire et doivent garder la couleur prévue
+// pour lui. Les autres boutons à fond primaire déclarent déjà leur `color` eux-mêmes.
+.btn-primary,
+.module-bar,
+.notif-item-dot {
+  color: var(--pico-primary-inverse);
+}

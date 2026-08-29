@@ -177,7 +177,7 @@ const matchCount = computed(() => props.merchants.filter(matchesSearch).length)
   gap: 0.6rem;
   background: transparent;
   border: none;
-  color: var(--pico-color);
+  color: inherit;
   cursor: pointer;
   text-align: left;
 

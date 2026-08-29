@@ -160,10 +160,10 @@ onUnmounted(() => {
 .path-canvas-banner { position: absolute; z-index: 3; top: .75rem; left: 50%; display: flex; justify-content: center; max-width: min(560px, calc(100% - 16rem)); transform: translateX(-50%); pointer-events: none; }
 .path-canvas-banner > * { pointer-events: auto; }
 .path-canvas-alternatives { position: absolute; z-index: 2; top: .75rem; left: .75rem; }
-.path-canvas-alternatives button { width: auto; min-height: 2rem; margin: 0; padding: .35rem .6rem; border-color: var(--pico-card-border-color); background: var(--pico-card-background-color); color: var(--pico-color); box-shadow: var(--pico-card-box-shadow); font-size: .7rem; }
+.path-canvas-alternatives button { width: auto; min-height: 2rem; margin: 0; padding: .35rem .6rem; border-color: var(--pico-card-border-color); background: var(--pico-card-background-color); color: var(--app-text-color); box-shadow: var(--pico-card-box-shadow); font-size: .7rem; }
 .path-canvas-alternatives button:hover { border-color: var(--pico-primary); color: var(--pico-primary); }
 .path-canvas-controls { position: absolute; z-index: 2; top: .75rem; right: .75rem; display: flex; overflow: hidden; border: 1px solid var(--pico-card-border-color); border-radius: var(--pico-border-radius); background: var(--pico-card-background-color); box-shadow: var(--pico-card-box-shadow); }
-.path-canvas-controls button { display: grid; place-items: center; width: 2rem; height: 2rem; margin: 0; padding: 0; border: 0; border-right: 1px solid var(--pico-card-border-color); border-radius: 0; background: transparent; color: var(--pico-color); }
+.path-canvas-controls button { display: grid; place-items: center; width: 2rem; height: 2rem; margin: 0; padding: 0; border: 0; border-right: 1px solid var(--pico-card-border-color); border-radius: 0; background: transparent; color: var(--app-text-color); }
 .path-canvas-controls button:last-child { border-right: 0; }
 .path-canvas-controls button:hover { background: var(--pico-primary-background); color: var(--pico-primary-inverse); }
 .path-canvas-content { position: absolute; top: 0; left: 0; width: max-content; transform-origin: top left; will-change: transform; }

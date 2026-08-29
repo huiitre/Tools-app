@@ -155,7 +155,7 @@ onBeforeUnmount(() => {
   &.active {
     border-color: var(--pico-muted-border-color);
     background: var(--pico-card-background-color);
-    color: var(--pico-color);
+    color: inherit;
   }
 }
 
@@ -274,7 +274,7 @@ onBeforeUnmount(() => {
   border: 1px solid transparent;
   border-radius: var(--pico-border-radius);
   background: transparent;
-  color: var(--pico-color);
+  color: inherit;
   font-size: .72rem;
   text-align: left;
 
@@ -286,7 +286,9 @@ onBeforeUnmount(() => {
 
   &.active {
     border-color: var(--pico-primary);
-    color: var(--pico-color);
+    // Assorti à la bordure : var(--pico-color) vaudrait ici --pico-primary-inverse, prévu pour
+    // un fond primaire que cette ligne n'a pas (cf. web/AGENTS.md).
+    color: var(--pico-primary);
     font-weight: 600;
   }
 

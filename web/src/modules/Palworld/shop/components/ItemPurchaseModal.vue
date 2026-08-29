@@ -119,7 +119,7 @@ function confirm() {
   color: var(--pico-muted-color);
   cursor: pointer;
 
-  &:hover { color: var(--pico-color); }
+  &:hover { color: inherit; }
 }
 
 .item-preview {
@@ -177,7 +177,7 @@ function confirm() {
     border-radius: var(--pico-border-radius);
     background: var(--pico-form-element-background-color);
     border: 1px solid var(--pico-form-element-border-color);
-    color: var(--pico-color);
+    color: var(--app-text-color);
     cursor: pointer;
 
     &:hover { border-color: var(--pico-primary); color: var(--pico-primary); }

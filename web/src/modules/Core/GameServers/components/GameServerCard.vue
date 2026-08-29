@@ -247,7 +247,7 @@ const copyConnection = () => {
   gap: 0.4rem;
 
   background: var(--pico-muted-background-color);
-  color: var(--pico-color);
+  color: inherit;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;

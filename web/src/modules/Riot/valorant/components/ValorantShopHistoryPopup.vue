@@ -124,7 +124,7 @@ function formatDate(dateStr: string) {
   background: color-mix(in srgb, var(--pico-muted-border-color) 40%, transparent);
   border: 1px solid var(--pico-muted-border-color);
   border-radius: 6px;
-  color: var(--pico-color);
+  color: inherit;
   cursor: pointer;
   width: auto;
   transition: all 0.2s ease;

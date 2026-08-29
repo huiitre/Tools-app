@@ -18,4 +18,16 @@
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
 
+  <!-- Diagrammes de dépendances régénérés à chaque compilation, pour qu'ils ne dérivent jamais du
+       code. Inputs/Outputs rendent la cible incrémentale : MSBuild la saute tant qu'aucun .cs
+       n'est plus récent que les diagrammes, ce qui compte pour « dotnet watch », qui reconstruit
+       à chaque sauvegarde. ContinueOnError car le script a besoin de Python et de Graphviz : leur
+       absence ne doit jamais casser une compilation. -->
+  <Target Name="GenerateDiagrams" AfterTargets="Build"
+          Inputs="@(Compile)" Outputs="docs/diagrams/00-modules.md">
+    <Exec Command="python3 docs/diagrams/uml.py"
+          WorkingDirectory="$(MSBuildProjectDirectory)"
+          ContinueOnError="true" StandardOutputImportance="low" />
+  </Target>
+
 </Project>

@@ -318,7 +318,7 @@ function onSavePreset() {
   border-radius: 6px;
   background: transparent;
   border: 1px solid var(--pico-card-border-color);
-  color: var(--pico-color);
+  color: inherit;
 
   &:hover {
     border-color: var(--pico-primary);
