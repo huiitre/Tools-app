@@ -1,0 +1,37 @@
+info:
+  name: Réordonner les membres
+  type: http
+  seq: 8
+
+http:
+  method: PUT
+  url: "{{apiUrl}}/temtem/teams/1/members/order"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "memberIds": [3, 1, 2]
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Remplace l'ordre des membres d'une équipe avec la liste complète issue du drag-and-drop et rend
+  `TemtemTeamView`.
+
+  Chaque identifiant de membre de l'équipe doit apparaître **une et une seule fois**. La requête
+  ne crée ni ne supprime aucun membre : elle modifie seulement les slots 1 à n. Les techniques
+  retenues restent donc attachées à leur membre, quel que soit son nouvel emplacement.
+
+  - `400 TEAM_MEMBER_ORDER_INVALID` — membre manquant, doublon ou membre d'une autre équipe.
+  - `404 TEAM_NOT_FOUND` — équipe absente ou appartenant à un autre utilisateur.

@@ -128,6 +128,15 @@ async function createTeam() {
   align-items: center;
   gap: 0.3rem;
   white-space: nowrap;
+  background: transparent;
+  border-color: var(--pico-card-border-color);
+  color: var(--pico-primary);
+
+  &:hover:not(:disabled) {
+    background: transparent;
+    border-color: var(--pico-primary);
+    color: var(--pico-primary);
+  }
 }
 
 .teams-count {

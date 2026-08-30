@@ -18,6 +18,8 @@ flowchart LR
   RemoveTemtemTeamMemberUseCase["RemoveTemtemTeamMemberUseCase"]
   RenameTemtemTeamCommand["RenameTemtemTeamCommand"]
   RenameTemtemTeamUseCase["RenameTemtemTeamUseCase"]
+  ReorderTemtemTeamMembersCommand["ReorderTemtemTeamMembersCommand"]
+  ReorderTemtemTeamMembersUseCase["ReorderTemtemTeamMembersUseCase"]
   SetTemtemTeamMemberTechniquesCommand["SetTemtemTeamMemberTechniquesCommand"]
   SetTemtemTeamMemberTechniquesUseCase["SetTemtemTeamMemberTechniquesUseCase"]
   TemtemTeamMemberView["TemtemTeamMemberView"]
@@ -38,6 +40,7 @@ flowchart LR
   PostgresTemtemTeamRepository -.-> ITemtemTeamRepository
   RemoveTemtemTeamMemberUseCase --> ITemtemTeamRepository
   RenameTemtemTeamUseCase --> ITemtemTeamRepository
+  ReorderTemtemTeamMembersUseCase --> ITemtemTeamRepository
   SetTemtemTeamMemberTechniquesUseCase --> ITemtemTeamRepository
   SetTemtemTeamMemberTechniquesUseCase --> TeamRoster
   TemtemTeamView --> TemtemTeamMemberView
@@ -47,5 +50,6 @@ flowchart LR
   TemtemTeamsController --> ListMyTemtemTeamsUseCase
   TemtemTeamsController --> RemoveTemtemTeamMemberUseCase
   TemtemTeamsController --> RenameTemtemTeamUseCase
+  TemtemTeamsController --> ReorderTemtemTeamMembersUseCase
   TemtemTeamsController --> SetTemtemTeamMemberTechniquesUseCase
 ```

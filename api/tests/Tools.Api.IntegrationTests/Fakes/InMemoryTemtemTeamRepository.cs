@@ -80,6 +80,19 @@ public sealed class InMemoryTemtemTeamRepository(InMemoryTemtemCatalogueReposito
         return Task.FromResult(member.Id);
     }
 
+    public Task ReorderMembers(long teamId, IReadOnlyList<long> memberIds)
+    {
+        var members = Find(teamId)!.Members;
+
+        foreach (var (memberId, index) in memberIds.Select((memberId, index) => (memberId, index)))
+        {
+            var memberIndex = members.FindIndex(member => member.Id == memberId);
+            members[memberIndex] = members[memberIndex] with { Slot = index + 1 };
+        }
+
+        return Task.CompletedTask;
+    }
+
     public Task<int?> FindMemberTemtemId(long teamId, long memberId) =>
         Task.FromResult(FindMember(teamId, memberId)?.TemtemId);
 

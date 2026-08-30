@@ -13,7 +13,8 @@ http:
     type: json
     data: |-
       {
-        "temtemId": 7
+        "temtemId": 7,
+        "slot": 3
       }
   auth:
     type: bearer
@@ -26,14 +27,16 @@ settings:
   maxRedirects: 5
 
 docs: |-
-  Place un Temtem à la **première place libre** de l'équipe et rend `TemtemTeamView`.
+  Place un Temtem dans l'équipe et rend `TemtemTeamView`.
 
-  La place n'est pas un paramètre : un membre retiré au milieu laisse un trou que le prochain
-  ajout rebouche. Sans cette règle, une équipe de trois pourrait se retrouver « pleine ».
+  `slot` est facultatif. Absent, le Temtem rejoint la **première place libre** (comportement
+  historique). Présent, il désigne une place exacte, entre 1 et 6, qui doit être libre.
 
   Le même Temtem peut occuper deux places — le jeu l'autorise, et l'interdire reviendrait à
   décider à la place du joueur.
 
   - `409 TEAM_FULL` — les six places sont prises.
+  - `409 TEAM_SLOT_OCCUPIED` — le slot demandé est déjà pris.
+  - `400 TEAM_SLOT_INVALID` — le slot demandé n'est pas entre 1 et 6.
   - `404 TEMTEM_NOT_FOUND` — `temtemId` ne désigne aucun Temtem.
   - `404 TEAM_NOT_FOUND` — équipe inexistante ou appartenant à un autre.

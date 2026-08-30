@@ -47,6 +47,7 @@ public static class TemtemModule
         builder.Services.AddScoped<RenameTemtemTeamUseCase>();
         builder.Services.AddScoped<DeleteTemtemTeamUseCase>();
         builder.Services.AddScoped<AddTemtemTeamMemberUseCase>();
+        builder.Services.AddScoped<ReorderTemtemTeamMembersUseCase>();
         builder.Services.AddScoped<RemoveTemtemTeamMemberUseCase>();
         builder.Services.AddScoped<SetTemtemTeamMemberTechniquesUseCase>();
 

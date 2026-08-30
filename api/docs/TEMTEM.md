@@ -11,6 +11,7 @@ Module né directement en C# le 30/08/2026 — il n'a jamais existé côté Java
 | Sync `POST /internal/temtem/sync` | **livrée et vérifiée en base** |
 | Domaine `TypeEffectiveness` + 8 tests unitaires | **livré** |
 | Migration `V2.72.0__temtem_team.sql` | **appliquée** (à la main, hors Flyway) |
+| Migration `V2.73.0__temtem_team_member_slot_order.sql` | à appliquer (réordonnancement des équipes) |
 | Catalogue en lecture (API) | **livré et vérifié contre la base** |
 | Sous-module `Teams/` (API) | **livré et vérifié contre la base** |
 | Front : Temtemdex | **livré** |
@@ -115,7 +116,7 @@ adaptateurs en mémoire : **ils ne voient aucune ligne de SQL**, d'où la vérif
 ## Les équipes
 
 La seule partie du module qui écrit, et la seule en `RoleCode.User` — le catalogue se contente de
-`ReadOnly`. Sept routes sous `/temtem/teams`, toutes filtrées sur le propriétaire **dans le use
+`ReadOnly`. Huit routes sous `/temtem/teams`, toutes filtrées sur le propriétaire **dans le use
 case et dans le SQL** : l'équipe d'un autre rend **404 et non 403**, confirmer son existence
 renseignerait déjà l'intrus.
 
@@ -125,9 +126,10 @@ renseignerait déjà l'intrus.
 | `POST /temtem/teams` | crée l'équipe ; `temtemId` facultatif place un premier membre |
 | `PATCH /temtem/teams/{teamId}` | renomme |
 | `DELETE /temtem/teams/{teamId}` | supprime (204) ; membres et techniques partent en cascade |
-| `POST /temtem/teams/{teamId}/members` | place un Temtem à la première place libre |
+| `POST /temtem/teams/{teamId}/members` | place un Temtem à une place précise ou à la première libre |
 | `DELETE /temtem/teams/{teamId}/members/{memberId}` | retire un membre |
 | `PUT /temtem/teams/{teamId}/members/{memberId}/techniques` | remplace les techniques retenues |
+| `PUT /temtem/teams/{teamId}/members/order` | remplace l'ordre complet des membres |
 
 **Chaque écriture rend l'équipe entière**, pas un accusé de réception : le front affiche une
 équipe complète après chaque geste, sans la recharger ni deviner l'état obtenu. Seule la
@@ -156,6 +158,11 @@ jeu, y compris celles que se posent les équipes.
 
 Le même Temtem peut occuper deux places : le jeu l'autorise, et l'interdire reviendrait à décider
 à la place du joueur.
+
+Le réordonnancement reçoit la liste complète des `memberId` après un drag-and-drop et réécrit
+uniquement les `slot`. La contrainte unique `(team_id, slot)` est différable depuis `V2.73.0` :
+l'échange de deux places reste atomique, sans supprimer le membre ni les techniques qui lui sont
+liées.
 
 ### Le SQL n'est pas dupliqué non plus
 
@@ -228,7 +235,7 @@ c'est `temtem_technique` qui le dit.
 | Écran | Route | Ce qu'il consomme |
 |---|---|---|
 | Temtemdex | `/temtem/temtemdex` | `GET /temtem/creatures`, `GET /temtem/types` |
-| Mes équipes | `/temtem/teams` | les sept routes `/temtem/teams`, plus `GET /temtem/creatures/{slug}` |
+| Mes équipes | `/temtem/teams` | les huit routes `/temtem/teams`, plus `GET /temtem/creatures/{slug}` |
 
 Le nom de la route racine (`temtem`) doit valoir le code du module en base : `BurgerNav.vue`
 teste `router.hasRoute(module.code)` pour afficher l'entrée de menu.

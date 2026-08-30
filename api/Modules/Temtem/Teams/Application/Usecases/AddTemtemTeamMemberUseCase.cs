@@ -41,10 +41,21 @@ public sealed class AddTemtemTeamMemberUseCase(
         // ne peuvent pas viser la même, et l'unicité (team_id, slot) reste le dernier rempart.
         await using var transaction = await transactionManager.BeginAsync();
 
-        var slot = TeamRoster.FirstFreeSlot(await teamRepository.FindOccupiedSlots(command.TeamId))
-            ?? throw AppException.Conflict(
-                "TEAM_FULL",
-                $"Une équipe ne peut pas dépasser {TeamRoster.MaxMembers} Temtem.");
+        var occupiedSlots = await teamRepository.FindOccupiedSlots(command.TeamId);
+        var slot = command.Slot switch
+        {
+            < 1 or > TeamRoster.MaxMembers => throw AppException.Validation(
+                "TEAM_SLOT_INVALID",
+                $"La place doit être comprise entre 1 et {TeamRoster.MaxMembers}."),
+            { } requestedSlot when occupiedSlots.Contains(requestedSlot) => throw AppException.Conflict(
+                "TEAM_SLOT_OCCUPIED",
+                "Cette place est déjà occupée."),
+            { } requestedSlot => requestedSlot,
+            null => TeamRoster.FirstFreeSlot(occupiedSlots)
+                ?? throw AppException.Conflict(
+                    "TEAM_FULL",
+                    $"Une équipe ne peut pas dépasser {TeamRoster.MaxMembers} Temtem.")
+        };
 
         await teamRepository.AddMember(command.TeamId, command.TemtemId, slot);
         await teamRepository.TouchUpdatedAt(command.TeamId);

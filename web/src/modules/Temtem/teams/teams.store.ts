@@ -5,6 +5,7 @@ import {
   deleteTeam,
   fetchTeams,
   removeTeamMember,
+  reorderTeamMembers,
   renameTeam,
   setMemberTechniques,
 } from './fetch/teams.fetch'
@@ -46,8 +47,12 @@ export const useTemtemTeamsStore = defineStore('temtemTeams', {
       return team
     },
 
-    async addMember(teamId: number, temtemId: number) {
-      return this.replace(await addTeamMember(teamId, temtemId))
+    async addMember(teamId: number, temtemId: number, slot?: number) {
+      return this.replace(await addTeamMember(teamId, temtemId, slot))
+    },
+
+    async reorderMembers(teamId: number, memberIds: number[]) {
+      return this.replace(await reorderTeamMembers(teamId, memberIds))
     },
 
     async rename(teamId: number, name: string) {
