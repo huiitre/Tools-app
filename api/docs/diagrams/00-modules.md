@@ -22,7 +22,7 @@ flowchart LR
   Teams["Teams<br/>20 types"]
   Techniques["Techniques<br/>4 types"]
   Traits["Traits<br/>1 types"]
-  Types["Types<br/>6 types"]
+  Types["Types<br/>8 types"]
   Users["Users<br/>14 types"]
   Valorant["Valorant<br/>83 types"]
   Vpn["Vpn<br/>15 types"]

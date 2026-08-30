@@ -79,19 +79,14 @@ const groups = computed(() => {
 
 const isEmpty = computed(() => groups.value.every(group => group.entries.length === 0))
 
-// La légende se déduit des techniques chargées : il n'y a pas de route qui liste les catégories,
-// et leurs icônes ne vivent que dans les données. Elle ignore la recherche — une légende qui
-// disparaîtrait en filtrant n'expliquerait plus les couleurs restées à l'écran.
 const CATEGORY_ORDER = ['PHYSICAL', 'SPECIAL', 'STATUS']
 
 const legend = computed(() => {
-  const byCode = new Map<string, TemtemCategory>()
-  for (const entry of learned.value) {
-    byCode.set(entry.technique.category.code, entry.technique.category)
-  }
-  return [...byCode.values()]
-    .sort((a, b) => CATEGORY_ORDER.indexOf(a.code) - CATEGORY_ORDER.indexOf(b.code))
+  const categories = new Map<string, TemtemCategory>()
+  for (const entry of learned.value) categories.set(entry.technique.category.code, entry.technique.category)
+  return [...categories.values()].sort((a, b) => CATEGORY_ORDER.indexOf(a.code) - CATEGORY_ORDER.indexOf(b.code))
 })
+
 </script>
 
 <template>
@@ -113,11 +108,7 @@ const legend = computed(() => {
           </header>
 
           <ul v-if="legend.length" class="technique-modal__legend">
-            <li
-              v-for="category in legend"
-              :key="category.code"
-              :class="`category-${category.code.toLowerCase()}`"
-            >
+            <li v-for="category in legend" :key="category.code">
               <img v-if="category.imageUrl" :src="category.imageUrl" alt="" aria-hidden="true">
               {{ category.label }}
             </li>
@@ -149,13 +140,17 @@ const legend = computed(() => {
                   :key="entry.technique.id"
                   type="button"
                   class="technique-option"
-                  :class="[
-                    `category-${entry.technique.category.code.toLowerCase()}`,
-                    { selected: isSelected(entry.technique.id), disabled: isDisabled(entry.technique.id) },
-                  ]"
+                  :class="{ selected: isSelected(entry.technique.id), disabled: isDisabled(entry.technique.id) }"
                   :title="entry.technique.effect ?? entry.technique.name"
                   @click="toggle(entry.technique.id)"
                 >
+                  <img
+                    v-if="entry.technique.type.imageUrl"
+                    class="technique-option__type"
+                    :src="entry.technique.type.imageUrl"
+                    :alt="entry.technique.type.name"
+                    :title="entry.technique.type.name"
+                  >
                   <span class="technique-option__name">
                     {{ entry.technique.name }}
                     <small v-if="entry.level">Nv. {{ entry.level }}</small>
@@ -172,12 +167,6 @@ const legend = computed(() => {
                   </span>
 
                   <span class="technique-option__icons">
-                    <img
-                      v-if="entry.technique.type.imageUrl"
-                      :src="entry.technique.type.imageUrl"
-                      :alt="entry.technique.type.name"
-                      :title="entry.technique.type.name"
-                    >
                     <img
                       v-if="entry.technique.category.imageUrl"
                       :src="entry.technique.category.imageUrl"
@@ -261,11 +250,7 @@ footer {
   display: inline-flex;
   align-items: center;
   gap: .3rem;
-  padding: .18rem .45rem;
-  border: 1px solid var(--technique-category-color);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--technique-category-color) 12%, transparent);
-  color: var(--technique-category-color);
+  color: var(--pico-muted-color);
   font-size: .62rem;
   font-weight: 700;
 }
@@ -293,7 +278,7 @@ footer {
 
 .technique-option {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: 18px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: .4rem;
   width: 100%;
@@ -301,18 +286,20 @@ footer {
   margin: 0;
   padding: .35rem .5rem;
   border: 1px solid var(--pico-muted-border-color);
-  border-left: 3px solid var(--technique-category-color);
+  border-left: 1px solid var(--pico-muted-border-color);
   border-radius: 0;
-  background: color-mix(in srgb, var(--technique-category-color) 7%, var(--pico-card-background-color));
+  background: var(--pico-card-background-color);
   color: inherit;
   font-size: .66rem;
   font-weight: 600;
   text-align: left;
 }
 
-.technique-option:hover { background: color-mix(in srgb, var(--technique-category-color) 18%, var(--pico-card-background-color)); box-shadow: 0 0 10px color-mix(in srgb, var(--technique-category-color) 25%, transparent); }
-.technique-option.selected { border-color: #22c55e; border-left-color: #22c55e; background: color-mix(in srgb, #22c55e 13%, var(--pico-card-background-color)); box-shadow: 0 0 0 1px #22c55e; }
+.technique-option:hover { background: var(--pico-card-sectioning-background-color); }
+.technique-option.selected { border-color: #22c55e; box-shadow: 0 0 0 1px #22c55e; }
 .technique-option.disabled { opacity: .5; cursor: not-allowed; }
+
+.technique-option__type { width: 18px; height: 18px; object-fit: contain; }
 
 .technique-option__name {
   overflow: hidden;
@@ -330,11 +317,6 @@ footer {
 .technique-option__icons { display: flex; align-items: center; gap: .2rem; }
 .technique-option__icons img, .technique-option__icons i { width: 18px; height: 18px; object-fit: contain; }
 .technique-option.selected .technique-option__icons .mdi-check { color: #22c55e; }
-
-/* Physique, Spéciale, État — la couleur de bord dit la catégorie sans lire l'icône. */
-.category-physical { --technique-category-color: #f5934d; }
-.category-special  { --technique-category-color: #a855f7; }
-.category-status   { --technique-category-color: #94a3b8; }
 
 .technique-modal__empty { grid-column: 1 / -1; margin: 1rem 0; color: var(--pico-muted-color); font-size: .72rem; text-align: center; }
 

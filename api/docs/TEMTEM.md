@@ -16,7 +16,7 @@ Module né directement en C# le 30/08/2026 — il n'a jamais existé côté Java
 | Sous-module `Teams/` (API) | **livré et vérifié contre la base** |
 | Front : Temtemdex | **livré** |
 | Front : Mes équipes | **livré** |
-| Simulateur de combat (API + front) | à faire — **la prochaine étape** |
+| Front : Simulateur de combat | **livré** (sélection éphémère, sans localStorage) |
 | Choix du trait d'un membre d'équipe | à faire (demande une migration) |
 
 ## L'objectif, tel que décrit par l'utilisateur
@@ -31,10 +31,9 @@ Trois écrans, dans cet ordre :
 2. **Mes équipes** — toutes les équipes, chacune avec ses Temtem. Pour chaque membre on choisit
    **4 techniques** parmi celles qu'il apprend, et plus tard un trait parmi ceux disponibles. Une
    barre de recherche permet d'ajouter un Temtem à une équipe depuis cette page.
-3. **Simulateur de combat** — l'objectif réel. On sélectionne une équipe, puis on désigne les
-   Temtem adverses le plus vite possible ; l'application répond quel Temtem de l'équipe opposer,
-   d'après les forces et faiblesses de types, et — dans un second temps — quelles techniques
-   utiliser.
+3. **Simulateur de combat** — on sélectionne une équipe puis deux Temtem adverses. L'application
+   met en évidence les forces et faiblesses de types ; les recommandations de techniques viendront
+   dans un second temps.
 
 ## La règle du double type
 
@@ -101,9 +100,9 @@ Le segment `creatures` n'est pas décoratif : `/temtem/{slug}` serait entré en 
 **Le catalogue part entier, sans pagination ni filtre serveur** — 165 lignes, environ 70 Ko.
 Recherche, tri et filtres sont l'affaire de la grille, côté navigateur, comme sur la Paldex.
 
-La matrice d'efficacité n'est pas exposée. Le port `ITemtemTypeRepository.FindEffectivenessMatrix`
-existe pour le simulateur, qui calculera côté API : le front recevra un verdict, pas une matrice
-à interpréter lui-même.
+La matrice d'efficacité est exposée par `GET /temtem/types/effectiveness` : 144 lignes, chargées
+une seule fois à l'entrée du module. Le simulateur applique côté front le produit des deux lignes
+pour un Temtem à double type ; il ne recopie donc jamais la matrice synchronisée en TypeScript.
 
 La fiche coûte trois requêtes — le Temtem, ses techniques, ses traits — et non une par technique ;
 les cibles sont agrégées dans la requête des techniques par un `array_agg`.
@@ -234,8 +233,9 @@ c'est `temtem_technique` qui le dit.
 
 | Écran | Route | Ce qu'il consomme |
 |---|---|---|
-| Temtemdex | `/temtem/temtemdex` | `GET /temtem/creatures`, `GET /temtem/types` |
+| Temtemdex | `/temtem/temtemdex` | `GET /temtem/creatures`, `GET /temtem/types`, `GET /temtem/types/effectiveness` |
 | Mes équipes | `/temtem/teams` | les huit routes `/temtem/teams`, plus `GET /temtem/creatures/{slug}` |
+| Simulateur | `/temtem/simulator` | données déjà chargées à l'entrée du module |
 
 Le nom de la route racine (`temtem`) doit valoir le code du module en base : `BurgerNav.vue`
 teste `router.hasRoute(module.code)` pour afficher l'entrée de menu.
@@ -248,22 +248,17 @@ Deux choses à ne pas défaire :
 - **Le catalogue est chargé une fois** à l'entrée sur `/temtem` et gardé en mémoire, comme le
   Paldex. La recherche, le tri et les filtres sont locaux : le serveur ne pagine ni ne filtre.
 
-## Ce qui reste : le simulateur
+## Évolution possible : recommandations de techniques
 
-Le domaine existe et est testé ; **rien ne l'expose encore**. Il manque un use case qui, pour une
-équipe et une liste de Temtem adverses, rende quel membre opposer puis quelles techniques.
-
-`ITemtemTypeRepository.FindEffectivenessMatrix()` est là pour lui : la matrice entière en une
-requête, 144 lignes. Elle n'est **volontairement pas rendue par `GET /temtem/types`** — le calcul
-vit dans l'API, le front reçoit un verdict, pas une matrice à interpréter. Ne pas réimplémenter
-la règle du produit en TypeScript.
+Le premier simulateur se limite aux avantages de type. Il pourra ensuite recommander les
+techniques retenues par chaque membre, sans changer le contrat de la matrice.
 
 ## Ce qu'il ne faut pas faire
 
 - Ne pas modéliser `version.json` : il appartient à l'extracteur.
 - Ne pas reprendre `nameEn` (décision de l'utilisateur : « on s'en fout de l'anglais »).
 - Ne pas reprendre `mandatory` de `technique_target.json` : ce champ doit disparaître de la source.
-- Ne pas exposer la matrice d'efficacité au front (voir ci-dessus).
+- Ne pas recopier la matrice d'efficacité en TypeScript : elle vient de l'API synchronisée.
 - Ne pas recharger la liste des équipes après une écriture : l'API rend l'équipe entière, le
   store la substitue.
 

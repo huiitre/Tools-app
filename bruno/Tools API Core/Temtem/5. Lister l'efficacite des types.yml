@@ -1,0 +1,26 @@
+info:
+  name: Lister l'efficacité des types
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{apiUrl}}/temtem/types/effectiveness"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  La matrice complète d'efficacité des types : 144 lignes (12 attaquants × 12 défenseurs),
+  multiplicateurs neutres compris.
+
+  Le simulateur la charge une fois à l'entrée du module puis calcule côté navigateur. Pour un
+  Temtem à deux types, il multiplie les deux lignes correspondant au type de l'attaque.
+
+  Rôle minimum : READ_ONLY dans le module Temtem.

@@ -1,5 +1,6 @@
 import { temtemdexRoutes } from '@/modules/Temtem/temtemdex/temtemdex.routes'
 import { temtemTeamsRoutes } from '@/modules/Temtem/teams/teams.routes'
+import { temtemSimulatorRoutes } from '@/modules/Temtem/simulator/simulator.routes'
 
 // Le nom de la route racine doit valoir le code du module (`tools_core.module.code`) : c'est ce
 // que teste BurgerNav pour décider d'afficher l'entrée de menu.
@@ -13,6 +14,7 @@ export const routes = [
     children: [
       ...temtemdexRoutes,
       ...temtemTeamsRoutes,
+      ...temtemSimulatorRoutes,
     ],
   },
 ]

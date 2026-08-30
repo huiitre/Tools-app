@@ -21,6 +21,7 @@ public sealed class TemtemCatalogueTests(ApiWebApplicationFactory factory)
 
     [Theory]
     [InlineData("/temtem/types")]
+    [InlineData("/temtem/types/effectiveness")]
     [InlineData("/temtem/creatures")]
     [InlineData("/temtem/creatures/mimit")]
     public async Task Le_catalogue_refuse_un_appel_anonyme(string route)
@@ -34,6 +35,7 @@ public sealed class TemtemCatalogueTests(ApiWebApplicationFactory factory)
 
     [Theory]
     [InlineData("/temtem/types")]
+    [InlineData("/temtem/types/effectiveness")]
     [InlineData("/temtem/creatures")]
     [InlineData("/temtem/creatures/mimit")]
     public async Task Le_catalogue_refuse_un_utilisateur_hors_du_module(string route)
@@ -55,6 +57,20 @@ public sealed class TemtemCatalogueTests(ApiWebApplicationFactory factory)
 
         Assert.NotNull(types);
         Assert.Contains(types, type => type.Slug == "eau");
+    }
+
+    [Fact]
+    public async Task La_matrice_d_efficacite_repond_a_un_lecteur_du_module()
+    {
+        using var client = ClientInTemtem("READ_ONLY");
+
+        var matrix = await client.GetFromJsonAsync<List<TemtemTypeEffectivenessView>>(
+            "/temtem/types/effectiveness");
+
+        Assert.NotNull(matrix);
+        Assert.Contains(matrix, entry => entry.AttackerTypeId == 3
+                                      && entry.DefenderTypeId == 3
+                                      && entry.Multiplier == 0.5m);
     }
 
     [Fact]

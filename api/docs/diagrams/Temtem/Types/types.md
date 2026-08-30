@@ -9,7 +9,9 @@ flowchart LR
   end
   subgraph Application
   ITemtemTypeRepository(["ITemtemTypeRepository"])
+  ListTemtemTypeEffectivenessUseCase["ListTemtemTypeEffectivenessUseCase"]
   ListTemtemTypesUseCase["ListTemtemTypesUseCase"]
+  TemtemTypeEffectivenessView["TemtemTypeEffectivenessView"]
   TemtemTypeView["TemtemTypeView"]
   end
   subgraph Domain
@@ -18,7 +20,9 @@ flowchart LR
   subgraph Infrastructure
   PostgresTemtemTypeRepository["PostgresTemtemTypeRepository"]
   end
+  ListTemtemTypeEffectivenessUseCase --> ITemtemTypeRepository
   ListTemtemTypesUseCase --> ITemtemTypeRepository
   PostgresTemtemTypeRepository -.-> ITemtemTypeRepository
+  TemtemTypesController --> ListTemtemTypeEffectivenessUseCase
   TemtemTypesController --> ListTemtemTypesUseCase
 ```
