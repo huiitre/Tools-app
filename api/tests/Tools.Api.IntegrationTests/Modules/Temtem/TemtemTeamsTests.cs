@@ -132,6 +132,83 @@ public sealed class TemtemTeamsTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Un_temtem_peut_rejoindre_la_place_libre_demandee()
+    {
+        using var client = ClientFor(OwnerId);
+        var team = await CreateTeam(client, "Place choisie", InMemoryTemtemCatalogueRepository.MonoTypeId);
+
+        using var response = await client.PostAsJsonAsync(
+            $"/temtem/teams/{team.Id}/members",
+            new { TemtemId = InMemoryTemtemCatalogueRepository.DoubleTypeId, Slot = 5 });
+        var updated = (await response.Content.ReadFromJsonAsync<TemtemTeamView>())!;
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal([1, 5], updated.Members.Select(member => member.Slot));
+    }
+
+    [Fact]
+    public async Task Une_place_occupee_ne_peut_pas_etre_demandee()
+    {
+        using var client = ClientFor(OwnerId);
+        var team = await CreateTeam(client, "Place occupee", InMemoryTemtemCatalogueRepository.MonoTypeId);
+
+        using var response = await client.PostAsJsonAsync(
+            $"/temtem/teams/{team.Id}/members",
+            new { TemtemId = InMemoryTemtemCatalogueRepository.DoubleTypeId, Slot = 1 });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Le_reordonnancement_conserve_les_techniques_du_membre()
+    {
+        using var client = ClientFor(OwnerId);
+        var team = await CreateTeam(client, "Ordre persistant", InMemoryTemtemCatalogueRepository.DoubleTypeId);
+
+        using var added = await client.PostAsJsonAsync(
+            $"/temtem/teams/{team.Id}/members",
+            new { TemtemId = InMemoryTemtemCatalogueRepository.MonoTypeId });
+        var withTwoMembers = (await added.Content.ReadFromJsonAsync<TemtemTeamView>())!;
+        var firstMember = withTwoMembers.Members[0];
+        var secondMember = withTwoMembers.Members[1];
+
+        using var techniques = await client.PutAsJsonAsync(
+            $"/temtem/teams/{team.Id}/members/{firstMember.Id}/techniques",
+            new { TechniqueIds = new[] { InMemoryTemtemCatalogueRepository.LearnableTechniqueId } });
+        techniques.EnsureSuccessStatusCode();
+
+        using var response = await client.PutAsJsonAsync(
+            $"/temtem/teams/{team.Id}/members/order",
+            new { MemberIds = new[] { secondMember.Id, firstMember.Id } });
+        var reordered = (await response.Content.ReadFromJsonAsync<TemtemTeamView>())!;
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal([secondMember.Id, firstMember.Id], reordered.Members.Select(member => member.Id));
+        Assert.Equal([1, 2], reordered.Members.Select(member => member.Slot));
+        Assert.Equal(InMemoryTemtemCatalogueRepository.LearnableTechniqueId,
+            Assert.Single(reordered.Members[1].Techniques).Id);
+    }
+
+    [Fact]
+    public async Task Le_reordonnancement_refuse_une_liste_incomplete_ou_avec_doublon()
+    {
+        using var client = ClientFor(OwnerId);
+        var team = await CreateTeam(client, "Ordre invalide", InMemoryTemtemCatalogueRepository.MonoTypeId);
+
+        using var added = await client.PostAsJsonAsync(
+            $"/temtem/teams/{team.Id}/members",
+            new { TemtemId = InMemoryTemtemCatalogueRepository.DoubleTypeId });
+        var withTwoMembers = (await added.Content.ReadFromJsonAsync<TemtemTeamView>())!;
+        var memberId = withTwoMembers.Members[0].Id;
+
+        using var response = await client.PutAsJsonAsync(
+            $"/temtem/teams/{team.Id}/members/order",
+            new { MemberIds = new[] { memberId, memberId } });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Un_temtem_inconnu_ne_rejoint_aucune_equipe()
     {
         using var client = ClientFor(OwnerId);

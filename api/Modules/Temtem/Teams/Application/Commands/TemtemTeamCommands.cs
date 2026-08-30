@@ -10,7 +10,11 @@ public sealed record CreateTemtemTeamCommand(string Name, int? TemtemId);
 
 public sealed record RenameTemtemTeamCommand(long TeamId, string Name);
 
-public sealed record AddTemtemTeamMemberCommand(long TeamId, int TemtemId);
+public sealed record AddTemtemTeamMemberCommand(long TeamId, int TemtemId, int? Slot);
+
+// Le drag-and-drop rend l'ordre entier : le remplacer évite les cas ambigus de déplacements
+// successifs et permet de vérifier que le client ne retire ni n'ajoute aucun membre.
+public sealed record ReorderTemtemTeamMembersCommand(long TeamId, IReadOnlyList<long> MemberIds);
 
 // Le remplacement est total : la liste envoyée devient la liste retenue. Une liste vide efface
 // les techniques du membre, ce qui est un choix valable en cours de composition.

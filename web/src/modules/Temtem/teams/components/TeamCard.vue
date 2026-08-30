@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { VueDraggable } from 'vue-draggable-plus'
 import { useTemtemTeamsStore } from '@/modules/Temtem/teams/teams.store'
 import { typesOf } from '@/modules/Temtem/shared/temtem.helpers'
 import TemtemContextTrigger from '@/modules/Temtem/shared/components/TemtemContextTrigger.vue'
@@ -17,6 +18,11 @@ const MAX_MEMBERS = 6
 const MAX_TECHNIQUES = 4
 const SLOTS = Array.from({ length: MAX_MEMBERS }, (_, index) => index + 1)
 
+interface TeamSlot {
+  key: string
+  member: TemtemTeamMember | null
+}
+
 const teamsStore = useTemtemTeamsStore()
 
 const renaming = ref(false)
@@ -25,18 +31,27 @@ const nameInput = ref<HTMLInputElement | null>(null)
 const confirmingDelete = ref(false)
 const busy = ref(false)
 const memberBeingEdited = ref<TemtemTeamMember | null>(null)
-const addingMember = ref(false)
+const addingSlot = ref<number | null>(null)
+const orderedSlots = ref<TeamSlot[]>([])
 
 // Une modale ouverte se superpose à l'infobulle : on la coupe pendant ce temps.
-const modalOpen = computed(() => memberBeingEdited.value !== null || addingMember.value)
+const modalOpen = computed(() => memberBeingEdited.value !== null || addingSlot.value !== null)
 
 const isFull = computed(() => props.team.members.length >= MAX_MEMBERS)
 
-// Par place et non par rang : un membre retiré au milieu laisse un trou, et c'est celui-là que
-// le prochain ajout rebouchera.
-function memberAt(slot: number): TemtemTeamMember | undefined {
-  return props.team.members.find(member => member.slot === slot)
-}
+// Les six emplacements restent toujours dans le DOM. Après une suppression, le trou reste donc
+// visible à sa place et le prochain ajout de l'API le rebouche naturellement.
+watch(
+  () => props.team.members,
+  members => {
+    const membersBySlot = new Map(members.map(member => [member.slot, member]))
+    orderedSlots.value = SLOTS.map(slot => {
+      const member = membersBySlot.get(slot) ?? null
+      return { key: member ? `member-${member.id}` : `empty-${slot}`, member }
+    })
+  },
+  { immediate: true },
+)
 
 // Le message de l'API porte la raison exacte : on le montre plutôt qu'un texte générique.
 function reason(error: any, fallback: string) {
@@ -94,11 +109,35 @@ async function removeMember(member: TemtemTeamMember) {
 
 async function addMember(temtem: TemtemSummary) {
   try {
-    await teamsStore.addMember(props.team.id, temtem.id)
-    addingMember.value = false
+    await teamsStore.addMember(props.team.id, temtem.id, addingSlot.value ?? undefined)
+    addingSlot.value = null
   } catch (error) {
     toast.error(reason(error, "Impossible d'ajouter ce Temtem."))
-    addingMember.value = false
+    addingSlot.value = null
+  }
+}
+
+async function persistOrder() {
+  const memberIds = orderedSlots.value.flatMap(slot => (slot.member ? [slot.member.id] : []))
+  const currentMemberIds = [...props.team.members]
+    .sort((left, right) => left.slot - right.slot)
+    .map(member => member.id)
+
+  if (memberIds.every((memberId, index) => memberId === currentMemberIds[index])) return
+
+  busy.value = true
+  try {
+    await teamsStore.reorderMembers(props.team.id, memberIds)
+  } catch (error) {
+    // La réponse n'ayant pas remplacé l'équipe, on revient explicitement à son ordre connu.
+    const membersBySlot = new Map(props.team.members.map(member => [member.slot, member]))
+    orderedSlots.value = SLOTS.map(slot => {
+      const member = membersBySlot.get(slot) ?? null
+      return { key: member ? `member-${member.id}` : `empty-${slot}`, member }
+    })
+    toast.error(reason(error, "Impossible d'enregistrer le nouvel ordre."))
+  } finally {
+    busy.value = false
   }
 }
 
@@ -162,41 +201,54 @@ async function saveTechniques(techniqueIds: number[]) {
       </span>
     </header>
 
-    <div class="slots">
-      <template v-for="slot in SLOTS" :key="slot">
-        <div v-if="memberAt(slot)" class="slot">
-          <TemtemContextTrigger :temtem="memberAt(slot)!.temtem" :disabled="modalOpen">
+    <VueDraggable
+      v-model="orderedSlots"
+      class="slots"
+        handle=".drag-handle"
+        :animation="180"
+        :disabled="busy || modalOpen"
+        @end="persistOrder"
+    >
+      <template v-for="(teamSlot, index) in orderedSlots" :key="teamSlot.key">
+        <div v-if="teamSlot.member" class="slot">
+          <!-- Hors du déclencheur d'infobulle : saisir la poignée ne doit jamais en ouvrir une. -->
+          <span class="drag-handle" title="Glisser pour réordonner">
+            <i class="mdi mdi-drag-vertical" />
+          </span>
+
+          <TemtemContextTrigger :temtem="teamSlot.member.temtem" :disabled="modalOpen">
             <div class="member-head">
               <img
-                v-if="memberAt(slot)!.temtem.imageUrl"
-                :src="memberAt(slot)!.temtem.imageUrl!"
-                :alt="memberAt(slot)!.temtem.name"
+                v-if="teamSlot.member.temtem.imageUrl"
+                :src="teamSlot.member.temtem.imageUrl!"
+                :alt="teamSlot.member.temtem.name"
                 loading="lazy"
               >
-              <span class="member-name">{{ memberAt(slot)!.temtem.name }}</span>
-              <span class="member-types">
-                <img
-                  v-for="type in typesOf(memberAt(slot)!.temtem)"
-                  :key="type.id"
-                  :src="type.imageUrl ?? ''"
-                  :alt="type.name"
-                  :title="type.name"
-                  class="type-icon"
-                  loading="lazy"
-                >
-              </span>
+              <span class="member-name">{{ teamSlot.member.temtem.name }}</span>
             </div>
           </TemtemContextTrigger>
+
+          <span class="member-types">
+            <img
+              v-for="type in typesOf(teamSlot.member.temtem)"
+              :key="type.id"
+              :src="type.imageUrl ?? ''"
+              :alt="type.name"
+              :title="type.name"
+              class="type-icon"
+              loading="lazy"
+            >
+          </span>
 
           <button
             type="button"
             class="techniques"
             title="Choisir les techniques"
             :disabled="busy"
-            @click="memberBeingEdited = memberAt(slot)!"
+            @click="memberBeingEdited = teamSlot.member"
           >
             <span
-              v-for="technique in memberAt(slot)!.techniques"
+              v-for="technique in teamSlot.member.techniques"
               :key="technique.id"
               class="technique-chip"
               :title="technique.effect ?? technique.name"
@@ -211,7 +263,7 @@ async function saveTechniques(techniqueIds: number[]) {
             </span>
 
             <span
-              v-for="empty in MAX_TECHNIQUES - memberAt(slot)!.techniques.length"
+              v-for="empty in MAX_TECHNIQUES - teamSlot.member.techniques.length"
               :key="`empty-${empty}`"
               class="technique-chip empty"
             >
@@ -224,25 +276,24 @@ async function saveTechniques(techniqueIds: number[]) {
             class="icon-btn remove-member"
             title="Retirer de l'équipe"
             :disabled="busy"
-            @click="removeMember(memberAt(slot)!)"
+            @click="removeMember(teamSlot.member)"
           >
             <i class="mdi mdi-close" />
           </button>
         </div>
-
         <button
           v-else
           type="button"
           class="slot empty"
           title="Ajouter un Temtem"
           :disabled="busy"
-          @click="addingMember = true"
+          @click="addingSlot = index + 1"
         >
           <i class="mdi mdi-plus" />
-          <span>Place {{ slot }}</span>
+          <span>Place {{ index + 1 }}</span>
         </button>
       </template>
-    </div>
+    </VueDraggable>
 
     <TechniquePickerModal
       v-if="memberBeingEdited"
@@ -252,9 +303,9 @@ async function saveTechniques(techniqueIds: number[]) {
     />
 
     <AddMemberModal
-      v-if="addingMember"
+      v-if="addingSlot !== null"
       :team-name="team.name"
-      @close="addingMember = false"
+      @close="addingSlot = null"
       @pick="addMember"
     />
   </article>
@@ -385,6 +436,8 @@ async function saveTechniques(techniqueIds: number[]) {
   display: flex;
   align-items: center;
   gap: 0.45rem;
+  min-height: 38px;
+  padding: 0 1.45rem 0 1.2rem;
 
   img {
     width: 38px;
@@ -392,6 +445,22 @@ async function saveTechniques(techniqueIds: number[]) {
     border-radius: 5px;
     flex-shrink: 0;
   }
+}
+
+.drag-handle {
+  position: absolute;
+  top: 0.82rem;
+  left: 0.28rem;
+  display: grid;
+  place-items: center;
+  width: 1rem;
+  height: 1rem;
+  color: var(--pico-muted-color);
+  cursor: grab;
+  z-index: 1;
+  flex-shrink: 0;
+
+  &:active { cursor: grabbing; }
 }
 
 .member-name {
@@ -405,13 +474,15 @@ async function saveTechniques(techniqueIds: number[]) {
 
 .member-types {
   display: flex;
+  justify-content: center;
   gap: 0.2rem;
-  flex-shrink: 0;
+  min-height: 14px;
+  margin-bottom: 0.15rem;
 }
 
 .type-icon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 3px;
 }
 

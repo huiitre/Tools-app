@@ -232,6 +232,9 @@ async function createAndAdd() {
 
   &:hover:not(:disabled) {
     background: var(--pico-card-sectioning-background-color);
+    color: var(--pico-primary);
+
+    .team-name { color: var(--pico-primary) !important; }
   }
 
   &:disabled {
@@ -357,6 +360,15 @@ async function createAndAdd() {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
+    background: transparent;
+    border-color: var(--pico-card-border-color);
+    color: var(--pico-primary);
+
+    &:hover:not(:disabled) {
+      background: transparent;
+      border-color: var(--pico-primary);
+      color: var(--pico-primary);
+    }
   }
 }
 

@@ -61,7 +61,19 @@ public class TemtemTeamsController : ControllerBase
     )
     {
         return addTemtemTeamMemberUseCase.Execute(
-            new AddTemtemTeamMemberCommand(teamId, request.TemtemId));
+            new AddTemtemTeamMemberCommand(teamId, request.TemtemId, request.Slot));
+    }
+
+    // PUT et non PATCH : le drag-and-drop envoie l'ordre complet qui remplace celui en place.
+    [HttpPut("{teamId:long}/members/order")]
+    public Task<TemtemTeamView> ReorderMembers(
+        [FromServices] ReorderTemtemTeamMembersUseCase reorderTemtemTeamMembersUseCase,
+        [FromRoute] long teamId,
+        ReorderTemtemTeamMembersRequest request
+    )
+    {
+        return reorderTemtemTeamMembersUseCase.Execute(
+            new ReorderTemtemTeamMembersCommand(teamId, request.MemberIds ?? []));
     }
 
     [HttpDelete("{teamId:long}/members/{memberId:long}")]
@@ -93,7 +105,9 @@ public class TemtemTeamsController : ControllerBase
 
     public sealed record RenameTemtemTeamRequest(string Name);
 
-    public sealed record AddTemtemTeamMemberRequest(int TemtemId);
+    public sealed record AddTemtemTeamMemberRequest(int TemtemId, int? Slot);
+
+    public sealed record ReorderTemtemTeamMembersRequest(IReadOnlyList<long>? MemberIds);
 
     public sealed record SetTemtemTeamMemberTechniquesRequest(IReadOnlyList<int>? TechniqueIds);
 }

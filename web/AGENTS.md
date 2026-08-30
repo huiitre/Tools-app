@@ -368,6 +368,10 @@ paraissait maximale.
 ligne reçue (`replace`) au lieu de rejouer la modification de son côté. Ne jamais recharger la
 liste après une écriture. Seul `DELETE /temtem/teams/{id}` rend 204 sans corps.
 
+Le réordonnancement persistant passe par `PUT /temtem/teams/{id}/members/order` avec la liste
+complète des `memberIds` issue du drag-and-drop. La réponse est l'équipe entière ; les techniques
+restent liées au membre et ne bougent donc pas avec son slot.
+
 ### Détails d'interface qui ont demandé plusieurs passes
 
 - **Popup « ajouter à une équipe »** (Temtemdex) : le bouton `+` de la carte reste invisible
@@ -375,6 +379,9 @@ liste après une écriture. Seul `DELETE /temtem/teams/{id}` rend 204 sans corps
   forme de cercles — image du Temtem à sa place, cercle pointillé pour une place libre —
   **indexés par slot** : un trou au milieu doit rester visible, c'est celui que le prochain ajout
   rebouchera.
+- **Ajout depuis Mes équipes** : le clic sur une place vide transmet son numéro (`slot`) à l'API,
+  pour y poser le Temtem sélectionné. La popup Temtemdex, elle, n'en transmet pas : elle conserve
+  le comportement historique de première place libre.
 - **Sélecteur de techniques** : calqué sur `BreedingPassiveSelectorModal.vue` (Palworld). **Pas de
   cases à cocher, pas de toast** : arrivé à quatre, les autres options passent en grisé et
   deviennent inertes — il n'y a rien à refuser, donc rien à signaler. Les valeurs sont

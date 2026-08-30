@@ -19,7 +19,7 @@ flowchart LR
   Security["Security<br/>17 types"]
   Settings["Settings<br/>18 types"]
   Sync["Sync<br/>58 types"]
-  Teams["Teams<br/>18 types"]
+  Teams["Teams<br/>20 types"]
   Techniques["Techniques<br/>4 types"]
   Traits["Traits<br/>1 types"]
   Types["Types<br/>6 types"]

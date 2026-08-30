@@ -15,8 +15,15 @@ export async function createTeam(name: string, temtemId?: number): Promise<Temte
   return data
 }
 
-export async function addTeamMember(teamId: number, temtemId: number): Promise<TemtemTeam> {
-  const { data } = await clientCore.post<TemtemTeam>(`/temtem/teams/${teamId}/members`, { temtemId })
+export async function addTeamMember(teamId: number, temtemId: number, slot?: number): Promise<TemtemTeam> {
+  const { data } = await clientCore.post<TemtemTeam>(`/temtem/teams/${teamId}/members`, { temtemId, slot })
+  return data
+}
+
+// Le drag-and-drop remplace l'ordre entier. Les membres (et leurs techniques) restent les mêmes :
+// seuls leurs slots changent côté API.
+export async function reorderTeamMembers(teamId: number, memberIds: number[]): Promise<TemtemTeam> {
+  const { data } = await clientCore.put<TemtemTeam>(`/temtem/teams/${teamId}/members/order`, { memberIds })
   return data
 }
 

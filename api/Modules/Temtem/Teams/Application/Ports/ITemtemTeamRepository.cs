@@ -17,6 +17,7 @@ public interface ITemtemTeamRepository
 
     Task<List<int>> FindOccupiedSlots(long teamId);
     Task<long> AddMember(long teamId, int temtemId, int slot);
+    Task ReorderMembers(long teamId, IReadOnlyList<long> memberIds);
 
     // Rend le Temtem du membre, ou null si ce membre n'appartient pas à cette équipe : la même
     // requête sert de contrôle d'appartenance et de source pour valider les techniques.

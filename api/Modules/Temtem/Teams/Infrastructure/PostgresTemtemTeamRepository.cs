@@ -114,6 +114,21 @@ public sealed class PostgresTemtemTeamRepository(
             new { TeamId = teamId, TemtemId = temtemId, Slot = slot },
             session.Transaction));
 
+    public async Task ReorderMembers(long teamId, IReadOnlyList<long> memberIds)
+    {
+        await Connection().ExecuteAsync(new CommandDefinition(
+            """
+            SET CONSTRAINTS tools_temtem.uq_temtem_team_member_slot DEFERRED;
+
+            UPDATE tools_temtem.team_member AS member
+            SET slot = ordered.slot::int
+            FROM unnest(@MemberIds::bigint[]) WITH ORDINALITY AS ordered(member_id, slot)
+            WHERE member.team_id = @TeamId AND member.id = ordered.member_id
+            """,
+            new { TeamId = teamId, MemberIds = memberIds.ToArray() },
+            session.Transaction));
+    }
+
     public Task<int?> FindMemberTemtemId(long teamId, long memberId) =>
         Connection().ExecuteScalarAsync<int?>(new CommandDefinition(
             "SELECT temtem_id FROM tools_temtem.team_member WHERE id = @MemberId AND team_id = @TeamId",
