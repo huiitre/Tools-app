@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { fetchTemtem, fetchTemtemDetail, fetchTemtemTypes } from './fetch/temtemdex.fetch'
-import type { TemtemDetail, TemtemSummary, TemtemType } from '@/modules/Temtem/shared/types/temtem.types'
+import { fetchTemtem, fetchTemtemDetail, fetchTemtemTypeEffectiveness, fetchTemtemTypes } from './fetch/temtemdex.fetch'
+import type { TemtemDetail, TemtemSummary, TemtemType, TemtemTypeEffectiveness } from '@/modules/Temtem/shared/types/temtem.types'
 
 /**
  * Catalogue chargé une fois à l'entrée sur /temtem et gardé en mémoire, comme le Paldex :
@@ -11,6 +11,7 @@ export const useTemtemdexStore = defineStore('temtemdex', {
   state: () => ({
     temtem: [] as TemtemSummary[],
     types: [] as TemtemType[],
+    effectiveness: [] as TemtemTypeEffectiveness[],
     // Fiches déjà lues, par slug. Le choix des techniques d'une équipe en demande une par
     // membre : les garder évite de rappeler l'API à chaque ouverture du sélecteur.
     details: {} as Record<string, TemtemDetail>,
@@ -44,9 +45,14 @@ export const useTemtemdexStore = defineStore('temtemdex', {
       this.loading = true
       this.error = null
       try {
-        const [temtem, types] = await Promise.all([fetchTemtem(), fetchTemtemTypes()])
+        const [temtem, types, effectiveness] = await Promise.all([
+          fetchTemtem(),
+          fetchTemtemTypes(),
+          fetchTemtemTypeEffectiveness(),
+        ])
         this.temtem = temtem
         this.types = types
+        this.effectiveness = effectiveness
       } catch {
         this.error = 'Impossible de charger le Temtemdex.'
       } finally {

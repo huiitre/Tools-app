@@ -4,10 +4,8 @@ using Tools.Api.Modules.Temtem.Types.Application.Views;
 
 namespace Tools.Api.Modules.Temtem.Types.Api;
 
-// Référentiel des types élémentaires : filtres du catalogue et icônes des techniques.
-//
-// La matrice d'efficacité n'est pas exposée : le calcul des forces et faiblesses vit dans le
-// domaine, côté API, et le front n'en reçoit que le résultat.
+// Référentiel des types élémentaires : filtres du catalogue, icônes des techniques et matrice
+// d'efficacité brute du simulateur.
 [ApiController]
 [Route("temtem/types")]
 public class TemtemTypesController : ControllerBase
@@ -18,5 +16,13 @@ public class TemtemTypesController : ControllerBase
     )
     {
         return listTemtemTypesUseCase.Execute();
+    }
+
+    [HttpGet("effectiveness")]
+    public Task<List<TemtemTypeEffectivenessView>> ListEffectiveness(
+        [FromServices] ListTemtemTypeEffectivenessUseCase listTemtemTypeEffectivenessUseCase
+    )
+    {
+        return listTemtemTypeEffectivenessUseCase.Execute();
     }
 }

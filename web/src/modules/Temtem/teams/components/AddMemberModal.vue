@@ -146,7 +146,12 @@ function pick(temtem: TemtemSummary) {
   cursor: pointer;
   transition: background 0.15s;
 
-  &:hover:not(:disabled) { background: var(--pico-card-sectioning-background-color); }
+  &:hover:not(:disabled) {
+    background: var(--pico-card-sectioning-background-color);
+    color: var(--pico-primary) !important;
+  }
+
+  &:hover:not(:disabled) .result-name { color: var(--pico-primary) !important; }
   &:disabled { opacity: 0.5; cursor: progress; }
 
   img {

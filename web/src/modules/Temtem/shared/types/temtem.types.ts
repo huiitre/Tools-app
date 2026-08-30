@@ -12,6 +12,13 @@ export interface TemtemType {
   imageUrl: string | null
 }
 
+/** Une ligne de la matrice type attaquant → type défenseur, chargée une fois pour le simulateur. */
+export interface TemtemTypeEffectiveness {
+  attackerTypeId: number
+  defenderTypeId: number
+  multiplier: number
+}
+
 export interface TemtemStats {
   hp: number
   stamina: number

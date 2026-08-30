@@ -496,8 +496,11 @@ async function saveTechniques(techniqueIds: number[]) {
   padding: 0;
   border: none;
   background: transparent;
+  color: inherit;
   cursor: pointer;
 }
+
+.techniques:hover { color: inherit; }
 
 .technique-chip {
   display: flex;
@@ -506,7 +509,7 @@ async function saveTechniques(techniqueIds: number[]) {
   padding: 0.15rem 0.35rem;
   border-radius: 4px;
   background: color-mix(in srgb, var(--pico-color) 7%, transparent);
-  color: var(--pico-color);
+  color: inherit;
   font-size: 0.74rem;
   text-align: left;
   overflow: hidden;

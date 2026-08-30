@@ -37,6 +37,7 @@ public static class TemtemModule
         builder.Services.AddScoped<ITemtemTypeRepository, PostgresTemtemTypeRepository>();
         builder.Services.AddScoped<ITemtemCreatureRepository, PostgresTemtemCreatureRepository>();
         builder.Services.AddScoped<ListTemtemTypesUseCase>();
+        builder.Services.AddScoped<ListTemtemTypeEffectivenessUseCase>();
         builder.Services.AddScoped<ListTemtemCreaturesUseCase>();
         builder.Services.AddScoped<GetTemtemBySlugUseCase>();
 

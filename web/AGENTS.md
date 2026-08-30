@@ -319,7 +319,7 @@ Client HTTP : `clientCore`. Le module naît en C#, il n'a jamais existé côté 
 |---|---|---|
 | Temtemdex | `temtem_temtemdex` (`/temtem/temtemdex`) | **livré** |
 | Mes équipes | `temtem_teams` (`/temtem/teams`) | **livré** |
-| Simulateur de combat | — | à faire ; il manque aussi son use case côté API |
+| Simulateur de combat | `temtem_simulator` (`/temtem/simulator`) | **livré** ; état éphémère |
 
 ### Arborescence
 
@@ -403,11 +403,11 @@ restent liées au membre et ne bougent donc pas avec son slot.
 
 ### Ce qui reste
 
-Le **simulateur** : choisir une équipe, désigner les Temtem adverses le plus vite possible, et
-recevoir quel Temtem opposer puis quelles techniques utiliser. **Le calcul d'efficacité vit dans
-l'API** (`TypeEffectiveness`, règle du produit pour les doubles types) — ne pas le réimplémenter
-en TypeScript « parce que la matrice est petite ». Il manque encore le use case qui l'expose ;
-la matrice n'est volontairement pas rendue par `GET /temtem/types`.
+Le **simulateur** : choisir une équipe, désigner les deux Temtem adverses et lire les indications
+de type. La matrice est chargée une fois à l'entrée du module par
+`GET /temtem/types/effectiveness` ; le front applique le produit pour les doubles types au lieu
+de recopier ces 144 données synchronisées en TypeScript. La sélection est volontairement
+éphémère ; aucune donnée n'est encore écrite dans le localStorage.
 
 Le **trait** d'un membre d'équipe n'est pas encore choisissable : la table
 `team_member_technique` n'a pas d'équivalent pour les traits, ce sera une migration.
