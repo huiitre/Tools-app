@@ -593,10 +593,16 @@ contrats seront suffisamment stables ; elle ne conditionne pas le démarrage de
 ### Temtem, premier module écrit directement en C# (2026-08-30)
 
 `Modules/Temtem/` n'est pas une migration : le module n'a jamais existé côté Java, seul son
-schéma `tools_temtem` avait été créé en V2.24.0 puis laissé vide. La première livraison ne
-contient que la synchronisation du catalogue, alimentée par l'extracteur du NAS.
+schéma `tools_temtem` avait été créé en V2.24.0 puis laissé vide. Au 30/08/2026 il porte la
+synchronisation du catalogue, le catalogue en lecture, les équipes de l'utilisateur, et deux des
+trois écrans front ; ne manque que le simulateur de combat.
 
-Deux décisions le distinguent des autres modules :
+Le découpage suit **Dofus** : un sous-module par entité — `Types/`, `Creatures/`, `Techniques/`,
+`Traits/`, `Teams/`, `Sync/` — et jamais par écran. `Techniques/` et `Traits/` n'ont ni port ni
+contrôleur : ils existent pour que leurs vues vivent chez l'entité qu'elles décrivent, et non
+chez celle qui les consomme.
+
+Quatre décisions le distinguent des autres modules :
 
 - **Sa sync est une route `internal/`**, pas une route TECH. Les autres extracteurs
   (`update_palworld.sh`, `update_data_doduda.sh`) se connectent sur `/auth/login` avec un compte
@@ -608,6 +614,20 @@ Deux décisions le distinguent des autres modules :
   puis suppression de ce qui a disparu de la source : une extraction ratée qui publierait un
   tableau vide viderait la table, et emporterait le reste par cascade. Le garde-fou est dans le
   use case, avant l'ouverture de la transaction.
+
+- **Une vue par entité, jamais par écran.** `TemtemSummaryView` sert à la carte du catalogue, à
+  la vignette d'équipe et au simulateur ; `TemtemDetailView` l'**imbrique** au lieu de la
+  recopier. La consigne vaut jusqu'au SQL : `TemtemCreatureSql` et `TemtemTechniqueSql` portent
+  colonnes, jointures, ligne Dapper et projection, incorporées par le catalogue comme par les
+  équipes — deux copies d'un `SELECT` divergent au premier champ ajouté.
+- **Les règles qu'aucune contrainte SQL n'exprime vivent dans un domaine minuscule.**
+  `Teams/Domain/TeamRoster` ne porte que la première place libre (le `CHECK` borne l'équipe à
+  six mais ne désigne pas la place à attribuer, et un membre retiré laisse un trou à reboucher)
+  et le maximum de quatre techniques (un `CHECK` ne compte pas de lignes). Le reste — le Temtem
+  apprend-il vraiment cette technique — reste au use case, parce qu'il interroge une autre table.
+
+L'état du module, la cible fonctionnelle et les décisions de détail vivent dans
+`docs/TEMTEM.md` ; le front dans `web/AGENTS.md`.
 
 L'upsert distingue créé, modifié et **inchangé** : `ON CONFLICT DO UPDATE ... WHERE la ligne
 IS DISTINCT FROM excluded` empêche PostgreSQL de réécrire une ligne identique, et `RETURNING

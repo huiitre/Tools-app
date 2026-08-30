@@ -1,0 +1,39 @@
+info:
+  name: Ajouter un Temtem
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{apiUrl}}/temtem/teams/1/members"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "temtemId": 7
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Place un Temtem à la **première place libre** de l'équipe et rend `TemtemTeamView`.
+
+  La place n'est pas un paramètre : un membre retiré au milieu laisse un trou que le prochain
+  ajout rebouche. Sans cette règle, une équipe de trois pourrait se retrouver « pleine ».
+
+  Le même Temtem peut occuper deux places — le jeu l'autorise, et l'interdire reviendrait à
+  décider à la place du joueur.
+
+  - `409 TEAM_FULL` — les six places sont prises.
+  - `404 TEMTEM_NOT_FOUND` — `temtemId` ne désigne aucun Temtem.
+  - `404 TEAM_NOT_FOUND` — équipe inexistante ou appartenant à un autre.

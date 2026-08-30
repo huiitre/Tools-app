@@ -1,0 +1,24 @@
+info:
+  name: Mes équipes
+  type: folder
+  seq: 5
+
+request:
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+docs: |-
+  Équipes de combat de l'appelant. C'est la seule partie du module Temtem qui écrit — le
+  catalogue, lui, est en lecture seule.
+
+  **Rôle minimum : USER dans le module Temtem.** Un READ_ONLY peut consulter le catalogue mais
+  n'a pas d'équipes : il reçoit 403 `INSUFFICIENT_ROLE`. Un utilisateur à qui le module n'est pas
+  ouvert reçoit 403 `NO_MODULE_ACCESS`, fût-il OWNER global.
+
+  Le propriétaire n'est jamais un paramètre : il vient de l'appelant validé. L'équipe d'un autre
+  utilisateur rend **404 et non 403** — confirmer son existence renseignerait déjà l'intrus.
+
+  **Chaque écriture rend l'équipe entière**, pas un accusé de réception : le front affiche une
+  équipe complète après chaque geste, sans avoir à la recharger ni à deviner l'état obtenu. Seule
+  la suppression rend `204`.

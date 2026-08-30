@@ -1,0 +1,35 @@
+info:
+  name: Renommer une équipe
+  type: http
+  seq: 3
+
+http:
+  method: PATCH
+  url: "{{apiUrl}}/temtem/teams/1"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Nouveau nom"
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Renomme l'équipe et rend `TemtemTeamView`.
+
+  Réenregistrer le nom actuel n'est pas un conflit : l'équipe renommée est exclue du contrôle
+  d'unicité.
+
+  - `404 TEAM_NOT_FOUND` — équipe inexistante **ou appartenant à un autre**.
+  - `409 TEAM_NAME_TAKEN`, `400 TEAM_NAME_REQUIRED` / `TEAM_NAME_TOO_LONG` — comme à la création.

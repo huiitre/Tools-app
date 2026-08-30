@@ -1,0 +1,26 @@
+info:
+  name: Retirer un membre
+  type: http
+  seq: 6
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/temtem/teams/1/members/1"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Retire un membre et rend l'équipe mise à jour (`TemtemTeamView`).
+
+  Le second identifiant est celui du **membre** (`members[].id`), pas celui du Temtem : le même
+  Temtem peut occuper deux places. Sa place reste vacante, il n'y a aucune renumérotation.
+
+  - `404 TEAM_MEMBER_NOT_FOUND` — ce membre n'est pas dans cette équipe.
+  - `404 TEAM_NOT_FOUND` — équipe inexistante ou appartenant à un autre.

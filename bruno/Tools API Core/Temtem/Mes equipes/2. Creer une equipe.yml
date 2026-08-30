@@ -1,0 +1,41 @@
+info:
+  name: Créer une équipe
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/temtem/teams"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Mon équipe",
+        "temtemId": 7
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Crée une équipe et rend `TemtemTeamView`.
+
+  `temtemId` est **facultatif** : c'est ce qui permet à la popup du catalogue de créer l'équipe
+  **et** d'y placer la carte d'un seul geste, en place 1. La page « Mes équipes », elle, envoie
+  seulement `name` et obtient une équipe vide. Les deux écritures tiennent dans la même
+  transaction : aucune équipe vide ne reste derrière un ajout raté.
+
+  - `400 TEAM_NAME_REQUIRED` — nom absent ou fait d'espaces.
+  - `400 TEAM_NAME_TOO_LONG` — au-delà de 100 caractères.
+  - `409 TEAM_NAME_TAKEN` — l'appelant a déjà une équipe de ce nom. Le contrôle ignore la casse
+    et les espaces de bord : « Team A » et « team a  » sont le même nom.
+  - `404 TEMTEM_NOT_FOUND` — `temtemId` ne désigne aucun Temtem.

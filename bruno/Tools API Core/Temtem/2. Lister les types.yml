@@ -1,0 +1,27 @@
+info:
+  name: Lister les types
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{apiUrl}}/temtem/types"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Les 12 types élémentaires (`TemtemTypeView`), triés par nom français. Sert aux filtres du
+  catalogue et aux icônes portées par les techniques.
+
+  Rôle minimum : READ_ONLY **dans le module Temtem**. Sans jeton : 401 `UNAUTHENTICATED`. Avec un
+  compte à qui le module n'est pas ouvert — fût-il OWNER global : 403 `NO_MODULE_ACCESS`.
+
+  La matrice d'efficacité n'est volontairement pas exposée : le calcul des forces et faiblesses
+  vit dans le domaine (`TypeEffectiveness`), côté API, et le front n'en recevra que le résultat.
