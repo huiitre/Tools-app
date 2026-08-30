@@ -1,0 +1,41 @@
+info:
+  name: Détail d'un Temtem
+  type: http
+  seq: 4
+
+http:
+  method: GET
+  url: "{{apiUrl}}/temtem/creatures/platypet"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  La fiche d'un Temtem (`TemtemDetailView`), adressée par **slug** et non par identifiant : c'est
+  ce que porte l'URL du front, et le slug est unique en base.
+
+  La réponse imbrique le résumé au lieu de le recopier :
+
+  ```json
+  {
+    "temtem":     { ... TemtemSummaryView, identique à la ligne du catalogue ... },
+    "techniques": [ { "technique": { ... }, "source": "LEVEL", "level": 1 } ],
+    "traits":     [ { "id": 14, "slug": "amphibie", "name": "Amphibie", "effect": "..." } ]
+  }
+  ```
+
+  - `source` vaut `LEVEL`, `BREEDING` ou `TRAINING` ; `level` n'est renseigné que pour `LEVEL`.
+    Un même couple (Temtem, technique) peut apparaître deux fois, avec deux sources.
+  - `damage` à `null` désigne une technique de statut — à ne pas confondre avec 0 dégât.
+  - `chargeTurns` est le nombre de tours de **chargement avant de pouvoir utiliser** la technique,
+    `null` si elle est disponible tout de suite. Ce n'est pas un temps de recharge après usage.
+  - `targets` liste les cibles possibles : `SELF`, `ALLY`, `SELF_AND_ALLY`, `SINGLE_OPPONENT`,
+    `OWN_FIELD`, `OPPONENT_FIELD`, `ANY_ON_FIELD`, `EVERYONE`.
+
+  Slug inconnu : 404 `TEMTEM_NOT_FOUND`. Rôle minimum : READ_ONLY dans le module Temtem.

@@ -1,0 +1,30 @@
+info:
+  name: Lister les Temtem
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{apiUrl}}/temtem/creatures"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Le catalogue entier en un appel : les 165 Temtem en résumé (`TemtemSummaryView`), triés par
+  numéro de Temtemdex. Environ 70 Ko.
+
+  **Aucune pagination, aucun filtre côté serveur.** La recherche, le tri et les filtres sont
+  l'affaire de la grille, côté navigateur, comme sur la Paldex.
+
+  Chaque ligne porte l'identité, l'image, les deux types et les sept statistiques de base —
+  c'est-à-dire tout ce dont le calcul d'efficacité a besoin. `type2` vaut `null` pour les 79
+  Temtem à type unique.
+
+  Rôle minimum : READ_ONLY dans le module Temtem.

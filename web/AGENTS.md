@@ -308,6 +308,103 @@ Archivage **en bloc** : toute la rotation du jour part en un appel.
   date (format « J mois AAAA »), grille de miniatures sans interactivité, fermeture au scroll ou
   au clic extérieur. Placée à gauche du bouton « Changer de token » dans `ValorantDailyShop.vue`.
 
+## Module Temtem (`src/modules/Temtem/`)
+
+Deux écrans sur trois sont livrés (30/08/2026). Spec, décisions et état d'avancement complets :
+**`api/docs/TEMTEM.md`** — le lire avant de reprendre.
+
+Client HTTP : `clientCore`. Le module naît en C#, il n'a jamais existé côté Java.
+
+| Écran | Route | État |
+|---|---|---|
+| Temtemdex | `temtem_temtemdex` (`/temtem/temtemdex`) | **livré** |
+| Mes équipes | `temtem_teams` (`/temtem/teams`) | **livré** |
+| Simulateur de combat | — | à faire ; il manque aussi son use case côté API |
+
+### Arborescence
+
+```
+src/modules/Temtem/
+├── Temtem.vue              nav + router-view ; charge le catalogue à l'entrée
+├── temtem.routes.ts        route racine nommée « temtem »
+├── shared/
+│   ├── components/         TemtemNav, TemtemContextTrigger, TemtemContextFloating
+│   ├── temtem.helpers.ts   dexNumber(), typesOf()
+│   └── types/              TemtemSummary, TemtemDetail, TemtemTechnique, TemtemTrait…
+├── temtemdex/              store + fetch du catalogue, vue, popup « ajouter à une équipe »
+└── teams/                  store + fetch des équipes, vue, TeamCard, sélecteurs
+```
+
+**Le nom de la route racine doit valoir le code du module** (`tools_core.module.code` = `temtem`).
+`BurgerNav.vue` teste `router.hasRoute(module.code)` pour décider d'afficher l'entrée de menu : un
+autre nom et le module reste invisible sans qu'aucune erreur ne le signale.
+
+### Ce qui est partagé, et pourquoi
+
+- **`TemtemSummary`** est la vue du catalogue, reprise telle quelle par la vignette d'équipe et,
+  demain, par le simulateur. Consigne explicite de l'utilisateur : **pas de DTO par page**. Si un
+  écran semble réclamer sa propre forme, c'est presque toujours qu'il faut enrichir celle-ci.
+- **L'infobulle vit dans `shared/components/`** parce qu'elle sert aux deux écrans. C'est la
+  logique de positionnement de `PalContextTrigger.vue` (Palworld) et `ItemContextTrigger.vue`
+  (Dofus) à l'identique : mêmes décalages, mêmes marges de bord, même bascule au-dessus / à gauche
+  quand la place manque. Elle se remplit du seul `TemtemSummary` — donc instantanée et
+  correctement mesurée. **Y mettre les techniques ou les traits demanderait un appel au survol**,
+  et l'infobulle changerait de taille après coup : à traiter explicitement si le besoin revient.
+- **`shared/temtem.helpers.ts`** porte `typesOf()` : `type2` est nul pour 79 Temtem, et le
+  `.filter(t => t !== null)` inline ne suffit pas à convaincre TypeScript.
+
+### Les stores
+
+`temtemdex.store.ts` charge les 165 Temtem et les 12 types **une fois**, à l'entrée sur `/temtem`
+(dans `Temtem.vue`), comme le Paldex côté Palworld. Il garde aussi un cache des fiches par slug
+(`ensureDetail`) : le sélecteur de techniques en demande une par membre.
+
+Son getter **`maxStatValue`** est l'échelle des barres de statistiques : la plus haute valeur du
+catalogue entier (125), pas celle du Temtem affiché. Mesurer chaque Temtem contre lui-même
+remplissait la barre de sa meilleure statistique quelle qu'elle soit — une attaque à 55
+paraissait maximale.
+
+`teams.store.ts` : **chaque écriture de l'API rend l'équipe entière**, donc le store substitue la
+ligne reçue (`replace`) au lieu de rejouer la modification de son côté. Ne jamais recharger la
+liste après une écriture. Seul `DELETE /temtem/teams/{id}` rend 204 sans corps.
+
+### Détails d'interface qui ont demandé plusieurs passes
+
+- **Popup « ajouter à une équipe »** (Temtemdex) : le bouton `+` de la carte reste invisible
+  jusqu'au survol, comme sur les cartes de skins Valorant. La popup montre les six places sous
+  forme de cercles — image du Temtem à sa place, cercle pointillé pour une place libre —
+  **indexés par slot** : un trou au milieu doit rester visible, c'est celui que le prochain ajout
+  rebouchera.
+- **Sélecteur de techniques** : calqué sur `BreedingPassiveSelectorModal.vue` (Palworld). **Pas de
+  cases à cocher, pas de toast** : arrivé à quatre, les autres options passent en grisé et
+  deviennent inertes — il n'y a rien à refuser, donc rien à signaler. Les valeurs sont
+  **étiquetées `ATQ` et `END`** : deux nombres nus ne se distinguaient pas. Le bord gauche et la
+  légende du haut colorent la catégorie (Physique orange, Spéciale violet, État gris).
+- `damage: null` désigne une technique de statut, pas 0 dégât — afficher `—`, jamais `0`.
+
+### Pièges rencontrés
+
+- **`vue-tsc` ne voit pas les erreurs de template.** Un `:alt=""` (v-bind sans expression) passait
+  le typecheck au vert alors que la modale ne s'affichait pas du tout. Contrôle qui les attrape :
+  demander le fichier au serveur Vite et vérifier que la réponse ne contient pas `ErrorOverlay` —
+  `curl -s localhost:5173/src/modules/…/Foo.vue | grep -c ErrorOverlay`.
+- **`dotnet watch` ne sait pas ajouter un enregistrement DI à chaud.** Après avoir câblé un use
+  case dans `TemtemModule.cs`, la route répond 500 `No service for type …UseCase` tant que le
+  process n'est pas relancé (`curl -X POST localhost:4488/restart/api`).
+- L'`eslint` du dépôt est cassé (config `@vue/prettier/@typescript-eslint` introuvable), sans
+  rapport avec ce module.
+
+### Ce qui reste
+
+Le **simulateur** : choisir une équipe, désigner les Temtem adverses le plus vite possible, et
+recevoir quel Temtem opposer puis quelles techniques utiliser. **Le calcul d'efficacité vit dans
+l'API** (`TypeEffectiveness`, règle du produit pour les doubles types) — ne pas le réimplémenter
+en TypeScript « parce que la matrice est petite ». Il manque encore le use case qui l'expose ;
+la matrice n'est volontairement pas rendue par `GET /temtem/types`.
+
+Le **trait** d'un membre d'équipe n'est pas encore choisissable : la table
+`team_member_technique` n'a pas d'équivalent pour les traits, ce sera une migration.
+
 ## `useImagePreview` — taille minimale
 
 `src/composables/useImagePreview.ts` accepte un troisième paramètre optionnel `minSize` (en px) :

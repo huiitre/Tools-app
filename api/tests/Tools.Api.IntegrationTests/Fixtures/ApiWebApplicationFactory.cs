@@ -30,6 +30,9 @@ using Tools.Api.Modules.Core.GameServers.Application.Ports.Polling;
 using Tools.Api.Modules.Core.GameServers.Application.Ports.Sync;
 using Tools.Api.Modules.Riot.Valorant.Application.Catalog.Ports;
 using Tools.Api.Modules.Riot.Valorant.Application.Core.Ports;
+using Tools.Api.Modules.Temtem.Creatures.Application.Ports;
+using Tools.Api.Modules.Temtem.Teams.Application.Ports;
+using Tools.Api.Modules.Temtem.Types.Application.Ports;
 
 namespace Tools.Api.IntegrationTests.Fixtures;
 
@@ -135,6 +138,16 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
             services.AddSingleton<InMemoryValorantAuthRepository>();
             services.AddSingleton<IValorantAuthRepository>(
                 provider => provider.GetRequiredService<InMemoryValorantAuthRepository>());
+
+            services.RemoveAll<ITemtemTypeRepository>();
+            services.RemoveAll<ITemtemCreatureRepository>();
+            services.AddSingleton<InMemoryTemtemCatalogueRepository>();
+            services.AddSingleton<ITemtemTypeRepository>(
+                provider => provider.GetRequiredService<InMemoryTemtemCatalogueRepository>());
+            services.AddSingleton<ITemtemCreatureRepository>(
+                provider => provider.GetRequiredService<InMemoryTemtemCatalogueRepository>());
+            services.RemoveAll<ITemtemTeamRepository>();
+            services.AddSingleton<ITemtemTeamRepository, InMemoryTemtemTeamRepository>();
 
             services.RemoveAll<IRecipientResolver>();
             services.AddSingleton<InMemoryRecipientResolver>();

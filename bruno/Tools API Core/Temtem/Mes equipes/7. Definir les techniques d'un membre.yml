@@ -1,0 +1,44 @@
+info:
+  name: Définir les techniques d'un membre
+  type: http
+  seq: 7
+
+http:
+  method: PUT
+  url: "{{apiUrl}}/temtem/teams/1/members/1/techniques"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "techniqueIds": [53, 163, 232, 36]
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Fixe les techniques retenues pour un membre et rend `TemtemTeamView`.
+
+  **PUT et non PATCH : la liste envoyée remplace la précédente**, elle ne s'y ajoute pas. Une
+  liste vide efface les techniques du membre, ce qui est un choix valable en cours de
+  composition.
+
+  Les identifiants recevables sont ceux que rend `GET /temtem/creatures/{slug}` pour ce Temtem.
+  Un doublon n'est pas une erreur : deux fois la même technique reste un seul choix.
+
+  Deux règles vivent dans le use case, faute de pouvoir vivre en SQL — un CHECK ne compte pas de
+  lignes, et aucune clé étrangère ne dit qu'une technique est à la portée d'un Temtem donné :
+
+  - `400 TOO_MANY_TECHNIQUES` — plus de quatre techniques.
+  - `400 TECHNIQUE_NOT_LEARNABLE` — ce Temtem n'apprend pas l'une des techniques ; le message
+    nomme les identifiants fautifs.
+  - `404 TEAM_MEMBER_NOT_FOUND` / `404 TEAM_NOT_FOUND`.
