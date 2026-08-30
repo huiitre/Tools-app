@@ -1,0 +1,63 @@
+info:
+  name: Synchroniser le catalogue
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}/internal/temtem/sync"
+  headers:
+    - name: X-Internal-Token
+      value: "{{internalApiToken}}"
+  auth: none
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Recharge tout le catalogue Temtem depuis les données de l'extracteur, lues en HTTP sur le CDN
+  des assets (`tools_temtem/*.json`). Aucun corps de requête.
+
+  **Route de service à service**, appelée par `update_temtem.sh` sur le NAS après un scraping —
+  le cron tourne toutes les heures et ne scrape que si une mise à jour du jeu est détectée.
+  L'authentification se fait par le secret partagé `X-Internal-Token` (`INTERNAL_API_TOKEN`),
+  jamais par jeton utilisateur : c'est la seule sync du projet dans ce cas, les autres passent
+  par un compte TECH.
+
+  Sans le secret, ou avec une valeur fausse : **404**, jamais 401 — la route ne confirme pas son
+  existence. Un 404 ici veut donc presque toujours dire « jeton absent ou faux dans
+  l'environnement Bruno », la variable étant déclarée `secret:` et n'ayant aucune valeur dans le
+  dépôt.
+
+  ## Réponse
+
+  `200` avec un rapport par famille :
+
+  ```json
+  {
+    "categories": { "created": 0, "updated": 0, "deleted": 0 },
+    "priorities": { "created": 0, "updated": 0, "deleted": 0 },
+    "types":      { "created": 0, "updated": 0, "deleted": 0 },
+    "creatures":  { "created": 0, "updated": 0, "deleted": 0 },
+    "techniques": { "created": 0, "updated": 0, "deleted": 0 },
+    "traits":     { "created": 0, "updated": 0, "deleted": 0 },
+    "links": { "techniqueTargets": 546, "learnings": 2517, "temtemTraits": 330, "typeMatchups": 144 }
+  }
+  ```
+
+  Une synchronisation sans changement rend des compteurs à zéro : l'upsert ne réécrit pas une
+  ligne identique. Les tables de liaison, elles, sont toujours réécrites en bloc — leur nombre
+  de lignes est donc un total, pas un delta.
+
+  ## Ce qui peut échouer
+
+  - `503 TEMTEM_ASSET_UNAVAILABLE` / `TEMTEM_ASSET_INVALID` — un fichier est injoignable ou illisible.
+  - `503 TEMTEM_ASSET_EMPTY` — un fichier est vide. La synchronisation s'arrête **avant** toute
+    écriture : sans ce garde-fou, une extraction ratée viderait la table correspondante et
+    emporterait le reste par cascade.
+
+  Tout se joue dans une seule transaction : un échec en cours de route ne laisse rien à moitié
+  écrit.

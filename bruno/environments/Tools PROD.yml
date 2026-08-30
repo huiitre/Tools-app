@@ -3,10 +3,7 @@ color: "#CE4F3B"
 variables:
   - name: apiUrl
     value: https://api.tools.huiitre.fr/api/core
-    description: ""
   - name: apiJavaUrl
     value: https://api.tools.huiitre.fr/api/v3
-    description: ""
   - secret: true
     name: internalApiToken
-    description: ""

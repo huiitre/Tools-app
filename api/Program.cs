@@ -7,6 +7,7 @@ using Tools.Api.Modules.Core.Realtime;
 using Tools.Api.Modules.Core.Security;
 using Tools.Api.Modules.EliteDangerous;
 using Tools.Api.Modules.Riot;
+using Tools.Api.Modules.Temtem;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,7 @@ builder.AddCoreHost();
 builder.AddCoreModules();
 builder.AddEliteDangerousModule();
 builder.AddRiotModule();
+builder.AddTemtemModule();
 
 var app = builder.Build();
 
