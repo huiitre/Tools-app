@@ -48,7 +48,6 @@ flowchart LR
   RoadToRiches --> Security
   Settings --> Security
   Sync --> Common
-  Sync --> Security
   Teams --> Common
   Teams --> Creatures
   Teams --> Security

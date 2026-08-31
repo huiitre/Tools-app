@@ -1,19 +1,12 @@
-using Tools.Api.Modules.Core.Security.Application.Services;
-using Tools.Api.Modules.Core.Security.Application.Usecases;
-using Tools.Api.Modules.Core.Security.Domain;
 using Tools.Api.Modules.Riot.Sync.Application.Ports;
 
 namespace Tools.Api.Modules.Riot.Sync.Application.Usecases;
 
 public sealed class SyncValorantContentTiersUseCase(
-    UseCaseAuthorizer authorizer,
     IValorantContentTierDataProvider contentTierDataProvider,
     IValorantContentTierSyncRepository contentTierSyncRepository
-) : SecuredUseCase(authorizer)
+)
 {
-    protected override RoleCode RequiredRole => RoleCode.Tech;
-    protected override ModuleCode? RequiredModule => ModuleCode.Riot;
-
     public async Task<ValorantSyncReport> Execute()
     {
         var currentByAssetId = (await contentTierSyncRepository.FindAll())

@@ -5,10 +5,11 @@ info:
 
 http:
   method: POST
-  url: "{{apiUrl}}/riot/valorant/sync"
-  auth:
-    type: bearer
-    token: "{{authToken}}"
+  url: "{{apiUrl}}/internal/riot/valorant/sync"
+  headers:
+    - name: X-Internal-Token
+      value: "{{internalApiToken}}"
+  auth: none
 
 settings:
   encodeUrl: true
@@ -23,4 +24,9 @@ docs: |-
   Niveaux et chromas sont purgés puis réinsérés. Rend un rapport créés/modifiés/supprimés par
   famille.
 
-  Rôle minimum : TECH.
+  **Route de service à service**, appelée par `update_valorant.sh` sur le NAS après une synchro
+  des assets. L'authentification se fait par le secret partagé `X-Internal-Token`
+  (`INTERNAL_API_TOKEN`), jamais par jeton utilisateur.
+
+  Sans le secret, ou avec une valeur fausse : **404**, jamais 401 — la route ne confirme pas son
+  existence.
