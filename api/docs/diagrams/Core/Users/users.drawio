@@ -34,9 +34,6 @@
         <mxCell id="PostgresUserRepository" value="PostgresUserRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="903" y="522" width="200" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="RoleDto" value="RoleDto" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="162" width="200" height="40" as="geometry" />
-        </mxCell>
         <mxCell id="SetUserGlobalRoleCommand" value="SetUserGlobalRoleCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="306" width="200" height="40" as="geometry" />
         </mxCell>
@@ -50,13 +47,13 @@
           <mxGeometry x="0" y="378" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="UserAdminDto" value="UserAdminDto" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="90" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="234" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="UserModuleDto" value="UserModuleDto" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="UserProfileDto" value="UserProfileDto" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="234" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="90" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="UsersController" value="UsersController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="522" width="200" height="40" as="geometry" />
@@ -76,16 +73,13 @@
         <mxCell id="edge4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="SetUserGlobalRoleUseCase" target="IUserRepository">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="edge5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="UserModuleDto" target="RoleDto">
+        <mxCell id="edge5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="UsersController" target="GetMyProfileUseCase">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="edge6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="UsersController" target="GetMyProfileUseCase">
+        <mxCell id="edge6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="UsersController" target="ListUsersUseCase">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="edge7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="UsersController" target="ListUsersUseCase">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="edge8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="UsersController" target="SetUserGlobalRoleUseCase">
+        <mxCell id="edge7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="UsersController" target="SetUserGlobalRoleUseCase">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>

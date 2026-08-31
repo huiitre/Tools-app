@@ -1,19 +1,12 @@
-using Tools.Api.Modules.Core.Security.Application.Services;
-using Tools.Api.Modules.Core.Security.Application.Usecases;
-using Tools.Api.Modules.Core.Security.Domain;
 using Tools.Api.Modules.Riot.Sync.Application.Ports;
 
 namespace Tools.Api.Modules.Riot.Sync.Application.Usecases;
 
 public sealed class SyncValorantWeaponsUseCase(
-    UseCaseAuthorizer authorizer,
     IValorantWeaponDataProvider weaponDataProvider,
     IValorantWeaponSyncRepository weaponSyncRepository
-) : SecuredUseCase(authorizer)
+)
 {
-    protected override RoleCode RequiredRole => RoleCode.Tech;
-    protected override ModuleCode? RequiredModule => ModuleCode.Riot;
-
     public async Task<ValorantWeaponSyncResult> Execute()
     {
         var external = await weaponDataProvider.FetchAll();
