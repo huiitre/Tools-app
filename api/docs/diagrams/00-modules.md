@@ -6,7 +6,7 @@
 flowchart LR
   Access["Access<br/>23 types"]
   Admin["Admin<br/>7 types"]
-  Auth["Auth<br/>68 types"]
+  Auth["Auth<br/>70 types"]
   Common["Common<br/>18 types"]
   Creatures["Creatures<br/>10 types"]
   Feedback["Feedback<br/>12 types"]
@@ -35,6 +35,7 @@ flowchart LR
   Auth --> Mail
   Auth --> Notifications
   Auth --> Security
+  Auth --> Settings
   Creatures --> Security
   Creatures --> Techniques
   Creatures --> Traits

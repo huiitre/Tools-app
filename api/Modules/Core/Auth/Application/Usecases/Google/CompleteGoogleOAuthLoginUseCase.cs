@@ -1,6 +1,7 @@
 using Tools.Api.Modules.Core.Auth.Application.Ports;
 using Tools.Api.Modules.Core.Auth.Application.Services;
 using Tools.Api.Modules.Core.Auth.Application.Ports.Google;
+using Tools.Api.Modules.Core.Common.Application.Exceptions;
 
 namespace Tools.Api.Modules.Core.Auth.Application.Usecases.Google;
 
@@ -21,14 +22,29 @@ public sealed class CompleteGoogleOAuthLoginUseCase(
         var idToken = await googleOAuthClient.ExchangeCodeForIdTokenAsync(code);
         var googleIdentity = await googleIdentityVerifier.VerifyAsync(idToken);
         var authentication = await googleIdentityAuthenticationService.AuthenticateAsync(googleIdentity);
-        var session = await authSessionService.Create(authentication.User, null);
 
-        // Google confirme l'adresse lui-même : le compte est actif dès sa création, il n'y a
-        // pas d'étape de confirmation à signaler ensuite comme pour l'inscription classique.
+        // Google confirme l'adresse lui-même : il n'y a pas d'étape de confirmation à signaler
+        // ensuite comme pour l'inscription classique. Le compte n'est pour autant actif d'office
+        // que si `auth.adminApprovalRequired` n'est pas posé — un compte tout juste créé et
+        // inactif est nécessairement en attente de validation.
+        //
+        // Notifié **avant** le refus ci-dessous : sans ça, personne n'apprendrait qu'un compte
+        // attend, et la file d'attente resterait invisible.
         if (authentication.AccountCreated)
         {
-            await adminSignupNotifier.GoogleAccountCreated(authentication.User.Email);
+            await adminSignupNotifier.GoogleAccountCreated(
+                authentication.User.Email, pendingApproval: !authentication.User.IsActive);
         }
+
+        // Le compte inactif est refusé ici plutôt que dans le service : la session ne doit pas
+        // être créée, et le contrôle vaut aussi bien pour une inscription en attente que pour un
+        // compte suspendu retrouvé par son provider.
+        if (!authentication.User.IsActive)
+        {
+            throw AppException.Unauthorized("USER_DISABLED", "Utilisateur désactivé.");
+        }
+
+        var session = await authSessionService.Create(authentication.User, null);
 
         return new GoogleOAuthLoginResult(source, session);
     }

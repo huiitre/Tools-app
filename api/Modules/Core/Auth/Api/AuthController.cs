@@ -182,14 +182,24 @@ public sealed class AuthController(
             "Un email de confirmation vient de vous être envoyé."));
     }
 
+    // Répond un corps plutôt qu'un 204 : confirmer une adresse ouvre la connexion, ou pas, et
+    // seul le serveur sait lequel des deux. Sans cette réponse, l'écran de confirmation invitait
+    // à se connecter un visiteur dont le compte attend encore la validation d'un administrateur.
     [AllowAnonymous]
     [HttpPost("verify-email")]
-    public async Task<IActionResult> VerifyEmail(
+    public async Task<ActionResult<VerifyEmailResponse>> VerifyEmail(
         [FromQuery, Required] string token,
         [FromServices] VerifyEmailUseCase verifyEmailUseCase)
     {
-        await verifyEmailUseCase.Execute(token);
-        return NoContent();
+        var result = await verifyEmailUseCase.Execute(token);
+
+        return result == VerifyEmailResult.PendingApproval
+            ? Ok(new VerifyEmailResponse(
+                "PENDING_APPROVAL",
+                "Adresse confirmée. Votre compte doit être activé par un administrateur avant que vous puissiez vous connecter."))
+            : Ok(new VerifyEmailResponse(
+                "ACTIVE",
+                "Adresse confirmée, vous pouvez vous connecter."));
     }
 
     // Définir ou changer son propre mot de passe. L'identité vient du jeton, comme pour
@@ -221,3 +231,7 @@ public sealed record RegisterRequest(
     [Required, EmailAddress] string Email,
     [Required] string Password);
 public sealed record RegisterResponse(string Status, string Message);
+
+// `Status` vaut ACTIVE ou PENDING_APPROVAL. Le frontend s'en sert pour choisir son message et
+// pour savoir s'il propose la connexion — le texte, lui, n'est pas un contrat.
+public sealed record VerifyEmailResponse(string Status, string Message);

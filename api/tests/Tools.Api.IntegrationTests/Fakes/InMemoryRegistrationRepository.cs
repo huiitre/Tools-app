@@ -38,11 +38,13 @@ public sealed class InMemoryRegistrationRepository(InMemoryAuthStore store) : IR
         return Task.CompletedTask;
     }
 
-    public Task MarkEmailVerifiedAsync(long userId, DateTime verifiedAt)
+    public Task MarkEmailVerifiedAsync(long userId, DateTime verifiedAt, bool activate)
     {
+        // L'adresse est confirmée dans tous les cas ; seule l'activation dépend de
+        // `auth.adminApprovalRequired`, comme en base.
         var account = store.Accounts[userId];
-        store.Accounts[userId] = (account.Name, account.Email, true, verifiedAt);
-        store.Users[userId] = new AuthUser(userId, account.Email, true, "HUMAN");
+        store.Accounts[userId] = (account.Name, account.Email, activate, verifiedAt);
+        store.Users[userId] = new AuthUser(userId, account.Email, activate, "HUMAN");
         return Task.CompletedTask;
     }
 

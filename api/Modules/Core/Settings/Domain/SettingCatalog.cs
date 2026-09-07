@@ -51,6 +51,36 @@ public static class SettingCatalog
         };
     }
 
+    // Paramètres d'arrivée des comptes. Comme ceux d'instance, ils ne déclarent que `Global` :
+    // ils gouvernent qui peut entrer, une question qui ne se pose pas par utilisateur.
+    //
+    // Leurs valeurs par défaut décrivent le comportement **actuel** du site, et c'est
+    // délibéré : un déploiement qui embarque ces définitions ne doit rien changer tant que
+    // personne n'a rien réglé.
+    public static class Auth
+    {
+        // Ferme `/auth/register` et la création de compte au premier login Google. Les deux,
+        // sans quoi la porte reste ouverte du côté Google.
+        public static readonly BooleanSetting RegistrationEnabled = new()
+        {
+            Code = "auth.registrationEnabled",
+            AllowedScopes = SettingScopes.GlobalOnly,
+            MinRoleToView = RoleCode.Admin,
+            Default = true
+        };
+
+        // Le compte reste inactif après confirmation de l'adresse : un administrateur l'active
+        // depuis le tableau d'administration. L'approbation n'a pas d'état propre — activer le
+        // compte *est* l'approbation.
+        public static readonly BooleanSetting AdminApprovalRequired = new()
+        {
+            Code = "auth.adminApprovalRequired",
+            AllowedScopes = SettingScopes.GlobalOnly,
+            MinRoleToView = RoleCode.Admin,
+            Default = false
+        };
+    }
+
     // Paramètres d'instance : ils ne déclarent que `Global`. « Mon mode maintenance à moi » n'a
     // aucun sens — ce n'est pas une question de droit, la notion n'existe pas.
     public static class Instance
@@ -71,6 +101,8 @@ public static class SettingCatalog
         Ui.Theme,
         Ui.CompactMode,
         Ui.PageSize,
+        Auth.RegistrationEnabled,
+        Auth.AdminApprovalRequired,
         Instance.MaintenanceMode
     ];
 

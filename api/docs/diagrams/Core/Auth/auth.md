@@ -15,6 +15,7 @@ flowchart LR
   RegisterResponse["RegisterResponse"]
   ResetPasswordRequest["ResetPasswordRequest"]
   SetPasswordRequest["SetPasswordRequest"]
+  VerifyEmailResponse["VerifyEmailResponse"]
   end
   subgraph Application
   AccessTokenData["AccessTokenData"]
@@ -51,6 +52,7 @@ flowchart LR
   ResetPasswordUseCase["ResetPasswordUseCase"]
   SetUserPasswordCommand["SetUserPasswordCommand"]
   SetUserPasswordUseCase["SetUserPasswordUseCase"]
+  VerifyEmailResult["VerifyEmailResult"]
   VerifyEmailUseCase["VerifyEmailUseCase"]
   end
   subgraph Domain

@@ -22,6 +22,7 @@ using Tools.Api.Modules.Core.Admin.Application.Ports;
 using Tools.Api.Modules.Core.Notifications.Application.Ports;
 using Tools.Api.Modules.Core.Realtime.Application.Ports;
 using Tools.Api.Modules.Core.Security.Application.Ports;
+using Tools.Api.Modules.Core.Settings.Application.Ports;
 using Tools.Api.Modules.Core.Users.Application;
 using Tools.Api.Modules.Core.GameServers.Application.Ports.Games;
 using Tools.Api.Modules.Core.GameServers.Application.Ports.Listing;
@@ -81,6 +82,15 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IEmailVerificationRepository, InMemoryEmailVerificationRepository>();
             services.RemoveAll<ITransactionManager>();
             services.AddScoped<ITransactionManager, NoOpTransactionManager>();
+
+            // Singleton : un test pose une valeur globale puis appelle une route, et les deux
+            // doivent voir le même contenu. En Scoped, la valeur posée disparaîtrait avec le
+            // scope du test. `SettingReader`, lui, reste Scoped — son cache ne doit pas survivre
+            // d'une requête à l'autre.
+            services.RemoveAll<ISettingValueRepository>();
+            services.AddSingleton<InMemorySettingValueRepository>();
+            services.AddSingleton<ISettingValueRepository>(
+                provider => provider.GetRequiredService<InMemorySettingValueRepository>());
 
             services.RemoveAll<IGameServerRepository>();
             services.AddSingleton<InMemoryGameServerRepository>();

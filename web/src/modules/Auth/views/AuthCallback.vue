@@ -13,8 +13,11 @@ const auth = useAuthStore()
 // que de répondre une erreur : le callback est atteint par le navigateur, une réponse JSON
 // laisserait l'utilisateur sur une page vide.
 const GOOGLE_ERRORS: Record<string, string> = {
-  USER_DISABLED: 'Ce compte a été désactivé.',
+  USER_DISABLED: 'Le compte est désactivé.',
   GOOGLE_EMAIL_ALREADY_REGISTERED: 'Un compte existe déjà avec cette adresse email.',
+  // Le paramètre `auth.registrationEnabled` ferme les deux portes d'entrée : ce code arrive
+  // aussi bien de POST /auth/register que du premier login Google, qui crée le compte.
+  REGISTRATION_CLOSED: 'Les inscriptions sont actuellement fermées.',
   // Le state ne vit que quelques minutes et ne sert qu'une fois : c'est un lien rejoué ou
   // laissé de côté trop longtemps, pas un refus.
   GOOGLE_STATE_INVALID: 'Lien de connexion expiré, merci de réessayer.',

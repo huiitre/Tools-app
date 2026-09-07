@@ -11,6 +11,28 @@ http:
       value: cLW_h4SLSSZKkf1fFlmmJtHN0JtVuQERJFONAfOgF-k
       type: query
 
+docs: |-
+  Confirme l'adresse et, selon le réglage, active le compte. Route anonyme.
+
+  `email_verified_at` est renseignée dans tous les cas — c'est le compte qui peut attendre, pas
+  l'adresse. `is_active` ne passe à `true` que si `auth.adminApprovalRequired` vaut `false`.
+
+  Quand il vaut `true`, le compte reste inactif et un administrateur l'active depuis le tableau
+  d'administration (`PUT /users/{id}/active`) : l'approbation n'a pas d'état propre, activer le
+  compte *est* l'approbation. Les administrateurs reçoivent alors la notification
+  « Inscription à valider » au lieu de « Inscription confirmée ».
+
+  Conséquence assumée : le login d'un compte en attente répond `401 USER_DISABLED`, le même code
+  qu'un compte suspendu — rien ne les distingue de l'extérieur.
+
+  Réponses : **200** avec `{ "status", "message" }`, ou 400 INVALID_EMAIL_VERIFICATION_TOKEN pour
+  un jeton inconnu, déjà consommé ou expiré.
+
+  `status` vaut `ACTIVE` (la connexion est ouverte) ou `PENDING_APPROVAL` (le compte attend un
+  administrateur). C'est un contrat, contrairement à `message` qui n'est qu'un libellé. La route
+  répondait 204 : le frontend ne pouvait alors pas distinguer les deux cas et invitait à se
+  connecter quelqu'un qui ne le pouvait pas encore.
+
 settings:
   encodeUrl: true
   timeout: 0

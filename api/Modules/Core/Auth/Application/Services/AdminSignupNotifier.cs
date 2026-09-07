@@ -25,13 +25,25 @@ public sealed class AdminSignupNotifier(
         "Nouvelle inscription",
         $"{email} vient de créer un compte. L'adresse n'est pas encore confirmée.");
 
-    public Task EmailVerified(string email) => Notify(
-        "Inscription confirmée",
-        $"{email} a confirmé son adresse email : le compte est actif.");
+    // `pendingApproval` n'est pas une nuance de rédaction : quand `auth.adminApprovalRequired`
+    // est posé, le compte reste inactif et **quelqu'un doit agir**. Une notification qui
+    // annoncerait « le compte est actif » serait fausse, et personne ne saurait qu'il y a une
+    // file d'attente à traiter.
+    public Task EmailVerified(string email, bool pendingApproval) => pendingApproval
+        ? Notify(
+            "Inscription à valider",
+            $"{email} a confirmé son adresse email. Le compte reste inactif tant qu'un administrateur ne l'a pas activé.")
+        : Notify(
+            "Inscription confirmée",
+            $"{email} a confirmé son adresse email : le compte est actif.");
 
-    public Task GoogleAccountCreated(string email) => Notify(
-        "Nouvelle inscription via Google",
-        $"{email} vient de créer un compte avec Google.");
+    public Task GoogleAccountCreated(string email, bool pendingApproval) => pendingApproval
+        ? Notify(
+            "Inscription Google à valider",
+            $"{email} vient de créer un compte avec Google. Le compte reste inactif tant qu'un administrateur ne l'a pas activé.")
+        : Notify(
+            "Nouvelle inscription via Google",
+            $"{email} vient de créer un compte avec Google.");
 
     private async Task Notify(string title, string body)
     {

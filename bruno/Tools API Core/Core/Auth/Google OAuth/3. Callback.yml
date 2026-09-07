@@ -27,7 +27,9 @@ docs: |-
   source vit dans le `state`, que le use case n'a pas pu consommer. Codes rencontrés :
   `USER_DISABLED` (compte désactivé par un administrateur),
   `GOOGLE_EMAIL_ALREADY_REGISTERED` (l'adresse a déjà un compte créé autrement),
-  `GOOGLE_STATE_INVALID`. Le front les traduit dans `AuthCallback.vue`.
+  `GOOGLE_STATE_INVALID`, `REGISTRATION_CLOSED` (le paramètre `auth.registrationEnabled` ferme
+  aussi la création de compte au premier login Google, pas seulement `/auth/register`).
+  Le front les traduit dans `AuthCallback.vue`.
 
 settings:
   encodeUrl: true

@@ -7,6 +7,40 @@ POST /auth/verify-email?token=…
 
 Les deux routes sont anonymes : un visiteur sans session est le seul appelant possible.
 
+## Deux paramètres gouvernent l'entrée
+
+Déclarés dans `SettingCatalog.Auth`, portée `Global` uniquement, visibles des seuls
+administrateurs. Leurs défauts reproduisent le comportement d'avant leur existence : déployer
+ces définitions ne change rien tant que personne n'a rien posé.
+
+| paramètre | défaut | effet quand il est posé |
+|---|---|---|
+| `auth.registrationEnabled` | `true` | `false` ferme la création de compte |
+| `auth.adminApprovalRequired` | `false` | `true` laisse le compte inactif après confirmation |
+
+**Les deux portes, pas une.** `registrationEnabled` est lu par `RegisterUserUseCase` *et* par
+`GoogleIdentityAuthenticationService`, où le premier login Google crée le compte à la volée. Ne
+fermer que `/auth/register` laisserait la fenêtre Google grande ouverte. Le refus est
+`403 REGISTRATION_CLOSED`, et côté Google il est placé **après** la recherche du compte existant :
+fermer les inscriptions ne met dehors aucun habitué.
+
+Les deux se lisent avec `GetGlobal` et jamais `Get` : l'appelant est un visiteur anonyme, et
+`Get` lèverait faute d'utilisateur identifié.
+
+**L'approbation n'a pas d'état propre.** `auth.adminApprovalRequired` ne fait que laisser
+`is_active` à `false` — activer le compte depuis le tableau d'administration
+(`PUT /users/{id}/active`) *est* l'approbation. Une colonne `approved_at` a été écrite puis
+abandonnée le 08/09/2026 : la route d'activation existait déjà, et elle rendait la colonne
+inutile.
+
+Ce qu'on perd, et qui est assumé : le login d'un compte en attente répond `USER_DISABLED`, comme
+un compte suspendu. Rien ne les distingue de l'extérieur, et l'administrateur les distingue à la
+date d'inscription — le tableau trie par `created_at DESC`.
+
+Les administrateurs sont prévenus dans les deux cas, avec un message différent : une
+notification qui annoncerait « le compte est actif » alors qu'il attend serait fausse, et
+personne ne saurait qu'il y a une file à traiter.
+
 ## Déroulé
 
 `register` crée l'utilisateur, ses credentials, son provider `PASSWORD` et son rôle `USER`
@@ -20,12 +54,18 @@ et **une seule demande est active par utilisateur**. Le lien envoyé est
 
 L'email part **après le commit** : un jeton annulé ne peut jamais être envoyé.
 
-`verify-email` active le compte, renseigne `email_verified_at` et consomme le jeton. Un jeton
-inconnu, déjà utilisé ou expiré donne la même réponse — `400 INVALID_EMAIL_VERIFICATION_TOKEN`
-— rien ne permet de les distinguer de l'extérieur.
+`verify-email` renseigne `email_verified_at`, consomme le jeton, et active le compte **sauf si**
+`auth.adminApprovalRequired` est posé. La route répond `200` avec un `status` — `ACTIVE` ou
+`PENDING_APPROVAL` — et non plus `204` : sans lui le frontend ne pouvait pas distinguer les deux
+cas, et invitait à se connecter quelqu'un dont le compte attendait encore. L'écran de
+confirmation purge au passage la session éventuellement présente dans le navigateur, le lien
+concernant le compte qui vient de s'inscrire et non celui qui était connecté. Un jeton inconnu, déjà utilisé ou expiré donne la même
+réponse — `400 INVALID_EMAIL_VERIFICATION_TOKEN` — rien ne permet de les distinguer de
+l'extérieur.
 
 À l'arrivée, un compte inscrit par mot de passe est dans le même état qu'un compte créé via
-Google : actif, avec une adresse confirmée.
+Google : adresse confirmée, et actif si aucune validation d'administrateur n'est exigée. Les
+deux chemins lisent le même paramètre, ils ne peuvent pas diverger.
 
 ## Deux états, deux colonnes
 
