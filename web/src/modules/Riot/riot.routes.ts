@@ -7,6 +7,7 @@ export const routes = [
     component: () => import('@/modules/Riot/Riot.vue'),
     meta: {
       requireAuth: true,
+      requireModule: 'riot',
     },
     redirect: { name: 'riot-valorant-shop' },
     children: [

@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useAdminUsersStore } from '../store/adminUsers.store'
-import { updateUserRole } from '../fetch/adminUsers.fetch'
+import { updateUserRole, updateUserActive } from '../fetch/adminUsers.fetch'
 import type { AdminUser } from '../types/adminUsers.types'
 import { useImagePreview } from '@/composables/useImagePreview'
+import { useAuthStore } from '@/modules/Auth/auth.store'
 import toast from '@/services/toast'
 
 const props = defineProps<{ user: AdminUser }>()
 
 const store = useAdminUsersStore()
+const authStore = useAuthStore()
 const visibleColumns = computed(() => store.visibleColumns)
 const { open: openPreview } = useImagePreview()
 
@@ -45,6 +47,29 @@ const selectRole = async (e: MouseEvent, roleId: number) => {
     toast.error('Erreur lors de la mise à jour du rôle')
   } finally {
     saving.value = false
+  }
+}
+
+/* ── Statut du compte ────────────────────────────────────── */
+// L'API refuse de toute façon qu'un administrateur se suspende lui-même (409
+// CANNOT_DEACTIVATE_SELF) : le badge est simplement inerte sur sa propre ligne plutôt que de
+// proposer une action qui échouera.
+const isSelf = computed(() => authStore.user?.id === props.user.id)
+
+const togglingActive = ref(false)
+
+const toggleActive = async () => {
+  if (isSelf.value || togglingActive.value) return
+  const next = !props.user.active
+  togglingActive.value = true
+  try {
+    await updateUserActive(props.user.id, next)
+    store.updateUserActiveLocally(props.user.id, next)
+    toast.success(next ? 'Compte activé' : 'Compte désactivé')
+  } catch {
+    toast.error('Erreur lors de la mise à jour du statut')
+  } finally {
+    togglingActive.value = false
   }
 }
 
@@ -107,7 +132,15 @@ const getCellValue = (key: string): string => {
 
       <!-- STATUT -->
       <div v-else-if="col.key === 'active'" class="cell">
-        <span class="status-badge" :class="user.active ? 'status-badge--active' : 'status-badge--inactive'">
+        <span
+          class="status-badge"
+          :class="[
+            user.active ? 'status-badge--active' : 'status-badge--inactive',
+            { 'status-badge--clickable': !isSelf, 'status-badge--busy': togglingActive },
+          ]"
+          :title="isSelf ? 'Vous ne pouvez pas désactiver votre propre compte' : (user.active ? 'Désactiver ce compte' : 'Activer ce compte')"
+          @click="toggleActive"
+        >
           {{ getCellValue('active') }}
         </span>
       </div>
@@ -263,6 +296,17 @@ const getCellValue = (key: string): string => {
   &--inactive {
     background: color-mix(in srgb, #ef4444 12%, transparent);
     color: #dc2626;
+  }
+
+  &--clickable {
+    cursor: pointer;
+
+    &:hover { filter: brightness(1.15); }
+  }
+
+  &--busy {
+    opacity: 0.6;
+    pointer-events: none;
   }
 }
 </style>

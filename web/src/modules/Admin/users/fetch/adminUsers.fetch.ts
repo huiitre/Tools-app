@@ -15,3 +15,9 @@ export async function fetchAdminRoles(): Promise<AdminRole[]> {
 export async function updateUserRole(userId: string, roleId: number): Promise<void> {
   await clientCore.put(`/users/${userId}/role`, { roleId })
 }
+
+// L'état voulu est envoyé explicitement : l'API ne bascule pas, elle pose. Deux clics rapides
+// sur la même ligne ne peuvent donc pas aboutir à l'inverse de ce qui est affiché.
+export async function updateUserActive(userId: string, active: boolean): Promise<void> {
+  await clientCore.put(`/users/${userId}/active`, { active })
+}

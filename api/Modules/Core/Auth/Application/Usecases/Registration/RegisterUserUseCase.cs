@@ -10,6 +10,8 @@ using Tools.Api.Modules.Core.Common.Infrastructure;
 using Tools.Api.Modules.Core.Auth.Application.Services;
 using Tools.Api.Modules.Core.Mail.Application;
 using Tools.Api.Modules.Core.Mail.Application.Services;
+using Tools.Api.Modules.Core.Settings.Application.Services;
+using Tools.Api.Modules.Core.Settings.Domain;
 
 namespace Tools.Api.Modules.Core.Auth.Application.Usecases.Registration;
 
@@ -28,6 +30,7 @@ public sealed class RegisterUserUseCase(
     ITransactionManager transactionManager,
     MailService mailService,
     AdminSignupNotifier adminSignupNotifier,
+    SettingReader settings,
     IOptions<RegistrationOptions> registrationOptions,
     IOptions<AppOptions> appOptions,
     ILogger<RegisterUserUseCase> logger)
@@ -36,6 +39,20 @@ public sealed class RegisterUserUseCase(
 
     public async Task Execute(RegisterUserCommand command)
     {
+        // Lu avant tout le reste : inscription fermée, rien n'est créé, aucun jeton posé, aucun
+        // mail envoyé. `GetGlobal` et non `Get` — l'appelant est un visiteur anonyme, et `Get`
+        // lèverait faute d'utilisateur identifié.
+        //
+        // Le refus vaut aussi pour une inscription **reprise** : une adresse jamais confirmée ne
+        // doit pas rester un passe-droit tant que la porte est fermée.
+        if (!await settings.GetGlobal(SettingCatalog.Auth.RegistrationEnabled))
+        {
+            logger.LogInformation("Inscription refusée : les inscriptions sont fermées.");
+            throw AppException.Forbidden(
+                "REGISTRATION_CLOSED",
+                "Les inscriptions sont actuellement fermées.");
+        }
+
         var email = command.Email.Trim();
         var passwordHash = passwordHasher.Hash(command.Password);
 

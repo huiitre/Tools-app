@@ -173,6 +173,63 @@ Deux règles à ne pas casser en modifiant cette fonction :
 Les URLs `/auth/refresh` et `/users/me` sont deux constantes en tête de fichier. Elles sont
 servies par `clientInit`, qui vise l'API Core au même titre que `clientCore`.
 
+### Compte désactivé en cours de session
+
+`auth.store.armRealtimeSync()` écoute `Core.UserActiveChanged` (charge `{ active: boolean }`),
+poussé par l'API quand un administrateur ouvre ou ferme un compte. Sur `active: false`, le store
+émet `auth:deactivated` et `App.vue` fait le reste : `POST /auth/logout`, purge du store, toast
+et retour sur `/login`. Sur `active: true`, un simple `refreshUser()`.
+
+Le déroulé est celui de `auth:expired`, seul le message change — « votre session a expiré »
+enverrait la personne se reconnecter pour rien. La déconnexion vit dans `App.vue` parce qu'elle
+demande le routeur, que le store n'a pas.
+
+**Le bus `window` est assumé, ne pas le « corriger ».** Un état de store observé par `watch`
+serait plus idiomatique en Pinia — typé, testable sans DOM — et l'import direct du routeur dans
+le store est de toute façon exclu (`router.ts` importe déjà `useAuthStore`, ce serait un cycle).
+Migration proposée le 07/09/2026 et écartée : `auth:expired` préexistait, et une seconde
+convention pour le même besoin coûterait plus cher que la première appliquée partout. Les trois
+events du front — `auth:expired`, `auth:deactivated`, `access:forbidden` — suivent donc le même
+schéma, et tout nouveau besoin de ce type aussi.
+
+**Ce n'est pas un contrôle de sécurité.** Le claim `isActive` est figé à l'émission de l'access
+token : un client qui ignore l'event garde son jeton jusqu'à expiration (10 min) et n'est bloqué
+qu'au premier `/auth/refresh`. L'event ne fait qu'écourter l'attente.
+
+### Accès aux modules — deux barrières
+
+Une route de module déclare `meta: { requireModule: '<code>' }`, avec le code de
+`tools_core.module.code`. La meta se pose sur la route **parente** : vue-router fusionne les meta
+de tous les records d'une navigation, une déclaration couvre donc tous les enfants. Les cinq
+modules la portent (`dofus`, `riot`, `elite_dangerous`, `palworld`, `temtem`).
+
+- **Le routeur prévient.** `router.beforeEach` appelle `isModuleAllowed(to)`
+  (`src/router/moduleAccess.ts`), qui délègue à `auth.hasModuleAccess(code, READ_ONLY)` : refus →
+  toast + retour sur `/`. Sans ça, la page s'ouvrait et ses requêtes partaient pour rien, l'écran
+  affichant ses 403 une par une sans jamais dire que le module était fermé.
+- **Un `watch` sur `authStore.user` rejoue le contrôle** quand les droits changent en cours de
+  session (`App.vue`). Sans lui, une page déjà chargée qui n'appelle plus rien — l'Atelier Dofus —
+  restait ouverte après une révocation : `beforeEach` ne tourne qu'à une navigation, et
+  l'intercepteur ne voit que ce qui part sur le réseau. Ses onglets se grisaient bien, puisqu'ils
+  observent les droits, mais la route n'était jamais re-testée. Observer `user` couvre du même
+  coup l'accès révoqué, le module désactivé globalement et le rôle abaissé.
+- **L'intercepteur alimente ce `watch`.** Sur un 403, `attachInterceptors` émet
+  `access:forbidden` et `App.vue` se contente de relire le profil — la redirection appartient au
+  `watch`, décider aux deux endroits produirait deux toasts. L'event passe par `window` pour
+  éviter d'importer le routeur dans `axiosInstance` (cycle : `router.ts` importe déjà
+  `refreshSession`). Il reste utile malgré le temps réel : le hub peut être déconnecté.
+
+**L'intercepteur ne redirige jamais de lui-même** : un 403 sur une action — un bouton, un envoi
+de formulaire — éjecterait la personne de sa page et lui ferait perdre sa saisie, pour un refus
+qui ne concernait que ce bouton. Il n'y a redirection que si le profil relu montre que le module
+lui-même a disparu.
+
+Le seuil du routeur est `READ_ONLY`, soit « ce module m'est ouvert ». Une action plus exigeante à
+l'intérieur reste l'affaire de l'API : le routeur ouvre la page, il ne prétend pas connaître le
+droit de chaque bouton. Et comme `hasModuleAccess` ignore le rôle global — même règle que
+`UseCaseAuthorizer` —, **un administrateur du site absent d'un module en est redirigé comme tout
+le monde**.
+
 ## Key Configuration
 
 - `vite.config.ts` — Vue plugin, PWA (workbox), `@/` path alias

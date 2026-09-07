@@ -12,6 +12,9 @@ public sealed class InMemoryUserRepository : IUserRepository
     public long? LastRoleAssignedTo { get; private set; }
     public long? LastRoleAssigned { get; private set; }
 
+    public long? LastActiveSetOn { get; private set; }
+    public bool? LastActiveSet { get; private set; }
+
     public Task<UserProfileDto?> FindProfileAsync(long userId) =>
         Task.FromResult<UserProfileDto?>(userId == ExistingUserId
             ? new UserProfileDto(userId, "admin@example.com", "Admin", "HUMAN", true, null, null, [])
@@ -29,6 +32,13 @@ public sealed class InMemoryUserRepository : IUserRepository
     {
         LastRoleAssignedTo = userId;
         LastRoleAssigned = roleId;
+        return Task.CompletedTask;
+    }
+
+    public Task SetActiveAsync(long userId, bool active)
+    {
+        LastActiveSetOn = userId;
+        LastActiveSet = active;
         return Task.CompletedTask;
     }
 }

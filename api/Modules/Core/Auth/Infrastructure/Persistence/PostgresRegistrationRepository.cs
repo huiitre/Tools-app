@@ -89,18 +89,22 @@ public sealed class PostgresRegistrationRepository(PostgresSession session) : IR
         }
     }
 
-    public async Task MarkEmailVerifiedAsync(long userId, DateTime verifiedAt)
+    public async Task MarkEmailVerifiedAsync(long userId, DateTime verifiedAt, bool activate)
     {
-        // is_active passe à true à la confirmation ; email_verified_at garde la trace du fait
-        // que l'adresse a été confirmée, indépendamment d'une suspension ultérieure.
+        // email_verified_at garde la trace du fait que l'adresse a été confirmée,
+        // indépendamment de is_active : une suspension ultérieure ne la défait pas, et un
+        // compte laissé inactif en attente de validation reste bien une adresse confirmée.
         const string sql = """
             UPDATE tools_core.users
-            SET is_active = true, email_verified_at = @VerifiedAt, updated_at = now()
+            SET is_active = @Activate, email_verified_at = @VerifiedAt, updated_at = now()
             WHERE id = @UserId
             """;
 
         await Connection().ExecuteAsync(
-            new CommandDefinition(sql, new { UserId = userId, VerifiedAt = verifiedAt }, session.Transaction));
+            new CommandDefinition(
+                sql,
+                new { UserId = userId, VerifiedAt = verifiedAt, Activate = activate },
+                session.Transaction));
     }
 
     public async Task<string?> FindEmailByIdAsync(long userId)

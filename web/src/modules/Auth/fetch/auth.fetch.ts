@@ -41,8 +41,15 @@ export const useFetchRegister = async (credentials: useFetchRegisterType) => {
   return await clientCore.post('/auth/register', credentials);
 };
 
+//* `status` vaut ACTIVE ou PENDING_APPROVAL : confirmer son adresse n'ouvre la connexion que si
+//* le paramètre `auth.adminApprovalRequired` n'exige pas la validation d'un administrateur.
+export type VerifyEmailResponse = {
+  status: 'ACTIVE' | 'PENDING_APPROVAL'
+  message: string
+}
+
 export const useFetchVerifyEmail = async (token: string) => {
-  return await clientCore.post(`/auth/verify-email?token=${token}`);
+  return await clientCore.post<VerifyEmailResponse>(`/auth/verify-email?token=${token}`);
 };
 
 //* Le mot de passe est un moyen d'identification, pas une propriété du profil :

@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Tools.Api.IntegrationTests.Fakes;
 using Tools.Api.IntegrationTests.Fixtures;
 using Tools.Api.Modules.Core.Auth.Application.Ports.Registration;
+using Tools.Api.Modules.Core.Settings.Domain;
 using Xunit;
 
 namespace Tools.Api.IntegrationTests.Modules.Core.Auth;
@@ -25,12 +26,19 @@ public sealed class RegistrationTests : IClassFixture<ApiWebApplicationFactory>
         store.Reset();
         factory.Services.GetRequiredService<RecordingMailSender>().Clear();
         factory.Services.GetRequiredService<InMemoryNotificationRepository>().Clear();
+
+        // Le dépôt de paramètres est un singleton : sans ce nettoyage, un test qui ferme les
+        // inscriptions les laisserait fermées pour tous les suivants.
+        factory.Services.GetRequiredService<InMemorySettingValueRepository>().Clear();
     }
 
     private RecordingMailSender Mails => factory.Services.GetRequiredService<RecordingMailSender>();
 
     private InMemoryNotificationRepository Notifications =>
         factory.Services.GetRequiredService<InMemoryNotificationRepository>();
+
+    private InMemorySettingValueRepository Settings =>
+        factory.Services.GetRequiredService<InMemorySettingValueRepository>();
 
     private static object ValidRegistration => new
     {
@@ -82,6 +90,10 @@ public sealed class RegistrationTests : IClassFixture<ApiWebApplicationFactory>
     [Fact]
     public async Task Confirming_the_address_notifies_the_administrators()
     {
+        // Posé explicitement : ce test porte sur la notification, pas sur la valeur par défaut
+        // du paramètre — qui peut changer sans que ce test doive en souffrir.
+        Settings.SetGlobal(SettingCatalog.Auth.AdminApprovalRequired, false);
+
         await factory.CreateClient().PostAsJsonAsync("/auth/register", ValidRegistration);
         Notifications.Clear();
         var token = Assert.Single(store.VerificationTokens).Key;
@@ -89,7 +101,7 @@ public sealed class RegistrationTests : IClassFixture<ApiWebApplicationFactory>
         using var response = await factory.CreateClient()
             .PostAsync($"/auth/verify-email?token={token}", null);
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var notification = Assert.Single(Notifications.Notifications);
         Assert.Equal("Inscription confirmée", notification.Title);
@@ -169,13 +181,19 @@ public sealed class RegistrationTests : IClassFixture<ApiWebApplicationFactory>
     [Fact]
     public async Task Verify_activates_the_account_and_consumes_the_token()
     {
+        Settings.SetGlobal(SettingCatalog.Auth.AdminApprovalRequired, false);
+
         var client = factory.CreateClient();
         using var registration = await client.PostAsJsonAsync("/auth/register", ValidRegistration);
         var token = Assert.Single(store.VerificationTokens).Key;
 
         using var response = await client.PostAsync($"/auth/verify-email?token={token}", null);
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // Le statut est ce qui permet au frontend de proposer la connexion, ou d'annoncer
+        // l'attente : il fait partie du contrat, pas le libellé qui l'accompagne.
+        Assert.Equal("ACTIVE", await ReadStatus(response));
 
         var account = Assert.Single(store.Accounts).Value;
         Assert.True(account.IsActive);
@@ -249,8 +267,112 @@ public sealed class RegistrationTests : IClassFixture<ApiWebApplicationFactory>
         Assert.Single(store.Accounts);
     }
 
+    // ---------- Paramètres d'inscription ----------
+
+    // Aucun paramètre n'est posé : chacun vaut son défaut de catalogue, soit le comportement
+    // d'avant leur existence.
+    //
+    // Ces deux tests gardent les **défauts** eux-mêmes. Il est tentant d'inverser une valeur
+    // dans `SettingCatalog` pour essayer un flux à la main, et tout aussi facile d'oublier de la
+    // remettre : livré ainsi, le défaut fermerait le site sans qu'aucune ligne en base ne
+    // l'explique. Ces tests échouent avant que ça n'arrive.
+    [Fact]
+    public async Task Registration_is_open_by_default()
+    {
+        using var response = await factory.CreateClient().PostAsJsonAsync("/auth/register", ValidRegistration);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Admin_approval_is_not_required_by_default()
+    {
+        var client = factory.CreateClient();
+        await client.PostAsJsonAsync("/auth/register", ValidRegistration);
+        var token = Assert.Single(store.VerificationTokens).Key;
+
+        using var response = await client.PostAsync($"/auth/verify-email?token={token}", null);
+
+        Assert.Equal("ACTIVE", await ReadStatus(response));
+    }
+
+    [Fact]
+    public async Task Register_is_refused_when_registrations_are_closed()
+    {
+        Settings.SetGlobal(SettingCatalog.Auth.RegistrationEnabled, false);
+
+        using var response = await factory.CreateClient().PostAsJsonAsync("/auth/register", ValidRegistration);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal("REGISTRATION_CLOSED", await ReadCode(response));
+
+        // Rien n'a été entrepris : ni compte, ni jeton, ni email.
+        Assert.Empty(store.Accounts);
+        Assert.Empty(store.VerificationTokens);
+        Assert.Null(Mails.LastCommand);
+    }
+
+    // Une inscription reprise ne doit pas être un passe-droit tant que la porte est fermée.
+    [Fact]
+    public async Task Resuming_a_registration_is_refused_when_registrations_are_closed()
+    {
+        await factory.CreateClient().PostAsJsonAsync("/auth/register", ValidRegistration);
+        Settings.SetGlobal(SettingCatalog.Auth.RegistrationEnabled, false);
+
+        using var response = await factory.CreateClient().PostAsJsonAsync("/auth/register", ValidRegistration);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal("REGISTRATION_CLOSED", await ReadCode(response));
+    }
+
+    [Fact]
+    public async Task Verify_leaves_the_account_inactive_when_an_admin_must_approve()
+    {
+        Settings.SetGlobal(SettingCatalog.Auth.AdminApprovalRequired, true);
+
+        var client = factory.CreateClient();
+        await client.PostAsJsonAsync("/auth/register", ValidRegistration);
+        var token = Assert.Single(store.VerificationTokens).Key;
+
+        using var response = await client.PostAsync($"/auth/verify-email?token={token}", null);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // Sans ce statut, l'écran de confirmation invitait à se connecter quelqu'un qui ne le
+        // peut pas encore.
+        Assert.Equal("PENDING_APPROVAL", await ReadStatus(response));
+
+        // L'adresse est bien confirmée — c'est le compte qui attend, pas l'adresse.
+        var account = Assert.Single(store.Accounts).Value;
+        Assert.False(account.IsActive);
+        Assert.NotNull(account.EmailVerifiedAt);
+    }
+
+    // Sans ça, personne n'apprendrait qu'un compte attend d'être activé.
+    [Fact]
+    public async Task Confirming_notifies_that_an_approval_is_pending()
+    {
+        Settings.SetGlobal(SettingCatalog.Auth.AdminApprovalRequired, true);
+
+        var client = factory.CreateClient();
+        await client.PostAsJsonAsync("/auth/register", ValidRegistration);
+        var token = Assert.Single(store.VerificationTokens).Key;
+        Notifications.Clear();
+
+        await client.PostAsync($"/auth/verify-email?token={token}", null);
+
+        var notification = Assert.Single(Notifications.Notifications);
+        Assert.Equal("Inscription à valider", notification.Title);
+    }
+
     private IEmailVerificationRepository Repository() =>
         factory.Services.CreateScope().ServiceProvider.GetRequiredService<IEmailVerificationRepository>();
+
+    private static async Task<string?> ReadStatus(HttpResponseMessage response)
+    {
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        return body.GetProperty("status").GetString();
+    }
 
     private static async Task<string?> ReadCode(HttpResponseMessage response)
     {

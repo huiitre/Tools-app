@@ -7,6 +7,9 @@ public interface IGoogleAuthRepository
 {
     Task<AuthUser?> FindByGoogleProviderIdAsync(string providerUserId);
     Task<bool> ExistsByEmailAsync(string email);
-    Task<AuthUser> CreateGoogleUserAsync(GoogleIdentity identity);
+    // `activate` est faux quand `auth.adminApprovalRequired` est posé. Google a bien confirmé
+    // l'adresse, mais le compte attend qu'un administrateur l'active — comme une inscription
+    // par mot de passe qui vient d'être confirmée.
+    Task<AuthUser> CreateGoogleUserAsync(GoogleIdentity identity, bool activate);
     Task UpdateGoogleAvatarAsync(long userId, string pictureUrl);
 }

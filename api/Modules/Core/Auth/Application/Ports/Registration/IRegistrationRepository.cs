@@ -13,8 +13,12 @@ public interface IRegistrationRepository
     // Remplace le mot de passe d'une inscription encore non confirmée.
     Task ReplacePendingPasswordAsync(long userId, string passwordHash);
 
-    // Confirme l'adresse et autorise la connexion.
-    Task MarkEmailVerifiedAsync(long userId, DateTime verifiedAt);
+    // Confirme l'adresse et fixe l'autorisation de connexion.
+    //
+    // `activate` est faux quand `auth.adminApprovalRequired` est posé : l'adresse est bien
+    // confirmée, mais le compte attend qu'un administrateur l'active. L'approbation n'a pas
+    // d'état propre — activer le compte *est* l'approbation.
+    Task MarkEmailVerifiedAsync(long userId, DateTime verifiedAt, bool activate);
 
     // Adresse du compte, pour les messages destinés aux administrateurs : un identifiant
     // numérique ne dit rien à qui lit la notification.

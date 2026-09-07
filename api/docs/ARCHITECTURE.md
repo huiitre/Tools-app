@@ -1004,6 +1004,10 @@ DELETE /modules/{id}/users/{userId}          Access
 GET    /admin/stats                          Admin
 ```
 
+S'y est ajoutée depuis `PUT /users/{id}/active` (Users), qui n'a pas d'équivalent Java : la
+suspension d'un compte n'existait nulle part, alors que le tableau d'administration affichait
+déjà la colonne. Voir `docs/REGISTRATION.md`, « Deux états, deux colonnes ».
+
 **Deux nouveaux modules.** `Access` porte les modules *fonctionnels* de l'application (Dofus,
 Palworld…) et les accès des utilisateurs à ces modules. Il ne s'appelle pas « Modules » pour ne
 pas produire `Modules/Core/Modules` et un namespace `Tools.Api.Modules.Core.Modules`, où le même mot

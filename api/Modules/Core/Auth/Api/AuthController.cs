@@ -102,6 +102,10 @@ public sealed class AuthController(
         return Ok(new GoogleAuthorizationUrlResponse(getGoogleAuthorizationUrlUseCase.Execute(source)));
     }
 
+    // Cette route est atteinte par une redirection de Google, donc par le navigateur lui-même :
+    // l'appelant est un humain qui regarde une page, pas un client HTTP. Laisser remonter une
+    // AppException lui afficherait le ProblemDetails JSON sur une page vide — c'est l'échec qui
+    // doit ramener sur le front, exactement comme le succès.
     [AllowAnonymous]
     [HttpGet("callback/google")]
     public async Task<IActionResult> CompleteGoogleOAuthLogin(
@@ -109,7 +113,26 @@ public sealed class AuthController(
         [FromQuery, Required] string state,
         [FromServices] CompleteGoogleOAuthLoginUseCase completeGoogleOAuthLoginUseCase)
     {
-        var result = await completeGoogleOAuthLoginUseCase.Execute(code, state);
+        GoogleOAuthLoginResult result;
+        try
+        {
+            result = await completeGoogleOAuthLoginUseCase.Execute(code, state);
+        }
+        catch (AppException exception)
+        {
+            // Le code part en clair dans l'URL. Il ne divulgue rien : y parvenir suppose de
+            // s'être authentifié auprès de Google avec cette adresse, donc d'en être le
+            // titulaire. Rien à voir avec le login par mot de passe, où l'appelant choisit
+            // l'adresse qu'il veut et où la réponse reste donc uniforme.
+            //
+            // La source est inconnue ici — c'est le use case qui consomme le `state` qui la
+            // porte, et il vient d'échouer. On retombe sur le front web : une fenêtre de
+            // navigateur qui affiche la raison vaut mieux qu'un Electron muet.
+            logger.LogInformation("Connexion Google refusée : {Code}", exception.Code);
+            return Redirect(
+                $"{googleOAuthOptions.Value.FrontendBaseUrl}/auth/callback?error={Uri.EscapeDataString(exception.Code)}");
+        }
+
         refreshTokenCookieManager.Set(Response, result.Session.RefreshToken, result.Session.RefreshTokenExpiresAt);
 
         // Compatibilité temporaire avec le front actuel : il lit l'access token dans query.token.
@@ -159,14 +182,24 @@ public sealed class AuthController(
             "Un email de confirmation vient de vous être envoyé."));
     }
 
+    // Répond un corps plutôt qu'un 204 : confirmer une adresse ouvre la connexion, ou pas, et
+    // seul le serveur sait lequel des deux. Sans cette réponse, l'écran de confirmation invitait
+    // à se connecter un visiteur dont le compte attend encore la validation d'un administrateur.
     [AllowAnonymous]
     [HttpPost("verify-email")]
-    public async Task<IActionResult> VerifyEmail(
+    public async Task<ActionResult<VerifyEmailResponse>> VerifyEmail(
         [FromQuery, Required] string token,
         [FromServices] VerifyEmailUseCase verifyEmailUseCase)
     {
-        await verifyEmailUseCase.Execute(token);
-        return NoContent();
+        var result = await verifyEmailUseCase.Execute(token);
+
+        return result == VerifyEmailResult.PendingApproval
+            ? Ok(new VerifyEmailResponse(
+                "PENDING_APPROVAL",
+                "Adresse confirmée. Votre compte doit être activé par un administrateur avant que vous puissiez vous connecter."))
+            : Ok(new VerifyEmailResponse(
+                "ACTIVE",
+                "Adresse confirmée, vous pouvez vous connecter."));
     }
 
     // Définir ou changer son propre mot de passe. L'identité vient du jeton, comme pour
@@ -198,3 +231,7 @@ public sealed record RegisterRequest(
     [Required, EmailAddress] string Email,
     [Required] string Password);
 public sealed record RegisterResponse(string Status, string Message);
+
+// `Status` vaut ACTIVE ou PENDING_APPROVAL. Le frontend s'en sert pour choisir son message et
+// pour savoir s'il propose la connexion — le texte, lui, n'est pas un contrat.
+public sealed record VerifyEmailResponse(string Status, string Message);

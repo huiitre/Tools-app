@@ -11,7 +11,7 @@ http:
     data: |-
       {
         "name": "Yanis",
-        "email": "yanisdeluca69+test1@gmail.com",
+        "email": "yanisdeluca69+test4@gmail.com",
         "password": "test123456"
       }
 
@@ -20,3 +20,17 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Inscription par email et mot de passe. Route anonyme.
+
+  Refusée par **403 REGISTRATION_CLOSED** quand le paramètre `auth.registrationEnabled` est
+  posé à `false` : rien n'est créé, aucun jeton posé, aucun email envoyé. Le refus vaut aussi
+  pour une inscription reprise — une adresse jamais confirmée n'est pas un passe-droit.
+
+  Le même paramètre ferme la création de compte au premier login Google
+  (`GoogleIdentityAuthenticationService`) : la fermer d'un seul côté laisserait l'autre ouverte.
+
+  Autres réponses : 200 VERIFICATION_SENT, 409 EMAIL_ALREADY_REGISTERED si l'adresse est déjà
+  confirmée.

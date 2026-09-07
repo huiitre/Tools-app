@@ -133,6 +133,20 @@ const attachInterceptors = (client: AxiosInstance) => {
       const originalRequest = error.config;
 
       /* -----------------------------
+         403 → LES DROITS ONT PEUT-ÊTRE CHANGÉ
+      ----------------------------- */
+      //* Le routeur ne connaît que les droits chargés au démarrage : un module retiré en
+      //* cours de session ne se voit que par ce 403. On le signale sans rien décider ici —
+      //* l'erreur remonte normalement à l'écran, et App.vue relit le profil pour trancher.
+      //*
+      //* Surtout, on ne redirige pas depuis ici : un 403 sur une action (un bouton, un envoi
+      //* de formulaire) éjecterait la personne de sa page et lui ferait perdre sa saisie,
+      //* pour un refus qui ne concernait que ce bouton.
+      if (status === 403) {
+        window.dispatchEvent(new Event('access:forbidden'));
+      }
+
+      /* -----------------------------
          PAS UNE 401 → ON REMONTE
       ----------------------------- */
       if (status !== 401) {

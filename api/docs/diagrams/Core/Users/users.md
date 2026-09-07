@@ -5,6 +5,7 @@
 ```mermaid
 flowchart LR
   subgraph Api
+  SetUserActiveRequest["SetUserActiveRequest"]
   SetUserRoleRequest["SetUserRoleRequest"]
   UsersController["UsersController"]
   end
@@ -12,6 +13,9 @@ flowchart LR
   GetMyProfileUseCase["GetMyProfileUseCase"]
   IUserRepository(["IUserRepository"])
   ListUsersUseCase["ListUsersUseCase"]
+  RoleDto["RoleDto"]
+  SetUserActiveCommand["SetUserActiveCommand"]
+  SetUserActiveUseCase["SetUserActiveUseCase"]
   SetUserGlobalRoleCommand["SetUserGlobalRoleCommand"]
   SetUserGlobalRoleUseCase["SetUserGlobalRoleUseCase"]
   UserAdminDto["UserAdminDto"]
@@ -30,8 +34,11 @@ flowchart LR
   GetMyProfileUseCase --> IUserRepository
   ListUsersUseCase --> IUserRepository
   PostgresUserRepository -.-> IUserRepository
+  SetUserActiveUseCase --> IUserRepository
   SetUserGlobalRoleUseCase --> IUserRepository
+  UserModuleDto --> RoleDto
   UsersController --> GetMyProfileUseCase
   UsersController --> ListUsersUseCase
+  UsersController --> SetUserActiveUseCase
   UsersController --> SetUserGlobalRoleUseCase
 ```

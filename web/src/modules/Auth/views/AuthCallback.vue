@@ -9,9 +9,31 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 
+// Codes renvoyés par /auth/callback/google quand la connexion échoue. L'API redirige ici plutôt
+// que de répondre une erreur : le callback est atteint par le navigateur, une réponse JSON
+// laisserait l'utilisateur sur une page vide.
+const GOOGLE_ERRORS: Record<string, string> = {
+  USER_DISABLED: 'Le compte est désactivé.',
+  GOOGLE_EMAIL_ALREADY_REGISTERED: 'Un compte existe déjà avec cette adresse email.',
+  // Le paramètre `auth.registrationEnabled` ferme les deux portes d'entrée : ce code arrive
+  // aussi bien de POST /auth/register que du premier login Google, qui crée le compte.
+  REGISTRATION_CLOSED: 'Les inscriptions sont actuellement fermées.',
+  // Le state ne vit que quelques minutes et ne sert qu'une fois : c'est un lien rejoué ou
+  // laissé de côté trop longtemps, pas un refus.
+  GOOGLE_STATE_INVALID: 'Lien de connexion expiré, merci de réessayer.',
+}
+
 onMounted(async () => {
   if (auth.user) {
     return router.replace('/')
+  }
+
+  const error = route.query.error as string | undefined
+
+  if (error) {
+    // Un code inconnu reste un échec de connexion : le message générique le couvre.
+    toast.error(GOOGLE_ERRORS[error] ?? 'Erreur lors de la connexion Google')
+    return router.replace('/login')
   }
 
   const token = route.query.token as string | undefined

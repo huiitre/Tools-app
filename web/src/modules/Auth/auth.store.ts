@@ -118,6 +118,24 @@ export const useAuthStore = defineStore('auth', {
       coreHubConnection.on('Core.UserModuleRoleChanged', onRightsChanged)
       coreHubConnection.on('Core.UserModuleAccessGranted', onRightsChanged)
       coreHubConnection.on('Core.UserModuleAccessRevoked', onRightsChanged)
+
+      //* Un administrateur vient d'ouvrir ou de fermer ce compte.
+      //*
+      //* La fermeture ne prend effet côté serveur qu'à l'expiration de l'access token (le claim
+      //* `isActive` y est figé à l'émission) : cet event ne fait qu'écourter l'attente pour un
+      //* client connecté, il ne remplace aucun contrôle. Quelqu'un qui l'ignore reste bloqué au
+      //* premier /auth/refresh.
+      coreHubConnection.on<{ active: boolean }>('Core.UserActiveChanged', (payload) => {
+        if (payload?.active === false) {
+          //* La déconnexion appartient à App.vue : elle demande le routeur et l'appel de
+          //* logout, que le store n'a pas — même partage que `auth:expired`.
+          window.dispatchEvent(new Event('auth:deactivated'))
+          return
+        }
+
+        //* Réactivation : rien à couper, seulement un profil à remettre à jour.
+        onRightsChanged()
+      })
       // Ciblé côté API sur les membres du module (FindByModuleIdAsync) : quiconque reçoit cet
       // event en fait déjà partie, pas besoin de le revérifier ici.
       coreHubConnection.on('Core.ModuleUpdated', onRightsChanged)

@@ -9,7 +9,7 @@ export const routes = [
     name: 'temtem',
     path: '/temtem',
     component: () => import('@/modules/Temtem/Temtem.vue'),
-    meta: { requireAuth: true },
+    meta: { requireAuth: true, requireModule: 'temtem' },
     redirect: { name: 'temtem_temtemdex' },
     children: [
       ...temtemdexRoutes,
