@@ -16,6 +16,7 @@ public static class UsersModule
         builder.Services.AddScoped<GetMyProfileUseCase>();
         builder.Services.AddScoped<ListUsersUseCase>();
         builder.Services.AddScoped<SetUserGlobalRoleUseCase>();
+        builder.Services.AddScoped<SetUserActiveUseCase>();
 
         return builder;
     }

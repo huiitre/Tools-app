@@ -42,6 +42,15 @@ l'utilisateur et ses données.
 `email_verified_at` sépare définitivement les deux notions. Le nettoyage ne regarde plus
 jamais `is_active` (migration `V2.65.0`).
 
+La suspension elle-même se fait par `PUT /users/{id}/active` (rôle ADMIN). Elle ne touche pas
+`email_verified_at` : l'adresse reste confirmée, seule la connexion est fermée. Un
+administrateur ne peut pas suspendre son propre compte — `409 CANNOT_DEACTIVATE_SELF` —, sans
+quoi il lui faudrait un autre administrateur ou un `UPDATE` à la main pour revenir en arrière.
+
+La suspension ne coupe pas la session déjà ouverte : l'access token reste valide jusqu'à son
+expiration (10 minutes). Le renouvellement, lui, relit `is_active` et refuse
+(`RefreshSessionUseCase`) — la suspension prend donc effet au plus tard au premier refresh.
+
 ## Réinscription avant confirmation
 
 Une adresse déjà **confirmée** est refusée : `409 EMAIL_ALREADY_REGISTERED`. Le compte peut

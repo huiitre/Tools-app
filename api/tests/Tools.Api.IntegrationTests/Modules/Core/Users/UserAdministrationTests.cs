@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Tools.Api.IntegrationTests.Modules.Core.Users;
 
-// Administration des utilisateurs : liste et attribution du rôle global.
+// Administration des utilisateurs : liste, attribution du rôle global et statut du compte.
 //
 // Le rôle exigé est ADMIN, comme dans l'API Java. Attention au piège : le contrôleur Java
 // annote parfois TECH, mais cette annotation n'est lue par aucun aspect — seul
@@ -111,6 +111,88 @@ public sealed class UserAdministrationTests(ApiWebApplicationFactory factory)
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal("ROLE_NOT_FOUND", await ReadCode(response));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Setting_the_active_status_records_the_requested_state(bool active)
+    {
+        // L'acteur n'est pas la cible : la garde anti-auto-suspension n'entre pas en jeu ici.
+        var client = factory.CreateClientForUser(2, "ADMIN");
+
+        using var response = await client.PutAsJsonAsync(
+            $"/users/{ExistingUserId}/active", new { active });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+        var repository = factory.Services.GetRequiredService<InMemoryUserRepository>();
+        Assert.Equal(ExistingUserId, repository.LastActiveSetOn);
+        Assert.Equal(active, repository.LastActiveSet);
+    }
+
+    // Se suspendre soi-même retirerait le droit d'annuler l'opération : il faudrait un autre
+    // administrateur, ou un UPDATE à la main en base.
+    [Fact]
+    public async Task Deactivating_your_own_account_is_a_conflict()
+    {
+        var client = factory.CreateClientForUser(ExistingUserId, "ADMIN");
+
+        using var response = await client.PutAsJsonAsync(
+            $"/users/{ExistingUserId}/active", new { active = false });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal("CANNOT_DEACTIVATE_SELF", await ReadCode(response));
+    }
+
+    // La réactivation de son propre compte ne ferme aucune porte : rien à interdire.
+    [Fact]
+    public async Task Reactivating_your_own_account_is_allowed()
+    {
+        var client = factory.CreateClientForUser(ExistingUserId, "ADMIN");
+
+        using var response = await client.PutAsJsonAsync(
+            $"/users/{ExistingUserId}/active", new { active = true });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("READ_ONLY")]
+    [InlineData("USER")]
+    [InlineData("MODERATOR")]
+    [InlineData("TECH")]
+    public async Task Setting_the_active_status_is_refused_below_the_administration_level(string role)
+    {
+        var client = factory.CreateClientForUser(2, role);
+
+        using var response = await client.PutAsJsonAsync(
+            $"/users/{ExistingUserId}/active", new { active = false });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal("INSUFFICIENT_ROLE", await ReadCode(response));
+    }
+
+    [Fact]
+    public async Task Setting_the_active_status_on_an_unknown_user_is_not_found()
+    {
+        var client = factory.CreateClientForUser(2, "ADMIN");
+
+        using var response = await client.PutAsJsonAsync("/users/999/active", new { active = false });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("USER_NOT_FOUND", await ReadCode(response));
+    }
+
+    // Sans ce refus, un corps où le champ manque vaudrait `false` et suspendrait le compte.
+    [Fact]
+    public async Task Setting_the_active_status_without_the_field_is_rejected()
+    {
+        var client = factory.CreateClientForUser(2, "ADMIN");
+
+        using var response = await client.PutAsJsonAsync($"/users/{ExistingUserId}/active", new { });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     private static async Task<string?> ReadCode(HttpResponseMessage response)

@@ -1,0 +1,39 @@
+info:
+  name: Set active
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{apiUrl}}/users/1/active"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+  body:
+    type: json
+    data: |-
+      {
+        "active": false
+      }
+
+docs: |-
+  Autorise ou refuse la connexion d'un compte (`tools_core.users.is_active`).
+
+  Rôle minimum : ADMIN.
+
+  L'état voulu est passé dans le corps, la route ne bascule pas : deux appels partis du même
+  écran s'annuleraient sinon. `active` est obligatoire — un corps sans le champ est refusé
+  plutôt que compris comme une désactivation.
+
+  Suspendre un compte ne touche pas à `email_verified_at` : l'adresse reste confirmée, seule
+  la connexion est fermée. La session déjà ouverte survit jusqu'à l'expiration de son access
+  token ; le renouvellement, lui, relit `is_active` et répond 401 INVALID_REFRESH_TOKEN.
+
+  Réponses : 204 si le statut est posé, 404 USER_NOT_FOUND si le compte n'existe pas,
+  409 CANNOT_DEACTIVATE_SELF si un administrateur tente de se suspendre lui-même.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

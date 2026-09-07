@@ -8,8 +8,8 @@ namespace Tools.Api.Modules.Core.Users.Infrastructure;
 
 // Adaptateur PostgreSQL/Dapper du port IUserRepository.
 //
-// Les lectures ouvrent leur propre connexion ; l'écriture du rôle global passe par la
-// transaction du use case, sans quoi la suppression et l'insertion ne seraient pas atomiques.
+// Chaque opération ouvre sa propre connexion, sauf l'écriture du rôle global : elle passe par
+// la transaction du use case, qui l'accompagne d'autres écritures.
 public sealed class PostgresUserRepository(
     NpgsqlDataSource dataSource,
     PostgresSession session) : IUserRepository
@@ -133,6 +133,19 @@ public sealed class PostgresUserRepository(
 
         await Connection().ExecuteAsync(
             new CommandDefinition(sql, new { UserId = userId, RoleId = roleId }, session.Transaction));
+    }
+
+    public async Task SetActiveAsync(long userId, bool active)
+    {
+        const string sql = """
+            UPDATE tools_core.users
+            SET is_active = @Active, updated_at = now()
+            WHERE id = @UserId
+            """;
+
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await connection.ExecuteAsync(
+            new CommandDefinition(sql, new { UserId = userId, Active = active }));
     }
 
     private NpgsqlConnection Connection() => session.Connection

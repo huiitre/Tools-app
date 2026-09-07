@@ -102,6 +102,10 @@ public sealed class AuthController(
         return Ok(new GoogleAuthorizationUrlResponse(getGoogleAuthorizationUrlUseCase.Execute(source)));
     }
 
+    // Cette route est atteinte par une redirection de Google, donc par le navigateur lui-même :
+    // l'appelant est un humain qui regarde une page, pas un client HTTP. Laisser remonter une
+    // AppException lui afficherait le ProblemDetails JSON sur une page vide — c'est l'échec qui
+    // doit ramener sur le front, exactement comme le succès.
     [AllowAnonymous]
     [HttpGet("callback/google")]
     public async Task<IActionResult> CompleteGoogleOAuthLogin(
@@ -109,7 +113,26 @@ public sealed class AuthController(
         [FromQuery, Required] string state,
         [FromServices] CompleteGoogleOAuthLoginUseCase completeGoogleOAuthLoginUseCase)
     {
-        var result = await completeGoogleOAuthLoginUseCase.Execute(code, state);
+        GoogleOAuthLoginResult result;
+        try
+        {
+            result = await completeGoogleOAuthLoginUseCase.Execute(code, state);
+        }
+        catch (AppException exception)
+        {
+            // Le code part en clair dans l'URL. Il ne divulgue rien : y parvenir suppose de
+            // s'être authentifié auprès de Google avec cette adresse, donc d'en être le
+            // titulaire. Rien à voir avec le login par mot de passe, où l'appelant choisit
+            // l'adresse qu'il veut et où la réponse reste donc uniforme.
+            //
+            // La source est inconnue ici — c'est le use case qui consomme le `state` qui la
+            // porte, et il vient d'échouer. On retombe sur le front web : une fenêtre de
+            // navigateur qui affiche la raison vaut mieux qu'un Electron muet.
+            logger.LogInformation("Connexion Google refusée : {Code}", exception.Code);
+            return Redirect(
+                $"{googleOAuthOptions.Value.FrontendBaseUrl}/auth/callback?error={Uri.EscapeDataString(exception.Code)}");
+        }
+
         refreshTokenCookieManager.Set(Response, result.Session.RefreshToken, result.Session.RefreshTokenExpiresAt);
 
         // Compatibilité temporaire avec le front actuel : il lit l'access token dans query.token.

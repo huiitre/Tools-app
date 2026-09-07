@@ -43,7 +43,24 @@ public class UsersController : ControllerBase
         await setUserGlobalRoleUseCase.Execute(new SetUserGlobalRoleCommand(userId, request.RoleId));
         return NoContent();
     }
+
+    // L'état voulu est dans le corps, pas déduit de l'état courant : une route qui bascule
+    // n'est pas idempotente, et deux appels partis du même écran s'annuleraient.
+    [HttpPut("{userId:long}/active")]
+    public async Task<IActionResult> SetActive(
+        long userId,
+        SetUserActiveRequest request,
+        [FromServices] SetUserActiveUseCase setUserActiveUseCase)
+    {
+        await setUserActiveUseCase.Execute(new SetUserActiveCommand(userId, request.Active!.Value));
+        return NoContent();
+    }
 }
 
 // DTO entrant : ASP.NET applique cette règle avant d'appeler SetRole.
 public sealed record SetUserRoleRequest([Required] long RoleId);
+
+// `Active` est nullable exprès : sur un `bool` sec, un corps où le champ manque vaudrait
+// `false` sans que rien ne le signale — donc une suspension que personne n'a demandée.
+// [Required] ne rejette que `null`, il faut donc que l'absence puisse s'exprimer.
+public sealed record SetUserActiveRequest([Required] bool? Active);

@@ -117,6 +117,11 @@ export const useAdminUsersStore = defineStore('adminUsers', () => {
     if (user) user.roleId = roleId
   }
 
+  function updateUserActiveLocally(userId: string, active: boolean) {
+    const user = users.value.find(u => u.id === userId)
+    if (user) user.active = active
+  }
+
   return {
     users, roles, columns, loading, error,
     q, sort, dir, page, pageSize,
@@ -124,6 +129,6 @@ export const useAdminUsersStore = defineStore('adminUsers', () => {
     filtered, sorted, paginated, total, lastPage,
     editingRoleUserId,
     setQuery, setSort, toggleSort, setPage, setPageSize,
-    toggleColumn, openRoleEdit, closeRoleEdit, updateUserRoleLocally,
+    toggleColumn, openRoleEdit, closeRoleEdit, updateUserRoleLocally, updateUserActiveLocally,
   }
 })

@@ -1,0 +1,36 @@
+info:
+  name: 3. Callback
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{apiUrl}}/auth/callback/google?code=REMPLACER&state=REMPLACER"
+  auth:
+    type: none
+
+docs: |-
+  Retour de Google après consentement. **Non jouable à la main** : `code` est à usage unique et
+  émis par Google, `state` doit avoir été produit par `1.` ou `2.` et n'est consommé qu'une fois.
+  Entrée présente pour documenter le contrat, pas pour être exécutée.
+
+  Cette route ne répond jamais en JSON : elle est atteinte par le navigateur, elle **redirige**
+  dans tous les cas.
+
+  Succès :
+  - web      → `{App:FrontendBaseUrl}/auth/callback?token=<access token>`
+  - electron → `tools://auth?token=<access token>`
+
+  Le refresh token part dans le cookie HttpOnly, jamais dans l'URL.
+
+  Échec → `{App:FrontendBaseUrl}/auth/callback?error=<code>`, toujours vers le front web : la
+  source vit dans le `state`, que le use case n'a pas pu consommer. Codes rencontrés :
+  `USER_DISABLED` (compte désactivé par un administrateur),
+  `GOOGLE_EMAIL_ALREADY_REGISTERED` (l'adresse a déjà un compte créé autrement),
+  `GOOGLE_STATE_INVALID`. Le front les traduit dans `AuthCallback.vue`.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: false
+  maxRedirects: 0

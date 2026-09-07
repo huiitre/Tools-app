@@ -16,4 +16,8 @@ public interface IUserRepository
     // Remplace le rôle global : les rôles existants sont supprimés avant l'insertion.
     // À appeler dans une transaction — l'opération n'est pas atomique en elle-même.
     Task ReplaceGlobalRoleAsync(long userId, long roleId);
+
+    // Autorise ou refuse la connexion du compte. Une seule écriture, donc atomique en
+    // elle-même : contrairement au rôle global, aucune transaction n'est nécessaire.
+    Task SetActiveAsync(long userId, bool active);
 }
