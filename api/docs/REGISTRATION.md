@@ -53,7 +53,8 @@ renouvellement, lui, relit `is_active` et refuse (`RefreshSessionUseCase`) — l
 donc effet au plus tard au premier refresh.
 
 Un event SignalR `Core.UserActiveChanged`, de charge `{ "active": bool }`, est poussé vers
-l'utilisateur visé, dans les deux sens. Il écourte cette attente pour un client connecté au hub,
+l'utilisateur visé, dans les deux sens. Le frontend l'écoute dans `armRealtimeSync` et déconnecte
+sur `active: false` (voir `web/AGENTS.md`). Il écourte cette attente pour un client connecté au hub,
 **sans rien garantir** : un client qui l'ignore garde son jeton jusqu'au bout. Ce n'est donc pas
 un contrôle de sécurité, et il ne remplace rien côté serveur. Fermer la fenêtre pour de bon
 demanderait une liste des comptes suspendus consultée dans `EnforceAccessTokenRules` — envisagé,
