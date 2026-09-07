@@ -173,6 +173,34 @@ Deux règles à ne pas casser en modifiant cette fonction :
 Les URLs `/auth/refresh` et `/users/me` sont deux constantes en tête de fichier. Elles sont
 servies par `clientInit`, qui vise l'API Core au même titre que `clientCore`.
 
+### Accès aux modules — deux barrières
+
+Une route de module déclare `meta: { requireModule: '<code>' }`, avec le code de
+`tools_core.module.code`. La meta se pose sur la route **parente** : vue-router fusionne les meta
+de tous les records d'une navigation, une déclaration couvre donc tous les enfants. Les cinq
+modules la portent (`dofus`, `riot`, `elite_dangerous`, `palworld`, `temtem`).
+
+- **Le routeur prévient.** `router.beforeEach` appelle `isModuleAllowed(to)`
+  (`src/router/moduleAccess.ts`), qui délègue à `auth.hasModuleAccess(code, READ_ONLY)` : refus →
+  toast + retour sur `/`. Sans ça, la page s'ouvrait et ses requêtes partaient pour rien, l'écran
+  affichant ses 403 une par une sans jamais dire que le module était fermé.
+- **L'intercepteur rattrape.** Le routeur ne connaît que les droits chargés ; un module retiré en
+  cours de session ne se voit que par un 403. `attachInterceptors` émet alors
+  `access:forbidden`, et `App.vue` relit le profil avant de décider — même schéma que
+  `auth:expired`, qui évite d'importer le routeur dans `axiosInstance` (cycle : `router.ts`
+  importe déjà `refreshSession`).
+
+**L'intercepteur ne redirige jamais de lui-même** : un 403 sur une action — un bouton, un envoi
+de formulaire — éjecterait la personne de sa page et lui ferait perdre sa saisie, pour un refus
+qui ne concernait que ce bouton. Il n'y a redirection que si le profil relu montre que le module
+lui-même a disparu.
+
+Le seuil du routeur est `READ_ONLY`, soit « ce module m'est ouvert ». Une action plus exigeante à
+l'intérieur reste l'affaire de l'API : le routeur ouvre la page, il ne prétend pas connaître le
+droit de chaque bouton. Et comme `hasModuleAccess` ignore le rôle global — même règle que
+`UseCaseAuthorizer` —, **un administrateur du site absent d'un module en est redirigé comme tout
+le monde**.
+
 ## Key Configuration
 
 - `vite.config.ts` — Vue plugin, PWA (workbox), `@/` path alias

@@ -47,9 +47,17 @@ La suspension elle-même se fait par `PUT /users/{id}/active` (rôle ADMIN). Ell
 administrateur ne peut pas suspendre son propre compte — `409 CANNOT_DEACTIVATE_SELF` —, sans
 quoi il lui faudrait un autre administrateur ou un `UPDATE` à la main pour revenir en arrière.
 
-La suspension ne coupe pas la session déjà ouverte : l'access token reste valide jusqu'à son
-expiration (10 minutes). Le renouvellement, lui, relit `is_active` et refuse
-(`RefreshSessionUseCase`) — la suspension prend donc effet au plus tard au premier refresh.
+La suspension ne coupe pas la session déjà ouverte : le claim `isActive` est figé à l'émission
+de l'access token, qui reste donc accepté jusqu'à son expiration (10 minutes). Le
+renouvellement, lui, relit `is_active` et refuse (`RefreshSessionUseCase`) — la suspension prend
+donc effet au plus tard au premier refresh.
+
+Un event SignalR `Core.UserActiveChanged`, de charge `{ "active": bool }`, est poussé vers
+l'utilisateur visé, dans les deux sens. Il écourte cette attente pour un client connecté au hub,
+**sans rien garantir** : un client qui l'ignore garde son jeton jusqu'au bout. Ce n'est donc pas
+un contrôle de sécurité, et il ne remplace rien côté serveur. Fermer la fenêtre pour de bon
+demanderait une liste des comptes suspendus consultée dans `EnforceAccessTokenRules` — envisagé,
+pas fait : dix minutes de sursis sur un compte qu'on vient de suspendre sont sans conséquence.
 
 ## Réinscription avant confirmation
 

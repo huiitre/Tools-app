@@ -29,6 +29,10 @@ docs: |-
   la connexion est fermée. La session déjà ouverte survit jusqu'à l'expiration de son access
   token ; le renouvellement, lui, relit `is_active` et répond 401 INVALID_REFRESH_TOKEN.
 
+  Un event SignalR `Core.UserActiveChanged`, de charge `{ "active": bool }`, est poussé vers
+  l'utilisateur visé — dans les deux sens, activation comprise. Il n'arrive qu'à un client
+  connecté au hub et son échec n'empêche pas l'écriture : c'est un confort, pas un contrôle.
+
   Réponses : 204 si le statut est posé, 404 USER_NOT_FOUND si le compte n'existe pas,
   409 CANNOT_DEACTIVATE_SELF si un administrateur tente de se suspendre lui-même.
 

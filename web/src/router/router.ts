@@ -9,6 +9,8 @@ import TermsOfService from '@/modules/Legal/TermsOfService.vue';
 import NotFound from '@/components/NotFound.vue';
 import { useAuthStore } from '@/modules/Auth/auth.store';
 import { refreshSession } from '@/services/axiosInstance';
+import { isModuleAllowed } from '@/router/moduleAccess';
+import toast from '@/services/toast';
 
 import { useUIStore } from '@/stores/ui.store';
 
@@ -116,6 +118,17 @@ router.beforeEach(async (to) => {
 
   //* Route admin sans rang suffisant
   if (to.meta.requireAdmin && !auth.isAdmin) {
+    return '/';
+  }
+
+  //* Route d'un module fonctionnel auquel l'utilisateur n'a pas accès.
+  //*
+  //* Sans ce contrôle, la page s'ouvrait et ses requêtes partaient pour rien : l'écran
+  //* affichait ses erreurs 403 une par une, sans jamais dire que le module lui-même était
+  //* fermé. Le toast est indispensable — une redirection muette vers l'accueil ressemble à
+  //* un bug.
+  if (!isModuleAllowed(to)) {
+    toast.error("Vous n'avez pas accès à ce module.");
     return '/';
   }
 

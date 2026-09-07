@@ -12,6 +12,7 @@ export const routes = [
     component: () => import('@/modules/Dofus/Dofus.vue'),
     meta: {
       requireAuth: true,
+      requireModule: 'dofus',
       desktopOnly: true,
     },
     redirect: { name: 'dofus-almanax' },

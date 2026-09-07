@@ -10,7 +10,7 @@ export const routes = [
     name: 'palworld',
     path: '/palworld',
     component: () => import('@/modules/Palworld/Palworld.vue'),
-    meta: { requireAuth: true },
+    meta: { requireAuth: true, requireModule: 'palworld' },
     redirect: { name: 'palworld-tierlist' },
     children: [
       ...tierlistRoutes,
