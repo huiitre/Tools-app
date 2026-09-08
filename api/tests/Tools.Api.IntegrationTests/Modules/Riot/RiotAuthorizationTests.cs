@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Tools.Api.IntegrationTests.Fakes;
 using Tools.Api.IntegrationTests.Fixtures;
+using Tools.Api.Modules.Core.Common.Api.Internal;
 using Tools.Api.Modules.Riot.Valorant.Application.Catalog.Views;
 using Xunit;
 
@@ -146,17 +147,54 @@ public sealed class RiotAuthorizationTests(ApiWebApplicationFactory factory)
         Assert.Equal(expected, response.StatusCode);
     }
 
-    // Seule l'autorisation est vérifiée ici : ce qui suit dépend de PostgreSQL et du CDN des
-    // assets, hors de portée d'un test d'intégration HTTP.
-    [Theory]
-    [InlineData("USER", true)]
-    [InlineData("TECH", false)]
-    public async Task La_synchronisation_du_catalogue_est_reservee_a_TECH(string role, bool refuse)
+    // La synchronisation du catalogue n'est plus une route d'utilisateur.
+    //
+    // Elle exigeait TECH dans le module, puis `81c26c87` l'a passée sous `/internal` et
+    // `83b55813` a retiré `SecuredUseCase` de toute la chaîne de synchro : c'est le NAS qui
+    // l'appelle, aucun utilisateur n'y est identifié, et un use case sécurisé construit hors
+    // requête HTTP lèverait. La protection est désormais le secret partagé, comme
+    // `/internal/notifications` et `/internal/realtime/publish`.
+    //
+    // Ces deux tests ne vérifient donc plus un rôle mais l'en-tête. Ils remplacent un
+    // `La_synchronisation_du_catalogue_est_reservee_a_TECH` qui interrogeait encore
+    // `/riot/valorant/sync` — une route disparue, donc un 404 : le cas USER échouait, et le cas
+    // TECH passait par accident, un 404 n'étant pas un 403.
+
+    // 404 et non 401 : `InternalApiAttribute` refuse sans confirmer que la route existe.
+    [Fact]
+    public async Task La_synchronisation_du_catalogue_refuse_un_appel_sans_secret_interne()
     {
-        using var client = ClientInRiot(role);
+        using var client = factory.CreateClient();
 
-        using var response = await client.PostAsync("/riot/valorant/sync", null);
+        using var response = await client.PostAsync("/internal/riot/valorant/sync", null);
 
-        Assert.Equal(refuse, response.StatusCode == HttpStatusCode.Forbidden);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    // Un jeton utilisateur, même TECH dans le module, ne vaut pas le secret interne : cette
+    // route ne regarde pas les rôles.
+    [Fact]
+    public async Task La_synchronisation_du_catalogue_refuse_un_jeton_utilisateur()
+    {
+        using var client = ClientInRiot("TECH");
+
+        using var response = await client.PostAsync("/internal/riot/valorant/sync", null);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task La_synchronisation_du_catalogue_accepte_le_secret_interne()
+    {
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add(
+            InternalApiAttribute.HeaderName, ApiWebApplicationFactory.TestInternalToken);
+
+        using var response = await client.PostAsync("/internal/riot/valorant/sync", null);
+
+        // Le secret passe : la route n'oppose plus l'en-tête, donc plus de 404. Ce qu'elle fait
+        // ensuite dépend de PostgreSQL et des assets, hors de portée d'un test d'intégration
+        // HTTP — seul compte ici qu'elle ait été atteinte.
+        Assert.NotEqual(HttpStatusCode.NotFound, response.StatusCode);
     }
 }

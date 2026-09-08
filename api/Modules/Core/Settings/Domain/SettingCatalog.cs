@@ -24,8 +24,7 @@ public static class SettingCatalog
         {
             Code = "ui.theme",
             AllowedScopes = SettingScopes.All,
-            MinRoleToView = RoleCode.ReadOnly,
-            MinRoleToSetOwn = RoleCode.ReadOnly,
+            MinRole = RoleCode.ReadOnly,
             Options = ["light", "dark"],
             Default = "dark"
         };
@@ -34,8 +33,7 @@ public static class SettingCatalog
         {
             Code = "ui.compactMode",
             AllowedScopes = SettingScopes.All,
-            MinRoleToView = RoleCode.ReadOnly,
-            MinRoleToSetOwn = RoleCode.ReadOnly,
+            MinRole = RoleCode.ReadOnly,
             Default = false
         };
 
@@ -43,16 +41,15 @@ public static class SettingCatalog
         {
             Code = "ui.pageSize",
             AllowedScopes = SettingScopes.All,
-            MinRoleToView = RoleCode.ReadOnly,
-            MinRoleToSetOwn = RoleCode.User,
+            MinRole = RoleCode.User,
             Min = 10,
             Max = 200,
             Default = 25
         };
     }
 
-    // Paramètres d'arrivée des comptes. Comme ceux d'instance, ils ne déclarent que `Global` :
-    // ils gouvernent qui peut entrer, une question qui ne se pose pas par utilisateur.
+    // Paramètres d'arrivée des comptes. Ils ne déclarent que `Global` : ils gouvernent qui peut
+    // entrer, une question qui ne se pose pas par utilisateur.
     //
     // Leurs valeurs par défaut décrivent le comportement **actuel** du site, et c'est
     // délibéré : un déploiement qui embarque ces définitions ne doit rien changer tant que
@@ -65,7 +62,7 @@ public static class SettingCatalog
         {
             Code = "auth.registrationEnabled",
             AllowedScopes = SettingScopes.GlobalOnly,
-            MinRoleToView = RoleCode.Admin,
+            MinRole = RoleCode.Admin,
             Default = true
         };
 
@@ -76,20 +73,7 @@ public static class SettingCatalog
         {
             Code = "auth.adminApprovalRequired",
             AllowedScopes = SettingScopes.GlobalOnly,
-            MinRoleToView = RoleCode.Admin,
-            Default = false
-        };
-    }
-
-    // Paramètres d'instance : ils ne déclarent que `Global`. « Mon mode maintenance à moi » n'a
-    // aucun sens — ce n'est pas une question de droit, la notion n'existe pas.
-    public static class Instance
-    {
-        public static readonly BooleanSetting MaintenanceMode = new()
-        {
-            Code = "instance.maintenanceMode",
-            AllowedScopes = SettingScopes.GlobalOnly,
-            MinRoleToView = RoleCode.Admin,
+            MinRole = RoleCode.Admin,
             Default = false
         };
     }
@@ -102,8 +86,7 @@ public static class SettingCatalog
         Ui.CompactMode,
         Ui.PageSize,
         Auth.RegistrationEnabled,
-        Auth.AdminApprovalRequired,
-        Instance.MaintenanceMode
+        Auth.AdminApprovalRequired
     ];
 
     // Index par code, codes historiques compris : une valeur écrite sous un ancien code reste
@@ -131,32 +114,12 @@ public static class SettingCatalog
                     $"Paramètre '{definition.Code}' : aucune portée autorisée, il ne pourrait jamais recevoir de valeur.");
             }
 
-            var acceptsUser = definition.AllowedScopes.Contains(SettingScope.User);
-
-            if (acceptsUser && definition.MinRoleToSetOwn is null)
+            // Fixer la valeur du site sans pouvoir régler la sienne n'a pas de sens : les deux
+            // seuils sont ordonnés.
+            if (!definition.MinRoleToAdminister.HasAtLeast(definition.MinRole))
             {
                 throw new InvalidOperationException(
-                    $"Paramètre '{definition.Code}' : la portée User est autorisée mais MinRoleToSetOwn n'est pas déclaré.");
-            }
-
-            if (!acceptsUser && definition.MinRoleToSetOwn is not null)
-            {
-                throw new InvalidOperationException(
-                    $"Paramètre '{definition.Code}' : MinRoleToSetOwn est déclaré alors que la portée User n'est pas autorisée.");
-            }
-
-            // On ne peut pas modifier ce qu'on ne voit pas : l'inverse produirait un paramètre
-            // réglable en aveugle.
-            if (definition.MinRoleToSetOwn is { } setOwn && !setOwn.HasAtLeast(definition.MinRoleToView))
-            {
-                throw new InvalidOperationException(
-                    $"Paramètre '{definition.Code}' : MinRoleToSetOwn ({setOwn}) est sous MinRoleToView ({definition.MinRoleToView}).");
-            }
-
-            if (!definition.MinRoleToAdminister.HasAtLeast(definition.MinRoleToView))
-            {
-                throw new InvalidOperationException(
-                    $"Paramètre '{definition.Code}' : MinRoleToAdminister ({definition.MinRoleToAdminister}) est sous MinRoleToView ({definition.MinRoleToView}).");
+                    $"Paramètre '{definition.Code}' : MinRoleToAdminister ({definition.MinRoleToAdminister}) est sous MinRole ({definition.MinRole}).");
             }
 
             // Le défaut du catalogue doit satisfaire ses propres contraintes, sinon la valeur
