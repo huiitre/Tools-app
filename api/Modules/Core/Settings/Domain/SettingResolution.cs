@@ -35,9 +35,8 @@ public static class SettingResolution
         // utilisateur, que le rôle suffise, et qu'aucun verrou ne vienne d'en dessous.
         var canSetOwn =
             definition.AllowedScopes.Contains(SettingScope.User)
-            && definition.MinRoleToSetOwn is { } minRole
             && role is { } actual
-            && actual.HasAtLeast(minRole)
+            && actual.HasAtLeast(definition.MinRole)
             && !locked.Any(candidate => candidate.Scope < SettingScope.User);
 
         return new ResolvedSetting(
@@ -48,11 +47,17 @@ public static class SettingResolution
             canSetOwn);
     }
 
-    // L'appelant voit-il ce paramètre ? Seuil et non égalité : un administrateur voit tout ce
-    // qu'un modérateur voit. Un rôle absent — typiquement un module auquel l'appelant n'a pas
-    // accès — ne satisfait jamais aucun seuil.
+    // L'appelant reçoit-il ce paramètre ?
+    //
+    // Aucun seuil de rôle : **tout le monde reçoit tout**, y compris ce qu'il ne peut pas
+    // modifier. Un READ_ONLY de Palworld doit rafraîchir son tableau de bord à l'intervalle
+    // réglé — il lui faut donc la valeur, même s'il n'a pas le droit de la changer. Un seuil de
+    // lecture rendrait le paramètre invisible de ceux qu'il gouverne.
+    //
+    // Seul le module filtre : un paramètre de module ne descend qu'à ses membres, `RoleFor`
+    // rendant null pour qui n'y a pas accès. Un paramètre transverse descend à tout le monde.
     public static bool CanView(SettingDefinition definition, SettingAudience audience) =>
-        audience.RoleFor(definition) is { } role && role.HasAtLeast(definition.MinRoleToView);
+        definition.Module is null || audience.RoleFor(definition) is not null;
 
     // L'appelant peut-il poser une valeur globale ou de rôle ?
     public static bool CanAdminister(SettingDefinition definition, SettingAudience audience) =>

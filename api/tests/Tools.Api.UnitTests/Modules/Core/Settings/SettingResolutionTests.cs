@@ -15,8 +15,7 @@ public sealed class SettingResolutionTests
     {
         Code = "ui.theme",
         AllowedScopes = SettingScopes.All,
-        MinRoleToView = RoleCode.ReadOnly,
-        MinRoleToSetOwn = RoleCode.ReadOnly,
+        MinRole = RoleCode.ReadOnly,
         Options = ["light", "dark"],
         Default = "dark"
     };
@@ -60,7 +59,7 @@ public sealed class SettingResolutionTests
     {
         // Correspondance exacte, pas un seuil : une valeur posée pour les modérateurs ne
         // descend pas — ni ne monte — sur les autres rôles. C'est la différence avec
-        // MinRoleToView, qui est une permission.
+        // MinRole, qui est une permission.
         var resolved = Resolve(
             Theme,
             [Global(Theme, "dark"), ForRole(Theme, RoleCode.Moderator, "light")],
@@ -107,7 +106,7 @@ public sealed class SettingResolutionTests
         {
             Code = "system.maintenanceMode",
             AllowedScopes = SettingScopes.GlobalOnly,
-            MinRoleToView = RoleCode.Admin,
+            MinRole = RoleCode.Admin,
             Default = false
         };
 
@@ -130,8 +129,7 @@ public sealed class SettingResolutionTests
         {
             Code = "ui.pageSize",
             AllowedScopes = SettingScopes.All,
-            MinRoleToView = RoleCode.ReadOnly,
-            MinRoleToSetOwn = RoleCode.ReadOnly,
+            MinRole = RoleCode.ReadOnly,
             Min = 10,
             Max = 50,
             Default = 25
@@ -154,13 +152,13 @@ public sealed class SettingResolutionTests
             Code = "dofus.autoSync",
             Module = ModuleCode.Dofus,
             AllowedScopes = SettingScopes.All,
-            MinRoleToView = RoleCode.ReadOnly,
-            MinRoleToSetOwn = RoleCode.User,
+            MinRole = RoleCode.User,
             Default = true
         };
 
         // Administrateur du site, mais READ_ONLY dans le module : c'est le rôle du module qui
-        // décide. Il suffit pour voir, pas pour régler — le rôle global n'y ajoute rien.
+        // décide. Il reçoit le paramètre puisqu'il est membre, mais ne peut pas régler le sien
+        // — le rôle global n'y ajoute rien.
         var audience = new SettingAudience(
             UserId,
             RoleCode.Admin,
@@ -178,8 +176,7 @@ public sealed class SettingResolutionTests
             Code = "dofus.autoSync",
             Module = ModuleCode.Dofus,
             AllowedScopes = SettingScopes.All,
-            MinRoleToView = RoleCode.ReadOnly,
-            MinRoleToSetOwn = RoleCode.ReadOnly,
+            MinRole = RoleCode.ReadOnly,
             Default = true
         };
 
@@ -189,22 +186,28 @@ public sealed class SettingResolutionTests
     }
 
     [Fact]
-    public void La_visibilite_est_un_seuil_donc_un_admin_voit_un_parametre_moderateur()
+    public void Un_parametre_transverse_descend_a_tout_le_monde_meme_sans_droit_de_le_regler()
     {
+        // `MinRole` n'est **pas** un seuil de visibilité : il dit qui peut poser sa propre
+        // valeur, pas qui reçoit la valeur. Un READ_ONLY doit connaître un intervalle de
+        // rafraîchissement pour l'appliquer, même s'il ne peut pas le changer — un seuil de
+        // lecture rendrait le paramètre invisible de ceux qu'il gouverne.
         var moderation = new IntegerSetting
         {
             Code = "moderation.autoFlagThreshold",
             AllowedScopes = SettingScopes.All,
-            MinRoleToView = RoleCode.Moderator,
-            MinRoleToSetOwn = RoleCode.Moderator,
+            MinRole = RoleCode.Moderator,
             Min = 1,
             Max = 100,
             Default = 10
         };
 
-        Assert.True(SettingResolution.CanView(moderation, Audience(RoleCode.Admin)));
-        Assert.True(SettingResolution.CanView(moderation, Audience(RoleCode.Moderator)));
-        Assert.False(SettingResolution.CanView(moderation, Audience(RoleCode.User)));
+        Assert.True(SettingResolution.CanView(moderation, Audience(RoleCode.ReadOnly)));
+        Assert.True(SettingResolution.CanView(moderation, Audience(RoleCode.User)));
+
+        // Le rôle ne décide que de l'écriture.
+        Assert.False(SettingResolution.Resolve(moderation, [], Audience(RoleCode.User)).CanSetOwn);
+        Assert.True(SettingResolution.Resolve(moderation, [], Audience(RoleCode.Moderator)).CanSetOwn);
     }
 
     [Fact]
@@ -214,8 +217,7 @@ public sealed class SettingResolutionTests
         {
             Code = "ui.pageSize",
             AllowedScopes = SettingScopes.All,
-            MinRoleToView = RoleCode.ReadOnly,
-            MinRoleToSetOwn = RoleCode.User,
+            MinRole = RoleCode.User,
             Min = 10,
             Max = 200,
             Default = 25
@@ -236,8 +238,7 @@ public sealed class SettingResolutionTests
         {
             Code = "ui.accent",
             AllowedScopes = SettingScopes.All,
-            MinRoleToView = RoleCode.ReadOnly,
-            MinRoleToSetOwn = RoleCode.ReadOnly,
+            MinRole = RoleCode.ReadOnly,
             Options = ["light", "dark"],
             Default = "dark"
         };
@@ -256,8 +257,7 @@ public sealed class SettingResolutionTests
             Code = "ui.colorScheme",
             PreviousCodes = ["ui.theme"],
             AllowedScopes = SettingScopes.All,
-            MinRoleToView = RoleCode.ReadOnly,
-            MinRoleToSetOwn = RoleCode.ReadOnly,
+            MinRole = RoleCode.ReadOnly,
             Options = ["light", "dark"],
             Default = "dark"
         };

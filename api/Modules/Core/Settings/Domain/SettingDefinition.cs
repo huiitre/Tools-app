@@ -32,13 +32,15 @@ public abstract record SettingDefinition
     // par un rôle très élevé serait faux — ce n'est pas une question de droit.
     public required IReadOnlySet<SettingScope> AllowedScopes { get; init; }
 
-    // Rôle minimum pour **voir** le paramètre. C'est un seuil : `Moderator` le rend visible aux
-    // modérateurs et à tout ce qui est au-dessus, administrateurs compris.
-    public required RoleCode MinRoleToView { get; init; }
-
-    // Rôle minimum pour poser **sa propre** valeur. Null quand `User` n'est pas dans
-    // `AllowedScopes` — il n'y a alors rien à autoriser.
-    public RoleCode? MinRoleToSetOwn { get; init; }
+    // Rôle minimum pour poser **sa propre** valeur. C'est un seuil : `User` autorise les
+    // utilisateurs et tout ce qui est au-dessus.
+    //
+    // **Ce n'est pas un seuil de visibilité.** Tout le monde reçoit la valeur de tous les
+    // paramètres de son périmètre, y compris ceux qu'il ne peut pas modifier : un READ_ONLY doit
+    // rafraîchir son tableau de bord à l'intervalle réglé, donc connaître cet intervalle. Seule
+    // l'appartenance au module filtre ce qui descend, et `MinRole` décide de ce que l'écran de
+    // réglages propose d'éditer.
+    public required RoleCode MinRole { get; init; }
 
     // Rôle minimum pour poser une valeur **globale ou par rôle**. C'est de l'administration :
     // régler son thème et fixer celui du site n'ont pas le même public.

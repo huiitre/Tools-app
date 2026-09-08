@@ -37,7 +37,7 @@ l'énumération `SettingScope` portent cet ordre (1, 2, 3), la résolution compa
 — même principe que `RoleCode`, dont la valeur porte le niveau hiérarchique.
 
 Une définition déclare les accroches qu'elle accepte. Un paramètre d'instance ne déclare que
-`Global` : « mon mode maintenance à moi » n'a aucun sens, et l'exprimer par un rôle très élevé
+`Global` : « mon inscription ouverte à moi » n'a aucun sens, et l'exprimer par un rôle très élevé
 serait faux — ce n'est pas une question de droit.
 
 L'unicité porte sur l'accroche précise, pas sur le paramètre : une ligne `GLOBAL` par code, une
@@ -59,24 +59,52 @@ par un verrou de rôle.
 Sur une ligne `User`, où rien n'est plus précis, cela revient à « cette personne ne peut pas
 modifier sa propre valeur ».
 
-## Les quatre droits d'une définition
-
-Écraser ces questions en un seul champ ne marche pas : « tout le monde peut choisir son thème »
-et « tout le monde peut fixer le thème du site » ne sont pas la même phrase.
+## Les droits d'une définition
 
 | champ | question |
 |---|---|
+| `Module` | à qui le paramètre descend-il ? |
 | `AllowedScopes` | ce paramètre a-t-il un sens par personne ? |
-| `MinRoleToView` | qui le **voit** ? |
-| `MinRoleToSetOwn` | qui pose **sa propre** valeur ? |
+| `MinRole` | qui pose **sa propre** valeur ? |
 | `MinRoleToAdminister` | qui pose la valeur **globale ou par rôle** ? (ADMIN par défaut) |
+
+### Il n'y a pas de seuil de visibilité
+
+**Tout le monde reçoit la valeur de tous les paramètres de son périmètre**, y compris ceux qu'il
+n'a pas le droit de modifier. Un READ_ONLY de Palworld doit rafraîchir son tableau de bord à
+l'intervalle réglé : il lui faut donc la valeur. Un seuil de lecture rendrait le paramètre
+invisible de ceux qu'il gouverne — c'est le contraire du but.
+
+Seul `Module` filtre : un paramètre de module ne descend qu'à ses membres, un paramètre
+transverse descend à tout le monde.
+
+`MinRole` ne décide donc que de l'**écriture de sa propre valeur**. En dessous du seuil, on
+reçoit la valeur et on la subit : celle de son rôle, celle du site, ou le défaut du catalogue.
+
+Un troisième seuil, `MinRoleToSetOwn`, a existé jusqu'au 08/09/2026 en plus d'un
+`MinRoleToView`. Il était redondant : `AllowedScopes` dit déjà si un paramètre a un sens par
+personne, et le seul cas que les deux champs séparés couvraient — *sur un paramètre à accroche
+User, certains rôles règlent le leur et d'autres regardent seulement* — ne valait pas un champ
+dans le modèle.
+
+### `MinRoleToAdminister` n'est presque jamais renseigné
+
+`Admin` par défaut, et c'est ce qui s'applique partout. Un administrateur fait tout : la valeur
+globale, celle d'un rôle, celle d'un utilisateur donné, et la suppression de l'une d'elles. Le
+champ n'existe que pour descendre le seuil sur un paramètre précis — `Moderator` sur un réglage
+de modération, par exemple.
+
+Le frontend n'a besoin d'aucun booléen calculé pour savoir ce qu'il propose : `minRole`,
+`module` et `minRoleToAdminister` voyagent avec la définition, et `auth.store.hasModuleAccess`
+fait déjà la comparaison au bon rôle — celui du module pour un paramètre de module, le rôle
+global sinon.
 
 ### `RoleCode` sert à deux choses opposées
 
 C'est le point qui se confond le plus facilement :
 
-- **seuil `>=`** pour une **permission** — `MinRoleToView`, `MinRoleToSetOwn`. Un administrateur
-  voit tout ce qu'un modérateur voit.
+- **seuil `>=`** pour une **permission** — `MinRole`, `MinRoleToAdminister`. Un administrateur
+  peut tout ce qu'un modérateur peut.
 - **égalité `=`** pour une **cible** — une valeur posée sur `scope = ROLE, role_code = MODERATOR`
   s'applique aux modérateurs et à personne d'autre. Pas de cascade vers le haut.
 
@@ -171,8 +199,8 @@ Ils existent pour qu'une incohérence n'empêche jamais d'afficher la page de r�
 
 - pas de code en double, codes historiques compris ;
 - pas d'accroche vide ;
-- `MinRoleToSetOwn` déclaré si et seulement si l'accroche `User` est autorisée ;
-- aucun seuil d'écriture sous le seuil de lecture — on ne règle pas ce qu'on ne voit pas ;
+- `MinRoleToAdminister` au moins égal à `MinRole` — fixer la valeur du site sans pouvoir régler
+  la sienne n'a pas de sens ;
 - la valeur par défaut satisfait ses propres contraintes.
 
 `AddSettingsModule` touche `SettingCatalog.All` exprès : une définition incohérente empêche
@@ -187,9 +215,12 @@ l'exécution, et chaque lecture par le code une chaîne libre où une faute de f
 créer ou supprimer un paramètre s'accompagne de toute façon du code qui le lit — le panel
 n'économiserait que le cas déjà gratuit.
 
-Reste envisageable, et sans ces défauts : mettre la **présentation** en base (libellé,
-description, section, ordre d'affichage), éditable sans déploiement parce qu'elle ne peut rien
-casser.
+**La présentation en base** (libellé, description, section), un temps envisagée parce qu'elle ne
+peut rien casser. Tranchée le 08/09/2026 : elle vivra dans le catalogue, en C#, avec le reste de
+la définition. Le site est monolingue, ces textes ne bougeront pas souvent, et un `Label` requis
+rend l'oubli impossible — c'est exactement l'argument qui avait mis le catalogue en code. Une
+table de libellés côté frontend aurait ouvert l'i18n, mais au prix d'une seconde source à tenir,
+où un paramètre ajouté côté API s'afficherait sous son code brut sans que rien ne le signale.
 
 **La cascade hiérarchique sur l'accroche `Role`.** Une valeur posée sur `USER` ne remonte pas
 vers `ADMIN`. Ça avait l'air naturel puisque `RoleCode` est ordonné, mais ça réintroduisait un
@@ -197,11 +228,96 @@ arbitrage et produisait des surprises — on pose une valeur « pour les utilisa
 s'applique silencieusement aux administrateurs. Avec l'égalité, ce que montre la table est ce qui
 s'applique ; pour viser tout le monde, c'est `Global`.
 
+## Comment ça se consomme — décidé le 08/09/2026
+
+### Deux lectures, parce que ce sont deux questions
+
+C'est le piège principal, et il ne se voit qu'une fois les écrans dessinés.
+
+| route | question | pour qui |
+|---|---|---|
+| `GET /settings` | qu'est-ce qui s'applique **à moi** ? | le store au démarrage, la page Settings |
+| une route d'administration | quelles valeurs sont **posées**, et à quelle accroche ? | la page Admin |
+
+`ResolveVisible` répond à la première : pour chaque paramètre visible, **une seule** valeur, celle
+qui gagne après résolution, plus son origine et les droits associés.
+
+Elle ne peut pas répondre à la seconde. Un administrateur qui a posé `ui.theme = light` pour
+lui-même reçoit `light` avec `Source = User` ; la valeur globale, `dark`, a perdu la résolution et
+n'apparaît nulle part. L'écran qui règle le thème **du site** doit pourtant afficher `dark`. La
+route d'administration rend donc les lignes de `setting_value` telles quelles — la ligne `GLOBAL`,
+celles par rôle, avec leur verrou — sans aucune résolution. On y regarde la table, pas ce qu'on
+subit.
+
+### Une seule route de lecture pour tout le monde
+
+`GET /settings` n'a pas de variante « admin ». `ResolveVisible(audience)` rend tout ce qui
+concerne l'appelant, sans seuil de rôle : seuls les paramètres des modules auxquels il n'a pas
+accès sont absents de la réponse. Ce qui distingue les deux écrans n'est pas ce qu'ils reçoivent,
+mais ce qu'ils proposent d'éditer.
+
+### Tout est chargé au démarrage
+
+Le frontend charge l'intégralité de ce qu'il a le droit de voir en une fois, au lancement, et le
+garde dans un store — même les paramètres qu'il ne peut pas modifier, puisqu'ils pilotent
+l'interface. C'est la façon de faire d'EasyWeb et EasyMobile, et le volume la justifie : quelques
+dizaines de paramètres avec leur type et leurs bornes tiennent en quelques kilo-octets.
+
+Un appel séparé plutôt qu'un ajout à `/users/me`, bien que les deux partent ensemble au
+démarrage : après chaque écriture il faut recharger les paramètres **seuls**, sans refaire un
+profil complet.
+
+### Deux écrans, pour deux actions — pas pour deux populations
+
+| écran | ce qu'il montre | droit |
+|---|---|---|
+| page Settings | les paramètres réglables pour soi | `CanSetOwn` |
+| page Admin | la valeur globale et les valeurs par rôle | `MinRoleToAdminister` |
+
+Un administrateur utilise **les deux**, et `ui.theme` apparaît aux deux endroits sans que ce soit
+un doublon : dans Settings il choisit le sien, dans Admin il fixe celui du site. Ce sont deux
+valeurs distinctes, à deux accroches différentes.
+
+### La page Settings n'affiche pas tout ce qu'elle reçoit
+
+Le store porte la valeur de **tous** les paramètres, parce que l'interface s'en sert. L'écran de
+réglages, lui, ne montre que ceux dont l'utilisateur peut poser sa propre valeur : accroche
+`User` autorisée et `MinRole` atteint dans le périmètre du paramètre. Le réglage Palworld
+n'apparaît donc pas chez un READ_ONLY du module, alors que sa valeur est bien descendue et bien
+appliquée.
+
 ## État
 
 Fait : le Domain complet, la résolution et ses tests, le port, `SettingReader`, l'adaptateur
-PostgreSQL, la composition.
+PostgreSQL, la composition. Les deux paramètres d'inscription (`auth.registrationEnabled`,
+`auth.adminApprovalRequired`) sont déclarés **et lus** — voir `REGISTRATION.md`. Ce sont les
+premiers paramètres réellement consommés par du code.
 
-Reste : les use cases d'écriture (poser sa valeur, réinitialiser, administrer), le contrôleur,
-les entrées Bruno, et le frontend — dont `web/src/modules/Settings/settingsConfigMock.ts`,
-maquette jamais branchée, a été supprimé le 26/08/2026 ; un vrai store reste à écrire.
+`instance.maintenanceMode` a été supprimé le 08/09/2026 sans avoir jamais été lu : un mode
+maintenance doit être visible d'un visiteur anonyme, que la résolution ne sait pas servir, et
+couper le conteneur rend de toute façon tout paramètre applicatif inopérant.
+
+Manquent dans le Domain, à faire avant les écrans :
+
+- **`Label` (requis), `Description`, `Section`** sur `SettingDefinition`. Rien ne porte de texte
+  aujourd'hui : un écran de réglages afficherait `ui.compactMode`. L'ordre d'affichage suit celui
+  de `SettingCatalog.All`, qui est déjà une liste tenue à la main — pas de champ supplémentaire.
+Manquent ensuite : les use cases d'écriture (poser sa valeur, réinitialiser, administrer une
+valeur globale ou de rôle), les deux routes de lecture, le contrôleur, les entrées Bruno, et le
+frontend — dont `web/src/modules/Settings/settingsConfigMock.ts`, maquette jamais branchée,
+a été supprimé le 26/08/2026 ; un vrai store reste à écrire.
+
+## Reporté
+
+**Le cas anonyme.** Un visiteur sur la page de login ne peut pas savoir que les inscriptions sont
+fermées : `auth.registrationEnabled` ne descend qu'aux comptes connectés, et il n'en est pas un. Le formulaire s'affiche donc toujours et n'échoue
+qu'à la soumission — `403 REGISTRATION_CLOSED`, ou la redirection `?error=REGISTRATION_CLOSED`
+côté Google. Assumé pour l'instant : le refus est explicite et le message correct. Le jour où on
+voudra masquer le formulaire, il faudra une petite route publique : il n'y a rien à abaisser,
+un visiteur n'a pas de session du tout.
+
+**Un générateur de définition dans l'administration.** Un formulaire qui produit la ligne C# à
+coller dans `SettingCatalog`, en grisant les combinaisons que le garde-fou refuse. Purement
+frontend, aucun backend. Utile parce qu'il déplace ces erreurs du démarrage de l'application vers
+la saisie — mais il ne génère que la déclaration, jamais le `settings.Get(...)` qui donne son
+existence au paramètre.
