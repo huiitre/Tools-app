@@ -18,4 +18,7 @@ public sealed record GameServerLivePlayer(
     // le front : lui seul connaît les images et leurs bornes.
     double? PositionX,
     double? PositionY,
-    GameServerLiveCompanion? Companion);
+    GameServerLiveCompanion? Companion,
+    // Monde ou dimension où se trouve le joueur, pour un jeu qui en a plusieurs (Minecraft :
+    // « minecraft:overworld »). Une carte par monde s'en servira pour placer chaque joueur.
+    string? World = null);

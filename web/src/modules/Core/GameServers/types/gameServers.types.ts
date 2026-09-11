@@ -85,6 +85,8 @@ export interface GameServerLivePlayer {
   positionX: number | null
   positionY: number | null
   companion: GameServerLiveCompanion | null
+  // Monde ou dimension du joueur, pour un jeu qui en a plusieurs (Minecraft).
+  world: string | null
 }
 
 export interface GameServerLiveStructure {
