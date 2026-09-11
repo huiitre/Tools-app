@@ -155,6 +155,9 @@ Deux pièges vérifiés en direct sur les serveurs réels :
   jamais `FetchLiveAsync` : il consommerait toutes les 60 s les lignes que le
   dashboard doit afficher. C'est la raison d'être d'une méthode de statut
   séparée et minimale.
+  Le front cumule donc les lignes reçues (500 au plus, bouton pour vider) :
+  `Log` ne doit contenir que les lignes apparues depuis l'appel précédent,
+  jamais un instantané, qui serait dupliqué à chaque rafraîchissement.
 
 ### Joindre les serveurs depuis un poste de dev
 

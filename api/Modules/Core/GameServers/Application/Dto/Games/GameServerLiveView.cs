@@ -16,8 +16,8 @@ public sealed record GameServerLiveView(
     IReadOnlyList<GameServerLivePlayer> Players,
     // Constructions des joueurs. Vide quand le jeu n'en expose pas.
     IReadOnlyList<GameServerLiveStructure> Structures,
-    // Journal du serveur, des plus anciennes lignes aux plus récentes. Vide quand le jeu n'en
-    // expose pas — et attention, certains le vident à la lecture (Ark).
+    // Lignes du journal apparues depuis l'appel précédent, des plus anciennes aux plus récentes :
+    // le front les cumule, un instantané serait donc dupliqué. Vide quand le jeu n'en expose pas.
     IReadOnlyList<string> Log,
     // Sections que le provider n'a pas pu récupérer pendant cet appel, alors que le jeu sait
     // normalement les fournir. Distingue une panne d'une information que le jeu n'a jamais.

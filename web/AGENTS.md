@@ -760,6 +760,7 @@ map/         GameServerMapPanel.vue        onglets, colonne latérale, marqueurs
              GameServerMapLayerSection.vue calques décochables, idem
              mapAdapter.ts                 le contrat que remplit chaque jeu
              mapRegistry.ts                gameCode → adaptateur
+store/       gameServers.store.ts          liste des serveurs, journaux cumulés par slug
 ```
 
 **Le front ne connaît aucun jeu, sauf en un point.** `hasDashboard` vient de l'API (elle sait quels
@@ -777,6 +778,13 @@ base ne retrouve ses joueurs. Cet import disparaîtra quand `serverdata` sera mi
 
 `loadGroups()` part dans le **même `Promise.all`** que le live : un seul cycle, une seule gestion
 d'erreur.
+
+**Le journal serveur est cumulé côté front (11/09/2026).** `GetGameLog` vide celui d'Ark à la
+lecture : chaque appel live ne rend que les lignes apparues depuis le précédent. Le store les
+accumule dans `logs` (indexé par slug), garde les **500 dernières**, et survit à la fermeture de la
+popup ; le bouton « Vider » de l'en-tête de section le remet à zéro, et `$reset()` le purge à la
+déconnexion. Contrat qui en découle côté API : un provider ne met dans `log` que des lignes
+nouvelles, jamais un instantané, sinon elles seraient dupliquées à chaque rafraîchissement.
 
 **La page `/palworld/server` a été supprimée le 29/08/2026** au profit de cette popup, avec ses
 composants (`PalworldServerDashboard`, `PalworldOverviewMap`, `PalworldPlayerDetailsModal`),

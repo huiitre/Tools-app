@@ -6,9 +6,11 @@ import GameServerActionCard from './GameServerActionCard.vue'
 import type { GameServer, GameServerDetails, GameServerLive } from '../types/gameServers.types'
 import { mapAdapterFor } from '../map/mapRegistry'
 import GameServerMapPanel from '../map/GameServerMapPanel.vue'
+import { useGameServersStore } from '../store/gameServers.store'
 
 const props = defineProps<{ server: GameServer }>()
 const emit = defineEmits<{ close: [] }>()
+const store = useGameServersStore()
 
 const REFRESH_INTERVAL_MS = 5000
 // L'appel dure quelques dizaines de millisecondes : sans plancher, l'indicateur clignerait sans
@@ -60,8 +62,8 @@ const uptimeLabel = computed(() => {
 })
 
 // Le journal arrive du plus ancien au plus récent : le plus utile est en bas de la source,
-// on l'affiche en tête.
-const reversedLog = computed(() => [...(live.value?.log ?? [])].reverse())
+// on l'affiche en tête. Il est cumulé dans le store, chaque appel live n'en rendant que la suite.
+const reversedLog = computed(() => [...(store.logs[props.server.slug] ?? [])].reverse())
 
 // Repliée par défaut : 118 réglages sur Palworld, personne ne veut ça déployé à l'ouverture.
 const settingsCollapsed = ref(true)
@@ -115,6 +117,7 @@ async function refreshLive() {
       mapAdapter?.loadGroups?.() ?? Promise.resolve({}),
     ])
     live.value = liveResult
+    store.appendLog(props.server.slug, liveResult.log)
     groups.value = groupsResult
     error.value = null
   } catch {
@@ -146,6 +149,7 @@ onMounted(async () => {
     ])
     details.value = detailsResult
     live.value = liveResult
+    store.appendLog(props.server.slug, liveResult.log)
     groups.value = groupsResult
   } catch {
     error.value = 'Impossible de charger les données du serveur.'
@@ -331,8 +335,19 @@ onUnmounted(() => {
         </div>
 
         <div class="section">
-          <div class="section-header">
+          <div class="section-header section-header--with-action">
             <h3 class="section-title">Journal du serveur</h3>
+            <span v-if="reversedLog.length" class="section-count">{{ reversedLog.length }}</span>
+            <button
+              v-if="reversedLog.length"
+              type="button"
+              class="section-action"
+              title="Vider le journal"
+              @click="store.clearLog(server.slug)"
+            >
+              <i class="mdi mdi-delete-sweep-outline" aria-hidden="true" />
+              Vider
+            </button>
           </div>
 
           <div v-if="reversedLog.length" class="log-list">
@@ -791,6 +806,28 @@ onUnmounted(() => {
 }
 
 /* ── Journal ─────────────────────────────────────────────────────── */
+.section-header--with-action {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.section-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: auto;
+  margin: 0 0 0 auto;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--pico-muted-color);
+  cursor: pointer;
+
+  &:hover { color: var(--pico-primary); }
+}
+
 .log-list {
   max-height: 18rem;
   overflow: auto;
