@@ -78,6 +78,7 @@ flowchart LR
   ArkProvider -.-> IGameServerActions
   CobblemonProvider -.-> IGameServerProvider
   CobblemonProvider -.-> IGameServerDashboard
+  CobblemonProvider -.-> IGameServerActions
   CurseForgeIconResolver -.-> IModIconResolver
   EnshroudedProvider --> SteamA2sClient
   EnshroudedProvider -.-> IGameServerProvider

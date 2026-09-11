@@ -145,7 +145,7 @@ Les protocoles vivent dans `Infrastructure/Clients/` (`SteamA2sClient`,
 | ARK_SA | RCON `ListPlayers` | oui — `ListPlayers` et `GetGameLog` |
 | RUST, 7DTD | A2S | non |
 | HUMANITZ | RCON `info` | non |
-| COBBLEMON | RCON `list` (joueurs et maximum) | oui — `list` seul : nombre, maximum et noms des joueurs connectés |
+| COBBLEMON | RCON `list` (joueurs et maximum) | oui — `list uuids`, `time query day`, `tick query` (TPS dans `fps`), et par joueur `data get entity` (Pos, Dimension, Health, XpLevel) + `attribute … max_health` ; réglages : difficulté, bordure, liste blanche, bannis, 53 gamerules ; seed dans `worldId` |
 
 Deux pièges vérifiés en direct sur les serveurs réels :
 
@@ -193,13 +193,25 @@ Troisième contrat optionnel, `IGameServerActions`, à côté de `IGameServerDas
 Aucun code d'action n'est connu du module ni du front : celui-ci construit un
 formulaire à partir de la description. Palworld en déclare sept (announce, save,
 kick, ban, unban, shutdown, stop), Ark quatre — son RCON n'a ni `unban` ni arrêt
-différé. Un jeu qui n'implémente pas ce contrat n'affiche aucune section Actions.
+différé. Cobblemon en déclare quatre (announce, kick, ban, restart) :
+
+- `announce` passe par `tellraw @a` et non `say`, qui préfixerait `[Rcon]` : le message
+  s'affiche en message système `[Serveur]`, sérialisé en JSON pour survivre aux guillemets.
+- `kick` et `ban` reçoivent l'UUID que le front envoie, **refusé par ces deux commandes**
+  (vérifié) : le provider le traduit en pseudo parmi les joueurs connectés, et refuse tout le
+  reste — un sélecteur comme `@a` expulserait sinon tout le serveur.
+- `restart` n'existe pas en RCON : c'est `stop`, et la politique `restart: unless-stopped` du
+  conteneur qui relance le serveur. Changer cette politique ferait de `restart` un arrêt définitif.
+- Une réponse de refus du serveur (`No player was found`…) devient un 400
+  `GAME_SERVER_ACTION_REJECTED` au lieu d'un succès silencieux.
+
+Un jeu qui n'implémente pas ce contrat n'affiche aucune section Actions.
 
 `GET /details` ne renvoie que les actions **autorisées par le rôle de
 l'appelant** ; `POST /gameservers/{slug}/actions/{code}` revérifie ce rôle avant
 d'exécuter, puis contrôle les paramètres obligatoires. Ce que le front affiche
 n'autorise donc rien par lui-même. Les rôles reprennent ceux de l'API Java :
-MODERATOR pour announce/save/kick, ADMIN pour ban/unban/shutdown/stop.
+MODERATOR pour announce/save/kick, ADMIN pour ban/unban/shutdown/stop/restart.
 
 ## Mods et modpack (11/09/2026)
 

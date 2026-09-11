@@ -309,6 +309,7 @@ onUnmounted(() => {
                   <td>
                     <span v-if="player.mapX !== null && player.mapY !== null">{{ player.mapX }}, {{ player.mapY }}</span>
                     <span v-else class="muted">—</span>
+                    <span v-if="player.world" class="muted"> · {{ player.world }}</span>
                   </td>
                 </tr>
               </tbody>
