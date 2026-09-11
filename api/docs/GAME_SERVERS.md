@@ -144,6 +144,7 @@ Les protocoles vivent dans `Infrastructure/Clients/` (`SteamA2sClient`,
 | ARK_SA | RCON `ListPlayers` | oui — `ListPlayers` et `GetGameLog` |
 | RUST, 7DTD | A2S | non |
 | HUMANITZ | RCON `info` | non |
+| COBBLEMON | RCON `list` (joueurs et maximum) | non |
 
 Deux pièges vérifiés en direct sur les serveurs réels :
 
