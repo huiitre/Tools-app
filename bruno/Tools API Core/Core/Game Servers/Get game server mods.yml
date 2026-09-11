@@ -1,0 +1,20 @@
+info:
+  name: Get game server mods
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{apiUrl}}/gameservers/{{gameCode}}/mods"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: Mods d'un serveur et modpack à télécharger, tels que le dernier sync les a enregistrés. Un JWT avec au moins le rôle READ_ONLY est requis. Aucun appel n'est fait au serveur de jeu ni aux hébergeurs de mods. mods suit l'ordre du fichier de mods du manifest ; seul name est toujours renseigné, iconUrl vient du manifest ou de l'hébergeur (Modrinth, CurseForge) et reste null si aucun n'en fournit. modpackUrl pointe sur les assets et porte le hash du fichier en paramètre v ; modpackUrl et modpackSize sont null quand les joueurs n'ont rien à télécharger (jeu qui installe ses mods à la connexion). Un serveur sans mods renvoie une liste vide. 404 GAME_SERVER_NOT_FOUND si le slug est inconnu ou masqué.

@@ -16,4 +16,7 @@ public sealed record GameServerSyncEntry(
     bool HasLocalPicture,
     bool SteamMetadataAvailable,
     string ClientHost,
-    int ClientPort);
+    int ClientPort,
+    IReadOnlyList<GameServerModEntry> Mods,
+    string? ModpackUrl,
+    long? ModpackSize);

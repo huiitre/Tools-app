@@ -6,4 +6,7 @@ namespace Tools.Api.Modules.Core.GameServers.Application.Ports.Listing;
 public interface IGameServerDashboardRepository
 {
     Task<IReadOnlyList<GameServerListRow>> FindVisibleForDashboardAsync();
+
+    // Null si le serveur est inconnu ou masqué.
+    Task<GameServerModsView?> FindModsBySlugAsync(string slug);
 }

@@ -13,5 +13,7 @@ public sealed record GameServerListRow(
     int? MaxPlayers,
     DateTime? CheckedAt,
     string? ClientHost,
-    int? ClientPort
+    int? ClientPort,
+    int ModCount,
+    bool HasModpack
 );

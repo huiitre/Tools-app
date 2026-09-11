@@ -21,3 +21,8 @@ docs: >-
   https://assets.tools.huiitre.fr/tools_core/gameservers/gameservers.json produit par l'extractor.
   Cette route n'accepte aucun body. X-Internal-Token est le secret partagé INTERNAL_API_TOKEN,
   jamais un JWT. Une réponse 200 retourne created, updated, unchanged et deleted.
+  Les mods et le modpack de chaque serveur y sont enregistrés : une liste de mods modifiée
+  compte comme une mise à jour. Les icônes des nouveaux mods sont demandées à leur hébergeur
+  (Modrinth, CurseForge si la clé est configurée) une seule fois ; une panne les laisse vides
+  sans faire échouer le sync. 400 INVALID_MODPACK_FILE si modpackFile sort du dossier
+  modpacks/, 400 INVALID_GAME_SERVER_MOD si un mod n'a pas de nom.

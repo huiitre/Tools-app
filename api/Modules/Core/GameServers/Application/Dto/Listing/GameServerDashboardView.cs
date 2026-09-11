@@ -18,5 +18,9 @@ public sealed record GameServerDashboardView(
     int? MaxPlayers,
     DateTime? CheckedAt,
     string? ClientHost,
-    int? ClientPort
+    int? ClientPort,
+    // Suffisent au widget pour savoir s'il propose la liste des mods ; celle-ci est chargée à
+    // part, par GET /gameservers/{slug}/mods.
+    int ModCount,
+    bool HasModpack
 );

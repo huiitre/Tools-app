@@ -10,7 +10,7 @@ flowchart LR
   Common["Common<br/>18 types"]
   Creatures["Creatures<br/>10 types"]
   Feedback["Feedback<br/>12 types"]
-  GameServers["GameServers<br/>53 types"]
+  GameServers["GameServers<br/>61 types"]
   Health["Health<br/>5 types"]
   Mail["Mail<br/>13 types"]
   Notifications["Notifications<br/>18 types"]

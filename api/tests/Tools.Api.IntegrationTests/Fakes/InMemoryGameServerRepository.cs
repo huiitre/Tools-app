@@ -11,14 +11,18 @@ namespace Tools.Api.IntegrationTests.Fakes;
 public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameServerPollingRepository, IGameServerDashboardRepository, IGameServerTargetRepository
 {
     private readonly Dictionary<string, StoredGameServer> gameServers = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, IReadOnlyList<GameServerModEntry>> mods = new(StringComparer.Ordinal);
     private readonly Dictionary<long, GameServerStatus> statuses = [];
 
     public IReadOnlyCollection<StoredGameServer> GameServers => gameServers.Values;
     public IReadOnlyDictionary<long, GameServerStatus> Statuses => statuses;
 
+    public IReadOnlyList<GameServerModEntry> ModsOf(string slug) => mods.GetValueOrDefault(slug, []);
+
     public void Clear()
     {
         gameServers.Clear();
+        mods.Clear();
         statuses.Clear();
     }
 
@@ -40,15 +44,41 @@ public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameS
         return Task.FromResult(GameServerUpsertResult.Updated);
     }
 
+    public Task<bool> ReplaceModsAsync(string slug, IReadOnlyList<GameServerModEntry> entries)
+    {
+        if (ModsOf(slug).SequenceEqual(entries))
+        {
+            return Task.FromResult(false);
+        }
+
+        mods[slug] = entries;
+        return Task.FromResult(true);
+    }
+
     public Task<int> DeleteMissingAsync(IReadOnlyCollection<string> slugs)
     {
         var missing = gameServers.Keys.Where(slug => !slugs.Contains(slug)).ToArray();
         foreach (var slug in missing)
         {
             gameServers.Remove(slug);
+            mods.Remove(slug);
         }
 
         return Task.FromResult(missing.Length);
+    }
+
+    public Task<IReadOnlyDictionary<string, string>> FindModIconsAsync()
+    {
+        var icons = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var mod in mods.Values.SelectMany(entries => entries))
+        {
+            if (mod.Url is not null && mod.IconUrl is not null)
+            {
+                icons.TryAdd(mod.Url, mod.IconUrl);
+            }
+        }
+
+        return Task.FromResult<IReadOnlyDictionary<string, string>>(icons);
     }
 
     public Task<IReadOnlyList<GameServerTarget>> FindAllForPollingAsync()
@@ -110,10 +140,27 @@ public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameS
                     status?.MaxPlayers,
                     status is null ? null : DateTime.UtcNow,
                     gameServer.ClientHost,
-                    gameServer.ClientPort);
+                    gameServer.ClientPort,
+                    ModsOf(gameServer.Slug).Count,
+                    gameServer.ModpackUrl is not null);
             })
             .ToArray();
         return Task.FromResult(views);
+    }
+
+    public Task<GameServerModsView?> FindModsBySlugAsync(string slug)
+    {
+        if (!gameServers.TryGetValue(slug, out var gameServer))
+        {
+            return Task.FromResult<GameServerModsView?>(null);
+        }
+
+        return Task.FromResult<GameServerModsView?>(new GameServerModsView(
+            gameServer.ModpackUrl,
+            gameServer.ModpackSize,
+            ModsOf(slug)
+                .Select(mod => new GameServerModView(mod.Name, mod.Version, mod.Url, mod.Authors, mod.FileName, mod.IconUrl))
+                .ToList()));
     }
 }
 
@@ -129,7 +176,9 @@ public sealed record StoredGameServer(
     int Port,
     string ClientHost,
     int ClientPort,
-    string ProtocolConfig)
+    string ProtocolConfig,
+    string? ModpackUrl,
+    long? ModpackSize)
 {
     public static StoredGameServer From(GameServerSyncEntry entry, StoredGameServer? existing = null) => new(
         entry.Slug,
@@ -145,5 +194,7 @@ public sealed record StoredGameServer(
         entry.Port,
         entry.ClientHost,
         entry.ClientPort,
-        entry.ProtocolConfig);
+        entry.ProtocolConfig,
+        entry.ModpackUrl,
+        entry.ModpackSize);
 }

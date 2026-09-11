@@ -7,7 +7,12 @@ public interface IGameServerRepository
 {
     Task<GameServerUpsertResult> UpsertAsync(GameServerSyncEntry gameServer);
 
+    // Réécrit les mods du serveur seulement s'ils diffèrent de ceux enregistrés ; false sinon.
+    Task<bool> ReplaceModsAsync(string slug, IReadOnlyList<GameServerModEntry> mods);
+
     // Un scan vide est autoritaire : il supprime donc tous les serveurs encore enregistrés.
     Task<int> DeleteMissingAsync(IReadOnlyCollection<string> slugs);
 
+    // Icônes déjà enregistrées, par URL de mod, tous serveurs confondus.
+    Task<IReadOnlyDictionary<string, string>> FindModIconsAsync();
 }
