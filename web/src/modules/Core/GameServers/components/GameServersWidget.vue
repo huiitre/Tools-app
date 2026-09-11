@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useGameServersStore } from '../store/gameServers.store'
 import GameServerCard from './GameServerCard.vue'
 import GameServerDashboardModal from './GameServerDashboardModal.vue'
+import GameServerModsModal from './GameServerModsModal.vue'
 import type { GameServer } from '../types/gameServers.types'
 
 const HIDE_OFFLINE_STORAGE_KEY = 'gameServers.hideOffline'
@@ -21,6 +22,7 @@ onMounted(() => {
 })
 
 const dashboardServer = ref<GameServer | null>(null)
+const modsServer = ref<GameServer | null>(null)
 
 const visibleServers = computed(() =>
   hideOffline.value ? store.servers.filter(server => server.online === true) : store.servers
@@ -44,6 +46,7 @@ const visibleServers = computed(() =>
         :key="server.slug"
         :server="server"
         @open-dashboard="dashboardServer = server"
+        @open-mods="modsServer = server"
       />
     </div>
     <p v-else class="game-servers-empty">Aucun serveur en ligne pour le moment.</p>
@@ -52,6 +55,12 @@ const visibleServers = computed(() =>
       v-if="dashboardServer"
       :server="dashboardServer"
       @close="dashboardServer = null"
+    />
+
+    <GameServerModsModal
+      v-if="modsServer"
+      :server="modsServer"
+      @close="modsServer = null"
     />
   </section>
 </template>

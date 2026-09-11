@@ -751,8 +751,9 @@ au clic sur la bannière d'une carte — il n'y a **aucune route front**, la pop
 `GameServersWidget`.
 
 ```
-components/  GameServerCard.vue            bannière « Dashboard » si server.hasDashboard
+components/  GameServerCard.vue            boutons « Dashboard » (hasDashboard) et « N mods » (modCount/hasModpack)
              GameServerDashboardModal.vue  la popup : details une fois, live toutes les 5 s
+             GameServerModsModal.vue       liste des mods et téléchargement du modpack
              GameServerActionCard.vue      un formulaire par action déclarée
 map/         GameServerMapPanel.vue        onglets, colonne latérale, marqueurs
              GameServerMapFrame.vue        rendu canvas (zoom/pan), déplacé depuis Palworld
@@ -785,6 +786,17 @@ accumule dans `logs` (indexé par slug), garde les **500 dernières**, et survit
 popup ; le bouton « Vider » de l'en-tête de section le remet à zéro, et `$reset()` le purge à la
 déconnexion. Contrat qui en découle côté API : un provider ne met dans `log` que des lignes
 nouvelles, jamais un instantané, sinon elles seraient dupliquées à chaque rafraîchissement.
+
+**Mods et modpack (11/09/2026).** Le bouton « N mods » de la carte n'apparaît que si l'API
+annonce `modCount > 0` ou `hasModpack` ; il ouvre `GameServerModsModal`, qui appelle
+`GET /gameservers/{slug}/mods` à l'ouverture, une seule fois — aucune donnée n'est rafraîchie,
+le sync de l'API ne tourne qu'à la minute. La liste est celle du manifest (pour Minecraft,
+l'export de Prism côté client), dans l'ordre du fichier ; recherche sur le nom et les auteurs.
+Le bouton de téléchargement pointe **directement sur les assets** (`modpackUrl`, versionnée par
+`?v=<sha>`) : le fichier ne transite jamais par l'API. Sans `modpackUrl` (jeu qui installe ses
+mods à la connexion), la liste s'affiche seule. Les icônes sont servies par le CDN de l'hébergeur
+(Modrinth, CurseForge) ; une icône absente ou cassée retombe sur un pictogramme. Décisions et
+contrat : `api/docs/GAME_SERVERS.md`, section « Mods et modpack ».
 
 **La page `/palworld/server` a été supprimée le 29/08/2026** au profit de cette popup, avec ses
 composants (`PalworldServerDashboard`, `PalworldOverviewMap`, `PalworldPlayerDetailsModal`),

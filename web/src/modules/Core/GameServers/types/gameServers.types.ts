@@ -11,6 +11,26 @@ export interface GameServer {
   checkedAt: string | null
   clientHost: string | null
   clientPort: number | null
+  // Suffisent à décider si la carte propose les mods ; la liste est chargée à l'ouverture.
+  modCount: number
+  hasModpack: boolean
+}
+
+export interface GameServerMod {
+  name: string
+  version: string | null
+  url: string | null
+  authors: string[]
+  fileName: string | null
+  // Posée dans le manifest ou fournie par l'hébergeur du mod (Modrinth, CurseForge).
+  iconUrl: string | null
+}
+
+export interface GameServerMods {
+  // Null quand les joueurs n'ont rien à télécharger (jeu qui installe ses mods à la connexion).
+  modpackUrl: string | null
+  modpackSize: number | null
+  mods: GameServerMod[]
 }
 
 export interface GameServerDetails {
