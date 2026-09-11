@@ -36,7 +36,9 @@ public sealed class GetGameServersUseCase(
                 gameServer.MaxPlayers,
                 gameServer.CheckedAt,
                 gameServer.ClientHost,
-                gameServer.ClientPort))
+                gameServer.ClientPort,
+                gameServer.ModCount,
+                gameServer.HasModpack))
             .ToList();
     }
 }

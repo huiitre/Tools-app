@@ -7,4 +7,9 @@ public sealed class GameServersOptions
 
     // Hôte substitué à celui du manifest pour joindre les serveurs depuis un poste de dev.
     public string? HostOverride { get; init; }
+
+    // Sans elle, les mods hébergés sur CurseForge restent sans icône : son API refuse tout appel
+    // anonyme. Secret, jamais commité : appsettings.Local.json en dev, variable
+    // GameServers__CurseForgeApiKey sur le conteneur ailleurs.
+    public string? CurseForgeApiKey { get; init; }
 }

@@ -19,6 +19,10 @@ flowchart LR
   GameServerLivePlayer["GameServerLivePlayer"]
   GameServerLiveStructure["GameServerLiveStructure"]
   GameServerLiveView["GameServerLiveView"]
+  GameServerModEntry["GameServerModEntry"]
+  GameServerModSyncDto["GameServerModSyncDto"]
+  GameServerModView["GameServerModView"]
+  GameServerModsView["GameServerModsView"]
   GameServerStatus["GameServerStatus"]
   GameServerSyncDto["GameServerSyncDto"]
   GameServerSyncEntry["GameServerSyncEntry"]
@@ -27,16 +31,18 @@ flowchart LR
   GameServersSyncReport["GameServersSyncReport"]
   GameServersSyncUseCase["GameServersSyncUseCase"]
   GetGameServerDashboardUseCase["GetGameServerDashboardUseCase"]
+  GetGameServerModsUseCase["GetGameServerModsUseCase"]
   GetGameServersUseCase["GetGameServersUseCase"]
   IGameServerActions(["IGameServerActions"])
+  IGameServerAssetUrlBuilder(["IGameServerAssetUrlBuilder"])
   IGameServerDashboard(["IGameServerDashboard"])
   IGameServerDashboardRepository(["IGameServerDashboardRepository"])
-  IGameServerImageUrlBuilder(["IGameServerImageUrlBuilder"])
   IGameServerPollingRepository(["IGameServerPollingRepository"])
   IGameServerProvider(["IGameServerProvider"])
   IGameServerRepository(["IGameServerRepository"])
   IGameServerTargetRepository(["IGameServerTargetRepository"])
   IGameServersManifestProvider(["IGameServersManifestProvider"])
+  IModIconResolver(["IModIconResolver"])
   ISteamAppDetailsProvider(["ISteamAppDetailsProvider"])
   PollGameServersUseCase["PollGameServersUseCase"]
   SteamAppDetailsLookup["SteamAppDetailsLookup"]
@@ -44,8 +50,9 @@ flowchart LR
   subgraph Infrastructure
   ArkProvider["ArkProvider"]
   CobblemonProvider["CobblemonProvider"]
+  CurseForgeIconResolver["CurseForgeIconResolver"]
   EnshroudedProvider["EnshroudedProvider"]
-  GameServerImageUrlBuilder["GameServerImageUrlBuilder"]
+  GameServerAssetUrlBuilder["GameServerAssetUrlBuilder"]
   GameServerProtocolConfig["GameServerProtocolConfig"]
   GameServersManifestProvider["GameServersManifestProvider"]
   GameServersOptions["GameServersOptions"]
@@ -54,6 +61,7 @@ flowchart LR
   HostOverridingGameServerTargetRepository["HostOverridingGameServerTargetRepository"]
   HumanitzProvider["HumanitzProvider"]
   HumanitzRconClient["HumanitzRconClient"]
+  ModrinthIconResolver["ModrinthIconResolver"]
   PalworldProvider["PalworldProvider"]
   PostgresGameServerRepository["PostgresGameServerRepository"]
   RustProvider["RustProvider"]
@@ -69,29 +77,36 @@ flowchart LR
   ArkProvider -.-> IGameServerDashboard
   ArkProvider -.-> IGameServerActions
   CobblemonProvider -.-> IGameServerProvider
+  CurseForgeIconResolver -.-> IModIconResolver
   EnshroudedProvider --> SteamA2sClient
   EnshroudedProvider -.-> IGameServerProvider
   GameServerActionDefinition --> GameServerActionParameter
+  GameServerAssetUrlBuilder -.-> IGameServerAssetUrlBuilder
   GameServerDashboardController --> GetGameServerDashboardUseCase
   GameServerDetailsView --> GameServerActionDefinition
-  GameServerImageUrlBuilder -.-> IGameServerImageUrlBuilder
   GameServerLiveView --> GameServerLivePlayer
   GameServerLiveView --> GameServerLiveStructure
+  GameServerModsView --> GameServerModView
+  GameServerSyncEntry --> GameServerModEntry
+  GameServersController --> GetGameServerModsUseCase
   GameServersController --> GetGameServersUseCase
   GameServersManifestProvider -.-> IGameServersManifestProvider
   GameServersSyncController --> GameServersSyncUseCase
-  GameServersSyncUseCase --> IGameServerImageUrlBuilder
+  GameServersSyncUseCase --> IGameServerAssetUrlBuilder
   GameServersSyncUseCase --> IGameServerRepository
   GameServersSyncUseCase --> IGameServersManifestProvider
+  GameServersSyncUseCase --> IModIconResolver
   GameServersSyncUseCase --> ISteamAppDetailsProvider
   GetGameServerDashboardUseCase --> IGameServerProvider
   GetGameServerDashboardUseCase --> IGameServerTargetRepository
+  GetGameServerModsUseCase --> IGameServerDashboardRepository
   GetGameServersUseCase --> IGameServerDashboardRepository
   GetGameServersUseCase --> IGameServerProvider
   HostOverridingGameServerPollingRepository --> IGameServerPollingRepository
   HostOverridingGameServerTargetRepository --> IGameServerTargetRepository
   HumanitzProvider --> HumanitzRconClient
   HumanitzProvider -.-> IGameServerProvider
+  ModrinthIconResolver -.-> IModIconResolver
   PalworldProvider -.-> IGameServerProvider
   PalworldProvider -.-> IGameServerDashboard
   PalworldProvider -.-> IGameServerActions

@@ -33,7 +33,7 @@ public static class GameServersModule
         builder.Services.AddScoped<IGameServerTargetRepository>(services => hostOverride is null
             ? services.GetRequiredService<PostgresGameServerRepository>()
             : new HostOverridingGameServerTargetRepository(services.GetRequiredService<PostgresGameServerRepository>(), hostOverride));
-        builder.Services.AddSingleton<IGameServerImageUrlBuilder, GameServerImageUrlBuilder>();
+        builder.Services.AddSingleton<IGameServerAssetUrlBuilder, GameServerAssetUrlBuilder>();
         builder.Services.AddHttpClient<IGameServersManifestProvider, GameServersManifestProvider>((services, client) =>
         {
             var appOptions = services.GetRequiredService<IOptions<AppOptions>>().Value;
@@ -46,6 +46,28 @@ public static class GameServersModule
             client.Timeout = TimeSpan.FromSeconds(15);
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Tools-GameServers/1.0");
         });
+
+        // Un adapter par hébergeur de mods : le sync confie à chacun les URLs qu'il reconnaît.
+        // CurseForge n'est enregistré qu'avec sa clé ; sans elle, ses mods restent sans icône.
+        builder.Services.AddHttpClient<ModrinthIconResolver>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.modrinth.com/");
+            client.Timeout = TimeSpan.FromSeconds(15);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Tools-GameServers/1.0");
+        });
+        builder.Services.AddTransient<IModIconResolver>(services => services.GetRequiredService<ModrinthIconResolver>());
+        var curseForgeApiKey = builder.Configuration[$"{GameServersOptions.SectionName}:{nameof(GameServersOptions.CurseForgeApiKey)}"];
+        if (!string.IsNullOrWhiteSpace(curseForgeApiKey))
+        {
+            builder.Services.AddHttpClient<CurseForgeIconResolver>(client =>
+            {
+                client.BaseAddress = new Uri("https://api.curseforge.com/");
+                client.Timeout = TimeSpan.FromSeconds(15);
+                client.DefaultRequestHeaders.Add("x-api-key", curseForgeApiKey);
+            });
+            builder.Services.AddTransient<IModIconResolver>(services => services.GetRequiredService<CurseForgeIconResolver>());
+        }
+
         builder.Services.AddScoped<GameServersSyncUseCase>();
 
         // Un fichier par jeu, résolu par gameCode : le scheduler et le dashboard passent tous
@@ -66,6 +88,7 @@ public static class GameServersModule
         builder.Services.AddScoped<PollGameServersUseCase>();
         builder.Services.AddScoped<GetGameServersUseCase>();
         builder.Services.AddScoped<GetGameServerDashboardUseCase>();
+        builder.Services.AddScoped<GetGameServerModsUseCase>();
 
         // Les tests n'ont jamais de poll de fond. En dev il ne tourne que si un hôte de
         // substitution est configuré : sans lui les cibles sont des IP docker injoignables depuis

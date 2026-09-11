@@ -15,4 +15,13 @@ public class GameServersController : ControllerBase
     {
         return getGameServersUseCase.Execute();
     }
+
+    // Snapshot DB lui aussi : mods, icônes et modpack sont écrits par le sync.
+    [HttpGet("{slug}/mods")]
+    public Task<GameServerModsView> GetMods(
+        string slug,
+        [FromServices] GetGameServerModsUseCase getGameServerModsUseCase)
+    {
+        return getGameServerModsUseCase.Execute(slug);
+    }
 }

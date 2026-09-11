@@ -71,6 +71,7 @@ peu fréquent et séparé du poll, sera décidé seulement si nécessaire.
 | 7 | `client_host`/`client_port` (adresse publique affichée aux joueurs) | Fait le 20/08/2026 : migration `V2.68.0`, sync, dashboard et widget |
 | 8 | Migration QA/prod, sync réel depuis NAS en continu, tests de pannes isolées | À terminer |
 | 9 | Un provider par jeu, dashboard par serveur (`/details`, `/live`) | En cours depuis le 28/08/2026 : socle, Ark et Palworld faits, front à faire |
+| 10 | Mods et modpack par serveur (voir « Mods et modpack ») | 11/09/2026 : extractor en production, API codée et testée (fakes), migration `V2.74.0` non appliquée, front à faire |
 
 Les étapes 2 à 7 sont réalisées dans cet ordre. Toute route ajoutée ou modifiée
 est ajoutée à `bruno/` dans le même changement.
@@ -155,6 +156,9 @@ Deux pièges vérifiés en direct sur les serveurs réels :
   jamais `FetchLiveAsync` : il consommerait toutes les 60 s les lignes que le
   dashboard doit afficher. C'est la raison d'être d'une méthode de statut
   séparée et minimale.
+  Le front cumule donc les lignes reçues (500 au plus, bouton pour vider) :
+  `Log` ne doit contenir que les lignes apparues depuis l'appel précédent,
+  jamais un instantané, qui serait dupliqué à chaque rafraîchissement.
 
 ### Joindre les serveurs depuis un poste de dev
 
@@ -196,3 +200,54 @@ l'appelant** ; `POST /gameservers/{slug}/actions/{code}` revérifie ce rôle ava
 d'exécuter, puis contrôle les paramètres obligatoires. Ce que le front affiche
 n'autorise donc rien par lui-même. Les rôles reprennent ceux de l'API Java :
 MODERATOR pour announce/save/kick, ADMIN pour ban/unban/shutdown/stop.
+
+## Mods et modpack (11/09/2026)
+
+Afficher les mods d'un serveur et, quand les joueurs doivent les installer eux-mêmes, leur
+proposer le modpack client en téléchargement. Rien n'est propre à un jeu : Minecraft Cobblemon
+est le premier à s'en servir, un jeu qui installe ses mods à la connexion (Palworld, Ark) peut
+déclarer une liste sans modpack.
+
+**Le manifest pilote**, par deux champs optionnels relatifs au dossier du serveur :
+
+- `modsFile` — un fichier JSON, tableau de mods. Seul `name` est exigé ; `version`, `url`,
+  `authors`, `filename` et `icon` sont optionnels. C'est le format de l'export JSON « ModList »
+  de Prism Launcher, déposé tel quel : la liste affichée est donc celle **du client**, qui peut
+  différer du dossier `mods/` du serveur (choix assumé : elle décrit ce que le joueur installe).
+- `modpackFile` — le fichier que les joueurs téléchargent, quel que soit son format (`.zip`,
+  `.mrpack`…).
+
+**L'extractor** (NAS) intègre la liste à `gameservers.json` (champ `mods`) et copie le modpack
+vers `tools_core/gameservers/modpacks/<slug><extension>`. Il ne recopie que si le **sha256**
+diffère de la copie publiée — la taille et la date ne suffisent pas — et passe par un fichier
+temporaire renommé, pour qu'un téléchargement en cours ne lise jamais un fichier à moitié écrit.
+Il publie `modpackFile`, `modpackSize` et `modpackSha256`, et supprime les modpacks orphelins.
+Un fichier déclaré mais absent n'est qu'un avertissement ; un chemin qui sort du dossier du
+serveur ou un mod sans `name` fait échouer le passage.
+
+**Le sync** enregistre les mods dans `tools_core.game_server_mods` (migration `V2.74.0`) et le
+modpack dans `game_servers.modpack_url`/`modpack_size`. L'URL porte le hash en paramètre `v` :
+elle ne change pas quand le fichier est remplacé, et nginx ne renvoie aucun `Cache-Control`.
+Une liste modifiée est réécrite en entier et compte comme une mise à jour ; une liste identique
+n'est pas touchée.
+
+**Les icônes** sont résolues au sync, jamais à la lecture, par un adapter par hébergeur
+(`IModIconResolver`), choisi d'après l'URL du mod :
+
+| hébergeur | URL reconnue | appel |
+|---|---|---|
+| Modrinth | `modrinth.com/<type>/<id ou slug>` | `GET /v2/projects?ids=[…]`, sans clé |
+| CurseForge | `curseforge.com/projects/<id>` | `POST /v1/mods`, clé `GameServers:CurseForgeApiKey` |
+
+- Une icône déjà enregistrée n'est jamais redemandée : un hébergeur n'est appelé qu'à l'arrivée
+  d'un nouveau mod, en un seul appel pour tous.
+- Une panne ou une réponse invalide laisse les nouveaux mods sans icône, sans faire échouer le
+  sync ; le passage suivant réessaie.
+- `icon` posé dans le fichier de mods l'emporte sur l'hébergeur.
+- Sans clé CurseForge, son adapter n'est pas enregistré : ses mods restent sans icône. La clé est
+  un secret : `appsettings.Local.json` en dev, variable `GameServers__CurseForgeApiKey` sur les
+  conteneurs `tools_api` et `tools_api_qa`.
+
+**La lecture** : `GET /gameservers` expose `modCount` et `hasModpack`, qui suffisent au widget ;
+la liste est chargée à part par `GET /gameservers/{slug}/mods`, snapshot de la base comme le
+reste du widget.

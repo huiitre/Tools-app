@@ -15,4 +15,9 @@ public sealed record GameServerSyncDto(
     int Port,
     string ClientHost,
     int ClientPort,
-    JsonElement ProtocolConfig);
+    JsonElement ProtocolConfig,
+    // Null pour un serveur sans mods, ou sans modpack à télécharger. ModpackFile désigne un fichier du dossier modpacks/, dont ModpackSha256 est la version.
+    IReadOnlyList<GameServerModSyncDto>? Mods = null,
+    string? ModpackFile = null,
+    long? ModpackSize = null,
+    string? ModpackSha256 = null);

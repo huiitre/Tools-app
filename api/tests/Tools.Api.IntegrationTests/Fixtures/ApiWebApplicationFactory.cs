@@ -114,6 +114,11 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IGameServersManifestProvider>();
             services.AddSingleton<FakeGameServersManifestProvider>();
             services.AddSingleton<IGameServersManifestProvider>(provider => provider.GetRequiredService<FakeGameServersManifestProvider>());
+            // Aucun test n'interroge un vrai hébergeur de mods : le fake remplace Modrinth, et
+            // CurseForge quand une clé présente sur le poste l'a fait enregistrer.
+            services.RemoveAll<IModIconResolver>();
+            services.AddSingleton<FakeModIconResolver>();
+            services.AddSingleton<IModIconResolver>(provider => provider.GetRequiredService<FakeModIconResolver>());
 
             // L'administration est testée sans PostgreSQL : ces doubles sont des singletons
             // pour que le test puisse relire l'état laissé par la requête.

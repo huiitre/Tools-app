@@ -28,7 +28,7 @@ public sealed class GameServersPollingTests : IClassFixture<ApiWebApplicationFac
     {
         await Servers.UpsertAsync(new GameServerSyncEntry(
             "rust", "RUST", "STEAM_A2S", "Rust", 252490, "172.19.0.7", 28017, "{}",
-            "Rust", null, false, true, "games.huiitre.fr", 28015));
+            "Rust", null, false, true, "games.huiitre.fr", 28015, [], null, null));
 
         await using var scope = factory.Services.CreateAsyncScope();
         var useCase = scope.ServiceProvider.GetRequiredService<PollGameServersUseCase>();
@@ -45,7 +45,7 @@ public sealed class GameServersPollingTests : IClassFixture<ApiWebApplicationFac
     {
         await Servers.UpsertAsync(new GameServerSyncEntry(
             "unknown", "UNKNOWN", "UNSUPPORTED", "Unknown", null, "172.19.0.8", 1, "{}",
-            null, null, false, true, "games.huiitre.fr", 1));
+            null, null, false, true, "games.huiitre.fr", 1, [], null, null));
 
         await using var scope = factory.Services.CreateAsyncScope();
         var useCase = scope.ServiceProvider.GetRequiredService<PollGameServersUseCase>();
