@@ -21,4 +21,7 @@ public sealed record GameServerLivePlayer(
     GameServerLiveCompanion? Companion,
     // Monde ou dimension où se trouve le joueur, pour un jeu qui en a plusieurs (Minecraft :
     // « minecraft:overworld »). Une carte par monde s'en servira pour placer chaque joueur.
-    string? World = null);
+    string? World = null,
+    // Hauteur lisible, pour un jeu en trois dimensions (Minecraft : le Y). Hors de la carte, qui
+    // reste vue du dessus.
+    double? Altitude = null);
