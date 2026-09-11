@@ -61,6 +61,7 @@ public static class GameServersModule
         builder.Services.AddSingleton<IGameServerProvider, SevenDaysToDieProvider>();
         builder.Services.AddSingleton<IGameServerProvider, HumanitzProvider>();
         builder.Services.AddSingleton<IGameServerProvider, EnshroudedProvider>();
+        builder.Services.AddSingleton<IGameServerProvider, CobblemonProvider>();
 
         builder.Services.AddScoped<PollGameServersUseCase>();
         builder.Services.AddScoped<GetGameServersUseCase>();

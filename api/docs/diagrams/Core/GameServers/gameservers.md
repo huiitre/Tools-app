@@ -43,6 +43,8 @@ flowchart LR
   end
   subgraph Infrastructure
   ArkProvider["ArkProvider"]
+  CobblemonProvider["CobblemonProvider"]
+  EnshroudedProvider["EnshroudedProvider"]
   GameServerImageUrlBuilder["GameServerImageUrlBuilder"]
   GameServerProtocolConfig["GameServerProtocolConfig"]
   GameServersManifestProvider["GameServersManifestProvider"]
@@ -66,6 +68,9 @@ flowchart LR
   ArkProvider -.-> IGameServerProvider
   ArkProvider -.-> IGameServerDashboard
   ArkProvider -.-> IGameServerActions
+  CobblemonProvider -.-> IGameServerProvider
+  EnshroudedProvider --> SteamA2sClient
+  EnshroudedProvider -.-> IGameServerProvider
   GameServerActionDefinition --> GameServerActionParameter
   GameServerDashboardController --> GetGameServerDashboardUseCase
   GameServerDetailsView --> GameServerActionDefinition
