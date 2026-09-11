@@ -74,7 +74,7 @@ public static class SettingCatalog
             Code = "auth.adminApprovalRequired",
             AllowedScopes = SettingScopes.GlobalOnly,
             MinRole = RoleCode.Admin,
-            Default = false
+            Default = true
         };
     }
 
