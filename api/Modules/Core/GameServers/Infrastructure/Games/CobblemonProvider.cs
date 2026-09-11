@@ -200,13 +200,14 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
             MaxHealth: maxHealth is null ? null : (int)Math.Round(maxHealth.Value, MidpointRounding.AwayFromZero),
             GroupId: null,
             GroupName: null,
-            // Vue de dessus : X et Z. L'altitude Y n'a pas sa place sur une carte.
+            // Vue de dessus : X et Z. L'altitude Y est à part, une carte n'en a pas l'usage.
             MapX: position is null ? null : Math.Round(position.Value.X),
             MapY: position is null ? null : Math.Round(position.Value.Z),
             PositionX: position?.X,
             PositionY: position?.Z,
             Companion: null,
-            World: dimension);
+            World: dimension,
+            Altitude: position is null ? null : Math.Round(position.Value.Y));
     }
 
     private static GameServerDetailsView Details(

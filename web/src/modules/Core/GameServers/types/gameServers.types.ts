@@ -87,6 +87,8 @@ export interface GameServerLivePlayer {
   companion: GameServerLiveCompanion | null
   // Monde ou dimension du joueur, pour un jeu qui en a plusieurs (Minecraft).
   world: string | null
+  // Hauteur, pour un jeu en trois dimensions (Minecraft : le Y). Absente de la carte.
+  altitude: number | null
 }
 
 export interface GameServerLiveStructure {

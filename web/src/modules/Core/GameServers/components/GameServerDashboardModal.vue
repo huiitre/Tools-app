@@ -307,7 +307,9 @@ onUnmounted(() => {
                   <td>{{ player.ping !== null ? `${player.ping} ms` : '—' }}</td>
                   <td>{{ player.groupName ?? '—' }}</td>
                   <td>
-                    <span v-if="player.mapX !== null && player.mapY !== null">{{ player.mapX }}, {{ player.mapY }}</span>
+                    <!-- Avec une altitude, ordre X, Y, Z : celui qu'affiche Minecraft à ses joueurs. -->
+                    <span v-if="player.mapX !== null && player.mapY !== null && player.altitude !== null">{{ player.mapX }}, {{ player.altitude }}, {{ player.mapY }}</span>
+                    <span v-else-if="player.mapX !== null && player.mapY !== null">{{ player.mapX }}, {{ player.mapY }}</span>
                     <span v-else class="muted">—</span>
                     <span v-if="player.world" class="muted"> · {{ player.world }}</span>
                   </td>
