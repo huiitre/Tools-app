@@ -8,7 +8,14 @@ const props = defineProps<{
   server: GameServer
 }>()
 
-const emit = defineEmits<{ openDashboard: [] }>()
+const emit = defineEmits<{ openDashboard: [], openMods: [] }>()
+
+// Un serveur avec un modpack mais sans liste propose tout de même le téléchargement.
+const hasMods = computed(() => props.server.modCount > 0 || props.server.hasModpack)
+
+const modsLabel = computed(() =>
+  props.server.modCount > 0 ? `${props.server.modCount} mod${props.server.modCount > 1 ? 's' : ''}` : 'Mods'
+)
 
 const { copy } = useClipboard()
 
@@ -78,16 +85,29 @@ const copyConnection = () => {
       <p class="game-server-checked">{{ checkedLabel }}</p>
     </div>
 
-    <!-- Absente tant qu'aucun provider de jeu ne sait alimenter un dashboard pour ce serveur. -->
-    <button
-      v-if="server.hasDashboard"
-      type="button"
-      class="game-server-dashboard"
-      @click="emit('openDashboard')"
-    >
-      <i class="mdi mdi-view-dashboard-outline" aria-hidden="true" />
-      Dashboard
-    </button>
+    <div v-if="server.hasDashboard || hasMods" class="game-server-actions">
+      <!-- Absente tant qu'aucun provider de jeu ne sait alimenter un dashboard pour ce serveur. -->
+      <button
+        v-if="server.hasDashboard"
+        type="button"
+        class="game-server-action"
+        @click="emit('openDashboard')"
+      >
+        <i class="mdi mdi-view-dashboard-outline" aria-hidden="true" />
+        Dashboard
+      </button>
+
+      <!-- Absente tant que le manifest du serveur ne déclare ni liste de mods ni modpack. -->
+      <button
+        v-if="hasMods"
+        type="button"
+        class="game-server-action"
+        @click="emit('openMods')"
+      >
+        <i class="mdi mdi-puzzle-outline" aria-hidden="true" />
+        {{ modsLabel }}
+      </button>
+    </div>
   </article>
 </template>
 
@@ -233,13 +253,21 @@ const copyConnection = () => {
   opacity: 0.7;
 }
 
-.game-server-dashboard {
-  width: 100%;
+.game-server-actions {
+  display: flex;
+  border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.game-server-action {
+  flex: 1;
   margin: 0;
   padding: 0.5rem;
   border: none;
-  border-top: 1px solid var(--pico-muted-border-color);
   border-radius: 0;
+
+  & + & {
+    border-left: 1px solid var(--pico-muted-border-color);
+  }
 
   display: flex;
   align-items: center;

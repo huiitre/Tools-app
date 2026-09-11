@@ -1,5 +1,5 @@
 import { clientCore } from '@/services/axiosInstance'
-import type { GameServer, GameServerDetails, GameServerLive } from '../types/gameServers.types'
+import type { GameServer, GameServerDetails, GameServerLive, GameServerMods } from '../types/gameServers.types'
 
 export async function fetchGameServers(): Promise<GameServer[]> {
   const { data } = await clientCore.get<GameServer[]>('/gameservers')
@@ -13,6 +13,11 @@ export async function fetchGameServerDetails(slug: string): Promise<GameServerDe
 
 export async function fetchGameServerLive(slug: string): Promise<GameServerLive> {
   const { data } = await clientCore.get<GameServerLive>(`/gameservers/${slug}/live`)
+  return data
+}
+
+export async function fetchGameServerMods(slug: string): Promise<GameServerMods> {
+  const { data } = await clientCore.get<GameServerMods>(`/gameservers/${slug}/mods`)
   return data
 }
 
