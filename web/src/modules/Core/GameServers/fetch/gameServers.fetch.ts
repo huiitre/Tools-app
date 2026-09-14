@@ -1,5 +1,11 @@
 import { clientCore } from '@/services/axiosInstance'
-import type { GameServer, GameServerDetails, GameServerLive, GameServerMods } from '../types/gameServers.types'
+import type {
+  GameServer,
+  GameServerDetails,
+  GameServerLive,
+  GameServerMods,
+  GameServerRawCommandHistoryEntry,
+} from '../types/gameServers.types'
 
 export async function fetchGameServers(): Promise<GameServer[]> {
   const { data } = await clientCore.get<GameServer[]>('/gameservers')
@@ -32,4 +38,9 @@ export async function executeGameServerAction(
 export async function executeGameServerRawCommand(slug: string, command: string): Promise<string | null> {
   const { data } = await clientCore.post<{ answer: string | null }>(`/gameservers/${slug}/raw-command`, { command })
   return data.answer
+}
+
+export async function fetchGameServerRawCommandHistory(slug: string): Promise<GameServerRawCommandHistoryEntry[]> {
+  const { data } = await clientCore.get<GameServerRawCommandHistoryEntry[]>(`/gameservers/${slug}/raw-command/history`)
+  return data
 }

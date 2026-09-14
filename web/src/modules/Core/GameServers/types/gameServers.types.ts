@@ -107,6 +107,13 @@ export interface GameServerLiveStructure {
 
 // Tout est optionnel : un jeu qui n'expose pas une donnée renvoie null, et le front
 // affiche « indisponible » plutôt que de masquer le bloc.
+export interface GameServerRawCommandHistoryEntry {
+  command: string
+  answer: string | null
+  userName: string
+  executedAt: string
+}
+
 export interface GameServerLive {
   playerCount: number | null
   maxPlayers: number | null

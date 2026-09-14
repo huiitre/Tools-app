@@ -1,19 +1,34 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { executeGameServerRawCommand } from '../fetch/gameServers.fetch'
+import { onMounted, ref } from 'vue'
+import { executeGameServerRawCommand, fetchGameServerRawCommandHistory } from '../fetch/gameServers.fetch'
+import { formatRelativeTime } from '@/utils/formatRelativeTime'
 
 const props = defineProps<{ slug: string }>()
 
-interface RawCommandEntry {
+// Un échec de connexion n'a jamais atteint le jeu : rien n'est audité côté API, cette entrée ne
+// vit que dans cet onglet le temps de la session (voir GetGameServerDashboardUseCase.ExecuteRawCommand).
+interface TransientError {
   command: string
-  answer: string | null
-  error: string | null
+  error: string
 }
 
 const command = ref('')
 const running = ref(false)
-// Plus récent en tête : c'est la dernière réponse qui intéresse, comme le journal serveur.
-const history = ref<RawCommandEntry[]>([])
+const loadingHistory = ref(true)
+const transientErrors = ref<TransientError[]>([])
+// Déjà triée par l'API, la plus récente en tête.
+const history = ref<Awaited<ReturnType<typeof fetchGameServerRawCommandHistory>>>([])
+
+onMounted(loadHistory)
+
+async function loadHistory() {
+  loadingHistory.value = true
+  try {
+    history.value = await fetchGameServerRawCommandHistory(props.slug)
+  } finally {
+    loadingHistory.value = false
+  }
+}
 
 async function run() {
   const value = command.value.trim()
@@ -21,12 +36,12 @@ async function run() {
 
   running.value = true
   try {
-    const answer = await executeGameServerRawCommand(props.slug, value)
-    history.value.unshift({ command: value, answer, error: null })
+    await executeGameServerRawCommand(props.slug, value)
     command.value = ''
+    await loadHistory()
   } catch (error) {
     const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
-    history.value.unshift({ command: value, answer: null, error: message ?? 'Échec de la requête.' })
+    transientErrors.value.unshift({ command: value, error: message ?? 'Échec de la requête.' })
   } finally {
     running.value = false
   }
@@ -51,14 +66,22 @@ async function run() {
       <button type="submit" class="danger" :disabled="running || !command.trim()">Exécuter</button>
     </form>
 
-    <div v-if="history.length" class="raw-console-history">
-      <div v-for="(entry, index) in history" :key="index" class="raw-console-entry">
+    <div v-if="transientErrors.length || history.length" class="raw-console-history">
+      <div v-for="(entry, index) in transientErrors" :key="`transient-${index}`" class="raw-console-entry">
         <p class="raw-console-command">&gt; {{ entry.command }}</p>
-        <pre v-if="entry.error" class="raw-console-answer raw-console-answer--error">{{ entry.error }}</pre>
-        <pre v-else-if="entry.answer" class="raw-console-answer">{{ entry.answer }}</pre>
+        <pre class="raw-console-answer raw-console-answer--error">{{ entry.error }}</pre>
+      </div>
+
+      <div v-for="(entry, index) in history" :key="`history-${index}`" class="raw-console-entry">
+        <p class="raw-console-command">
+          &gt; {{ entry.command }}
+          <span class="raw-console-meta">{{ entry.userName }} · {{ formatRelativeTime(entry.executedAt) }}</span>
+        </p>
+        <pre v-if="entry.answer" class="raw-console-answer">{{ entry.answer }}</pre>
         <p v-else class="raw-console-answer raw-console-answer--empty">(aucune réponse)</p>
       </div>
     </div>
+    <p v-else-if="!loadingHistory" class="raw-console-empty">Aucune commande exécutée pour l'instant.</p>
   </div>
 </template>
 
@@ -131,6 +154,21 @@ async function run() {
   font-family: var(--pico-font-family-monospace, monospace);
   font-size: 0.78rem;
   font-weight: 600;
+}
+
+.raw-console-meta {
+  margin-left: 0.5rem;
+  font-family: var(--pico-font-family, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--pico-muted-color);
+}
+
+.raw-console-empty {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--pico-muted-color);
+  font-style: italic;
 }
 
 .raw-console-answer {

@@ -23,6 +23,7 @@ flowchart LR
   GameServerModSyncDto["GameServerModSyncDto"]
   GameServerModView["GameServerModView"]
   GameServerModsView["GameServerModsView"]
+  GameServerRawCommandHistoryEntry["GameServerRawCommandHistoryEntry"]
   GameServerRawCommandRequest["GameServerRawCommandRequest"]
   GameServerRawCommandResult["GameServerRawCommandResult"]
   GameServerStatus["GameServerStatus"]
@@ -42,6 +43,7 @@ flowchart LR
   IGameServerPollingRepository(["IGameServerPollingRepository"])
   IGameServerProvider(["IGameServerProvider"])
   IGameServerRawCommand(["IGameServerRawCommand"])
+  IGameServerRawCommandHistoryRepository(["IGameServerRawCommandHistoryRepository"])
   IGameServerRepository(["IGameServerRepository"])
   IGameServerTargetRepository(["IGameServerTargetRepository"])
   IGameServersManifestProvider(["IGameServersManifestProvider"])
@@ -105,6 +107,7 @@ flowchart LR
   GameServersSyncUseCase --> IModIconResolver
   GameServersSyncUseCase --> ISteamAppDetailsProvider
   GetGameServerDashboardUseCase --> IGameServerProvider
+  GetGameServerDashboardUseCase --> IGameServerRawCommandHistoryRepository
   GetGameServerDashboardUseCase --> IGameServerTargetRepository
   GetGameServerModsUseCase --> IGameServerDashboardRepository
   GetGameServersUseCase --> IGameServerDashboardRepository
@@ -123,6 +126,7 @@ flowchart LR
   PostgresGameServerRepository -.-> IGameServerPollingRepository
   PostgresGameServerRepository -.-> IGameServerDashboardRepository
   PostgresGameServerRepository -.-> IGameServerTargetRepository
+  PostgresGameServerRepository -.-> IGameServerRawCommandHistoryRepository
   RustProvider --> SteamA2sClient
   RustProvider -.-> IGameServerProvider
   SevenDaysToDieProvider --> SteamA2sClient

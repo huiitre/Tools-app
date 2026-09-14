@@ -33,6 +33,7 @@ public static class GameServersModule
         builder.Services.AddScoped<IGameServerTargetRepository>(services => hostOverride is null
             ? services.GetRequiredService<PostgresGameServerRepository>()
             : new HostOverridingGameServerTargetRepository(services.GetRequiredService<PostgresGameServerRepository>(), hostOverride));
+        builder.Services.AddScoped<IGameServerRawCommandHistoryRepository>(services => services.GetRequiredService<PostgresGameServerRepository>());
         builder.Services.AddSingleton<IGameServerAssetUrlBuilder, GameServerAssetUrlBuilder>();
         builder.Services.AddHttpClient<IGameServersManifestProvider, GameServersManifestProvider>((services, client) =>
         {

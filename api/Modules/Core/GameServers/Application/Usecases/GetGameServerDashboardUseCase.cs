@@ -12,11 +12,15 @@ namespace Tools.Api.Modules.Core.GameServers.Application.Usecases;
 public sealed class GetGameServerDashboardUseCase(
     UseCaseAuthorizer authorizer,
     IGameServerTargetRepository gameServerTargetRepository,
+    IGameServerRawCommandHistoryRepository rawCommandHistoryRepository,
     IEnumerable<IGameServerProvider> providers) : SecuredUseCase(authorizer)
 {
     // Borne les appels réseau : un serveur qui accepte la connexion sans jamais répondre
     // laisserait sinon la requête HTTP ouverte indéfiniment.
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(15);
+
+    // Un historique d'admin consulté à l'ouverture de la console, pas un flux à paginer.
+    private const int HistoryLimit = 100;
 
     // Seuls les jeux qui implémentent IGameServerDashboard ont un dashboard : les autres ne sont
     // même pas indexés ici.
@@ -73,9 +77,10 @@ public sealed class GetGameServerDashboardUseCase(
         using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutSource.CancelAfter(Timeout);
 
+        string? answer;
         try
         {
-            return await rawCommand.ExecuteRawCommandAsync(target, command.Trim(), timeoutSource.Token);
+            answer = await rawCommand.ExecuteRawCommandAsync(target, command.Trim(), timeoutSource.Token);
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
@@ -83,6 +88,32 @@ public sealed class GetGameServerDashboardUseCase(
                 "GAME_SERVER_UNREACHABLE",
                 $"Le serveur « {target.Slug} » n'a pas répondu dans le délai imparti.");
         }
+
+        // Seul un aller-retour réussi est audité : un échec de connexion n'a jamais atteint le
+        // jeu, il n'y a rien à tracer (déjà dans les logs techniques).
+        await rawCommandHistoryRepository.InsertAsync(target.Id, CurrentUser.UserId, command.Trim(), answer);
+
+        return answer;
+    }
+
+    public async Task<IReadOnlyList<GameServerRawCommandHistoryEntry>> ExecuteRawCommandHistory(
+        string slug,
+        CancellationToken cancellationToken)
+    {
+        var target = await gameServerTargetRepository.FindBySlugAsync(slug)
+            ?? throw AppException.NotFound("GAME_SERVER_NOT_FOUND", $"Aucun serveur de jeu visible pour le slug « {slug} ».");
+
+        if (!rawCommandByGameCode.ContainsKey(target.GameCode))
+        {
+            throw AppException.NotFound(
+                "GAME_SERVER_RAW_COMMAND_UNSUPPORTED",
+                $"Le jeu « {target.GameCode} » n'accepte pas de commande libre.");
+        }
+
+        // Même exigence que l'exécution : l'historique révèle ce que d'autres admins ont tapé.
+        authorizer.EnsureAtLeast(RoleCode.Admin);
+
+        return await rawCommandHistoryRepository.FindRecentAsync(target.Id, HistoryLimit);
     }
 
     public async Task ExecuteAction(

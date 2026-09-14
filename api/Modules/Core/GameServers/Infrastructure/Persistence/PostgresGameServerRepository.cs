@@ -15,7 +15,7 @@ namespace Tools.Api.Modules.Core.GameServers.Infrastructure.Persistence;
 // demi-sync suivi de suppressions.
 public sealed class PostgresGameServerRepository(
     PostgresSession session,
-    Npgsql.NpgsqlDataSource dataSource) : IGameServerRepository, IGameServerPollingRepository, IGameServerDashboardRepository, IGameServerTargetRepository
+    Npgsql.NpgsqlDataSource dataSource) : IGameServerRepository, IGameServerPollingRepository, IGameServerDashboardRepository, IGameServerTargetRepository, IGameServerRawCommandHistoryRepository
 {
     public async Task<GameServerUpsertResult> UpsertAsync(GameServerSyncEntry gameServer)
     {
@@ -225,6 +225,36 @@ public sealed class PostgresGameServerRepository(
             WHERE slug = @Slug AND is_visible
             """,
             new { Slug = slug });
+    }
+
+    public async Task InsertAsync(long gameServerId, long userId, string command, string? answer)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await connection.ExecuteAsync(
+            """
+            INSERT INTO tools_core.game_server_raw_commands (game_server_id, user_id, command, answer)
+            VALUES (@GameServerId, @UserId, @Command, @Answer)
+            """,
+            new { GameServerId = gameServerId, UserId = userId, Command = command, Answer = answer });
+    }
+
+    public async Task<IReadOnlyList<GameServerRawCommandHistoryEntry>> FindRecentAsync(long gameServerId, int limit)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+        var entries = await connection.QueryAsync<GameServerRawCommandHistoryEntry>(
+            """
+            SELECT command AS Command,
+                   answer AS Answer,
+                   users.name AS UserName,
+                   executed_at AS ExecutedAt
+            FROM tools_core.game_server_raw_commands
+            JOIN tools_core.users ON users.id = game_server_raw_commands.user_id
+            WHERE game_server_id = @GameServerId
+            ORDER BY executed_at DESC
+            LIMIT @Limit
+            """,
+            new { GameServerId = gameServerId, Limit = limit });
+        return entries.AsList();
     }
 
     public async Task UpdateStatusAsync(long id, GameServerStatus status)
