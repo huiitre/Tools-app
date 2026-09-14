@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Net.Sockets;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
@@ -263,7 +262,11 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
     private static string Parameter(IReadOnlyDictionary<string, string> parameters, string name) =>
         parameters.TryGetValue(name, out var value) ? value : string.Empty;
 
-    // Null si le serveur est injoignable ou refuse le mot de passe.
+    // Null si le mot de passe RCON n'est pas configuré (choix, pas une panne) ou si le serveur
+    // refuse l'authentification. Une panne réseau (DNS, connexion refusée/reset — ex. conteneur
+    // redémarré) n'est PAS rattrapée ici et remonte telle quelle : FetchDetailsAsync/FetchLiveAsync
+    // doivent la faire échouer, pas répondre « Indisponible » comme si le jeu n'exposait pas la
+    // donnée. Seul FetchStatusAsync, qui a son propre filet, doit rester silencieux là-dessus.
     private static async Task<SourceRconClient?> ConnectAsync(GameServerTarget target, CancellationToken cancellationToken)
     {
         var password = GameServerProtocolConfig.GetString(target.ProtocolConfig, "rconPassword");
@@ -280,8 +283,10 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
                 return client;
             }
         }
-        catch (Exception exception) when (exception is SocketException or IOException)
+        catch
         {
+            await client.DisposeAsync();
+            throw;
         }
 
         await client.DisposeAsync();

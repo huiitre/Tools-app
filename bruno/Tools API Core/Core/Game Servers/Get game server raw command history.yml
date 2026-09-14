@@ -1,0 +1,19 @@
+info:
+  name: Get game server raw command history
+  type: http
+  seq: 8
+
+http:
+  method: GET
+  url: "{{apiUrl}}/gameservers/ark-survival-ascended/raw-command/history"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: "Audit des commandes RCON libres déjà exécutées sur ce serveur (voir Execute game server raw command), les 100 plus récentes, triées de la plus récente à la plus ancienne. Même garde que l'exécution : rôle ADMIN et jeu qui implémente IGameServerRawCommand, sinon 404/403 identiques. Réponse 200 `[{ command, answer, userName, executedAt }]` — `answer` reprend la réponse brute du jeu (null si le protocole n'a pas répondu), `userName` celui qui a tapé la commande. Ne contient que les commandes qui ont effectivement atteint le jeu : un échec de connexion RCON n'y figure jamais. 404 GAME_SERVER_NOT_FOUND si le slug est inconnu, 404 GAME_SERVER_RAW_COMMAND_UNSUPPORTED si le jeu n'implémente pas ce port, 403 si le rôle est insuffisant."

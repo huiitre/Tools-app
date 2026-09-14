@@ -50,6 +50,16 @@ public class GameServerDashboardController : ControllerBase
         return new GameServerRawCommandResult(answer);
     }
 
+    // Même garde que l'exécution : révèle ce que d'autres admins ont tapé, pas seulement soi-même.
+    [HttpGet("raw-command/history")]
+    public Task<IReadOnlyList<GameServerRawCommandHistoryEntry>> GetRawCommandHistory(
+        string slug,
+        [FromServices] GetGameServerDashboardUseCase getGameServerDashboardUseCase,
+        CancellationToken cancellationToken)
+    {
+        return getGameServerDashboardUseCase.ExecuteRawCommandHistory(slug, cancellationToken);
+    }
+
     [HttpGet("live")]
     public Task<GameServerLiveView> GetLive(
         string slug,
