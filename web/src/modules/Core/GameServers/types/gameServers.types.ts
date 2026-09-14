@@ -44,6 +44,9 @@ export interface GameServerDetails {
   settings: Record<string, unknown> | null
   // Déjà filtrées par l'API sur les droits de l'utilisateur : ce qui est là est autorisé.
   actions: GameServerAction[]
+  // Vrai si le jeu accepte une commande RCON libre ET que l'appelant a le rôle ADMIN : le front
+  // n'a rien d'autre à vérifier, il affiche la console si ce champ est vrai.
+  supportsRawCommand: boolean
 }
 
 export interface GameServerActionParameter {

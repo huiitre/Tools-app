@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import toast from '@/services/toast'
 import { executeGameServerAction, fetchGameServerDetails, fetchGameServerLive } from '../fetch/gameServers.fetch'
 import GameServerActionCard from './GameServerActionCard.vue'
+import GameServerRawCommandConsole from './GameServerRawCommandConsole.vue'
 import type { GameServer, GameServerDetails, GameServerLive } from '../types/gameServers.types'
 import { mapAdapterFor } from '../map/mapRegistry'
 import GameServerMapPanel from '../map/GameServerMapPanel.vue'
@@ -371,6 +372,11 @@ onUnmounted(() => {
               @submit="runAction(action.code, action.label, $event)"
             />
           </div>
+        </div>
+
+        <div v-if="details?.supportsRawCommand" class="section">
+          <div class="section-header"><h3 class="section-title">Console RCON</h3></div>
+          <GameServerRawCommandConsole :slug="server.slug" />
         </div>
 
         <div class="section">

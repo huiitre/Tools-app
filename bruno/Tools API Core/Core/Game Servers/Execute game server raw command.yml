@@ -1,0 +1,25 @@
+info:
+  name: Execute game server raw command
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{apiUrl}}/gameservers/minecraft-all-the-mons/raw-command"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+  body:
+    type: json
+    data: |
+      {
+        "command": "op huiitre"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: "Exécute n'importe quelle commande texte sur le protocole d'administration du serveur (RCON), sans validation ni liste de commandes connue côté API — c'est un accès admin total au jeu, pas une action déclarée. Réservée aux jeux qui implémentent IGameServerRawCommand (Ark, Cobblemon/Minecraft ; ni Palworld qui est en REST, ni Humanitz dont le client RCON n'expose pour l'instant qu'une sonde de statut, ni Enshrouded/Rust/7 Days to Die qui n'ont aucun canal d'admin) et au rôle ADMIN, quel que soit le jeu — ce n'est pas le rôle de l'action la plus proche, c'est toujours le plus élevé. `details.supportsRawCommand` (GET .../details) dit si ce bloc doit s'afficher : déjà résolu sur les droits de l'appelant, le front n'a rien d'autre à vérifier. Réponse 200 `{ answer: string | null }` — `answer` est le texte brut renvoyé par le serveur de jeu (peut être un message d'erreur du jeu lui-même, ex. « Unknown command », ce n'est pas un échec HTTP), `null` quand le protocole ferme la connexion sans répondre (ex. une commande qui arrête le serveur). 404 GAME_SERVER_NOT_FOUND si le slug est inconnu, 404 GAME_SERVER_RAW_COMMAND_UNSUPPORTED si le jeu n'implémente pas ce port, 400 GAME_SERVER_RAW_COMMAND_EMPTY si la commande est vide, 403 si le rôle est insuffisant, 503 GAME_SERVER_UNREACHABLE au-delà de 15 secondes."

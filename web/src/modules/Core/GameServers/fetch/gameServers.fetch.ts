@@ -28,3 +28,8 @@ export async function executeGameServerAction(
 ): Promise<void> {
   await clientCore.post(`/gameservers/${slug}/actions/${actionCode}`, parameters)
 }
+
+export async function executeGameServerRawCommand(slug: string, command: string): Promise<string | null> {
+  const { data } = await clientCore.post<{ answer: string | null }>(`/gameservers/${slug}/raw-command`, { command })
+  return data.answer
+}

@@ -37,6 +37,19 @@ public class GameServerDashboardController : ControllerBase
         return NoContent();
     }
 
+    // Réservée aux jeux qui l'annoncent (details.supportsRawCommand) et au rôle ADMIN, revérifiés
+    // tous deux côté use case : le contrôleur ne fait que transmettre.
+    [HttpPost("raw-command")]
+    public async Task<GameServerRawCommandResult> ExecuteRawCommand(
+        string slug,
+        [FromBody] GameServerRawCommandRequest request,
+        [FromServices] GetGameServerDashboardUseCase getGameServerDashboardUseCase,
+        CancellationToken cancellationToken)
+    {
+        var answer = await getGameServerDashboardUseCase.ExecuteRawCommand(slug, request.Command, cancellationToken);
+        return new GameServerRawCommandResult(answer);
+    }
+
     [HttpGet("live")]
     public Task<GameServerLiveView> GetLive(
         string slug,

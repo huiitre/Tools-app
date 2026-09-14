@@ -23,6 +23,8 @@ flowchart LR
   GameServerModSyncDto["GameServerModSyncDto"]
   GameServerModView["GameServerModView"]
   GameServerModsView["GameServerModsView"]
+  GameServerRawCommandRequest["GameServerRawCommandRequest"]
+  GameServerRawCommandResult["GameServerRawCommandResult"]
   GameServerStatus["GameServerStatus"]
   GameServerSyncDto["GameServerSyncDto"]
   GameServerSyncEntry["GameServerSyncEntry"]
@@ -39,6 +41,7 @@ flowchart LR
   IGameServerDashboardRepository(["IGameServerDashboardRepository"])
   IGameServerPollingRepository(["IGameServerPollingRepository"])
   IGameServerProvider(["IGameServerProvider"])
+  IGameServerRawCommand(["IGameServerRawCommand"])
   IGameServerRepository(["IGameServerRepository"])
   IGameServerTargetRepository(["IGameServerTargetRepository"])
   IGameServersManifestProvider(["IGameServersManifestProvider"])
@@ -76,9 +79,11 @@ flowchart LR
   ArkProvider -.-> IGameServerProvider
   ArkProvider -.-> IGameServerDashboard
   ArkProvider -.-> IGameServerActions
+  ArkProvider -.-> IGameServerRawCommand
   CobblemonProvider -.-> IGameServerProvider
   CobblemonProvider -.-> IGameServerDashboard
   CobblemonProvider -.-> IGameServerActions
+  CobblemonProvider -.-> IGameServerRawCommand
   CurseForgeIconResolver -.-> IModIconResolver
   EnshroudedProvider --> SteamA2sClient
   EnshroudedProvider -.-> IGameServerProvider
