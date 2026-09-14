@@ -4,4 +4,4 @@ public sealed record GameServerRawCommandHistoryEntry(
     string Command,
     string? Answer,
     string UserName,
-    DateTimeOffset ExecutedAt);
+    DateTime ExecutedAt);
