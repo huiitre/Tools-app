@@ -73,7 +73,15 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
 
         // « stop » coupe la connexion avant de répondre : une absence de réponse n'est pas un refus.
         var answer = await client.ExecuteAsync(command.TrimEnd(), cancellationToken);
-        if (answer is not null && Rejections.Any(rejection => answer.StartsWith(rejection, StringComparison.Ordinal)))
+
+        // « tellraw @a » cible tous les joueurs connectés : sur un serveur vide, le sélecteur ne
+        // matche personne et Minecraft répond « No player was found » avant même d'afficher quoi
+        // que ce soit — un échec du dispatcher de commandes, pas un refus de l'annonce elle-même.
+        // Prévenir un serveur vide n'a rien d'une erreur, contrairement à kick/ban où ce même
+        // message signale un vrai rejet (le joueur ciblé n'est plus connecté).
+        if (actionCode != "announce"
+            && answer is not null
+            && Rejections.Any(rejection => answer.StartsWith(rejection, StringComparison.Ordinal)))
         {
             throw AppException.Validation("GAME_SERVER_ACTION_REJECTED", $"Le serveur a refusé la commande : {answer}");
         }
