@@ -24,6 +24,12 @@ public sealed class GetGameServerDashboardUseCase(
         .OfType<IGameServerDashboard>()
         .ToDictionary(provider => ((IGameServerProvider)provider).GameCode, StringComparer.Ordinal);
 
+    // Seuls les jeux qui implémentent IGameServerRawCommand acceptent une commande libre : les
+    // autres n'ont ni entrée ici ni bloc console côté front.
+    private readonly IReadOnlyDictionary<string, IGameServerRawCommand> rawCommandByGameCode = providers
+        .OfType<IGameServerRawCommand>()
+        .ToDictionary(provider => ((IGameServerProvider)provider).GameCode, StringComparer.Ordinal);
+
     public Task<GameServerDetailsView> ExecuteDetails(string slug, CancellationToken cancellationToken)
     {
         // Les actions sont ajoutées ici et non par le provider : lui ne connaît pas l'appelant.
@@ -34,9 +40,49 @@ public sealed class GetGameServerDashboardUseCase(
             var actions = provider is IGameServerActions actionable
                 ? actionable.Actions.Where(action => CurrentUser.Role?.HasAtLeast(action.Role) == true).ToList()
                 : [];
+            // La commande libre équivaut à un accès admin total au jeu : réservée au rôle le plus
+            // élevé, indépendamment de ce que le jeu déclare.
+            var supportsRawCommand = provider is IGameServerRawCommand
+                                      && CurrentUser.Role?.HasAtLeast(RoleCode.Admin) == true;
 
-            return details with { Actions = actions };
+            return details with { Actions = actions, SupportsRawCommand = supportsRawCommand };
         }, cancellationToken);
+    }
+
+    public async Task<string?> ExecuteRawCommand(string slug, string command, CancellationToken cancellationToken)
+    {
+        var target = await gameServerTargetRepository.FindBySlugAsync(slug)
+            ?? throw AppException.NotFound("GAME_SERVER_NOT_FOUND", $"Aucun serveur de jeu visible pour le slug « {slug} ».");
+
+        if (!rawCommandByGameCode.TryGetValue(target.GameCode, out var rawCommand))
+        {
+            throw AppException.NotFound(
+                "GAME_SERVER_RAW_COMMAND_UNSUPPORTED",
+                $"Le jeu « {target.GameCode} » n'accepte pas de commande libre.");
+        }
+
+        // Toujours ADMIN, quel que soit le jeu : une commande libre n'a pas de rôle propre comme
+        // une action déclarée, elle équivaut à la plus dangereuse d'entre elles.
+        authorizer.EnsureAtLeast(RoleCode.Admin);
+
+        if (string.IsNullOrWhiteSpace(command))
+        {
+            throw AppException.Validation("GAME_SERVER_RAW_COMMAND_EMPTY", "La commande ne peut pas être vide.");
+        }
+
+        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(Timeout);
+
+        try
+        {
+            return await rawCommand.ExecuteRawCommandAsync(target, command.Trim(), timeoutSource.Token);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw AppException.Unavailable(
+                "GAME_SERVER_UNREACHABLE",
+                $"Le serveur « {target.Slug} » n'a pas répondu dans le délai imparti.");
+        }
     }
 
     public async Task ExecuteAction(

@@ -10,7 +10,7 @@ namespace Tools.Api.Modules.Core.GameServers.Infrastructure.Games;
 // ni FPS, ni uptime, ni position : le dashboard affichera « indisponible » pour tout cela. Les
 // commandes vérifiées sur le serveur sont ListPlayers et GetGameLog ; GetChat, GetTimeOfDay,
 // GetServerInfo et ListActiveMods répondent « Server received, But no response!! ».
-public sealed partial class ArkProvider : IGameServerProvider, IGameServerDashboard, IGameServerActions
+public sealed partial class ArkProvider : IGameServerProvider, IGameServerDashboard, IGameServerActions, IGameServerRawCommand
 {
     private const string NoPlayers = "No Players Connected";
 
@@ -61,6 +61,23 @@ public sealed partial class ArkProvider : IGameServerProvider, IGameServerDashbo
 
     private static string Parameter(IReadOnlyDictionary<string, string> parameters, string name) =>
         parameters.TryGetValue(name, out var value) ? value : string.Empty;
+
+    public async Task<string?> ExecuteRawCommandAsync(GameServerTarget target, string command, CancellationToken cancellationToken)
+    {
+        var password = GameServerProtocolConfig.GetString(target.ProtocolConfig, "rconPassword");
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            throw new InvalidOperationException("Aucun mot de passe RCON n'est configuré pour ce serveur.");
+        }
+
+        await using var client = new SourceRconClient();
+        if (!await client.ConnectAsync(target.Host, target.Port, password, cancellationToken))
+        {
+            throw new InvalidOperationException("L'authentification RCON a échoué.");
+        }
+
+        return await client.ExecuteAsync(command, cancellationToken);
+    }
 
     public async Task<GameServerStatus> FetchStatusAsync(GameServerTarget target, CancellationToken cancellationToken)
     {

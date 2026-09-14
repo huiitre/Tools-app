@@ -13,7 +13,7 @@ namespace Tools.Api.Modules.Core.GameServers.Infrastructure.Games;
 // Minecraft moddé Cobblemon, interrogé en RCON. Toutes les commandes utilisées sont vanilla et
 // ont été vérifiées sur le serveur le 11/09/2026 ; elles ne rendent que du texte, lu par des
 // expressions régulières. Aucune ne donne la version, l'uptime ni le journal.
-public sealed partial class CobblemonProvider : IGameServerProvider, IGameServerDashboard, IGameServerActions
+public sealed partial class CobblemonProvider : IGameServerProvider, IGameServerDashboard, IGameServerActions, IGameServerRawCommand
 {
     // Réponses par lesquelles le serveur refuse une commande, vérifiées le 11/09/2026.
     private static readonly string[] Rejections =
@@ -78,6 +78,14 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
         {
             throw AppException.Validation("GAME_SERVER_ACTION_REJECTED", $"Le serveur a refusé la commande : {answer}");
         }
+    }
+
+    public async Task<string?> ExecuteRawCommandAsync(GameServerTarget target, string command, CancellationToken cancellationToken)
+    {
+        await using var client = await ConnectAsync(target, cancellationToken)
+            ?? throw new InvalidOperationException("Connexion ou authentification RCON impossible.");
+
+        return await client.ExecuteAsync(command.TrimEnd(), cancellationToken);
     }
 
     public async Task<GameServerStatus> FetchStatusAsync(GameServerTarget target, CancellationToken cancellationToken)

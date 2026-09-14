@@ -17,4 +17,7 @@ public sealed record GameServerDetailsView(
     IReadOnlyDictionary<string, JsonElement>? Settings,
     // Actions que ce serveur accepte, filtrées sur les droits de l'appelant : ce qui est absent
     // d'ici lui est refusé.
-    IReadOnlyList<GameServerActionDefinition> Actions);
+    IReadOnlyList<GameServerActionDefinition> Actions,
+    // Vrai si le jeu accepte une commande RCON libre ET que l'appelant a le rôle requis (Admin) :
+    // le front n'a donc rien à savoir du rôle, il affiche la console si ce champ est vrai.
+    bool SupportsRawCommand = false);
