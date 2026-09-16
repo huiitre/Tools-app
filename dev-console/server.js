@@ -36,9 +36,10 @@ const MAX_BUFFER = 3000;
 // Absents volontairement : 7dtd et rust, interrogés en A2S qui est de l'UDP — `ssh -L` ne
 // transporte que du TCP. Leurs ports RCON, eux, auraient leur place ici.
 const TUNNELS = [
-  { label: 'palworld', host: '172.19.0.7', port: 8212 }, // API REST d'administration
-  { label: 'ark', host: '172.19.0.7', port: 27020 }, // RCON
-  { label: 'cobblemon', host: '172.19.0.7', port: 25575 }, // RCON
+  { label: 'palworld', host: '172.19.0.4', port: 8212 }, // API REST d'administration
+  { label: 'ark', host: '172.19.0.4', port: 27020 }, // RCON
+  { label: 'cobblemon', host: '172.19.0.4', port: 25575 }, // RCON
+  { label: 'minecraft-all-the-mons', host: '172.19.0.4', port: 25576 }, // RCON
   // humanitz est un conteneur à part sur network_tools (pas dans la netns de wireguard-games,
   // seul son relay socat y est), démarré à la demande. Son IP est attribuée dynamiquement :
   // celle-ci est valable tant qu'il la retrouve, à revérifier s'il a été recréé entre-temps.

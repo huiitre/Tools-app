@@ -128,3 +128,16 @@ export interface GameServerLive {
   log: string[]
   unavailable: string[]
 }
+
+// État live d'un serveur tel que poussé par le scheduler (10s), en cold-start (GET
+// /gameservers/live-state) ou en continu (event WebSocket Core.GameServersLiveUpdated) — même
+// forme dans les deux cas. `live` n'est renseigné que pour les jeux à dashboard (Ark, Cobblemon,
+// Palworld) et seulement si le dernier poll a réussi ; les autres n'ont que le résumé.
+export interface GameServerLiveSnapshot {
+  slug: string
+  online: boolean
+  numPlayers: number | null
+  maxPlayers: number | null
+  checkedAt: string
+  live: GameServerLive | null
+}

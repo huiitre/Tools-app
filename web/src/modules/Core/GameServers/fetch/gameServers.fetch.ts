@@ -2,7 +2,7 @@ import { clientCore } from '@/services/axiosInstance'
 import type {
   GameServer,
   GameServerDetails,
-  GameServerLive,
+  GameServerLiveSnapshot,
   GameServerMods,
   GameServerRawCommandHistoryEntry,
 } from '../types/gameServers.types'
@@ -17,8 +17,10 @@ export async function fetchGameServerDetails(slug: string): Promise<GameServerDe
   return data
 }
 
-export async function fetchGameServerLive(slug: string): Promise<GameServerLive> {
-  const { data } = await clientCore.get<GameServerLive>(`/gameservers/${slug}/live`)
+// Cold-start uniquement (état courant sans attendre le prochain tick) : la mise à jour continue
+// passe par l'event WebSocket Core.GameServersLiveUpdated, jamais par un nouvel appel à ceci.
+export async function fetchGameServersLiveState(): Promise<GameServerLiveSnapshot[]> {
+  const { data } = await clientCore.get<GameServerLiveSnapshot[]>('/gameservers/live-state')
   return data
 }
 

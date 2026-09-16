@@ -13,6 +13,7 @@ public sealed class GetGameServerDashboardUseCase(
     UseCaseAuthorizer authorizer,
     IGameServerTargetRepository gameServerTargetRepository,
     IGameServerRawCommandHistoryRepository rawCommandHistoryRepository,
+    PollGameServersUseCase pollGameServersUseCase,
     IEnumerable<IGameServerProvider> providers) : SecuredUseCase(authorizer)
 {
     // Borne les appels réseau : un serveur qui accepte la connexion sans jamais répondre
@@ -93,6 +94,10 @@ public sealed class GetGameServerDashboardUseCase(
         // jeu, il n'y a rien à tracer (déjà dans les logs techniques).
         await rawCommandHistoryRepository.InsertAsync(target.Id, CurrentUser.UserId, command.Trim(), answer);
 
+        // Une commande libre peut changer n'importe quoi (op, kick, gamerule…) : on ne sait pas
+        // quoi, donc on rafraîchit toujours, plutôt que d'attendre jusqu'à 10s le prochain tick.
+        await pollGameServersUseCase.RefreshOneAsync(target, cancellationToken);
+
         return answer;
     }
 
@@ -168,6 +173,10 @@ public sealed class GetGameServerDashboardUseCase(
                 "GAME_SERVER_UNREACHABLE",
                 $"Le serveur « {target.Slug} » n'a pas répondu dans le délai imparti.");
         }
+
+        // Sans ça, l'effet d'un kick/ban/annonce ne serait visible qu'au prochain tick du
+        // scheduler partagé (jusqu'à 10s) — trop lent pour une action que l'admin vient de lancer.
+        await pollGameServersUseCase.RefreshOneAsync(target, cancellationToken);
     }
 
     public Task<GameServerLiveView> ExecuteLive(string slug, CancellationToken cancellationToken)

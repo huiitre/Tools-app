@@ -18,7 +18,7 @@ watch(hideOffline, value => {
 
 onMounted(() => {
   store.ensureLoaded()
-  store.startAutoRefresh()
+  store.ensureLiveSubscribed()
 })
 
 const dashboardServer = ref<GameServer | null>(null)
