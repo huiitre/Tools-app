@@ -17,6 +17,7 @@ flowchart LR
   GameServerListRow["GameServerListRow"]
   GameServerLiveCompanion["GameServerLiveCompanion"]
   GameServerLivePlayer["GameServerLivePlayer"]
+  GameServerLiveSnapshot["GameServerLiveSnapshot"]
   GameServerLiveStructure["GameServerLiveStructure"]
   GameServerLiveView["GameServerLiveView"]
   GameServerModEntry["GameServerModEntry"]
@@ -35,11 +36,13 @@ flowchart LR
   GameServersSyncUseCase["GameServersSyncUseCase"]
   GetGameServerDashboardUseCase["GetGameServerDashboardUseCase"]
   GetGameServerModsUseCase["GetGameServerModsUseCase"]
+  GetGameServersLiveStateUseCase["GetGameServersLiveStateUseCase"]
   GetGameServersUseCase["GetGameServersUseCase"]
   IGameServerActions(["IGameServerActions"])
   IGameServerAssetUrlBuilder(["IGameServerAssetUrlBuilder"])
   IGameServerDashboard(["IGameServerDashboard"])
   IGameServerDashboardRepository(["IGameServerDashboardRepository"])
+  IGameServerLiveStateStore(["IGameServerLiveStateStore"])
   IGameServerPollingRepository(["IGameServerPollingRepository"])
   IGameServerProvider(["IGameServerProvider"])
   IGameServerRawCommand(["IGameServerRawCommand"])
@@ -66,6 +69,7 @@ flowchart LR
   HostOverridingGameServerTargetRepository["HostOverridingGameServerTargetRepository"]
   HumanitzProvider["HumanitzProvider"]
   HumanitzRconClient["HumanitzRconClient"]
+  InMemoryGameServerLiveStateStore["InMemoryGameServerLiveStateStore"]
   ModrinthIconResolver["ModrinthIconResolver"]
   PalworldProvider["PalworldProvider"]
   PostgresGameServerRepository["PostgresGameServerRepository"]
@@ -98,6 +102,7 @@ flowchart LR
   GameServerModsView --> GameServerModView
   GameServerSyncEntry --> GameServerModEntry
   GameServersController --> GetGameServerModsUseCase
+  GameServersController --> GetGameServersLiveStateUseCase
   GameServersController --> GetGameServersUseCase
   GameServersManifestProvider -.-> IGameServersManifestProvider
   GameServersSyncController --> GameServersSyncUseCase
@@ -109,17 +114,21 @@ flowchart LR
   GetGameServerDashboardUseCase --> IGameServerProvider
   GetGameServerDashboardUseCase --> IGameServerRawCommandHistoryRepository
   GetGameServerDashboardUseCase --> IGameServerTargetRepository
+  GetGameServerDashboardUseCase --> PollGameServersUseCase
   GetGameServerModsUseCase --> IGameServerDashboardRepository
+  GetGameServersLiveStateUseCase --> IGameServerLiveStateStore
   GetGameServersUseCase --> IGameServerDashboardRepository
   GetGameServersUseCase --> IGameServerProvider
   HostOverridingGameServerPollingRepository --> IGameServerPollingRepository
   HostOverridingGameServerTargetRepository --> IGameServerTargetRepository
   HumanitzProvider --> HumanitzRconClient
   HumanitzProvider -.-> IGameServerProvider
+  InMemoryGameServerLiveStateStore -.-> IGameServerLiveStateStore
   ModrinthIconResolver -.-> IModIconResolver
   PalworldProvider -.-> IGameServerProvider
   PalworldProvider -.-> IGameServerDashboard
   PalworldProvider -.-> IGameServerActions
+  PollGameServersUseCase --> IGameServerLiveStateStore
   PollGameServersUseCase --> IGameServerPollingRepository
   PollGameServersUseCase --> IGameServerProvider
   PostgresGameServerRepository -.-> IGameServerRepository

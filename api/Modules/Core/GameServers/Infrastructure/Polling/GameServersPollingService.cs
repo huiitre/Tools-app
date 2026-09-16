@@ -3,12 +3,13 @@ using Tools.Api.Modules.Core.GameServers.Application.Usecases;
 namespace Tools.Api.Modules.Core.GameServers.Infrastructure.Polling;
 
 // Le BackgroundService est singleton : un scope est créé à chaque passage avant de résoudre le
-// use case scoped et son repository PostgreSQL. Le premier poll est immédiat, puis toutes les 60 s.
+// use case scoped et son repository PostgreSQL. Le premier poll est immédiat, puis toutes les 10 s
+// (voir la mémoire projet GameServers → push WebSocket pour le pourquoi de ce rythme).
 public sealed class GameServersPollingService(
     IServiceScopeFactory scopeFactory,
     ILogger<GameServersPollingService> logger) : BackgroundService
 {
-    private static readonly TimeSpan Interval = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan Interval = TimeSpan.FromSeconds(10);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

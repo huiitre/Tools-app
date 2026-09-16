@@ -12,7 +12,7 @@ const popoverRef = ref<HTMLElement | null>(null)
 
 onMounted(() => {
   store.ensureLoaded()
-  store.startAutoRefresh()
+  store.ensureLiveSubscribed()
   document.addEventListener('click', close)
   window.addEventListener('scroll', onScroll, true)
 })

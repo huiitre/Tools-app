@@ -1,0 +1,15 @@
+info:
+  name: Watch game servers hub (WebSocket)
+  type: websocket
+  seq: 10
+
+websocket:
+  url: "ws://localhost:5090/hub?access_token={{authToken}}"
+  message:
+    type: json
+    data: "{\"protocol\":\"json\",\"version\":1}"
+
+settings:
+  timeout: 0
+
+docs: "Connexion brute au hub SignalR (CoreHub) pour observer l'event Core.GameServersLiveUpdated poussé par PollGameServersUseCase toutes les 10s. SignalR n'est PAS du WebSocket nu : après l'ouverture de la connexion, il faut envoyer le message ci-dessus (le handshake SignalR) AVANT toute chose — le serveur ignore tout tant qu'il n'est pas reçu. Chaque message SignalR (handshake compris) est terminé par le caractère de séparation d'enregistrement U+001E, déjà inclus à la fin du message ci-dessus (`` final). Une fois le handshake accepté (réponse `{}` suivie du même séparateur), les messages poussés arrivent sous la forme `{\"type\":1,\"target\":\"Core.GameServersLiveUpdated\",\"arguments\":[[...]]}` — le tableau contient les GameServerLiveSnapshot de tous les serveurs, identique à la réponse de GET /gameservers/live-state. `access_token` en query string : c'est comme ça que le hub authentifie, un navigateur ne peut pas poser de header custom sur une poignée de main WebSocket. En local, `ws://` suffit (pas de TLS) ; en QA/prod ce serait `wss://`."

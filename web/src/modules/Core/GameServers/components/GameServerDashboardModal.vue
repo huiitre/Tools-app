@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import toast from '@/services/toast'
-import { executeGameServerAction, fetchGameServerDetails, fetchGameServerLive } from '../fetch/gameServers.fetch'
+import { executeGameServerAction, fetchGameServerDetails } from '../fetch/gameServers.fetch'
 import GameServerActionCard from './GameServerActionCard.vue'
 import GameServerRawCommandConsole from './GameServerRawCommandConsole.vue'
-import type { GameServer, GameServerDetails, GameServerLive } from '../types/gameServers.types'
+import type { GameServer, GameServerDetails } from '../types/gameServers.types'
 import { mapAdapterFor } from '../map/mapRegistry'
 import GameServerMapPanel from '../map/GameServerMapPanel.vue'
 import { useGameServersStore } from '../store/gameServers.store'
@@ -13,22 +13,20 @@ const props = defineProps<{ server: GameServer }>()
 const emit = defineEmits<{ close: [] }>()
 const store = useGameServersStore()
 
-const REFRESH_INTERVAL_MS = 5000
-// L'appel dure quelques dizaines de millisecondes : sans plancher, l'indicateur clignerait sans
-// jamais être vu. Même valeur que le dashboard Palworld.
-const MIN_SPINNER_DURATION_MS = 500
+// Null tant qu'aucun snapshot n'est encore arrivé pour ce serveur (cold-start en vol, ou premier
+// push pas encore reçu) — le template affiche déjà « Indisponible » pour un `live` null.
+const live = computed(() => store.liveDetailBySlug(props.server.slug))
+// Squelette du KPI/joueurs tant que le live n'est pas encore là — indépendant de `details`, qui a
+// son propre aller-retour HTTP et ne doit pas retarder l'affichage d'une donnée déjà en mémoire.
+const liveLoading = computed(() => live.value === null)
 
 // Null pour un jeu dont aucune carte n'est décrite : la section n'est alors pas rendue.
 const mapAdapter = mapAdapterFor(props.server.gameCode)
 
 const details = ref<GameServerDetails | null>(null)
-const live = ref<GameServerLive | null>(null)
 const groups = ref<Record<string, string[]>>({})
-const loading = ref(true)
-const refreshing = ref(false)
 const error = ref<string | null>(null)
 
-let refreshIntervalId: number | undefined
 let previousBodyOverflow = ''
 
 // Aucun bloc n'est masqué quand la donnée manque : le jeu ne l'expose pas, on le dit.
@@ -76,9 +74,9 @@ async function runAction(actionCode: string, label: string, parameters: Record<s
   runningAction.value = actionCode
   try {
     await executeGameServerAction(props.server.slug, actionCode, parameters)
+    // Le résultat n'est plus rafraîchi à la demande : il apparaît via le prochain push du
+    // scheduler (10s max), poussé à tout le monde plutôt que déclenché par ce dashboard.
     toast.success(`${label} : commande envoyée`)
-    // Le résultat est visible dans les données du serveur, pas dans la réponse.
-    await refreshLive()
   } catch {
     toast.error(`${label} : échec`)
   } finally {
@@ -108,30 +106,6 @@ function healthPercent(health: number | null, maxHealth: number | null): number 
     : 0
 }
 
-async function refreshLive() {
-  refreshing.value = true
-  const startedAt = Date.now()
-  try {
-    // Dans le même cycle que le live : un seul aller-retour perçu, une seule gestion d'erreur.
-    const [liveResult, groupsResult] = await Promise.all([
-      fetchGameServerLive(props.server.slug),
-      mapAdapter?.loadGroups?.() ?? Promise.resolve({}),
-    ])
-    live.value = liveResult
-    store.appendLog(props.server.slug, liveResult.log)
-    groups.value = groupsResult
-    error.value = null
-  } catch {
-    error.value = 'Serveur injoignable — dernières données connues affichées.'
-  } finally {
-    const elapsed = Date.now() - startedAt
-    if (elapsed < MIN_SPINNER_DURATION_MS) {
-      await new Promise(resolve => setTimeout(resolve, MIN_SPINNER_DURATION_MS - elapsed))
-    }
-    refreshing.value = false
-  }
-}
-
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') emit('close')
 }
@@ -141,30 +115,27 @@ onMounted(async () => {
   previousBodyOverflow = document.body.style.overflow
   document.body.style.overflow = 'hidden'
 
+  // Abonnement idempotent : si le widget est déjà monté (cas normal, le dashboard s'ouvre
+  // depuis lui), c'est un no-op immédiat, le live est déjà dans le store.
+  store.ensureLiveSubscribed()
+
   try {
-    // Les détails ne bougent pas : une seule fois, contrairement au reste.
-    const [detailsResult, liveResult, groupsResult] = await Promise.all([
+    // Seuls les détails sont propres à ce dashboard et ne bougent pas : une seule fois. Le live
+    // vient du store (poll + push WebSocket), plus aucun appel dédié à ce serveur ici.
+    const [detailsResult, groupsResult] = await Promise.all([
       fetchGameServerDetails(props.server.slug),
-      fetchGameServerLive(props.server.slug),
       mapAdapter?.loadGroups?.() ?? Promise.resolve({}),
     ])
     details.value = detailsResult
-    live.value = liveResult
-    store.appendLog(props.server.slug, liveResult.log)
     groups.value = groupsResult
   } catch {
     error.value = 'Impossible de charger les données du serveur.'
-  } finally {
-    loading.value = false
   }
-
-  refreshIntervalId = window.setInterval(refreshLive, REFRESH_INTERVAL_MS)
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', onKeydown)
   document.body.style.overflow = previousBodyOverflow
-  if (refreshIntervalId) clearInterval(refreshIntervalId)
 })
 </script>
 
@@ -188,9 +159,6 @@ onUnmounted(() => {
             <h2 class="server-name">{{ details?.serverName ?? server.serverName }}</h2>
             <span v-if="details?.version" class="server-version">{{ details.version }}</span>
             <span v-else class="server-version muted">{{ UNAVAILABLE }}</span>
-            <span class="refresh-indicator" :class="{ spinning: refreshing }" title="Actualisation automatique (5s)">
-              <i class="mdi mdi-autorenew" />
-            </span>
           </div>
           <p class="server-description">
             <template v-if="details?.description">{{ details.description }}</template>
@@ -208,7 +176,7 @@ onUnmounted(() => {
             <div class="kpi-body">
               <div class="kpi-label">Joueurs connectés</div>
               <div class="kpi-value" :class="{ unavailable: playerCountLabel === UNAVAILABLE }">
-                <span v-if="loading" class="skeleton-value" />
+                <span v-if="liveLoading" class="skeleton-value" />
                 <template v-else>{{ playerCountLabel }}</template>
               </div>
             </div>
@@ -218,8 +186,8 @@ onUnmounted(() => {
             <div class="kpi-icon kpi-icon--green"><i class="mdi mdi-speedometer" /></div>
             <div class="kpi-body">
               <div class="kpi-label">FPS serveur</div>
-              <div class="kpi-value" :class="{ unavailable: !loading && live?.fps === null }">
-                <span v-if="loading" class="skeleton-value" />
+              <div class="kpi-value" :class="{ unavailable: !liveLoading && live?.fps === null }">
+                <span v-if="liveLoading" class="skeleton-value" />
                 <template v-else>{{ metric(live?.fps) }}</template>
               </div>
               <div v-if="fpsSubLabel" class="kpi-sub">{{ fpsSubLabel }}</div>
@@ -230,8 +198,8 @@ onUnmounted(() => {
             <div class="kpi-icon kpi-icon--purple"><i class="mdi mdi-calendar-outline" /></div>
             <div class="kpi-body">
               <div class="kpi-label">Jours écoulés</div>
-              <div class="kpi-value" :class="{ unavailable: !loading && live?.inGameDay === null }">
-                <span v-if="loading" class="skeleton-value" />
+              <div class="kpi-value" :class="{ unavailable: !liveLoading && live?.inGameDay === null }">
+                <span v-if="liveLoading" class="skeleton-value" />
                 <template v-else>{{ metric(live?.inGameDay) }}</template>
               </div>
             </div>
@@ -241,8 +209,8 @@ onUnmounted(() => {
             <div class="kpi-icon kpi-icon--orange"><i class="mdi mdi-home-group" /></div>
             <div class="kpi-body">
               <div class="kpi-label">Bases</div>
-              <div class="kpi-value" :class="{ unavailable: !loading && live?.baseCount === null }">
-                <span v-if="loading" class="skeleton-value" />
+              <div class="kpi-value" :class="{ unavailable: !liveLoading && live?.baseCount === null }">
+                <span v-if="liveLoading" class="skeleton-value" />
                 <template v-else>{{ metric(live?.baseCount) }}</template>
               </div>
             </div>
@@ -253,7 +221,7 @@ onUnmounted(() => {
             <div class="kpi-body">
               <div class="kpi-label">Uptime</div>
               <div class="kpi-value" :class="{ unavailable: uptimeLabel === UNAVAILABLE }">
-                <span v-if="loading" class="skeleton-value" />
+                <span v-if="liveLoading" class="skeleton-value" />
                 <template v-else>{{ uptimeLabel }}</template>
               </div>
             </div>
@@ -265,7 +233,7 @@ onUnmounted(() => {
             <h3 class="section-title">Joueurs connectés</h3>
           </div>
 
-          <div v-if="loading" class="players-list">
+          <div v-if="liveLoading" class="players-list">
             <div v-for="i in 3" :key="i" class="player-row">
               <span class="skeleton-line" style="width: 120px" />
               <span class="skeleton-line" style="width: 40px" />
@@ -537,26 +505,6 @@ onUnmounted(() => {
 .server-version {
   font-size: 0.78rem;
   color: var(--pico-muted-color);
-}
-
-.refresh-indicator {
-  margin-left: auto;
-  display: inline-flex;
-  color: var(--pico-muted-color);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-
-  i { font-size: 1.1rem; }
-}
-
-.refresh-indicator.spinning {
-  opacity: 1;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 .server-description {

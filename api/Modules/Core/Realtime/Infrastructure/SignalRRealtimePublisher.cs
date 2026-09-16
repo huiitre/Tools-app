@@ -15,4 +15,7 @@ public sealed class SignalRRealtimePublisher(IHubContext<CoreHub> hubContext) : 
         var groups = userIds.Select(CoreHub.GroupName).ToArray();
         return hubContext.Clients.Groups(groups).SendAsync(eventType, payload);
     }
+
+    public Task PublishToAllAsync(string eventType, object payload) =>
+        hubContext.Clients.All.SendAsync(eventType, payload);
 }

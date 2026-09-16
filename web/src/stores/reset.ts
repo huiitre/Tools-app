@@ -13,9 +13,9 @@ export const resetSessionStores = () => {
   useAlmanaxStore().$reset();
   useRiotStore().clearAll();
 
-  // stopAutoRefresh() avant $reset() : l'intervalle vit dans une variable JS indépendante
-  // du state Pinia, $reset() seul ne l'arrêterait pas et en perdrait la référence.
+  // unsubscribeLive() avant $reset() : l'abonnement au hub vit hors du state Pinia, $reset()
+  // seul ne le couperait pas et en perdrait la référence.
   const gameServers = useGameServersStore();
-  gameServers.stopAutoRefresh();
+  gameServers.unsubscribeLive();
   gameServers.$reset();
 }

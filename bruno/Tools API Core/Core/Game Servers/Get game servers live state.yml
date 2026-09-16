@@ -1,0 +1,19 @@
+info:
+  name: Get game servers live state
+  type: http
+  seq: 9
+
+http:
+  method: GET
+  url: "{{apiUrl}}/gameservers/live-state"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: "État en mémoire de tous les serveurs, alimenté par le poll (PollGameServersUseCase, toutes les 10s) et diffusé par ailleurs à tout le monde via l'event WebSocket Core.GameServersLiveUpdated. Cette route ne sert qu'à ne pas attendre le prochain tick (jusqu'à 10s) à la connexion — page qui charge, WebSocket qui vient de s'établir. Réponse 200 `[{ slug, online, numPlayers, maxPlayers, checkedAt, live }]` — `live` (le détail complet façon dashboard : joueurs, position, journal…) n'est renseigné que pour les jeux qui implémentent IGameServerDashboard (Ark, Cobblemon, Palworld) et seulement si le dernier poll a réussi ; les autres n'ont que le résumé. Liste vide si aucun poll n'a encore eu lieu depuis le démarrage de l'API (juste après un déploiement) — ce n'est pas une erreur, le premier tick est immédiat. Un JWT avec au moins le rôle READ_ONLY est requis."

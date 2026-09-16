@@ -35,6 +35,10 @@ public static class GameServersModule
             : new HostOverridingGameServerTargetRepository(services.GetRequiredService<PostgresGameServerRepository>(), hostOverride));
         builder.Services.AddScoped<IGameServerRawCommandHistoryRepository>(services => services.GetRequiredService<PostgresGameServerRepository>());
         builder.Services.AddSingleton<IGameServerAssetUrlBuilder, GameServerAssetUrlBuilder>();
+        // Une seule instance pour toute l'appli : c'est elle que le poll (scoped, un par tick)
+        // écrit et que n'importe quel lecteur (une future connexion WebSocket) doit relire sans
+        // attendre le prochain tick.
+        builder.Services.AddSingleton<IGameServerLiveStateStore, InMemoryGameServerLiveStateStore>();
         builder.Services.AddHttpClient<IGameServersManifestProvider, GameServersManifestProvider>((services, client) =>
         {
             var appOptions = services.GetRequiredService<IOptions<AppOptions>>().Value;
@@ -88,6 +92,7 @@ public static class GameServersModule
 
         builder.Services.AddScoped<PollGameServersUseCase>();
         builder.Services.AddScoped<GetGameServersUseCase>();
+        builder.Services.AddScoped<GetGameServersLiveStateUseCase>();
         builder.Services.AddScoped<GetGameServerDashboardUseCase>();
         builder.Services.AddScoped<GetGameServerModsUseCase>();
 
