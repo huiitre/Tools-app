@@ -35,23 +35,44 @@ public sealed class GetGameServerDashboardUseCase(
         .OfType<IGameServerRawCommand>()
         .ToDictionary(provider => ((IGameServerProvider)provider).GameCode, StringComparer.Ordinal);
 
-    public Task<GameServerDetailsView> ExecuteDetails(string slug, CancellationToken cancellationToken)
+    public async Task<GameServerDetailsView> ExecuteDetails(string slug, CancellationToken cancellationToken)
     {
+        var target = await gameServerTargetRepository.FindBySlugAsync(slug)
+            ?? throw AppException.NotFound("GAME_SERVER_NOT_FOUND", $"Aucun serveur de jeu visible pour le slug « {slug} ».");
+
+        if (!dashboardsByGameCode.TryGetValue(target.GameCode, out var provider))
+        {
+            throw AppException.NotFound(
+                "GAME_SERVER_DASHBOARD_UNSUPPORTED",
+                $"Aucun dashboard n'est disponible pour le jeu « {target.GameCode} ».");
+        }
+
+        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(Timeout);
+
+        GameServerDetailsView details;
+        try
+        {
+            details = await provider.FetchDetailsAsync(target, timeoutSource.Token);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw AppException.Unavailable(
+                "GAME_SERVER_UNREACHABLE",
+                $"Le serveur « {target.Slug} » n'a pas répondu dans le délai imparti.");
+        }
+
         // Les actions sont ajoutées ici et non par le provider : lui ne connaît pas l'appelant.
         // Seules celles que son rôle autorise lui sont annoncées.
-        return Execute(slug, async (provider, target, token) =>
-        {
-            var details = await provider.FetchDetailsAsync(target, token);
-            var actions = provider is IGameServerActions actionable
-                ? actionable.Actions.Where(action => CurrentUser.Role?.HasAtLeast(action.Role) == true).ToList()
-                : [];
-            // La commande libre équivaut à un accès admin total au jeu : réservée au rôle le plus
-            // élevé, indépendamment de ce que le jeu déclare.
-            var supportsRawCommand = provider is IGameServerRawCommand
-                                      && CurrentUser.Role?.HasAtLeast(RoleCode.Admin) == true;
+        var actions = provider is IGameServerActions actionable
+            ? actionable.Actions.Where(action => CurrentUser.Role?.HasAtLeast(action.Role) == true).ToList()
+            : [];
+        // La commande libre équivaut à un accès admin total au jeu : réservée au rôle le plus
+        // élevé, indépendamment de ce que le jeu déclare.
+        var supportsRawCommand = provider is IGameServerRawCommand
+                                  && CurrentUser.Role?.HasAtLeast(RoleCode.Admin) == true;
 
-            return details with { Actions = actions, SupportsRawCommand = supportsRawCommand };
-        }, cancellationToken);
+        return details with { Actions = actions, SupportsRawCommand = supportsRawCommand };
     }
 
     public async Task<string?> ExecuteRawCommand(string slug, string command, CancellationToken cancellationToken)
@@ -179,38 +200,4 @@ public sealed class GetGameServerDashboardUseCase(
         await pollGameServersUseCase.RefreshOneAsync(target, cancellationToken);
     }
 
-    public Task<GameServerLiveView> ExecuteLive(string slug, CancellationToken cancellationToken)
-    {
-        return Execute(slug, (provider, target, token) => provider.FetchLiveAsync(target, token), cancellationToken);
-    }
-
-    private async Task<T> Execute<T>(
-        string slug,
-        Func<IGameServerDashboard, GameServerTarget, CancellationToken, Task<T>> fetch,
-        CancellationToken cancellationToken)
-    {
-        var target = await gameServerTargetRepository.FindBySlugAsync(slug)
-            ?? throw AppException.NotFound("GAME_SERVER_NOT_FOUND", $"Aucun serveur de jeu visible pour le slug « {slug} ».");
-
-        if (!dashboardsByGameCode.TryGetValue(target.GameCode, out var provider))
-        {
-            throw AppException.NotFound(
-                "GAME_SERVER_DASHBOARD_UNSUPPORTED",
-                $"Aucun dashboard n'est disponible pour le jeu « {target.GameCode} ».");
-        }
-
-        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutSource.CancelAfter(Timeout);
-
-        try
-        {
-            return await fetch(provider, target, timeoutSource.Token);
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            throw AppException.Unavailable(
-                "GAME_SERVER_UNREACHABLE",
-                $"Le serveur « {target.Slug} » n'a pas répondu dans le délai imparti.");
-        }
-    }
 }
