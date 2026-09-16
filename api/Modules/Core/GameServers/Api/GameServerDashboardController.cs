@@ -5,7 +5,10 @@ using Tools.Api.Modules.Core.GameServers.Application.Usecases;
 namespace Tools.Api.Modules.Core.GameServers.Api;
 
 // Interrogation en direct d'un serveur, par opposition à GameServersController qui ne sert que le
-// snapshot du poll. Details est chargé à l'ouverture, live est rafraîchi.
+// snapshot du poll/live-state. Details est chargé une fois à l'ouverture ; le live (joueurs,
+// position, journal…) ne passe plus par ici depuis le push WebSocket (Core.GameServersLiveUpdated,
+// voir PollGameServersUseCase) — GET .../live a été retiré, remplacé par ce push et le cold-start
+// GET /gameservers/live-state.
 [ApiController]
 [Route("gameservers/{slug}")]
 public class GameServerDashboardController : ControllerBase
@@ -58,14 +61,5 @@ public class GameServerDashboardController : ControllerBase
         CancellationToken cancellationToken)
     {
         return getGameServerDashboardUseCase.ExecuteRawCommandHistory(slug, cancellationToken);
-    }
-
-    [HttpGet("live")]
-    public Task<GameServerLiveView> GetLive(
-        string slug,
-        [FromServices] GetGameServerDashboardUseCase getGameServerDashboardUseCase,
-        CancellationToken cancellationToken)
-    {
-        return getGameServerDashboardUseCase.ExecuteLive(slug, cancellationToken);
     }
 }

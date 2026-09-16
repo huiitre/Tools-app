@@ -51,6 +51,10 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
         new("ban", "Bannir un joueur", "mdi-account-cancel-outline", RoleCode.Admin, true,
             [new("playerId", "Joueur", "player", true, null), new("reason", "Raison", "text", false, "Facultative")]),
         new("restart", "Redémarrer le serveur", "mdi-restart", RoleCode.Admin, true, []),
+        // Pas de « save » vanilla ici : c'est le mod SimpleBackups qui tient lieu de sauvegarde,
+        // avec son propre format d'archive. Même code que les autres jeux (Ark, Palworld) pour
+        // l'uniformité du bouton, la commande RCON diffère seulement en interne.
+        new("save", "Sauvegarder le monde", "mdi-content-save-outline", RoleCode.Moderator, false, []),
     ];
 
     public async Task ExecuteAsync(
@@ -68,6 +72,12 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
             "kick" => $"kick {await ResolvePlayerAsync(client, Parameter(parameters, "playerId"), cancellationToken)} {Reason(parameters)}",
             "ban" => $"ban {await ResolvePlayerAsync(client, Parameter(parameters, "playerId"), cancellationToken)} {Reason(parameters)}",
             "restart" => "stop",
+            // Fire-and-forget côté mod (un Thread démarré puis oublié) : la réponse RCON ne dit
+            // jamais si le backup a réussi, seulement si la commande a été acceptée. Vérifié en
+            // direct le 16/09/2026 : une vraie erreur de syntaxe répond
+            // « Unknown or incomplete command… » (bien capté par Rejections plus bas), un succès
+            // ne répond rien du tout.
+            "save" => "simplebackups backup start",
             _ => throw new InvalidOperationException($"Action inconnue : {actionCode}."),
         };
 

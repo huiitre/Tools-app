@@ -743,25 +743,36 @@ ex. `WorkshopCreateBar.vue`) sans avoir à les corriger un par un. Ne touche pas
 - Pas de géolocalisation des marchands (abandonné, cf. recherche du 06/08 : position hors DataTable,
   mécanisme spawner non percé).
 
-## Module Core/GameServers — widget et dashboard serveur (2026-08-29)
+## Module Core/GameServers — widget et dashboard serveur (2026-08-29, live en WebSocket depuis le 16/09/2026)
 
-`src/modules/Core/GameServers/` sert deux écrans : le **widget** de la home (liste des serveurs,
-lue en base par l'API, rafraîchie toutes les 60 s) et le **dashboard**, une popup centrée ouverte
-au clic sur la bannière d'une carte — il n'y a **aucune route front**, la popup est montée par
-`GameServersWidget`.
+`src/modules/Core/GameServers/` sert deux écrans : le **widget** de la home (liste des serveurs)
+et le **dashboard**, une popup centrée ouverte au clic sur la bannière d'une carte — il n'y a
+**aucune route front**, la popup est montée par `GameServersWidget`.
+
+**Les données live (online, joueurs, position, journal) ne sont plus obtenues par polling HTTP.**
+Côté API, `PollGameServersUseCase` interroge tous les serveurs de jeu toutes les 10 s et pousse le
+résultat à tout le monde via SignalR (event `Core.GameServersLiveUpdated`, hub `CoreHub`) — aucun
+composant front ne rappelle plus jamais un serveur de jeu lui-même. `gameServers.store.ts` fait un
+seul fetch de cold-start (`GET /gameservers/live-state`) à l'abonnement puis écoute cet event pour
+toujours ; home et dashboard lisent le même store, aucun des deux ne fait sa propre boucle. Détails
+complets, pièges rencontrés (skeleton du dashboard resté câblé sur le mauvais état de chargement,
+reconnexion initiale de `coreHubConnection` jamais retentée) : mémoire projet
+`project_gameservers_websocket_push`. Ce qui reste en HTTP classique : la liste statique
+(`GET /gameservers` — nom, image, mods, une fois par session) et les mods/modpack.
 
 ```
 components/  GameServerCard.vue            boutons « Dashboard » (hasDashboard) et « N mods » (modCount/hasModpack)
-             GameServerDashboardModal.vue  la popup : details une fois, live toutes les 5 s
+             GameServerDashboardModal.vue  la popup : details une fois (HTTP), live lu depuis le store (push)
              GameServerModsModal.vue       liste des mods et téléchargement du modpack
              GameServerActionCard.vue      un formulaire par action déclarée
+             GameServerRawCommandConsole.vue console RCON libre (rôle ADMIN), historique persisté
 map/         GameServerMapPanel.vue        onglets, colonne latérale, marqueurs
              GameServerMapFrame.vue        rendu canvas (zoom/pan), déplacé depuis Palworld
              GameServerMapSidebar.vue      colonne repliable, idem
              GameServerMapLayerSection.vue calques décochables, idem
              mapAdapter.ts                 le contrat que remplit chaque jeu
              mapRegistry.ts                gameCode → adaptateur
-store/       gameServers.store.ts          liste des serveurs, journaux cumulés par slug
+store/       gameServers.store.ts          static (sync) + live (push WebSocket) fusionnés, journaux cumulés par slug
 ```
 
 **Le front ne connaît aucun jeu, sauf en un point.** `hasDashboard` vient de l'API (elle sait quels
@@ -777,15 +788,17 @@ direct ne donne que les connectés. Il y fait aussi la conversion d'identifiant 
 deux sources (`8B72…` sans tirets côté direct, UUID canonique côté snapshot) : sans elle, aucune
 base ne retrouve ses joueurs. Cet import disparaîtra quand `serverdata` sera migré en C#.
 
-`loadGroups()` part dans le **même `Promise.all`** que le live : un seul cycle, une seule gestion
-d'erreur.
+`loadGroups()` part dans le **même `Promise.all`** que `fetchGameServerDetails` à l'ouverture du
+dashboard (le live n'y est plus : il vient du store, pas d'un fetch propre à ce composant).
 
-**Le journal serveur est cumulé côté front (11/09/2026).** `GetGameLog` vide celui d'Ark à la
-lecture : chaque appel live ne rend que les lignes apparues depuis le précédent. Le store les
-accumule dans `logs` (indexé par slug), garde les **500 dernières**, et survit à la fermeture de la
-popup ; le bouton « Vider » de l'en-tête de section le remet à zéro, et `$reset()` le purge à la
-déconnexion. Contrat qui en découle côté API : un provider ne met dans `log` que des lignes
-nouvelles, jamais un instantané, sinon elles seraient dupliquées à chaque rafraîchissement.
+**Le journal serveur est cumulé côté front (11/09/2026, alimenté par le push depuis le
+16/09/2026).** `GetGameLog` vide celui d'Ark à la lecture : chaque snapshot poussé par le
+scheduler (10 s, tous les serveurs, dashboard ouvert ou non) ne porte que les lignes apparues
+depuis le précédent. Le store les accumule dans `logs` (indexé par slug), garde les **500
+dernières**, et survit à la fermeture de la popup ; le bouton « Vider » de l'en-tête de section le
+remet à zéro, et `$reset()` le purge à la déconnexion. Contrat qui en découle côté API : un
+provider ne met dans `log` que des lignes nouvelles, jamais un instantané, sinon elles seraient
+dupliquées à chaque tick.
 
 **Mods et modpack (11/09/2026).** Le bouton « N mods » de la carte n'apparaît que si l'API
 annonce `modCount > 0` ou `hasModpack` ; il ouvre `GameServerModsModal`, qui appelle

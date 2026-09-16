@@ -29,12 +29,15 @@ L'API C# ne lit jamais `/data/docker/games`.
   `tools_core/gameservers/gameservers.json` depuis le CDN d'assets, valide le
   tableau entier puis, dans une transaction, upsert les manifests par `slug`
   et supprime les lignes absentes du scan, sans modifier les colonnes de statut.
-- Le poll écrit uniquement `online`, `num_players`, `max_players` et
-  `checked_at`. Une erreur ou un timeout est isolé par serveur et se traduit
-  par `online = false` pour ce serveur seulement.
+- Le poll écrit `online`, `num_players`, `max_players` et `checked_at` en base
+  (toujours, pour la home) et le même état en mémoire (`IGameServerLiveStateStore`,
+  pour le push — voir plus bas). Une erreur ou un timeout est isolé par serveur
+  et se traduit par `online = false` pour ce serveur seulement.
 - `GameServersPollingService` lance un passage immédiatement au démarrage, puis
-  toutes les 60 secondes. Il crée un scope à chaque passage et n'appelle aucun
-  use case sécurisé : il n'existe pas d'utilisateur HTTP dans un scheduler.
+  toutes les **10 secondes** (60 s jusqu'au 16/09/2026 ; timeout par serveur
+  passé de 15 s à 4 s en conséquence). Il crée un scope à chaque passage et
+  n'appelle aucun use case sécurisé : il n'existe pas d'utilisateur HTTP dans
+  un scheduler.
 - `GET /gameservers` exige un JWT portant au moins `READ_ONLY`, lit uniquement
   les lignes `is_visible = true`, et retourne le snapshot en base. Il n'expose
   ni `host`, ni `port`, ni `protocol_config` — ce sont les coordonnées internes
@@ -52,7 +55,7 @@ Steam retourne notamment `name`, `header_image` et `capsule_image`.
 Politique initiale : `pictureFile` reste un override local optionnel. En son
 absence, le sync enrichit une fois le serveur depuis Steam et persiste l'URL
 `header_image` dans `picture_url`. Le widget consomme cette URL stockée ; ni le
-poll de 30-60 secondes ni le navigateur ne doivent appeler Steam pour chaque
+poll (10 secondes) ni le navigateur ne doivent appeler Steam pour chaque
 rafraîchissement. Un échec Steam ne bloque pas le sync : `picture_url` reste
 null ou conserve l'ancienne valeur. Un futur rafraîchissement de métadonnées,
 peu fréquent et séparé du poll, sera décidé seulement si nécessaire.
@@ -147,18 +150,43 @@ Les protocoles vivent dans `Infrastructure/Clients/` (`SteamA2sClient`,
 | HUMANITZ | RCON `info` | non |
 | COBBLEMON | RCON `list` (joueurs et maximum) | oui — `list uuids`, `time query day`, `tick query` (TPS dans `fps`), et par joueur `data get entity` (Pos, Dimension, Health, XpLevel) + `attribute … max_health` ; réglages : difficulté, bordure, liste blanche, bannis, 53 gamerules ; seed dans `worldId` |
 
-Deux pièges vérifiés en direct sur les serveurs réels :
+Un piège vérifié en direct sur les serveurs réels :
 
 - **Ark émet des paquets `Keep Alive` non sollicités.** `SourceRconClient`
   apparie donc les réponses par identifiant ; prendre le premier paquet qui
   arrive fait lire la mauvaise réponse.
-- **`GetGameLog` vide le journal à la lecture.** Le scheduler n'appelle donc
-  jamais `FetchLiveAsync` : il consommerait toutes les 60 s les lignes que le
-  dashboard doit afficher. C'est la raison d'être d'une méthode de statut
-  séparée et minimale.
-  Le front cumule donc les lignes reçues (500 au plus, bouton pour vider) :
-  `Log` ne doit contenir que les lignes apparues depuis l'appel précédent,
-  jamais un instantané, qui serait dupliqué à chaque rafraîchissement.
+
+**`GetGameLog` vide le journal à la lecture — ce n'était un piège que tant que deux appelants
+coexistaient.** Avant le 16/09/2026, le scheduler n'appelait jamais `FetchLiveAsync` (il aurait
+consommé les lignes que le dashboard, qui l'appelait lui-même toutes les 5 s, devait afficher) :
+deux méthodes séparées, une minimale pour le scheduler, une riche pour le dashboard. Depuis le
+passage au push WebSocket (voir plus bas), **`FetchLiveAsync` n'a plus qu'un seul appelant : le
+scheduler**, toutes les 10 s. Le piège a disparu de lui-même — plus de dashboard qui interroge le
+jeu en parallèle, donc plus de conflit d'accès au journal. Le contrat qui protégeait déjà ce cas
+reste correct et nécessaire : `Log` ne doit contenir que les lignes apparues depuis l'appel
+précédent, jamais un instantané, sinon le front (qui les cumule, 500 au plus) les dupliquerait à
+chaque tick.
+
+## Le live est poussé, plus interrogé à la demande (16/09/2026)
+
+`PollGameServersUseCase` (le scheduler, `GameServersPollingService`) est désormais le **seul**
+appelant de `FetchStatusAsync`/`FetchLiveAsync` pour tous les serveurs, toutes les **10 secondes**
+(60 s auparavant — le timeout par serveur est passé de 15 s à **4 s** en conséquence, pour qu'un
+serveur muet ne fasse jamais déborder un tick sur le suivant). Le résultat est gardé en mémoire
+(`IGameServerLiveStateStore`, singleton) et **poussé à tout le monde** via SignalR
+(`Core.GameServersLiveUpdated`, hub `CoreHub`) — aucun client n'appelle plus jamais un serveur de
+jeu lui-même. `GET /gameservers/{slug}/live` (l'ancienne route par-dashboard) a été **retirée**,
+remplacée par ce push et par `GET /gameservers/live-state` (lecture pure du store en mémoire, pour
+un client qui vient de se connecter et ne doit pas attendre le prochain tick).
+
+Une action d'administration (kick/ban/annonce, commande de la console libre) déclenche en plus un
+rafraîchissement ciblé immédiat sur le seul serveur concerné
+(`PollGameServersUseCase.RefreshOneAsync`) puis republie tout de suite — sans ça, l'effet d'une
+action resterait invisible jusqu'à 10 s, perçu comme une régression par rapport à l'ancien
+rafraîchissement à la demande du dashboard.
+
+Décisions, alternatives écartées et pièges rencontrés en détail : mémoire projet
+`project_gameservers_websocket_push` (pas dans ce repo — mémoire de session).
 
 ### Joindre les serveurs depuis un poste de dev
 

@@ -10,8 +10,5 @@ public interface IGameServerLiveStateStore
 {
     void Set(GameServerLiveSnapshot snapshot);
 
-    // Null si aucun poll n'a encore eu lieu pour ce serveur depuis le démarrage de l'API.
-    GameServerLiveSnapshot? Get(string slug);
-
     IReadOnlyList<GameServerLiveSnapshot> GetAll();
 }

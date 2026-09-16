@@ -13,8 +13,5 @@ public sealed class InMemoryGameServerLiveStateStore : IGameServerLiveStateStore
 
     public void Set(GameServerLiveSnapshot snapshot) => snapshotsBySlug[snapshot.Slug] = snapshot;
 
-    public GameServerLiveSnapshot? Get(string slug) =>
-        snapshotsBySlug.TryGetValue(slug, out var snapshot) ? snapshot : null;
-
     public IReadOnlyList<GameServerLiveSnapshot> GetAll() => snapshotsBySlug.Values.ToList();
 }
