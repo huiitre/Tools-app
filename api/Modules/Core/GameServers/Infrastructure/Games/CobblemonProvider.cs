@@ -46,15 +46,15 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
     [
         new("announce", "Annoncer un message", "mdi-bullhorn-outline", RoleCode.Moderator, false,
             [new("message", "Message", "text", true, "Message affiché à tous les joueurs")]),
+        // Pas de « save » vanilla ici : c'est le mod SimpleBackups qui tient lieu de sauvegarde,
+        // avec son propre format d'archive. Même code que les autres jeux (Ark, Palworld) pour
+        // l'uniformité du bouton, la commande RCON diffère seulement en interne.
+        new("save", "Sauvegarder le monde", "mdi-content-save-outline", RoleCode.Moderator, false, []),
         new("kick", "Expulser un joueur", "mdi-account-remove-outline", RoleCode.Moderator, false,
             [new("playerId", "Joueur", "player", true, null), new("reason", "Raison", "text", false, "Facultative")]),
         new("ban", "Bannir un joueur", "mdi-account-cancel-outline", RoleCode.Admin, true,
             [new("playerId", "Joueur", "player", true, null), new("reason", "Raison", "text", false, "Facultative")]),
         new("restart", "Redémarrer le serveur", "mdi-restart", RoleCode.Admin, true, []),
-        // Pas de « save » vanilla ici : c'est le mod SimpleBackups qui tient lieu de sauvegarde,
-        // avec son propre format d'archive. Même code que les autres jeux (Ark, Palworld) pour
-        // l'uniformité du bouton, la commande RCON diffère seulement en interne.
-        new("save", "Sauvegarder le monde", "mdi-content-save-outline", RoleCode.Moderator, false, []),
     ];
 
     public async Task ExecuteAsync(
