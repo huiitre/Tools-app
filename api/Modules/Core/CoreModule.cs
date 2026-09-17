@@ -1,5 +1,6 @@
 using Tools.Api.Modules.Core.Access;
 using Tools.Api.Modules.Core.Admin;
+using Tools.Api.Modules.Core.AppLogs;
 using Tools.Api.Modules.Core.Auth;
 using Tools.Api.Modules.Core.Common;
 using Tools.Api.Modules.Core.Feedback;
@@ -32,6 +33,7 @@ public static class CoreModule
         // Common vient en premier : les autres dépendent de son contrat d'erreur et de son
         // accès PostgreSQL, jamais l'inverse.
         return builder.AddCommonModule()
+            .AddAppLogsModule()
             .AddSecurityModule()
             .AddAuthModule()
             .AddMailModule()

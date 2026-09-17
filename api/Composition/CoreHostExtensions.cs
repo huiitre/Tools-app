@@ -21,6 +21,7 @@ public static class CoreHostExtensions
             .Enrich.FromLogContext());
 
         builder.Services.AddControllers();
+        builder.Services.AddHttpContextAccessor();
 
         // AllowCredentials est nécessaire au cookie de refresh, posé sur un autre sous-domaine
         // que le front. Il interdit le joker sur les origines : la liste est donc explicite,

@@ -78,7 +78,7 @@ public sealed class GameServerDashboardTests : IClassFixture<ApiWebApplicationFa
     {
         await SyncAsync();
 
-        using var client = factory.CreateClientWithRole("READ_ONLY");
+        using HttpClient? client = factory.CreateClientWithRole("READ_ONLY");
         var gameServers = await client.GetFromJsonAsync<IReadOnlyList<GameServerDashboardView>>("/gameservers");
         Assert.NotNull(gameServers);
 
