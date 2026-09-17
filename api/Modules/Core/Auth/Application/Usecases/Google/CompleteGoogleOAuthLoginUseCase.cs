@@ -1,5 +1,7 @@
 using Tools.Api.Modules.Core.Auth.Application.Ports;
 using Tools.Api.Modules.Core.Auth.Application.Services;
+using Tools.Api.Modules.Core.AppLogs.Application;
+using Tools.Api.Modules.Core.AppLogs.Application.Services;
 using Tools.Api.Modules.Core.Auth.Application.Ports.Google;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
 
@@ -12,7 +14,8 @@ public sealed class CompleteGoogleOAuthLoginUseCase(
     IGoogleIdentityVerifier googleIdentityVerifier,
     GoogleIdentityAuthenticationService googleIdentityAuthenticationService,
     AuthSessionService authSessionService,
-    AdminSignupNotifier adminSignupNotifier)
+    AdminSignupNotifier adminSignupNotifier,
+    AppLogService appLogService)
 {
     public async Task<GoogleOAuthLoginResult> Execute(
         string code,
@@ -45,6 +48,13 @@ public sealed class CompleteGoogleOAuthLoginUseCase(
         }
 
         var session = await authSessionService.Create(authentication.User, null);
+
+        await appLogService.Log(new AppLogCommand(
+            ModuleId: null,
+            AreaCode: "AUTH",
+            ActionCode: "LOGIN",
+            UserId: authentication.User.Id,
+            Metadata: new { AuthenticationMethod = "GOOGLE" }));
 
         return new GoogleOAuthLoginResult(source, session);
     }

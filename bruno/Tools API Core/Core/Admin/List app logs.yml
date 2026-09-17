@@ -1,0 +1,33 @@
+info:
+  name: List app logs
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{apiUrl}}/admin/app-logs?page=1&pageSize=50&sortBy=createdAt&sortDirection=desc"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Page administrateur du journal applicatif. Rôle minimum : ADMIN.
+
+  Filtres : `userId`, `userSearch`, `roleId`, `userActive`, `userRegisteredFrom`,
+  `userRegisteredTo`, `moduleId`, `areaCode`, `actionCode`, `ipAddress`, `hasMetadata`,
+  `createdFrom`, `createdTo`.
+
+  `page` commence à 1 ; `pageSize` est borné à 100. Les dates de fin sont inclusives.
+  Tris : `createdAt`, `userName`, `userEmail`, `userRole`, `userStatus`,
+  `userRegisteredAt`, `moduleName`, `areaCode`, `actionCode`, `ipAddress`, `userAgent`,
+  `hasMetadata`, avec `sortDirection=asc|desc`.
+
+  Chaque ligne inclut `metadata` (JSON de contexte) et `ipLocation` (pays/ville issus de la base
+  GeoLite2 locale lorsqu'une IP publique est localisable). `hasMetadata` indique si `metadata`
+  contient autre chose que l'objet vide.

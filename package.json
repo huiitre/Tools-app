@@ -8,6 +8,7 @@
     "db:up": "docker compose -f docker-compose.dev.yml up -d",
     "db:down": "docker compose -f docker-compose.dev.yml down",
     "db:clone": "bash scripts/db-clone.sh",
+    "db:migrate": "bash scripts/db-migrate.sh",
     "sync": "npm run sync:assets && npm run sync:snapshots",
     "sync:assets": "bash scripts/sync-assets.sh",
     "sync:snapshots": "bash scripts/sync-snapshots.sh",

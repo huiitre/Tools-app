@@ -36,6 +36,12 @@ export const routes = [
         component: () => import('@/modules/Admin/feedbacks/views/AdminFeedbacks.vue'),
         meta: { label: 'Feedbacks' },
       },
+      {
+        name: 'admin-app-logs',
+        path: 'app-logs',
+        component: () => import('@/modules/Admin/appLogs/views/AdminAppLogs.vue'),
+        meta: { label: 'Journal applicatif' },
+      },
     ],
   },
 ]

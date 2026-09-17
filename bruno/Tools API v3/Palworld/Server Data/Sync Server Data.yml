@@ -6,10 +6,13 @@ info:
 http:
   method: POST
   url: "{{apiJavaUrl}}/palworld/server-data/admin/sync"
-  auth: inherit
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ0b2tlblR5cGUiOiJBQ0NFU1MiLCJpc0FjdGl2ZSI6dHJ1ZSwidXNlclR5cGUiOiJIVU1BTiIsIm1vZHVsZXMiOnsidGVtdGVtIjoiVVNFUiIsImVsaXRlX2Rhbmdlcm91cyI6IkFETUlOIiwiZG9mdXMiOiJBRE1JTiIsInJpb3QiOiJBRE1JTiIsInBhbHdvcmxkIjoiVEVDSCJ9LCJyb2xlIjoiT1dORVIiLCJzdWIiOiIyIiwibmJmIjoxNzg5MTgwMzM1LCJleHAiOjE3ODkxODA5MzUsImlzcyI6InRvb2xzLWFwaSJ9.sn7haGTnosCMoegvLDAN1N3xJfJQbHzFoUGdQRft3oUS0uYrbQjTZtIs7B-SVo4MlaYAEiI6jdwpoPKNT_Lw4g
 
 settings:
   encodeUrl: true
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+  forwardAuthorizationHeader: true

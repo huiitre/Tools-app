@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
+using Tools.Api.Modules.Core.AppLogs.Application;
+using Tools.Api.Modules.Core.AppLogs.Application.Services;
 using Tools.Api.Modules.Core.Auth.Application.Usecases;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
 using Tools.Api.Modules.Core.Auth.Infrastructure.Google;
@@ -10,6 +12,7 @@ using Tools.Api.Modules.Core.Auth.Application.Usecases.Google;
 using Tools.Api.Modules.Core.Auth.Application.Usecases.Password;
 using Tools.Api.Modules.Core.Auth.Application.Usecases.Registration;
 using Tools.Api.Modules.Core.Auth.Application.Usecases.Session;
+using Tools.Api.Modules.Core.Security.Application.Ports;
 
 namespace Tools.Api.Modules.Core.Auth.Api;
 
@@ -29,6 +32,8 @@ namespace Tools.Api.Modules.Core.Auth.Api;
 public sealed class AuthController(
     RefreshTokenCookieManager refreshTokenCookieManager,
     IOptions<GoogleOAuthOptions> googleOAuthOptions,
+    ICurrentUserProvider currentUserProvider,
+    AppLogService appLogService,
     ILogger<AuthController> logger) : ControllerBase
 {
     [AllowAnonymous]
@@ -70,8 +75,20 @@ public sealed class AuthController(
 
     [AllowAnonymous]
     [HttpPost("logout")]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
+        // La route reste anonyme : un client doit pouvoir effacer son cookie même si son access
+        // token a expiré. Avec un access token encore valide, le middleware porte toutefois
+        // l'identité dans le contexte et permet de journaliser le logout volontaire.
+        if (currentUserProvider.Current is { } currentUser)
+        {
+            await appLogService.Log(new AppLogCommand(
+                ModuleId: null,
+                AreaCode: "AUTH",
+                ActionCode: "LOGOUT",
+                UserId: currentUser.UserId));
+        }
+
         // Un logout consiste ici à supprimer le cookie détenu par le navigateur.
         refreshTokenCookieManager.Clear(Response);
         return NoContent();

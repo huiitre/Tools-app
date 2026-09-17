@@ -6,6 +6,7 @@
 flowchart LR
   Access["Access<br/>23 types"]
   Admin["Admin<br/>7 types"]
+  AppLogs["AppLogs<br/>20 types"]
   Auth["Auth<br/>70 types"]
   Common["Common<br/>18 types"]
   Creatures["Creatures<br/>10 types"]
@@ -16,14 +17,14 @@ flowchart LR
   Notifications["Notifications<br/>18 types"]
   Realtime["Realtime<br/>11 types"]
   RoadToRiches["RoadToRiches<br/>21 types"]
-  Security["Security<br/>18 types"]
+  Security["Security<br/>17 types"]
   Settings["Settings<br/>18 types"]
   Sync["Sync<br/>58 types"]
   Teams["Teams<br/>20 types"]
   Techniques["Techniques<br/>4 types"]
   Traits["Traits<br/>1 types"]
   Types["Types<br/>8 types"]
-  Users["Users<br/>16 types"]
+  Users["Users<br/>17 types"]
   Valorant["Valorant<br/>83 types"]
   Vpn["Vpn<br/>15 types"]
   Access --> Common
@@ -31,6 +32,8 @@ flowchart LR
   Access --> Security
   Access --> Users
   Admin --> Security
+  AppLogs --> Security
+  Auth --> AppLogs
   Auth --> Common
   Auth --> Mail
   Auth --> Notifications

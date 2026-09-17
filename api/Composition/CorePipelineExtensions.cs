@@ -12,6 +12,11 @@ public static class CorePipelineExtensions
 {
     public static WebApplication UseCorePipeline(this WebApplication app)
     {
+        // Doit précéder tout middleware et tout module qui lit RemoteIpAddress : à partir d'ici,
+        // ASP.NET expose l'IP client portée par X-Forwarded-For, mais uniquement si l'émetteur est
+        // un proxy explicitement approuvé dans ReverseProxy:TrustedProxies.
+        app.UseForwardedHeaders();
+
         app.UseMiddleware<RequestIdMiddleware>();
 
         // Une ligne par requête : méthode, chemin, statut et durée. Placée après

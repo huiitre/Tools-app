@@ -291,3 +291,76 @@ n'est pas touchée.
 **La lecture** : `GET /gameservers` expose `modCount` et `hasModpack`, qui suffisent au widget ;
 la liste est chargée à part par `GET /gameservers/{slug}/mods`, snapshot de la base comme le
 reste du widget.
+
+## Ressources JVM du serveur Minecraft — piste retenue, rien codé (16/09/2026)
+
+Besoin exprimé : afficher la RAM (et éventuellement le CPU) **réellement utilisée par le process
+Java** du serveur Cobblemon dans le dashboard — pas la RAM du conteneur Docker qui l'héberge (le
+conteneur ne fait tourner que ce process, mais son usage cgroup inclut off-heap/metaspace/buffers
+OS et n'est pas ce qui a été demandé).
+
+### Cheminement (pistes écartées, dans l'ordre où elles ont été testées)
+
+1. **Commande RCON dédiée** — aucun jeu de commandes vanilla ni NeoForge n'expose la RAM/CPU de la
+   JVM elle-même. Écarté d'emblée, RCON ne parle qu'au jeu, jamais à la JVM qui l'héberge.
+2. **Mod Spark, commande en jeu/RCON** — Spark (profiler NeoForge déjà présent sur le serveur)
+   sait produire ces métriques, mais toutes ses commandes sont **gate-keepées par la permission du
+   joueur qui les invoque** et leur sortie **n'est jamais renvoyée au RCON/à la console/aux logs**,
+   uniquement au chat du joueur qui a tapé la commande. Vérifié en direct : `/spark tps` sans OP
+   → « pas les droits » ; avec OP, la réponse arrive dans le chat du joueur, rien dans les logs du
+   conteneur. Piste fermée : Spark ne peut pas être piloté depuis le serveur.
+3. **Spark Developer API** (`me.lucko.spark.api.Spark`, `SparkProvider.get()`) — API Java, mais
+   **strictement in-process** : seul du code tournant **dans la même JVM** (donc un mod) peut
+   l'appeler. Expose TPS/MSPT/CPU/GC mais **pas** l'usage heap actuel (used/max), qui n'existe nulle
+   part dans cette API. Aurait de toute façon exigé d'écrire un mod maison pour faire le pont vers
+   l'extérieur (ex. une commande RCON custom) — plus lourd que les options ci-dessous, et ne répond
+   toujours pas à la question de la RAM. Piste fermée.
+4. **Accès Docker depuis `tools_api`** (socket ou bind mount) — permettrait de lire `docker stats`
+   du conteneur, mais c'est justement la RAM du **conteneur**, pas celle de la JVM (cf. besoin
+   exprimé ci-dessus) ; et le socket Docker complet donne un contrôle sur tous les conteneurs du
+   NAS, pas seulement ceux des jeux — jugé disproportionné pour ce seul besoin. Non retenu, mais pas
+   fermé définitivement : redeviendrait pertinent si un futur besoin réclamait un vrai contrôle des
+   conteneurs (ex. recréer un conteneur plutôt qu'un simple restart).
+5. **`docker exec` + outil JVM standard** (`jcmd <pid> GC.heap_info`, `jstat -gc <pid>`) — donnerait
+   la vraie heap, mais nécessite quand même d'exécuter une commande **dans** le conteneur depuis
+   l'API (socket Docker ou SSH ciblé) : même arbitrage sécurité que l'option 4, pour un résultat
+   équivalent à l'option retenue ci-dessous mais avec plus de risque.
+
+### Piste retenue : JMX exposé en HTTP via Jolokia
+
+JMX (Java Management Extensions) est le mécanisme standard de la JVM pour exposer heap/non-heap,
+GC, threads, etc. — mais c'est un protocole RMI, pas HTTP, donc pas appelable tel quel depuis
+C#. **Jolokia** est un agent Java (`-javaagent:jolokia.jar=port=XXXX` ajouté au lancement de la
+JVM du serveur Minecraft) qui expose JMX en HTTP/JSON sur un port dédié
+(`GET /jolokia/read/java.lang:type=Memory` → heap used/max en JSON).
+
+Avantages retenus :
+- Aucun accès Docker requis, aucun mod maison à écrire.
+- Données JVM précises et standard (pas limitées à ce que Spark choisit d'exposer).
+- S'intègre au pattern de tunnel SSH déjà en place pour RCON (`TUNNELS` dans
+  `dev-console/server.js`) : juste un port de plus à tunneler.
+
+### Intégration prévue côté code (pas commencée)
+
+Pas de nouvelle interface/nouveau "provider" : Jolokia n'est qu'**une source de données de plus
+pour `CobblemonProvider`**, au même titre que RCON en est déjà une — exactement le rôle
+d'`IGameServerDashboard.FetchLiveAsync`, qui enchaîne déjà plusieurs appels en interne pour un seul
+jeu. Une abstraction dédiée (`IGameServerResources` ou équivalent) serait prématurée tant qu'un
+seul jeu l'utilise ; à généraliser seulement si un autre jeu expose un jour un mécanisme
+équivalent.
+
+Étapes, dans l'ordre :
+
+1. Ajouter le flag `-javaagent:jolokia.jar=port=XXXX` au lancement du conteneur Minecraft (NAS,
+   hors repo) et exposer/tunneler ce port comme le RCON.
+2. Ajouter une clé (ex. `jolokiaUrl`) dans le `ProtocolConfig` du target Cobblemon, résolue comme
+   `rconPassword` l'est déjà via `GameServerProtocolConfig.GetString`.
+3. Étendre `GameServerLiveView` avec deux champs nullable, ex. `double? MemoryUsedMb`,
+   `double? MemoryMaxMb` — comme `Fps`/`BaseCount`, un jeu qui ne les fournit pas les laisse à
+   `null`, le front affiche « indisponible » sans rien coder de spécial.
+4. Dans `CobblemonProvider.FetchLiveAsync`, ajouter un appel `HttpClient` vers Jolokia à côté de
+   l'appel RCON existant ; une panne/timeout Jolokia ajoute "ram"/"cpu" à la liste `Unavailable`
+   plutôt que de faire échouer tout le live, comme pour n'importe quelle autre section.
+
+Rien de tout ça n'est codé : prochaine étape utile, poser le flag Jolokia côté NAS et vérifier
+qu'il répond bien en HTTP avant d'écrire la moindre ligne C#.

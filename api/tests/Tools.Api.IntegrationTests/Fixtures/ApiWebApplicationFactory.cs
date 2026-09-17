@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Tools.Api.IntegrationTests.Fakes;
 using Tools.Api.Modules.Core.Auth.Application.Ports;
+using Tools.Api.Modules.Core.AppLogs.Application.Ports;
 using Tools.Api.Modules.Core.Auth.Application.Services;
 using Tools.Api.Modules.Core.Auth.Domain;
 using Tools.Api.Modules.Core.Common.Application.Ports;
@@ -82,6 +83,11 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IEmailVerificationRepository, InMemoryEmailVerificationRepository>();
             services.RemoveAll<ITransactionManager>();
             services.AddScoped<ITransactionManager, NoOpTransactionManager>();
+
+            services.RemoveAll<IAppLogRepository>();
+            services.AddSingleton<RecordingAppLogRepository>();
+            services.AddSingleton<IAppLogRepository>(
+                provider => provider.GetRequiredService<RecordingAppLogRepository>());
 
             // Singleton : un test pose une valeur globale puis appelle une route, et les deux
             // doivent voir le même contenu. En Scoped, la valeur posée disparaîtrait avec le
@@ -172,6 +178,7 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
     }
 
     public InMemoryAuthStore Store => Services.GetRequiredService<InMemoryAuthStore>();
+    public RecordingAppLogRepository AppLogs => Services.GetRequiredService<RecordingAppLogRepository>();
 
     // Le token est produit par le vrai ITokenService : émission et lecture du rôle sont donc
     // testées ensemble, exactement comme en production.

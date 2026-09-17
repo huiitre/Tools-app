@@ -10,14 +10,13 @@ namespace Tools.Api.Modules.Core.Security;
 // catalogue des rôles attribuables.
 //
 // Le pipeline HTTP ne rend aucun 403 (voir docs/SECURITY.md) ; tout ce qui décide d'un droit
-// est enregistré ici. HttpContextAccessor accompagne HttpCurrentUserProvider, seul consommateur
-// du contexte ambiant : le déclarer dans ce module évite qu'un déplacement dans la racine de
-// composition ne laisse ce provider sans sa dépendance.
+// est enregistré ici. HttpCurrentUserProvider consomme le contexte HTTP partagé enregistré par
+// l'hôte, au même titre que les autres briques transverses qui enrichissent une opération avec
+// les informations de la requête courante.
 public static class SecurityModule
 {
     public static IHostApplicationBuilder AddSecurityModule(this IHostApplicationBuilder builder)
     {
-        builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<ICurrentUserProvider, HttpCurrentUserProvider>();
         builder.Services.AddScoped<UseCaseAuthorizer>();
 
