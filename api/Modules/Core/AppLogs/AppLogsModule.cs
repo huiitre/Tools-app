@@ -13,6 +13,7 @@ public static class AppLogsModule
     {
         builder.Services.AddScoped<IAppLogRepository, PostgresAppLogRepository>();
         builder.Services.AddScoped<IAppLogContextProvider, HttpAppLogContextProvider>();
+        builder.Services.AddSingleton<IGeoIpLookup, MaxMindGeoIpLookup>();
         builder.Services.AddScoped<AppLogService>();
         builder.Services.AddScoped<ListAppLogsUseCase>();
 

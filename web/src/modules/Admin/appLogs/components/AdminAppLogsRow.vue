@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useAdminAppLogsStore } from '../store/adminAppLogs.store'
 import type { AppLogAdminItem } from '../types/adminAppLogs.types'
 import UserRoleBadge from '../../users/components/UserRoleBadge.vue'
+import AppLogContextTrigger from './AppLogContextTrigger.vue'
 
 defineProps<{ log: AppLogAdminItem }>()
 
@@ -23,6 +24,10 @@ const formatDate = (value: string | null, withTime = false) => {
 }
 
 const status = (active: boolean | null) => active === null ? '—' : active ? 'Actif' : 'Inactif'
+const metadataJson = (metadata: unknown) => JSON.stringify(metadata, null, 2)
+const ipLocation = (log: AppLogAdminItem) => log.ipLocation
+  ? [log.ipLocation.cityName, log.ipLocation.countryName, log.ipLocation.countryCode].filter(Boolean).join(' · ')
+  : 'Localisation indisponible'
 </script>
 
 <template>
@@ -42,10 +47,13 @@ const status = (active: boolean | null) => active === null ? '—' : active ? 'A
     <div v-else-if="column.key === 'moduleName'" class="cell" :title="log.moduleName ?? undefined">{{ log.moduleName ?? '—' }}</div>
     <div v-else-if="column.key === 'areaCode'" class="cell cell--mono" :title="log.areaCode">{{ log.areaCode }}</div>
     <div v-else-if="column.key === 'actionCode'" class="cell cell--mono" :title="log.actionCode">{{ log.actionCode }}</div>
-    <div v-else-if="column.key === 'ipAddress'" class="cell cell--mono" :title="log.ipAddress ?? undefined">{{ log.ipAddress ?? '—' }}</div>
+    <div v-else-if="column.key === 'ipAddress'" class="cell cell--mono">
+      <AppLogContextTrigger v-if="log.ipAddress" title="Localisation IP" :content="ipLocation(log)">{{ log.ipAddress }}</AppLogContextTrigger>
+      <template v-else>—</template>
+    </div>
     <div v-else-if="column.key === 'userAgent'" class="cell cell--mono" :title="log.userAgent ?? undefined">{{ log.userAgent ?? '—' }}</div>
     <div v-else class="cell metadata-cell">
-      <i v-if="log.hasMetadata" class="mdi mdi-code-json" title="Des métadonnées sont disponibles" />
+      <AppLogContextTrigger v-if="log.hasMetadata" title="Métadonnées" :content="metadataJson(log.metadata)"><i class="mdi mdi-code-json" /></AppLogContextTrigger>
       <template v-else>—</template>
     </div>
     </template>

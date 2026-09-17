@@ -1,6 +1,7 @@
 namespace Tools.Api.Modules.Core.AppLogs.Application;
 
-// Le JSON des métadonnées reste côté serveur : le frontend reçoit uniquement sa présence.
+using System.Text.Json;
+
 public sealed record AppLogPageDto(
     IReadOnlyList<AppLogAdminDto> Items, long TotalCount, int Page, int PageSize);
 
@@ -8,4 +9,4 @@ public sealed record AppLogAdminDto(
     long Id, DateTime CreatedAt, long? ModuleId, string? ModuleName,
     string AreaCode, string ActionCode, long? UserId, string? UserName, string? UserEmail,
     long? UserRoleId, string? UserRoleCode, bool? UserActive, DateTime? UserRegisteredAt,
-    string? IpAddress, string? UserAgent, bool HasMetadata);
+    string? IpAddress, string? UserAgent, bool HasMetadata, JsonElement Metadata, AppLogIpLocationDto? IpLocation);

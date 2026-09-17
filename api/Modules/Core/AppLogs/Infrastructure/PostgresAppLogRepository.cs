@@ -1,5 +1,6 @@
 using Dapper;
 using Npgsql;
+using System.Text.Json;
 using Tools.Api.Modules.Core.AppLogs.Application;
 using Tools.Api.Modules.Core.AppLogs.Application.Ports;
 
@@ -112,7 +113,8 @@ public sealed class PostgresAppLogRepository(NpgsqlDataSource dataSource) : IApp
                    user_account.is_active AS UserActive,
                    user_account.created_at AS UserRegisteredAt,
                    host(log.ip_address) AS IpAddress, log.user_agent AS UserAgent,
-                   (log.metadata <> jsonb_build_object()) AS HasMetadata
+                   (log.metadata <> jsonb_build_object()) AS HasMetadata,
+                   log.metadata::text AS MetadataJson
             FROM tools_core.application_logs log
             LEFT JOIN tools_core.module module ON module.id = log.module_id
             LEFT JOIN tools_core.users user_account ON user_account.id = log.user_id
@@ -126,7 +128,16 @@ public sealed class PostgresAppLogRepository(NpgsqlDataSource dataSource) : IApp
         await using var connection = await dataSource.OpenConnectionAsync();
         await using var results = await connection.QueryMultipleAsync(new CommandDefinition(sql, query));
         var totalCount = await results.ReadSingleAsync<long>();
-        var rows = await results.ReadAsync<AppLogAdminDto>();
-        return new AppLogPageDto(rows.ToList(), totalCount, query.Page, query.PageSize);
+        var rows = await results.ReadAsync<AppLogAdminRow>();
+        return new AppLogPageDto(rows.Select(row => new AppLogAdminDto(
+            row.Id, row.CreatedAt, row.ModuleId, row.ModuleName, row.AreaCode, row.ActionCode,
+            row.UserId, row.UserName, row.UserEmail, row.UserRoleId, row.UserRoleCode, row.UserActive,
+            row.UserRegisteredAt, row.IpAddress, row.UserAgent, row.HasMetadata,
+            JsonDocument.Parse(row.MetadataJson).RootElement.Clone(), null)).ToList(), totalCount, query.Page, query.PageSize);
     }
+
+    private sealed record AppLogAdminRow(
+        long Id, DateTime CreatedAt, long? ModuleId, string? ModuleName, string AreaCode, string ActionCode,
+        long? UserId, string? UserName, string? UserEmail, long? UserRoleId, string? UserRoleCode,
+        bool? UserActive, DateTime? UserRegisteredAt, string? IpAddress, string? UserAgent, bool HasMetadata, string MetadataJson);
 }

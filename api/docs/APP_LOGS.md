@@ -76,6 +76,13 @@ La table conserve l'adresse avec le type PostgreSQL `inet`. La lecture d'adminis
 `host(ip_address)` : l'interface reçoit donc `2001:db8::1`, jamais `2001:db8::1/128` (et
 `203.0.113.42`, jamais `/32`).
 
+### Localisation IP locale (GeoLite2)
+
+La lecture admin cherche pays et ville dans la base locale MaxMind GeoLite2 City ; aucune adresse
+IP n'est envoyée à un service externe. Le fichier `GeoLite2-City.mmdb` doit être monté dans chaque
+conteneur API à `/app/geoip/GeoLite2-City.mmdb` (chemin configurable avec `GeoIp:DatabasePath`).
+Les IP locales, privées et absentes de la base ne produisent pas de localisation.
+
 ### Choix d'écriture
 
 Les logs applicatifs ne sont pas critiques : les appelants font donc directement
@@ -125,8 +132,9 @@ Les refus et les autres parcours Auth restent à instrumenter ; les codes déjà
 ## Étapes suivantes
 
 La lecture d'administration est livrée : `GET /admin/app-logs` exige ADMIN et propose filtres,
-pagination et tri. La réponse ne contient jamais le JSON des métadonnées, seulement
-`hasMetadata`. La route est présente dans Bruno.
+pagination et tri. La réponse inclut le JSON `metadata`, destiné à l'infobulle d'administration,
+ainsi que la localisation GeoLite2 lorsque l'IP publique est connue. La route est présente dans
+Bruno.
 
 1. afficher le journal et ses filtres dans l'administration Web ;
 2. étendre progressivement le journal aux autres modules.

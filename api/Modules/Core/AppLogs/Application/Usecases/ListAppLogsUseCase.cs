@@ -9,11 +9,12 @@ namespace Tools.Api.Modules.Core.AppLogs.Application.Usecases;
 // Lecture globale, protégée par ADMIN et sans aucun chemin de mutation du journal.
 public sealed class ListAppLogsUseCase(
     UseCaseAuthorizer authorizer,
-    IAppLogRepository appLogRepository) : SecuredUseCase(authorizer)
+    IAppLogRepository appLogRepository,
+    IGeoIpLookup geoIpLookup) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Admin;
 
-    public Task<AppLogPageDto> Execute(AppLogListQuery query)
+    public async Task<AppLogPageDto> Execute(AppLogListQuery query)
     {
         if (query.UserRegisteredFrom is { } registeredFrom && query.UserRegisteredTo is { } registeredTo
             && registeredFrom > registeredTo)
@@ -26,13 +27,14 @@ public sealed class ListAppLogsUseCase(
             throw AppException.Validation("APP_LOG_CREATED_RANGE_INVALID", "La période de création est invalide.");
         }
 
-        return appLogRepository.FindForAdminAsync(query with
+        var page = await appLogRepository.FindForAdminAsync(query with
         {
             UserSearch = EmptyToNull(query.UserSearch),
             AreaCode = NormalizeCode(query.AreaCode),
             ActionCode = NormalizeCode(query.ActionCode),
             IpAddress = EmptyToNull(query.IpAddress)
         });
+        return page with { Items = page.Items.Select(log => log with { IpLocation = geoIpLookup.Find(log.IpAddress) }).ToList() };
     }
 
     private static string? EmptyToNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

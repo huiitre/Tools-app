@@ -28,4 +28,6 @@ docs: |-
   `userRegisteredAt`, `moduleName`, `areaCode`, `actionCode`, `ipAddress`, `userAgent`,
   `hasMetadata`, avec `sortDirection=asc|desc`.
 
-  `hasMetadata` indique seulement la présence de métadonnées : leur JSON n'est pas exposé.
+  Chaque ligne inclut `metadata` (JSON de contexte) et `ipLocation` (pays/ville issus de la base
+  GeoLite2 locale lorsqu'une IP publique est localisable). `hasMetadata` indique si `metadata`
+  contient autre chose que l'objet vide.

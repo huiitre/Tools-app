@@ -33,6 +33,8 @@ export type AppLogAdminItem = {
   ipAddress: string | null
   userAgent: string | null
   hasMetadata: boolean
+  metadata: unknown
+  ipLocation: { countryCode: string | null; countryName: string | null; cityName: string | null } | null
 }
 
 export type AppLogPage = {
