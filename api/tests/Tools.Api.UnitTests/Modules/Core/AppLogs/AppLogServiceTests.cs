@@ -100,6 +100,9 @@ public sealed class AppLogServiceTests
             LastEntry = entry;
             return Task.FromResult(123L);
         }
+
+        public Task<AppLogPageDto> FindForAdminAsync(AppLogListQuery query) =>
+            Task.FromResult(new AppLogPageDto([], 0, query.Page, query.PageSize));
     }
 
     private sealed class FixedAppLogContextProvider(AppLogContext context) : IAppLogContextProvider

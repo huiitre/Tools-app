@@ -1,5 +1,6 @@
 using Tools.Api.Modules.Core.AppLogs.Application.Ports;
 using Tools.Api.Modules.Core.AppLogs.Application.Services;
+using Tools.Api.Modules.Core.AppLogs.Application.Usecases;
 using Tools.Api.Modules.Core.AppLogs.Infrastructure;
 
 namespace Tools.Api.Modules.Core.AppLogs;
@@ -13,6 +14,7 @@ public static class AppLogsModule
         builder.Services.AddScoped<IAppLogRepository, PostgresAppLogRepository>();
         builder.Services.AddScoped<IAppLogContextProvider, HttpAppLogContextProvider>();
         builder.Services.AddScoped<AppLogService>();
+        builder.Services.AddScoped<ListAppLogsUseCase>();
 
         return builder;
     }

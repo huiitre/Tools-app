@@ -32,7 +32,7 @@ La table contient :
 | `area_code` | zone fonctionnelle, par exemple `AUTH` |
 | `action_code` | action, par exemple `LOGIN` |
 | `user_id` | identifiant historique de l'utilisateur, nullable |
-| `ip_address` | adresse IP, nullable |
+| `ip_address` | adresse IP, nullable, au format PostgreSQL `inet` |
 | `user_agent` | user-agent HTTP, nullable |
 | `metadata` | contexte libre JSONB, sans secret |
 
@@ -55,28 +55,45 @@ Le module `api/Modules/Core/AppLogs/` fournit actuellement :
 Le service normalise `area_code` et `action_code` en majuscules et sérialise les métadonnées avec les
 conventions JSON Web de .NET.
 
-### Limite actuelle à traiter avant l'étape 3
+### Adresse IP du client derrière Nginx
 
-`AppLogService.Log` retourne actuellement la `Task` de l'insertion PostgreSQL. Un appelant qui fait
-`await` attend donc l'écriture du log avant de terminer son traitement HTTP.
+`HttpAppLogContextProvider` lit `RemoteIpAddress`. Le pipeline applique auparavant les forwarded
+headers standards : une requête passée par Nginx journalise donc le premier `X-Forwarded-For`, à
+condition que l'adresse TCP de Nginx soit explicitement présente dans
+`ReverseProxy:TrustedProxies`. La liste est vide par défaut, ce qui empêche toute usurpation par un
+client qui enverrait lui-même cet en-tête.
 
-Le besoin exprimé est que l'écriture du journal ne ralentisse pas chaque appel. Il faut donc choisir
-et valider un vrai mécanisme asynchrone avant d'instrumenter Auth. Ne pas lancer simplement la `Task`
-sans l'attendre : cela rendrait les erreurs invisibles et ne garantirait pas que l'écriture termine.
+Avant le test QA, renseigner l'adresse IP interne du conteneur/proxy Nginx dans la configuration QA
+déployée, par exemple :
 
-Options à arbitrer lors de la reprise :
+```json
+"ReverseProxy": {
+  "TrustedProxies": ["172.18.0.2"]
+}
+```
 
-- une file en mémoire avec un worker en arrière-plan, rapide mais susceptible de perdre les éléments
-  encore en mémoire si le processus s'arrête brutalement ;
-- une file durable ou un mécanisme d'outbox, plus fiable mais plus complexe et impliquant toujours
-  une écriture durable sur le chemin de la requête.
+La table conserve l'adresse avec le type PostgreSQL `inet`. La lecture d'administration utilise
+`host(ip_address)` : l'interface reçoit donc `2001:db8::1`, jamais `2001:db8::1/128` (et
+`203.0.113.42`, jamais `/32`).
 
-Aucune de ces options n'est choisie ou implémentée actuellement.
+### Choix d'écriture
 
-## Étape 3 — événements Auth : non commencée
+Les logs applicatifs ne sont pas critiques : les appelants font donc directement
+`await AppLogService.Log(...)`. Une insertion PostgreSQL d'une ligne est suffisamment légère pour
+ce besoin et conserve les erreurs observables. Une tâche détachée (`Task.Run`, tâche non attendue)
+reste interdite : elle perdrait les erreurs et peut survivre au scope HTTP dont elle dépend.
 
-Aucun contrôleur, use case ou repository du module Auth n'écrit actuellement dans le journal
-applicatif.
+Une file en mémoire avec worker ou une outbox ne sera envisagée que pour un flux beaucoup plus
+volumineux ou nécessitant une diffusion fiable à d'autres services.
+
+## Étape 3 — événements Auth : commencée
+
+Le logout volontaire et les connexions réussies sont instrumentés :
+
+- `AUTH / LOGOUT` porte l'utilisateur de l'access token lorsqu'il est encore valide. La route reste
+  anonyme pour toujours supprimer le cookie même si le token est absent ou expiré ; dans ce cas,
+  aucun utilisateur n'est journalisable. Le refresh token ne participe jamais à ce log ;
+- `AUTH / LOGIN` porte l'utilisateur et `metadata.authenticationMethod` (`PASSWORD` ou `GOOGLE`).
 
 Événements demandés pour la reprise :
 
@@ -102,14 +119,14 @@ Règles de données demandées :
 - garder l'instrumentation courte et indépendante du chemin métier, sans ajouter des branches métier
   uniquement pour les logs.
 
-Les noms définitifs des `action_code` et la manière de capter proprement les succès et les refus
-doivent être validés avec l'architecture asynchrone avant de coder.
+Les refus et les autres parcours Auth restent à instrumenter ; les codes déjà livrés sont
+`LOGIN` et `LOGOUT` dans la zone `AUTH`.
 
 ## Étapes suivantes
 
-Après l'instrumentation Auth :
+La lecture d'administration est livrée : `GET /admin/app-logs` exige ADMIN et propose filtres,
+pagination et tri. La réponse ne contient jamais le JSON des métadonnées, seulement
+`hasMetadata`. La route est présente dans Bruno.
 
-1. ajouter un use case et une route d'administration en lecture seule avec filtres et pagination ;
-2. ajouter cette route à la collection Bruno ;
-3. afficher le journal et ses filtres dans l'administration Web ;
-4. étendre progressivement le journal aux autres modules.
+1. afficher le journal et ses filtres dans l'administration Web ;
+2. étendre progressivement le journal aux autres modules.

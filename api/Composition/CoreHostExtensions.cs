@@ -1,3 +1,5 @@
+using System.Net;
+using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 
 namespace Tools.Api.Composition;
@@ -22,6 +24,39 @@ public static class CoreHostExtensions
 
         builder.Services.AddControllers();
         builder.Services.AddHttpContextAccessor();
+
+        // X-Forwarded-For ne doit être accepté que depuis le reverse proxy connu. Sans cette
+        // liste, un client pourrait forger cet en-tête et usurper l'adresse enregistrée dans le
+        // journal applicatif. Une liste vide signifie volontairement « ne faire confiance à
+        // personne » : l'adresse TCP directe reste alors utilisée.
+        var forwardedHeaders = new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+            ForwardLimit = 1,
+            RequireHeaderSymmetry = true
+        };
+        forwardedHeaders.KnownIPNetworks.Clear();
+        forwardedHeaders.KnownProxies.Clear();
+
+        foreach (var value in builder.Configuration.GetSection("ReverseProxy:TrustedProxies").Get<string[]>() ?? [])
+        {
+            if (!IPAddress.TryParse(value, out var address))
+            {
+                throw new InvalidOperationException($"ReverseProxy:TrustedProxies contient une adresse IP invalide : '{value}'.");
+            }
+
+            forwardedHeaders.KnownProxies.Add(address);
+        }
+
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = forwardedHeaders.ForwardedHeaders;
+            options.ForwardLimit = forwardedHeaders.ForwardLimit;
+            options.RequireHeaderSymmetry = forwardedHeaders.RequireHeaderSymmetry;
+            options.KnownIPNetworks.Clear();
+            options.KnownProxies.Clear();
+            foreach (var proxy in forwardedHeaders.KnownProxies) options.KnownProxies.Add(proxy);
+        });
 
         // AllowCredentials est nécessaire au cookie de refresh, posé sur un autre sous-domaine
         // que le front. Il interdit le joker sur les origines : la liste est donc explicite,

@@ -1,5 +1,7 @@
 using Tools.Api.Modules.Core.Auth.Application.Ports;
 using Tools.Api.Modules.Core.Auth.Application.Services;
+using Tools.Api.Modules.Core.AppLogs.Application;
+using Tools.Api.Modules.Core.AppLogs.Application.Services;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
 using Tools.Api.Modules.Core.Auth.Application.Ports.Password;
 
@@ -9,7 +11,8 @@ namespace Tools.Api.Modules.Core.Auth.Application.Usecases.Password;
 public sealed class LoginUseCase(
     IAuthRepository authRepository,
     IPasswordHasher passwordHasher,
-    AuthSessionService authSessionService)
+    AuthSessionService authSessionService,
+    AppLogService appLogService)
 {
     public async Task<AuthSession> Execute(string email, string password)
     {
@@ -43,6 +46,15 @@ public sealed class LoginUseCase(
         }
 
         // Le service partagé lit les droits puis crée l'access et le refresh token.
-        return await authSessionService.Create(candidate.Value.User, null);
+        var session = await authSessionService.Create(candidate.Value.User, null);
+
+        await appLogService.Log(new AppLogCommand(
+            ModuleId: null,
+            AreaCode: "AUTH",
+            ActionCode: "LOGIN",
+            UserId: candidate.Value.User.Id,
+            Metadata: new { AuthenticationMethod = "PASSWORD" }));
+
+        return session;
     }
 }

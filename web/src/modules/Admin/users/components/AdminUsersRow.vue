@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useAdminUsersStore } from '../store/adminUsers.store'
 import { updateUserRole, updateUserActive } from '../fetch/adminUsers.fetch'
 import type { AdminUser } from '../types/adminUsers.types'
+import UserRoleBadge from './UserRoleBadge.vue'
 import { useImagePreview } from '@/composables/useImagePreview'
 import { useAuthStore } from '@/modules/Auth/auth.store'
 import toast from '@/services/toast'
@@ -24,10 +25,6 @@ const isOpen = computed(() => store.editingRoleUserId === props.user.id)
 const saving = ref(false)
 
 const role = computed(() => store.roleOf(props.user))
-
-const roleModifier = computed(() => role.value?.code.toLowerCase() ?? null)
-
-const roleName = computed(() => role.value?.name ?? '—')
 
 const openPopup = (e: MouseEvent) => {
   e.stopPropagation()
@@ -112,9 +109,7 @@ const getCellValue = (key: string): string => {
 
       <!-- ROLE -->
       <div v-if="col.key === 'role'" class="cell role-cell" @click="openPopup">
-        <span class="role-badge" :class="roleModifier ? `role-badge--${roleModifier}` : ''">
-          {{ roleName }}
-        </span>
+        <UserRoleBadge :role="role" />
 
         <div v-if="isOpen" ref="popupRef" class="role-popup" @click.stop>
           <div
@@ -252,34 +247,6 @@ const getCellValue = (key: string): string => {
 }
 
 .role-row-name { flex: 1; }
-
-/* ── Role badge ──────────────────────────────────────────── */
-.role-badge {
-  display: inline-block;
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: color-mix(in srgb, var(--pico-muted-color) 12%, transparent);
-  color: var(--pico-muted-color);
-
-  &--owner, &--tech {
-    background: color-mix(in srgb, #f59e0b 12%, transparent);
-    color: #d97706;
-  }
-  &--admin {
-    background: color-mix(in srgb, var(--pico-primary) 12%, transparent);
-    color: var(--pico-primary);
-  }
-  &--moderator {
-    background: color-mix(in srgb, #8b5cf6 12%, transparent);
-    color: #7c3aed;
-  }
-  &--user {
-    background: color-mix(in srgb, #22c55e 12%, transparent);
-    color: #16a34a;
-  }
-}
 
 /* ── Status badge ────────────────────────────────────────── */
 .status-badge {

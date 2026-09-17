@@ -38,6 +38,7 @@ public sealed class AuthenticationTests : IClassFixture<ApiWebApplicationFactory
 
         // La factory est partagée par la classe : chaque test repart d'un état vierge.
         store.Reset();
+        factory.AppLogs.Reset();
     }
 
     private ITokenService Tokens => factory.Services.GetRequiredService<ITokenService>();
@@ -174,6 +175,22 @@ public sealed class AuthenticationTests : IClassFixture<ApiWebApplicationFactory
             "/auth/password/reset-request", new { email = "inconnu@example.com" });
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_voluntary_logout_with_a_valid_access_token_is_logged()
+    {
+        using var client = factory.CreateClientForUser(42, "READ_ONLY");
+
+        using var response = await client.PostAsync("/auth/logout", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        var log = Assert.Single(factory.AppLogs.Entries);
+        Assert.Null(log.ModuleId);
+        Assert.Equal("AUTH", log.AreaCode);
+        Assert.Equal("LOGOUT", log.ActionCode);
+        Assert.Equal(42, log.UserId);
+        Assert.Equal("{}", log.Metadata);
     }
 
     // ---------- L'authentification est exigée par défaut ----------

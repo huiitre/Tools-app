@@ -1,3 +1,5 @@
+import type { RoleCode } from '@/modules/Auth/types/auth.types'
+
 export type AdminUserColumn = {
   key: string
   label: string
@@ -17,7 +19,7 @@ export type AdminPageSize = (typeof ADMIN_PAGE_SIZES)[number]
 
 export type AdminRole = {
   id: number
-  code: string
+  code: RoleCode
   name: string
   description: string
   active: boolean
