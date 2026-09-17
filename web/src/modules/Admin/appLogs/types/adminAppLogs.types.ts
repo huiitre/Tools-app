@@ -42,6 +42,10 @@ export type AppLogPage = {
   totalCount: number
   page: number
   pageSize: number
+  filterOptions: {
+    areaCodes: string[]
+    actionCodes: string[]
+  }
 }
 
 export type AppLogListRequest = {
@@ -49,6 +53,13 @@ export type AppLogListRequest = {
   pageSize: number
   sortBy: AppLogSortBy
   sortDirection: AppLogSortDirection
+  userIds?: number[]
+  moduleIds?: number[]
+  areaCodes?: string[]
+  actionCodes?: string[]
+  createdFrom?: string
+  createdTo?: string
+  search?: string
 }
 
 export type AppLogColumn = {

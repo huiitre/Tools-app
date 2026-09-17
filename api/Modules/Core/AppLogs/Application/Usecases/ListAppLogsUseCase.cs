@@ -29,15 +29,21 @@ public sealed class ListAppLogsUseCase(
 
         var page = await appLogRepository.FindForAdminAsync(query with
         {
-            UserSearch = EmptyToNull(query.UserSearch),
-            AreaCode = NormalizeCode(query.AreaCode),
-            ActionCode = NormalizeCode(query.ActionCode),
-            IpAddress = EmptyToNull(query.IpAddress)
+            Search = EmptyToNull(query.Search),
+            AreaCodes = NormalizeCodes(query.AreaCodes),
+            ActionCodes = NormalizeCodes(query.ActionCodes),
+            IpAddress = EmptyToNull(query.IpAddress),
+            // Npgsql exige un DateTimeOffset en UTC pour un paramètre PostgreSQL timestamptz.
+            CreatedFrom = query.CreatedFrom?.ToUniversalTime(),
+            CreatedTo = query.CreatedTo?.ToUniversalTime()
         });
         return page with { Items = page.Items.Select(log => log with { IpLocation = geoIpLookup.Find(log.IpAddress) }).ToList() };
     }
 
     private static string? EmptyToNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-    private static string? NormalizeCode(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToUpperInvariant();
+    private static string[]? NormalizeCodes(IEnumerable<string>? values) => values?
+        .Where(value => !string.IsNullOrWhiteSpace(value))
+        .Select(value => value.Trim().ToUpperInvariant())
+        .Distinct(StringComparer.Ordinal)
+        .ToArray() is { Length: > 0 } normalized ? normalized : null;
 }

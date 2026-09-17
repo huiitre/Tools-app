@@ -54,6 +54,26 @@ public sealed class PostgresAppLogRepository(NpgsqlDataSource dataSource) : IApp
             _ => throw new ArgumentOutOfRangeException(nameof(query.SortBy))
         };
         var direction = query.SortDirection == SortDirection.Asc ? "ASC" : "DESC";
+        var filters = new List<string>
+        {
+            "(@Search IS NULL OR user_account.name ILIKE '%' || @Search || '%'"
+            + " OR user_account.email ILIKE '%' || @Search || '%'"
+            + " OR host(log.ip_address) ILIKE '%' || @Search || '%'"
+            + " OR log.user_agent ILIKE '%' || @Search || '%')",
+            "(@RoleId IS NULL OR user_role.role_id = @RoleId)",
+            "(@UserActive IS NULL OR user_account.is_active = @UserActive)",
+            "(CAST(@UserRegisteredFrom AS timestamp) IS NULL OR user_account.created_at >= CAST(@UserRegisteredFrom AS timestamp))",
+            "(CAST(@UserRegisteredTo AS timestamp) IS NULL OR user_account.created_at < CAST(@UserRegisteredTo AS timestamp) + INTERVAL '1 day')",
+            "(@IpAddress IS NULL OR host(log.ip_address) = @IpAddress)",
+            "(@HasMetadata IS NULL OR (log.metadata <> jsonb_build_object()) = @HasMetadata)",
+            "(CAST(@CreatedFrom AS timestamptz) IS NULL OR log.created_at >= CAST(@CreatedFrom AS timestamptz))",
+            "(CAST(@CreatedTo AS timestamptz) IS NULL OR log.created_at < CAST(@CreatedTo AS timestamptz) + INTERVAL '1 day')"
+        };
+        if (query.UserIds is { Length: > 0 }) filters.Add("log.user_id = ANY(@UserIds)");
+        if (query.ModuleIds is { Length: > 0 }) filters.Add("log.module_id = ANY(@ModuleIds)");
+        if (query.AreaCodes is { Length: > 0 }) filters.Add("log.area_code = ANY(@AreaCodes)");
+        if (query.ActionCodes is { Length: > 0 }) filters.Add("log.action_code = ANY(@ActionCodes)");
+        var where = string.Join("\n                  AND ", filters);
 
         // Les références user/module sont historiques : une jointure gauche conserve le log même
         // quand la ressource d'origine n'existe plus.
@@ -65,20 +85,7 @@ public sealed class PostgresAppLogRepository(NpgsqlDataSource dataSource) : IApp
                 LEFT JOIN tools_core.users user_account ON user_account.id = log.user_id
                 LEFT JOIN tools_core.user_role user_role ON user_role.user_id = user_account.id
                 LEFT JOIN tools_core.role role ON role.id = user_role.role_id
-                WHERE (@UserId IS NULL OR log.user_id = @UserId)
-                  AND (@UserSearch IS NULL OR user_account.name ILIKE '%' || @UserSearch || '%'
-                       OR user_account.email ILIKE '%' || @UserSearch || '%')
-                  AND (@RoleId IS NULL OR user_role.role_id = @RoleId)
-                  AND (@UserActive IS NULL OR user_account.is_active = @UserActive)
-                  AND (CAST(@UserRegisteredFrom AS timestamp) IS NULL OR user_account.created_at >= CAST(@UserRegisteredFrom AS timestamp))
-                  AND (CAST(@UserRegisteredTo AS timestamp) IS NULL OR user_account.created_at < CAST(@UserRegisteredTo AS timestamp) + INTERVAL '1 day')
-                  AND (@ModuleId IS NULL OR log.module_id = @ModuleId)
-                  AND (@AreaCode IS NULL OR log.area_code = @AreaCode)
-                  AND (@ActionCode IS NULL OR log.action_code = @ActionCode)
-                  AND (@IpAddress IS NULL OR host(log.ip_address) = @IpAddress)
-                  AND (@HasMetadata IS NULL OR (log.metadata <> jsonb_build_object()) = @HasMetadata)
-                  AND (CAST(@CreatedFrom AS timestamptz) IS NULL OR log.created_at >= CAST(@CreatedFrom AS timestamptz))
-                  AND (CAST(@CreatedTo AS timestamptz) IS NULL OR log.created_at < CAST(@CreatedTo AS timestamptz) + INTERVAL '1 day')
+                WHERE {where}
             )
             SELECT COUNT(*) FROM filtered_logs;
 
@@ -89,20 +96,7 @@ public sealed class PostgresAppLogRepository(NpgsqlDataSource dataSource) : IApp
                 LEFT JOIN tools_core.users user_account ON user_account.id = log.user_id
                 LEFT JOIN tools_core.user_role user_role ON user_role.user_id = user_account.id
                 LEFT JOIN tools_core.role role ON role.id = user_role.role_id
-                WHERE (@UserId IS NULL OR log.user_id = @UserId)
-                  AND (@UserSearch IS NULL OR user_account.name ILIKE '%' || @UserSearch || '%'
-                       OR user_account.email ILIKE '%' || @UserSearch || '%')
-                  AND (@RoleId IS NULL OR user_role.role_id = @RoleId)
-                  AND (@UserActive IS NULL OR user_account.is_active = @UserActive)
-                  AND (CAST(@UserRegisteredFrom AS timestamp) IS NULL OR user_account.created_at >= CAST(@UserRegisteredFrom AS timestamp))
-                  AND (CAST(@UserRegisteredTo AS timestamp) IS NULL OR user_account.created_at < CAST(@UserRegisteredTo AS timestamp) + INTERVAL '1 day')
-                  AND (@ModuleId IS NULL OR log.module_id = @ModuleId)
-                  AND (@AreaCode IS NULL OR log.area_code = @AreaCode)
-                  AND (@ActionCode IS NULL OR log.action_code = @ActionCode)
-                  AND (@IpAddress IS NULL OR host(log.ip_address) = @IpAddress)
-                  AND (@HasMetadata IS NULL OR (log.metadata <> jsonb_build_object()) = @HasMetadata)
-                  AND (CAST(@CreatedFrom AS timestamptz) IS NULL OR log.created_at >= CAST(@CreatedFrom AS timestamptz))
-                  AND (CAST(@CreatedTo AS timestamptz) IS NULL OR log.created_at < CAST(@CreatedTo AS timestamptz) + INTERVAL '1 day')
+                WHERE {where}
             )
             SELECT log.id AS Id, log.created_at AS CreatedAt,
                    log.module_id AS ModuleId, module.name AS ModuleName,
@@ -123,17 +117,23 @@ public sealed class PostgresAppLogRepository(NpgsqlDataSource dataSource) : IApp
             WHERE log.id IN (SELECT id FROM filtered_logs)
             ORDER BY {orderBy} {direction} NULLS LAST, log.id DESC
             LIMIT @PageSize OFFSET @Offset;
+
+            SELECT DISTINCT area_code FROM tools_core.application_logs ORDER BY area_code;
+            SELECT DISTINCT action_code FROM tools_core.application_logs ORDER BY action_code;
             """;
 
         await using var connection = await dataSource.OpenConnectionAsync();
         await using var results = await connection.QueryMultipleAsync(new CommandDefinition(sql, query));
         var totalCount = await results.ReadSingleAsync<long>();
         var rows = await results.ReadAsync<AppLogAdminRow>();
+        var areaCodes = (await results.ReadAsync<string>()).ToList();
+        var actionCodes = (await results.ReadAsync<string>()).ToList();
         return new AppLogPageDto(rows.Select(row => new AppLogAdminDto(
             row.Id, row.CreatedAt, row.ModuleId, row.ModuleName, row.AreaCode, row.ActionCode,
             row.UserId, row.UserName, row.UserEmail, row.UserRoleId, row.UserRoleCode, row.UserActive,
             row.UserRegisteredAt, row.IpAddress, row.UserAgent, row.HasMetadata,
-            JsonDocument.Parse(row.MetadataJson).RootElement.Clone(), null)).ToList(), totalCount, query.Page, query.PageSize);
+            JsonDocument.Parse(row.MetadataJson).RootElement.Clone(), null)).ToList(), totalCount, query.Page, query.PageSize,
+            new AppLogFilterOptionsDto(areaCodes, actionCodes));
     }
 
     private sealed record AppLogAdminRow(

@@ -6,7 +6,7 @@
 flowchart LR
   Access["Access<br/>23 types"]
   Admin["Admin<br/>7 types"]
-  AppLogs["AppLogs<br/>20 types"]
+  AppLogs["AppLogs<br/>21 types"]
   Auth["Auth<br/>70 types"]
   Common["Common<br/>18 types"]
   Creatures["Creatures<br/>10 types"]
