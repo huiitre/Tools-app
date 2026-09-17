@@ -19,9 +19,10 @@ settings:
 docs: |-
   Page administrateur du journal applicatif. Rôle minimum : ADMIN.
 
-  Filtres : `userId`, `userSearch`, `roleId`, `userActive`, `userRegisteredFrom`,
-  `userRegisteredTo`, `moduleId`, `areaCode`, `actionCode`, `ipAddress`, `hasMetadata`,
-  `createdFrom`, `createdTo`.
+  Filtres : `userIds`, `moduleIds`, `areaCodes`, `actionCodes` (paramètres répétables,
+  donc sélection multiple), `createdFrom`, `createdTo`, et `search` (nom, e-mail, IP ou
+  user-agent). Les autres filtres administratifs disponibles sont `roleId`, `userActive`,
+  `userRegisteredFrom`, `userRegisteredTo`, `ipAddress`, `hasMetadata`.
 
   `page` commence à 1 ; `pageSize` est borné à 100. Les dates de fin sont inclusives.
   Tris : `createdAt`, `userName`, `userEmail`, `userRole`, `userStatus`,
@@ -29,5 +30,6 @@ docs: |-
   `hasMetadata`, avec `sortDirection=asc|desc`.
 
   Chaque ligne inclut `metadata` (JSON de contexte) et `ipLocation` (pays/ville issus de la base
-  GeoLite2 locale lorsqu'une IP publique est localisable). `hasMetadata` indique si `metadata`
-  contient autre chose que l'objet vide.
+  GeoLite2 locale lorsqu'une IP publique est localisable). `filterOptions` contient les codes de
+  zone et d'action utilisables dans les sélecteurs. `hasMetadata` indique si `metadata` contient
+  autre chose que l'objet vide.

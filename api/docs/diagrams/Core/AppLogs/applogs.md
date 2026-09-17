@@ -13,6 +13,7 @@ flowchart LR
   AppLogCommand["AppLogCommand"]
   AppLogContext["AppLogContext"]
   AppLogEntry["AppLogEntry"]
+  AppLogFilterOptionsDto["AppLogFilterOptionsDto"]
   AppLogIpLocationDto["AppLogIpLocationDto"]
   AppLogListQuery["AppLogListQuery"]
   AppLogPageDto["AppLogPageDto"]
@@ -35,6 +36,7 @@ flowchart LR
   AppLogListQuery --> AppLogSortColumn
   AppLogListQuery --> SortDirection
   AppLogPageDto --> AppLogAdminDto
+  AppLogPageDto --> AppLogFilterOptionsDto
   AppLogService --> IAppLogContextProvider
   AppLogService --> IAppLogRepository
   AppLogsController --> ListAppLogsUseCase

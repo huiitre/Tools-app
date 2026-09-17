@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useAdminAppLogsStore } from '../store/adminAppLogs.store'
-import { fetchAdminRoles } from '../../users/fetch/adminUsers.fetch'
+import { fetchAdminRoles, fetchAdminUsers } from '../../users/fetch/adminUsers.fetch'
+import { fetchModules } from '../../modules/fetch/adminModules.fetch'
 import AdminAppLogsToolbar from '../components/AdminAppLogsToolbar.vue'
 import AdminAppLogsHeader from '../components/AdminAppLogsHeader.vue'
 import AdminAppLogsRow from '../components/AdminAppLogsRow.vue'
@@ -11,9 +12,12 @@ const store = useAdminAppLogsStore()
 onMounted(async () => {
   void store.load()
   try {
-    store.roles = await fetchAdminRoles()
+    const [roles, users, modules] = await Promise.all([fetchAdminRoles(), fetchAdminUsers(), fetchModules()])
+    store.roles = roles
+    store.users = users
+    store.modules = modules
   } catch {
-    // Les logs ne dépendent pas du catalogue : seul leur libellé de rôle restera indisponible.
+    // Les logs restent lisibles même si les catalogues utilisés par les filtres sont indisponibles.
   }
 })
 </script>

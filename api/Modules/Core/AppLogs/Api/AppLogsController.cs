@@ -15,9 +15,9 @@ public sealed class AppLogsController : ControllerBase
         [FromQuery] ListAppLogsRequest request,
         [FromServices] ListAppLogsUseCase listAppLogsUseCase) =>
         listAppLogsUseCase.Execute(new AppLogListQuery(
-            request.Page, request.PageSize, request.UserId, request.UserSearch, request.RoleId,
-            request.UserActive, request.UserRegisteredFrom, request.UserRegisteredTo, request.ModuleId,
-            request.AreaCode, request.ActionCode, request.IpAddress, request.HasMetadata,
+            request.Page, request.PageSize, request.UserIds, request.Search, request.RoleId,
+            request.UserActive, request.UserRegisteredFrom, request.UserRegisteredTo, request.ModuleIds,
+            request.AreaCodes, request.ActionCodes, request.IpAddress, request.HasMetadata,
             request.CreatedFrom, request.CreatedTo, ParseSortBy(request.SortBy), ParseSortDirection(request.SortDirection)));
 
     private static AppLogSortColumn ParseSortBy(string? value) => value?.Trim().ToLowerInvariant() switch
@@ -49,15 +49,15 @@ public sealed class ListAppLogsRequest
 {
     [Range(1, int.MaxValue)] public int Page { get; init; } = 1;
     [Range(1, 100)] public int PageSize { get; init; } = 50;
-    public long? UserId { get; init; }
-    public string? UserSearch { get; init; }
+    public long[]? UserIds { get; init; }
+    public string? Search { get; init; }
     public long? RoleId { get; init; }
     public bool? UserActive { get; init; }
     public DateTime? UserRegisteredFrom { get; init; }
     public DateTime? UserRegisteredTo { get; init; }
-    public long? ModuleId { get; init; }
-    public string? AreaCode { get; init; }
-    public string? ActionCode { get; init; }
+    public long[]? ModuleIds { get; init; }
+    public string[]? AreaCodes { get; init; }
+    public string[]? ActionCodes { get; init; }
     public string? IpAddress { get; init; }
     public bool? HasMetadata { get; init; }
     public DateTimeOffset? CreatedFrom { get; init; }
