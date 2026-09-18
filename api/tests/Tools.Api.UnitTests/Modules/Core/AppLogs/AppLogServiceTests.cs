@@ -102,7 +102,7 @@ public sealed class AppLogServiceTests
         }
 
         public Task<AppLogPageDto> FindForAdminAsync(AppLogListQuery query) =>
-            Task.FromResult(new AppLogPageDto([], 0, query.Page, query.PageSize));
+            Task.FromResult(new AppLogPageDto([], 0, query.Page, query.PageSize, new AppLogFilterOptionsDto([], [])));
     }
 
     private sealed class FixedAppLogContextProvider(AppLogContext context) : IAppLogContextProvider

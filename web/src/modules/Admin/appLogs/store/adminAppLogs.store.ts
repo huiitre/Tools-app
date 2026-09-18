@@ -130,56 +130,27 @@ export const useAdminAppLogsStore = defineStore('adminAppLogs', () => {
     if (column?.userToggle) column.visible = !column.visible
   }
 
-  async function setUserIds(nextUserIds: number[]) {
-    userIds.value = nextUserIds
+  // Toute mutation de filtre revient à la première page puis recharge : centralisé ici pour ne pas
+  // répéter ces deux lignes dans chaque setter.
+  async function applyFilter(mutate: () => void) {
+    mutate()
     page.value = 1
     await load()
   }
 
-  async function setModuleIds(nextModuleIds: number[]) {
-    moduleIds.value = nextModuleIds
-    page.value = 1
-    await load()
-  }
-
-  async function setAreaCodes(nextAreaCodes: string[]) {
-    selectedAreaCodes.value = nextAreaCodes
-    page.value = 1
-    await load()
-  }
-
-  async function setActionCodes(nextActionCodes: string[]) {
-    selectedActionCodes.value = nextActionCodes
-    page.value = 1
-    await load()
-  }
-
-  async function setCreatedFrom(value: string | null) {
-    createdFrom.value = value
-    page.value = 1
-    await load()
-  }
-
-  async function setCreatedTo(value: string | null) {
-    createdTo.value = value
-    page.value = 1
-    await load()
-  }
-
-  async function setDateRange(from: string | null, to: string | null) {
+  const setUserIds = (nextUserIds: number[]) => applyFilter(() => { userIds.value = nextUserIds })
+  const setModuleIds = (nextModuleIds: number[]) => applyFilter(() => { moduleIds.value = nextModuleIds })
+  const setAreaCodes = (nextAreaCodes: string[]) => applyFilter(() => { selectedAreaCodes.value = nextAreaCodes })
+  const setActionCodes = (nextActionCodes: string[]) => applyFilter(() => { selectedActionCodes.value = nextActionCodes })
+  const setCreatedFrom = (value: string | null) => applyFilter(() => { createdFrom.value = value })
+  const setCreatedTo = (value: string | null) => applyFilter(() => { createdTo.value = value })
+  const setDateRange = (from: string | null, to: string | null) => applyFilter(() => {
     createdFrom.value = from
     createdTo.value = to
-    page.value = 1
-    await load()
-  }
+  })
+  const setSearch = (value: string | null) => applyFilter(() => { search.value = value })
 
-  async function setSearch(value: string | null) {
-    search.value = value
-    page.value = 1
-    await load()
-  }
-
-  async function clearFilters() {
+  const clearFilters = () => applyFilter(() => {
     userIds.value = []
     moduleIds.value = []
     selectedAreaCodes.value = []
@@ -187,9 +158,7 @@ export const useAdminAppLogsStore = defineStore('adminAppLogs', () => {
     createdFrom.value = null
     createdTo.value = null
     search.value = null
-    page.value = 1
-    await load()
-  }
+  })
 
   const hasFilters = computed(() => userIds.value.length > 0 || moduleIds.value.length > 0
     || selectedAreaCodes.value.length > 0 || selectedActionCodes.value.length > 0

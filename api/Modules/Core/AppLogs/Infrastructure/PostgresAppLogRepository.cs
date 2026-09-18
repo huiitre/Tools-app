@@ -37,20 +37,21 @@ public sealed class PostgresAppLogRepository(NpgsqlDataSource dataSource) : IApp
     public async Task<AppLogPageDto> FindForAdminAsync(AppLogListQuery query)
     {
         // La colonne est choisie dans cette liste fermée : une valeur reçue ne devient jamais du SQL.
+        // Les noms correspondent aux alias exposés par le CTE filtered_logs ci-dessous.
         var orderBy = query.SortBy switch
         {
-            AppLogSortColumn.CreatedAt => "log.created_at",
-            AppLogSortColumn.UserName => "user_account.name",
-            AppLogSortColumn.UserEmail => "user_account.email",
-            AppLogSortColumn.UserRole => "role.code",
-            AppLogSortColumn.UserStatus => "user_account.is_active",
-            AppLogSortColumn.UserRegisteredAt => "user_account.created_at",
-            AppLogSortColumn.ModuleName => "module.name",
-            AppLogSortColumn.AreaCode => "log.area_code",
-            AppLogSortColumn.ActionCode => "log.action_code",
-            AppLogSortColumn.IpAddress => "log.ip_address",
-            AppLogSortColumn.UserAgent => "log.user_agent",
-            AppLogSortColumn.HasMetadata => "(log.metadata <> jsonb_build_object())",
+            AppLogSortColumn.CreatedAt => "created_at",
+            AppLogSortColumn.UserName => "user_name",
+            AppLogSortColumn.UserEmail => "user_email",
+            AppLogSortColumn.UserRole => "user_role_code",
+            AppLogSortColumn.UserStatus => "user_active",
+            AppLogSortColumn.UserRegisteredAt => "user_registered_at",
+            AppLogSortColumn.ModuleName => "module_name",
+            AppLogSortColumn.AreaCode => "area_code",
+            AppLogSortColumn.ActionCode => "action_code",
+            AppLogSortColumn.IpAddress => "ip_address",
+            AppLogSortColumn.UserAgent => "user_agent",
+            AppLogSortColumn.HasMetadata => "has_metadata",
             _ => throw new ArgumentOutOfRangeException(nameof(query.SortBy))
         };
         var direction = query.SortDirection == SortDirection.Asc ? "ASC" : "DESC";
@@ -76,10 +77,21 @@ public sealed class PostgresAppLogRepository(NpgsqlDataSource dataSource) : IApp
         var where = string.Join("\n                  AND ", filters);
 
         // Les références user/module sont historiques : une jointure gauche conserve le log même
-        // quand la ressource d'origine n'existe plus.
+        // quand la ressource d'origine n'existe plus. filtered_logs est matérialisé une seule fois et
+        // réutilisé pour la page ; TotalCount vient d'une fenêtre calculée avant LIMIT/OFFSET, donc
+        // correcte même sur la page retournée — sauf si elle est hors plage (page demandée après la
+        // dernière), où la fenêtre ne porte plus aucune ligne : CountFilteredAsync prend le relais.
         var sql = $"""
             WITH filtered_logs AS (
-                SELECT log.id
+                SELECT log.id, log.created_at, log.module_id, module.name AS module_name,
+                       log.area_code, log.action_code, log.user_id,
+                       user_account.name AS user_name, user_account.email AS user_email,
+                       user_role.role_id AS user_role_id, role.code AS user_role_code,
+                       user_account.is_active AS user_active,
+                       user_account.created_at AS user_registered_at,
+                       host(log.ip_address) AS ip_address, log.user_agent AS user_agent,
+                       (log.metadata <> jsonb_build_object()) AS has_metadata,
+                       log.metadata::text AS metadata_json
                 FROM tools_core.application_logs log
                 LEFT JOIN tools_core.module module ON module.id = log.module_id
                 LEFT JOIN tools_core.users user_account ON user_account.id = log.user_id
@@ -87,35 +99,15 @@ public sealed class PostgresAppLogRepository(NpgsqlDataSource dataSource) : IApp
                 LEFT JOIN tools_core.role role ON role.id = user_role.role_id
                 WHERE {where}
             )
-            SELECT COUNT(*) FROM filtered_logs;
-
-            WITH filtered_logs AS (
-                SELECT log.id
-                FROM tools_core.application_logs log
-                LEFT JOIN tools_core.module module ON module.id = log.module_id
-                LEFT JOIN tools_core.users user_account ON user_account.id = log.user_id
-                LEFT JOIN tools_core.user_role user_role ON user_role.user_id = user_account.id
-                LEFT JOIN tools_core.role role ON role.id = user_role.role_id
-                WHERE {where}
-            )
-            SELECT log.id AS Id, log.created_at AS CreatedAt,
-                   log.module_id AS ModuleId, module.name AS ModuleName,
-                   log.area_code AS AreaCode, log.action_code AS ActionCode,
-                   log.user_id AS UserId,
-                   user_account.name AS UserName, user_account.email AS UserEmail,
-                   user_role.role_id AS UserRoleId, role.code AS UserRoleCode,
-                   user_account.is_active AS UserActive,
-                   user_account.created_at AS UserRegisteredAt,
-                   host(log.ip_address) AS IpAddress, log.user_agent AS UserAgent,
-                   (log.metadata <> jsonb_build_object()) AS HasMetadata,
-                   log.metadata::text AS MetadataJson
-            FROM tools_core.application_logs log
-            LEFT JOIN tools_core.module module ON module.id = log.module_id
-            LEFT JOIN tools_core.users user_account ON user_account.id = log.user_id
-            LEFT JOIN tools_core.user_role user_role ON user_role.user_id = user_account.id
-            LEFT JOIN tools_core.role role ON role.id = user_role.role_id
-            WHERE log.id IN (SELECT id FROM filtered_logs)
-            ORDER BY {orderBy} {direction} NULLS LAST, log.id DESC
+            SELECT id AS Id, created_at AS CreatedAt, module_id AS ModuleId, module_name AS ModuleName,
+                   area_code AS AreaCode, action_code AS ActionCode, user_id AS UserId,
+                   user_name AS UserName, user_email AS UserEmail, user_role_id AS UserRoleId,
+                   user_role_code AS UserRoleCode, user_active AS UserActive,
+                   user_registered_at AS UserRegisteredAt, ip_address AS IpAddress, user_agent AS UserAgent,
+                   has_metadata AS HasMetadata, metadata_json AS MetadataJson,
+                   COUNT(*) OVER() AS TotalCount
+            FROM filtered_logs
+            ORDER BY {orderBy} {direction} NULLS LAST, id DESC
             LIMIT @PageSize OFFSET @Offset;
 
             SELECT DISTINCT area_code FROM tools_core.application_logs ORDER BY area_code;
@@ -124,10 +116,10 @@ public sealed class PostgresAppLogRepository(NpgsqlDataSource dataSource) : IApp
 
         await using var connection = await dataSource.OpenConnectionAsync();
         await using var results = await connection.QueryMultipleAsync(new CommandDefinition(sql, query));
-        var totalCount = await results.ReadSingleAsync<long>();
-        var rows = await results.ReadAsync<AppLogAdminRow>();
+        var rows = (await results.ReadAsync<AppLogAdminRow>()).ToList();
         var areaCodes = (await results.ReadAsync<string>()).ToList();
         var actionCodes = (await results.ReadAsync<string>()).ToList();
+        var totalCount = rows.Count > 0 ? rows[0].TotalCount : await CountFilteredAsync(connection, query, where);
         return new AppLogPageDto(rows.Select(row => new AppLogAdminDto(
             row.Id, row.CreatedAt, row.ModuleId, row.ModuleName, row.AreaCode, row.ActionCode,
             row.UserId, row.UserName, row.UserEmail, row.UserRoleId, row.UserRoleCode, row.UserActive,
@@ -136,8 +128,26 @@ public sealed class PostgresAppLogRepository(NpgsqlDataSource dataSource) : IApp
             new AppLogFilterOptionsDto(areaCodes, actionCodes));
     }
 
+    // N'est exécuté que si la page demandée ne contient aucune ligne (total réellement nul, ou page
+    // hors plage après un changement de filtre) : la fenêtre COUNT(*) OVER() de la requête principale
+    // ne porte alors sur aucune ligne renvoyée.
+    private static async Task<long> CountFilteredAsync(NpgsqlConnection connection, AppLogListQuery query, string where)
+    {
+        var sql = $"""
+            SELECT COUNT(*)
+            FROM tools_core.application_logs log
+            LEFT JOIN tools_core.module module ON module.id = log.module_id
+            LEFT JOIN tools_core.users user_account ON user_account.id = log.user_id
+            LEFT JOIN tools_core.user_role user_role ON user_role.user_id = user_account.id
+            LEFT JOIN tools_core.role role ON role.id = user_role.role_id
+            WHERE {where}
+            """;
+        return await connection.QuerySingleAsync<long>(new CommandDefinition(sql, query));
+    }
+
     private sealed record AppLogAdminRow(
         long Id, DateTime CreatedAt, long? ModuleId, string? ModuleName, string AreaCode, string ActionCode,
         long? UserId, string? UserName, string? UserEmail, long? UserRoleId, string? UserRoleCode,
-        bool? UserActive, DateTime? UserRegisteredAt, string? IpAddress, string? UserAgent, bool HasMetadata, string MetadataJson);
+        bool? UserActive, DateTime? UserRegisteredAt, string? IpAddress, string? UserAgent, bool HasMetadata,
+        string MetadataJson, long TotalCount);
 }

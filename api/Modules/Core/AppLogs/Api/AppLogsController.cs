@@ -18,24 +18,19 @@ public sealed class AppLogsController : ControllerBase
             request.Page, request.PageSize, request.UserIds, request.Search, request.RoleId,
             request.UserActive, request.UserRegisteredFrom, request.UserRegisteredTo, request.ModuleIds,
             request.AreaCodes, request.ActionCodes, request.IpAddress, request.HasMetadata,
-            request.CreatedFrom, request.CreatedTo, ParseSortBy(request.SortBy), ParseSortDirection(request.SortDirection)));
+            ToUtcStartOfDay(request.CreatedFrom), ToUtcStartOfDay(request.CreatedTo),
+            ParseSortBy(request.SortBy), ParseSortDirection(request.SortDirection)));
 
-    private static AppLogSortColumn ParseSortBy(string? value) => value?.Trim().ToLowerInvariant() switch
-    {
-        null or "" or "createdat" => AppLogSortColumn.CreatedAt,
-        "username" => AppLogSortColumn.UserName,
-        "useremail" => AppLogSortColumn.UserEmail,
-        "userrole" => AppLogSortColumn.UserRole,
-        "userstatus" => AppLogSortColumn.UserStatus,
-        "userregisteredat" => AppLogSortColumn.UserRegisteredAt,
-        "modulename" => AppLogSortColumn.ModuleName,
-        "areacode" => AppLogSortColumn.AreaCode,
-        "actioncode" => AppLogSortColumn.ActionCode,
-        "ipaddress" => AppLogSortColumn.IpAddress,
-        "useragent" => AppLogSortColumn.UserAgent,
-        "hasmetadata" => AppLogSortColumn.HasMetadata,
-        _ => throw AppException.Validation("APP_LOG_SORT_INVALID", "Colonne de tri du journal invalide.")
-    };
+    // Le sélecteur front n'envoie qu'un jour calendaire (`type="date"`, sans heure ni fuseau) : le lier
+    // en DateTimeOffset ferait résoudre l'offset manquant par ASP.NET avec le fuseau *du serveur*, pas
+    // UTC ni celui de l'admin. En DateOnly il n'y a rien à deviner ; on fixe nous-mêmes minuit UTC.
+    private static DateTimeOffset? ToUtcStartOfDay(DateOnly? date) =>
+        date is { } value ? new DateTimeOffset(value.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero) : null;
+
+    private static AppLogSortColumn ParseSortBy(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? AppLogSortColumn.CreatedAt :
+        Enum.TryParse<AppLogSortColumn>(value, ignoreCase: true, out var column) ? column :
+        throw AppException.Validation("APP_LOG_SORT_INVALID", "Colonne de tri du journal invalide.");
 
     private static SortDirection ParseSortDirection(string? value) => value?.Trim().ToLowerInvariant() switch
     {
@@ -60,8 +55,8 @@ public sealed class ListAppLogsRequest
     public string[]? ActionCodes { get; init; }
     public string? IpAddress { get; init; }
     public bool? HasMetadata { get; init; }
-    public DateTimeOffset? CreatedFrom { get; init; }
-    public DateTimeOffset? CreatedTo { get; init; }
+    public DateOnly? CreatedFrom { get; init; }
+    public DateOnly? CreatedTo { get; init; }
     public string? SortBy { get; init; }
     public string? SortDirection { get; init; }
 }
