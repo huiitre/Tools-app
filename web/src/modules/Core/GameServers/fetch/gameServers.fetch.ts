@@ -33,8 +33,9 @@ export async function executeGameServerAction(
   slug: string,
   actionCode: string,
   parameters: Record<string, string>,
+  delaySeconds?: number,
 ): Promise<void> {
-  await clientCore.post(`/gameservers/${slug}/actions/${actionCode}`, parameters)
+  await clientCore.post(`/gameservers/${slug}/actions/${actionCode}`, { parameters, delaySeconds })
 }
 
 export async function executeGameServerRawCommand(slug: string, command: string): Promise<string | null> {

@@ -23,20 +23,24 @@ public class GameServerDashboardController : ControllerBase
     }
 
     // Les paramètres sont libres : chaque jeu déclare les siens, le contrôleur ne les connaît pas.
+    // DelaySeconds est le seul champ générique, hors paramètres du jeu (voir GameServerActionDefinition.SupportsDelay).
     [HttpPost("actions/{actionCode}")]
     public async Task<IActionResult> ExecuteAction(
         string slug,
         string actionCode,
-        [FromBody] Dictionary<string, string>? parameters,
+        [FromBody] ExecuteGameServerActionRequest? request,
         [FromServices] GetGameServerDashboardUseCase getGameServerDashboardUseCase,
         CancellationToken cancellationToken)
     {
         await getGameServerDashboardUseCase.ExecuteAction(
             slug,
             actionCode,
-            parameters ?? [],
+            request?.Parameters ?? [],
+            request?.DelaySeconds,
             cancellationToken);
 
+        // Toujours 204, avec ou sans délai : le front ne distingue pas "exécuté" de "programmé"
+        // sur le statut HTTP (choix explicite, voir api/docs/GAME_SERVER_ACTION_COUNTDOWN.md).
         return NoContent();
     }
 

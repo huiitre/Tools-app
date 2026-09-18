@@ -14,6 +14,7 @@ public sealed class GetGameServerDashboardUseCase(
     IGameServerTargetRepository gameServerTargetRepository,
     IGameServerRawCommandHistoryRepository rawCommandHistoryRepository,
     PollGameServersUseCase pollGameServersUseCase,
+    IGameServerActionCountdownService actionCountdownService,
     IEnumerable<IGameServerProvider> providers) : SecuredUseCase(authorizer)
 {
     // Borne les appels réseau : un serveur qui accepte la connexion sans jamais répondre
@@ -146,6 +147,7 @@ public sealed class GetGameServerDashboardUseCase(
         string slug,
         string actionCode,
         IReadOnlyDictionary<string, string> parameters,
+        int? delaySeconds,
         CancellationToken cancellationToken)
     {
         var target = await gameServerTargetRepository.FindBySlugAsync(slug)
@@ -179,6 +181,27 @@ public sealed class GetGameServerDashboardUseCase(
             throw AppException.Validation(
                 "GAME_SERVER_ACTION_PARAMETERS_MISSING",
                 $"Paramètres obligatoires manquants : {string.Join(", ", missing)}.");
+        }
+
+        if (delaySeconds is < 0)
+        {
+            throw AppException.Validation("GAME_SERVER_ACTION_DELAY_INVALID", "Le délai ne peut pas être négatif.");
+        }
+
+        if (delaySeconds is > 0 && !action.SupportsDelay)
+        {
+            throw AppException.Validation(
+                "GAME_SERVER_ACTION_DELAY_UNSUPPORTED",
+                $"L'action « {actionCode} » ne peut pas être différée.");
+        }
+
+        // Un délai réel n'exécute rien ici : GameServerActionCountdownService s'en charge, avec
+        // ses propres annonces et sa propre gestion d'erreurs (voir
+        // api/docs/GAME_SERVER_ACTION_COUNTDOWN.md). 0 ou absent équivaut à immédiat.
+        if (delaySeconds is > 0)
+        {
+            actionCountdownService.Schedule(new ScheduledGameServerAction(target, actionCode, parameters, delaySeconds.Value));
+            return;
         }
 
         using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

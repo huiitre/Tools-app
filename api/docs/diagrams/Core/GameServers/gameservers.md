@@ -10,6 +10,7 @@ flowchart LR
   GameServersSyncController["GameServersSyncController"]
   end
   subgraph Application
+  ExecuteGameServerActionRequest["ExecuteGameServerActionRequest"]
   GameServerActionDefinition["GameServerActionDefinition"]
   GameServerActionParameter["GameServerActionParameter"]
   GameServerDashboardView["GameServerDashboardView"]
@@ -38,6 +39,7 @@ flowchart LR
   GetGameServerModsUseCase["GetGameServerModsUseCase"]
   GetGameServersLiveStateUseCase["GetGameServersLiveStateUseCase"]
   GetGameServersUseCase["GetGameServersUseCase"]
+  IGameServerActionCountdownService(["IGameServerActionCountdownService"])
   IGameServerActions(["IGameServerActions"])
   IGameServerAssetUrlBuilder(["IGameServerAssetUrlBuilder"])
   IGameServerDashboard(["IGameServerDashboard"])
@@ -53,6 +55,7 @@ flowchart LR
   IModIconResolver(["IModIconResolver"])
   ISteamAppDetailsProvider(["ISteamAppDetailsProvider"])
   PollGameServersUseCase["PollGameServersUseCase"]
+  ScheduledGameServerAction["ScheduledGameServerAction"]
   SteamAppDetailsLookup["SteamAppDetailsLookup"]
   end
   subgraph Infrastructure
@@ -60,6 +63,7 @@ flowchart LR
   CobblemonProvider["CobblemonProvider"]
   CurseForgeIconResolver["CurseForgeIconResolver"]
   EnshroudedProvider["EnshroudedProvider"]
+  GameServerActionCountdownService["GameServerActionCountdownService"]
   GameServerAssetUrlBuilder["GameServerAssetUrlBuilder"]
   GameServerProtocolConfig["GameServerProtocolConfig"]
   GameServersManifestProvider["GameServersManifestProvider"]
@@ -93,6 +97,7 @@ flowchart LR
   CurseForgeIconResolver -.-> IModIconResolver
   EnshroudedProvider --> SteamA2sClient
   EnshroudedProvider -.-> IGameServerProvider
+  GameServerActionCountdownService -.-> IGameServerActionCountdownService
   GameServerActionDefinition --> GameServerActionParameter
   GameServerAssetUrlBuilder -.-> IGameServerAssetUrlBuilder
   GameServerDashboardController --> GetGameServerDashboardUseCase
@@ -111,6 +116,7 @@ flowchart LR
   GameServersSyncUseCase --> IGameServersManifestProvider
   GameServersSyncUseCase --> IModIconResolver
   GameServersSyncUseCase --> ISteamAppDetailsProvider
+  GetGameServerDashboardUseCase --> IGameServerActionCountdownService
   GetGameServerDashboardUseCase --> IGameServerProvider
   GetGameServerDashboardUseCase --> IGameServerRawCommandHistoryRepository
   GetGameServerDashboardUseCase --> IGameServerTargetRepository
@@ -138,6 +144,7 @@ flowchart LR
   PostgresGameServerRepository -.-> IGameServerRawCommandHistoryRepository
   RustProvider --> SteamA2sClient
   RustProvider -.-> IGameServerProvider
+  ScheduledGameServerAction --> GameServerTarget
   SevenDaysToDieProvider --> SteamA2sClient
   SevenDaysToDieProvider -.-> IGameServerProvider
   SteamAppDetailsProvider -.-> ISteamAppDetailsProvider

@@ -7,6 +7,7 @@ using Tools.Api.Modules.Core.GameServers.Infrastructure;
 using Tools.Api.Modules.Core.GameServers.Infrastructure.Games;
 using Tools.Api.Modules.Core.GameServers.Infrastructure.Persistence;
 using Tools.Api.Modules.Core.GameServers.Infrastructure.Polling;
+using Tools.Api.Modules.Core.GameServers.Infrastructure.Scheduling;
 using Tools.Api.Modules.Core.GameServers.Infrastructure.Clients;
 using Tools.Api.Modules.Core.GameServers.Infrastructure.Sync;
 using Tools.Api.Modules.Core.Common.Infrastructure;
@@ -89,6 +90,15 @@ public static class GameServersModule
         builder.Services.AddSingleton<IGameServerProvider, HumanitzProvider>();
         builder.Services.AddSingleton<IGameServerProvider, EnshroudedProvider>();
         builder.Services.AddSingleton<IGameServerProvider, CobblemonProvider>();
+
+        // Singleton exposé à la fois comme IHostedService (démarré avec l'appli, jamais désactivé
+        // — GetGameServerDashboardUseCase en dépend via son port, contrairement au poll ci-dessous
+        // qui n'a aucun appelant direct) et comme IGameServerActionCountdownService (le port que ce
+        // use case appelle). Les deux enregistrements ci-dessous résolvent la même instance.
+        builder.Services.AddSingleton<GameServerActionCountdownService>();
+        builder.Services.AddSingleton<IGameServerActionCountdownService>(
+            services => services.GetRequiredService<GameServerActionCountdownService>());
+        builder.Services.AddHostedService(services => services.GetRequiredService<GameServerActionCountdownService>());
 
         builder.Services.AddScoped<PollGameServersUseCase>();
         builder.Services.AddScoped<GetGameServersUseCase>();

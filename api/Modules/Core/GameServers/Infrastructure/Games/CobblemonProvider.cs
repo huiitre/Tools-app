@@ -54,7 +54,7 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
             [new("playerId", "Joueur", "player", true, null), new("reason", "Raison", "text", false, "Facultative")]),
         new("ban", "Bannir un joueur", "mdi-account-cancel-outline", RoleCode.Admin, true,
             [new("playerId", "Joueur", "player", true, null), new("reason", "Raison", "text", false, "Facultative")]),
-        new("restart", "Redémarrer le serveur", "mdi-restart", RoleCode.Admin, true, []),
+        new("restart", "Redémarrer le serveur", "mdi-restart", RoleCode.Admin, true, [], SupportsDelay: true),
     ];
 
     public async Task ExecuteAsync(
