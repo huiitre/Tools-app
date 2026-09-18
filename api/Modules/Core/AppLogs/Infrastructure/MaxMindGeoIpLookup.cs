@@ -9,31 +9,46 @@ namespace Tools.Api.Modules.Core.AppLogs.Infrastructure;
 public sealed class MaxMindGeoIpLookup(IConfiguration configuration, ILogger<MaxMindGeoIpLookup> logger) : IGeoIpLookup, IDisposable
 {
     private readonly string? databasePath = configuration["GeoIp:DatabasePath"];
-    private DatabaseReader? reader;
-    private bool opened;
+    private readonly Lock gate = new();
+    private volatile DatabaseReader? reader;
+    private volatile bool warned;
 
     public AppLogIpLocationDto? Find(string? ipAddress)
     {
         if (string.IsNullOrWhiteSpace(ipAddress) || !IPAddress.TryParse(ipAddress, out var address) || IsPrivate(address)) return null;
         try
         {
-            if (!opened)
-            {
-                reader = OpenReader();
-                opened = true;
-            }
-            if (reader is null) return null;
-            var city = reader.City(address);
+            var currentReader = GetReader();
+            if (currentReader is null) return null;
+            var city = currentReader.City(address);
             return new AppLogIpLocationDto(city.Country.IsoCode, French(city.Country.Names), French(city.City.Names));
         }
         catch (AddressNotFoundException) { return null; }
+    }
+
+    // Ne se fige jamais sur un échec : tant qu'aucun reader n'a pu être ouvert, chaque appel retente
+    // (la base GeoLite2 peut arriver après le démarrage du process). Le verrou garantit qu'un seul
+    // DatabaseReader est jamais ouvert, sans quoi le second écraserait la référence du premier et son
+    // handle de fichier fuirait.
+    private DatabaseReader? GetReader()
+    {
+        var current = reader;
+        if (current is not null) return current;
+        lock (gate)
+        {
+            return reader ??= OpenReader();
+        }
     }
 
     private DatabaseReader? OpenReader()
     {
         if (string.IsNullOrWhiteSpace(databasePath) || !File.Exists(databasePath))
         {
-            logger.LogWarning("Base GeoLite2 absente : la localisation IP est désactivée ({Path}).", databasePath ?? "GeoIp:DatabasePath non configuré");
+            if (!warned)
+            {
+                logger.LogWarning("Base GeoLite2 absente : la localisation IP est désactivée ({Path}).", databasePath ?? "GeoIp:DatabasePath non configuré");
+                warned = true;
+            }
             return null;
         }
         return new DatabaseReader(databasePath);

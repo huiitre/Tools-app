@@ -23,19 +23,19 @@
           <mxGeometry x="0" y="378" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="CreateVpnPeerUseCase" value="CreateVpnPeerUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="486" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="414" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="DeleteVpnPeerUseCase" value="DeleteVpnPeerUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="301" y="558" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="GetVpnPeerConfigUseCase" value="GetVpnPeerConfigUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="414" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="486" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IVpnGateway" value="IVpnGateway" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="602" y="450" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="InMemoryVpnGateway" value="InMemoryVpnGateway" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="414" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="486" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ListVpnPeersUseCase" value="ListVpnPeersUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="301" y="342" width="200" height="40" as="geometry" />
@@ -62,7 +62,7 @@
           <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="WireGuardVpnGateway" value="WireGuardVpnGateway" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="486" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="414" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="CreateVpnPeerUseCase" target="IVpnGateway">
           <mxGeometry relative="1" as="geometry" />

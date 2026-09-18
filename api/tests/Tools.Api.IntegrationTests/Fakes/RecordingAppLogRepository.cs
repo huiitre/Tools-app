@@ -18,7 +18,7 @@ public sealed class RecordingAppLogRepository : IAppLogRepository
     }
 
     public Task<AppLogPageDto> FindForAdminAsync(AppLogListQuery query) =>
-        Task.FromResult(new AppLogPageDto([], 0, query.Page, query.PageSize));
+        Task.FromResult(new AppLogPageDto([], 0, query.Page, query.PageSize, new AppLogFilterOptionsDto([], [])));
 
     public void Reset() => entries.Clear();
 }

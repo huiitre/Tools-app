@@ -5,8 +5,8 @@ using Tools.Api.Modules.Core.AppLogs.Infrastructure;
 
 namespace Tools.Api.Modules.Core.AppLogs;
 
-// Composition du journal applicatif transverse. Le module ne propose que l'écriture : la future
-// consultation administrative sera ajoutée avec son propre use case, sans ouvrir de mutation.
+// Composition du journal applicatif transverse : écriture (AppLogService) et lecture administrative
+// (ListAppLogsUseCase), toujours sans aucun chemin de mutation ou de suppression du journal.
 public static class AppLogsModule
 {
     public static IHostApplicationBuilder AddAppLogsModule(this IHostApplicationBuilder builder)

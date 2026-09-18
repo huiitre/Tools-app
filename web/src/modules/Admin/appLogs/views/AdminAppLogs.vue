@@ -6,6 +6,7 @@ import { fetchModules } from '../../modules/fetch/adminModules.fetch'
 import AdminAppLogsToolbar from '../components/AdminAppLogsToolbar.vue'
 import AdminAppLogsHeader from '../components/AdminAppLogsHeader.vue'
 import AdminAppLogsRow from '../components/AdminAppLogsRow.vue'
+import toast from '@/services/toast'
 
 const store = useAdminAppLogsStore()
 
@@ -18,6 +19,7 @@ onMounted(async () => {
     store.modules = modules
   } catch {
     // Les logs restent lisibles même si les catalogues utilisés par les filtres sont indisponibles.
+    toast.error('Filtres (rôles, utilisateurs, modules) indisponibles.')
   }
 })
 </script>
