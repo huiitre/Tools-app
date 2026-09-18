@@ -1,5 +1,23 @@
 # Compte à rebours des actions serveur
 
+**Implémenté le 18/09/2026.** Les points laissés ouverts ci-dessous ont été tranchés :
+
+- **Statut HTTP** : toujours `204 No Content`, délai ou non — pas de 202, pour que le front n'ait
+  jamais à distinguer les deux cas sur le code de retour.
+- **Concurrence** : un nouveau `delaySeconds` sur un serveur qui a déjà un compte à rebours en
+  cours **remplace** l'ancien (annulé proprement), ne le refuse pas.
+- **Annulation** : pas de bouton "Annuler" ni d'indicateur "compte à rebours en cours" côté front
+  pour l'instant. `GameServerActionCountdownService` sait déjà annuler/remplacer en interne
+  (nécessaire pour le point précédent), rien n'est exposé côté API/UI au-delà de `Schedule`.
+- **Ark** : laissé de côté. Il n'a toujours pas d'action `restart`/`stop` dans son provider et la
+  bonne commande RCON pour Ark Survival Ascended n'est pas connue — pas de quoi deviner sur un
+  serveur réel. Seul Cobblemon (Minecraft) a reçu le mécanisme différé ; Palworld garde son
+  paramètre natif `waittime` sur `shutdown`, inchangé.
+- Le délai est porté par `GameServerActionDefinition.SupportsDelay` (booléen, indépendant des
+  `Parameters` déclarés par le jeu) et par un champ générique `delaySeconds` à côté de
+  `parameters` dans le corps de `POST .../actions/{actionCode}` — jamais un paramètre de plus dans
+  la liste du jeu.
+
 ## Objectif
 
 Permettre de lancer un redémarrage ou un arrêt différé depuis l’interface des serveurs de jeu.

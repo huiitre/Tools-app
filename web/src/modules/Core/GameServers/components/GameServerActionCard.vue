@@ -8,7 +8,9 @@ const props = defineProps<{
   running: boolean
 }>()
 
-const emit = defineEmits<{ submit: [parameters: Record<string, string>] }>()
+const emit = defineEmits<{
+  submit: [payload: { parameters: Record<string, string>; delaySeconds?: number }]
+}>()
 
 // Un champ par paramètre déclaré : le formulaire est construit depuis la description de l'action,
 // aucun code de jeu n'est écrit ici.
@@ -16,14 +18,20 @@ const values = ref<Record<string, string>>(
   Object.fromEntries(props.action.parameters.map(parameter => [parameter.name, '']))
 )
 
+// Générique et indépendant des parameters ci-dessus : n'existe que si l'action l'autorise
+// (action.supportsDelay), quel que soit le jeu. Vide ou 0 = immédiat.
+const delayValue = ref('')
+
 const canSubmit = computed(() =>
   props.action.parameters.every(parameter => !parameter.required || values.value[parameter.name]?.trim())
 )
 
 function submit() {
   if (!canSubmit.value || props.running) return
-  emit('submit', { ...values.value })
+  const delaySeconds = props.action.supportsDelay ? Number(delayValue.value) || undefined : undefined
+  emit('submit', { parameters: { ...values.value }, delaySeconds })
   for (const parameter of props.action.parameters) values.value[parameter.name] = ''
+  delayValue.value = ''
 }
 </script>
 
@@ -50,6 +58,15 @@ function submit() {
         :disabled="running"
       />
     </template>
+
+    <input
+      v-if="action.supportsDelay"
+      v-model="delayValue"
+      type="number"
+      min="0"
+      placeholder="Délai (secondes) — 0 ou vide = immédiat"
+      :disabled="running"
+    />
 
     <button type="submit" :class="{ danger: action.dangerous }" :disabled="!canSubmit || running">
       {{ action.label }}

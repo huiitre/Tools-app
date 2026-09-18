@@ -64,6 +64,9 @@ export interface GameServerAction {
   icon: string
   dangerous: boolean
   parameters: GameServerActionParameter[]
+  // Générique, indépendant de parameters : le jeu qui n'a pas de délai natif (Cobblemon) l'expose
+  // quand même via ce seul booléen, le front rend le champ délai sans connaître l'action.
+  supportsDelay: boolean
 }
 
 export interface GameServerLiveCompanion {

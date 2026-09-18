@@ -14,4 +14,8 @@ public sealed record GameServerActionDefinition(
     RoleCode Role,
     // Marque les actions qui coupent le serveur ou bannissent : le front les signale en rouge.
     bool Dangerous,
-    IReadOnlyList<GameServerActionParameter> Parameters);
+    IReadOnlyList<GameServerActionParameter> Parameters,
+    // Autorise un délai (voir GameServerActionCountdownService) indépendant des Parameters
+    // déclarés ci-dessus : le jeu qui n'a pas de délai natif (Cobblemon) le porte quand même via ce
+    // seul booléen, sans paramètre `delaySeconds` à déclarer lui-même.
+    bool SupportsDelay = false);

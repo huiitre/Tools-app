@@ -70,13 +70,22 @@ const settingsCollapsed = ref(true)
 // Une action à la fois : le code de celle en cours, pour ne verrouiller que sa carte.
 const runningAction = ref<string | null>(null)
 
-async function runAction(actionCode: string, label: string, parameters: Record<string, string>) {
+async function runAction(
+  actionCode: string,
+  label: string,
+  payload: { parameters: Record<string, string>; delaySeconds?: number },
+) {
   runningAction.value = actionCode
   try {
-    await executeGameServerAction(props.server.slug, actionCode, parameters)
+    await executeGameServerAction(props.server.slug, actionCode, payload.parameters, payload.delaySeconds)
     // Le résultat n'est plus rafraîchi à la demande : il apparaît via le prochain push du
-    // scheduler (10s max), poussé à tout le monde plutôt que déclenché par ce dashboard.
-    toast.success(`${label} : commande envoyée`)
+    // scheduler (10s max) pour une action immédiate, ou après le compte à rebours côté API pour
+    // une action différée — poussé à tout le monde plutôt que déclenché par ce dashboard.
+    toast.success(
+      payload.delaySeconds
+        ? `${label} : programmé dans ${payload.delaySeconds}s`
+        : `${label} : commande envoyée`,
+    )
   } catch {
     toast.error(`${label} : échec`)
   } finally {
