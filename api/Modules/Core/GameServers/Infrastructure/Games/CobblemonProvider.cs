@@ -12,7 +12,8 @@ namespace Tools.Api.Modules.Core.GameServers.Infrastructure.Games;
 // Minecraft moddé Cobblemon, interrogé en RCON. Toutes les commandes utilisées sont vanilla et
 // ont été vérifiées sur le serveur le 11/09/2026 ; elles ne rendent que du texte, lu par des
 // expressions régulières. Aucune ne donne la version, l'uptime ni le journal.
-public sealed partial class CobblemonProvider : IGameServerProvider, IGameServerDashboard, IGameServerActions, IGameServerRawCommand
+public sealed partial class CobblemonProvider(DockerContainerClient docker)
+    : IGameServerProvider, IGameServerDashboard, IGameServerActions, IGameServerRawCommand
 {
     // Réponses par lesquelles le serveur refuse une commande, vérifiées le 11/09/2026.
     private static readonly string[] Rejections =
@@ -40,8 +41,8 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
 
     public string GameCode => "COBBLEMON";
 
-    // Le redémarrage n'existe pas en RCON : « stop » arrête proprement le serveur, et c'est la
-    // politique restart: unless-stopped du conteneur qui le relance. Sans elle, il resterait arrêté.
+    // Le redémarrage passe par Docker et non par RCON : un « stop » RCON bloquait l'arrêt du
+    // serveur tant que la connexion restait ouverte (incident du 11/10/2026).
     public IReadOnlyList<GameServerActionDefinition> Actions { get; } =
     [
         new("announce", "Annoncer un message", "mdi-bullhorn-outline", RoleCode.Moderator, false,
@@ -63,6 +64,13 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
         IReadOnlyDictionary<string, string> parameters,
         CancellationToken cancellationToken)
     {
+        // Le conteneur porte le nom du dossier NAS du serveur, c'est-à-dire son slug.
+        if (actionCode == "restart")
+        {
+            await docker.RestartAsync(target.Slug);
+            return;
+        }
+
         await using var client = await ConnectAsync(target, cancellationToken)
             ?? throw new InvalidOperationException("Connexion ou authentification RCON impossible.");
 
@@ -71,7 +79,6 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
             "announce" => $"tellraw @a {AnnouncementComponent(Parameter(parameters, "message"))}",
             "kick" => $"kick {await ResolvePlayerAsync(client, Parameter(parameters, "playerId"), cancellationToken)} {Reason(parameters)}",
             "ban" => $"ban {await ResolvePlayerAsync(client, Parameter(parameters, "playerId"), cancellationToken)} {Reason(parameters)}",
-            "restart" => "stop",
             // Fire-and-forget côté mod (un Thread démarré puis oublié) : la réponse RCON ne dit
             // jamais si le backup a réussi, seulement si la commande a été acceptée. Vérifié en
             // direct le 16/09/2026 : une vraie erreur de syntaxe répond
@@ -81,7 +88,6 @@ public sealed partial class CobblemonProvider : IGameServerProvider, IGameServer
             _ => throw new InvalidOperationException($"Action inconnue : {actionCode}."),
         };
 
-        // « stop » coupe la connexion avant de répondre : une absence de réponse n'est pas un refus.
         var answer = await client.ExecuteAsync(command.TrimEnd(), cancellationToken);
 
         // « tellraw @a » cible tous les joueurs connectés : sur un serveur vide, le sélecteur ne

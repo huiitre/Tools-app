@@ -124,8 +124,7 @@ POST .../actions/restart { "waittime": "60" }
 → BackgroundService appelle announce : « Redémarrage dans 60 secondes »
 → annonce à 30, 10, 5, 4, 3, 2 et 1 seconde si possible
 → BackgroundService appelle CobblemonProvider.ExecuteAsync("restart", ...)
-→ CobblemonProvider envoie stop via RCON
-→ Docker relance le conteneur
+→ CobblemonProvider demande le redémarrage du conteneur à l'API Docker
 ```
 
 Pour un provider sans `announce`, le compte à rebours et l’action finale sont conservés ; seules
@@ -134,8 +133,8 @@ les annonces sont omises.
 ## Actions actuellement connues
 
 - Palworld expose `shutdown` avec son propre paramètre `waittime`, ainsi que `stop` immédiat.
-- Cobblemon expose `restart`, actuellement traduit par la commande RCON `stop` puis relancé par
-  Docker.
+- Cobblemon expose `restart`, exécuté par l'API Docker (voir `GAME_SERVERS.md`, « Redémarrage par
+  Docker »).
 - ARK expose actuellement `announce`, mais pas encore `restart` dans le provider présent dans le
   dépôt. L’action devra être ajoutée avant de pouvoir planifier son redémarrage.
 
