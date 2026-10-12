@@ -44,6 +44,7 @@ const TUNNELS = [
   // seul son relay socat y est), démarré à la demande. Son IP est attribuée dynamiquement :
   // celle-ci est valable tant qu'il la retrouve, à revérifier s'il a été recréé entre-temps.
   { label: 'humanitz', host: '172.19.0.13', port: 8888 }, // RCON
+  { label: 'docker', host: '127.0.0.1', port: 2375 }, // tools_docker_proxy, publié sur le loopback du NAS
 ];
 
 function loadEnvFile(filePath) {

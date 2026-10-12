@@ -228,8 +228,9 @@ différé. Cobblemon en déclare quatre (announce, kick, ban, restart) :
 - `kick` et `ban` reçoivent l'UUID que le front envoie, **refusé par ces deux commandes**
   (vérifié) : le provider le traduit en pseudo parmi les joueurs connectés, et refuse tout le
   reste — un sélecteur comme `@a` expulserait sinon tout le serveur.
-- `restart` n'existe pas en RCON : c'est `stop`, et la politique `restart: unless-stopped` du
-  conteneur qui relance le serveur. Changer cette politique ferait de `restart` un arrêt définitif.
+- `restart` ne passe pas par RCON mais par l'API Docker (`POST /containers/<slug>/restart?t=180`,
+  voir « Redémarrage par Docker » plus bas). Il ne dépend plus de la politique de redémarrage du
+  conteneur.
 - Une réponse de refus du serveur (`No player was found`…) devient un 400
   `GAME_SERVER_ACTION_REJECTED` au lieu d'un succès silencieux.
 
@@ -320,7 +321,9 @@ OS et n'est pas ce qui a été demandé).
    exprimé ci-dessus) ; et le socket Docker complet donne un contrôle sur tous les conteneurs du
    NAS, pas seulement ceux des jeux — jugé disproportionné pour ce seul besoin. Non retenu, mais pas
    fermé définitivement : redeviendrait pertinent si un futur besoin réclamait un vrai contrôle des
-   conteneurs (ex. recréer un conteneur plutôt qu'un simple restart).
+   conteneurs (ex. recréer un conteneur plutôt qu'un simple restart). Depuis le 12/10/2026 un accès
+   bridé existe (`tools_docker_proxy`, stop/restart/kill seulement) : il ne donne ni `stats` ni
+   `exec`, cette piste reste donc non retenue.
 5. **`docker exec` + outil JVM standard** (`jcmd <pid> GC.heap_info`, `jstat -gc <pid>`) — donnerait
    la vraie heap, mais nécessite quand même d'exécuter une commande **dans** le conteneur depuis
    l'API (socket Docker ou SSH ciblé) : même arbitrage sécurité que l'option 4, pour un résultat
@@ -364,3 +367,31 @@ seul jeu l'utilise ; à généraliser seulement si un autre jeu expose un jour u
 
 Rien de tout ça n'est codé : prochaine étape utile, poser le flag Jolokia côté NAS et vérifier
 qu'il répond bien en HTTP avant d'écrire la moindre ligne C#.
+
+## Redémarrage par Docker (12/10/2026)
+
+**Pourquoi.** Le 11/10/2026 un redémarrage de `minecraft-all-the-mons` est resté bloqué en plein
+arrêt : `restart` envoyait `stop` en RCON puis gardait la connexion ouverte en attendant la réponse,
+pendant que le serveur attendait la fin du fil qui servait cette connexion. Il a fallu intervenir à
+la main sur le NAS.
+
+**Décision.** `restart` n'utilise plus RCON. `DockerContainerClient` appelle
+`POST /containers/<slug>/restart?t=180` : Docker envoie le signal d'arrêt, l'image du serveur
+sauvegarde et s'arrête d'elle-même, et Docker tue le process au bout de 180 s s'il est figé. Le
+redémarrage aboutit donc même quand la JVM ou le RCON ne répondent plus.
+
+- **Accès Docker.** `tools_api` ne monte pas le socket. Il passe par `tools_docker_proxy`
+  (`tecnativa/docker-socket-proxy`, `/data/docker/tools/tools_docker_proxy/` sur le NAS, hors repo)
+  lancé avec `ALLOW_RESTARTS=1` seul : stop, restart et kill, rien d'autre. Le proxy ne filtre pas
+  par nom, l'API peut donc redémarrer n'importe quel conteneur du NAS ; c'est le compromis accepté
+  pour ne pas maintenir un sidecar maison.
+- **Configuration.** `DOCKER_API_HOST` (`http://tools_docker_proxy:2375` en prod et QA). Absente,
+  l'API démarre et seul `restart` échoue. En dev, le port 2375 est publié sur le loopback du NAS et
+  ramené par le tunnel SSH de `dev-console`.
+- **Nom du conteneur.** C'est le `slug` du serveur, qui est déjà le nom de son dossier NAS. Un
+  serveur dont le conteneur porterait un autre nom recevrait un 404 de Docker.
+- **Réponse HTTP.** Docker ne répond qu'une fois le conteneur relancé. L'action attend 3 s pour
+  remonter un refus immédiat (proxy injoignable, conteneur inconnu), puis rend la main ; un échec
+  plus tardif est journalisé. La requête vers Docker n'est jamais annulée : la couper en plein arrêt
+  laisserait le conteneur arrêté sans relance.
+

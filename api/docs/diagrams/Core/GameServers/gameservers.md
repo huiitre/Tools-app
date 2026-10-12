@@ -62,6 +62,7 @@ flowchart LR
   ArkProvider["ArkProvider"]
   CobblemonProvider["CobblemonProvider"]
   CurseForgeIconResolver["CurseForgeIconResolver"]
+  DockerContainerClient["DockerContainerClient"]
   EnshroudedProvider["EnshroudedProvider"]
   GameServerActionCountdownService["GameServerActionCountdownService"]
   GameServerAssetUrlBuilder["GameServerAssetUrlBuilder"]
@@ -90,6 +91,7 @@ flowchart LR
   ArkProvider -.-> IGameServerDashboard
   ArkProvider -.-> IGameServerActions
   ArkProvider -.-> IGameServerRawCommand
+  CobblemonProvider --> DockerContainerClient
   CobblemonProvider -.-> IGameServerProvider
   CobblemonProvider -.-> IGameServerDashboard
   CobblemonProvider -.-> IGameServerActions

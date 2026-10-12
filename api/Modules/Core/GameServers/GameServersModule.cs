@@ -89,7 +89,18 @@ public static class GameServersModule
         builder.Services.AddSingleton<IGameServerProvider, SevenDaysToDieProvider>();
         builder.Services.AddSingleton<IGameServerProvider, HumanitzProvider>();
         builder.Services.AddSingleton<IGameServerProvider, EnshroudedProvider>();
-        builder.Services.AddSingleton<IGameServerProvider, CobblemonProvider>();
+        // DOCKER_API_HOST absent : l'appli démarre quand même, seul le redémarrage échoue.
+        var dockerApiHost = builder.Configuration["DOCKER_API_HOST"];
+        builder.Services.AddHttpClient<DockerContainerClient>(client =>
+        {
+            if (!string.IsNullOrWhiteSpace(dockerApiHost))
+            {
+                client.BaseAddress = new Uri($"{dockerApiHost.TrimEnd('/')}/");
+            }
+
+            client.Timeout = DockerContainerClient.StopTimeout + TimeSpan.FromSeconds(30);
+        });
+        builder.Services.AddTransient<IGameServerProvider, CobblemonProvider>();
 
         // Singleton exposé à la fois comme IHostedService (démarré avec l'appli, jamais désactivé
         // — GetGameServerDashboardUseCase en dépend via son port, contrairement au poll ci-dessous
