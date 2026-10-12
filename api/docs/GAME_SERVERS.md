@@ -382,7 +382,9 @@ redémarrage aboutit donc même quand la JVM ou le RCON ne répondent plus.
 
 - **Accès Docker.** `tools_api` ne monte pas le socket. Il passe par `tools_docker_proxy`
   (`tecnativa/docker-socket-proxy`, `/data/docker/tools/tools_docker_proxy/` sur le NAS, hors repo)
-  lancé avec `ALLOW_RESTARTS=1` seul : stop, restart et kill, rien d'autre. Le proxy ne filtre pas
+  lancé avec `POST=1` et `ALLOW_RESTARTS=1` : stop, restart et kill, rien d'autre (`POST=1` est
+  obligatoire, sans lui le proxy refuse tout ce qui n'est pas un GET avant même de lire
+  `ALLOW_RESTARTS` ; `CONTAINERS` reste à 0). Le proxy ne filtre pas
   par nom, l'API peut donc redémarrer n'importe quel conteneur du NAS ; c'est le compromis accepté
   pour ne pas maintenir un sidecar maison.
 - **Configuration.** `DOCKER_API_HOST` (`http://tools_docker_proxy:2375` en prod et QA). Absente,
