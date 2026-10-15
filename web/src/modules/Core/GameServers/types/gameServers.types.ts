@@ -14,6 +14,10 @@ export interface GameServer {
   // Suffisent à décider si la carte propose les mods ; la liste est chargée à l'ouverture.
   modCount: number
   hasModpack: boolean
+  // Dernière sauvegarde publiée ; null si le serveur n'en publie pas.
+  saveUrl: string | null
+  saveSize: number | null
+  saveDate: string | null
 }
 
 export interface GameServerMod {

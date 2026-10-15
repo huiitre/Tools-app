@@ -44,7 +44,10 @@ public sealed class GameServersSyncUseCase(
                 gameServer.ClientPort,
                 BuildMods(gameServer, modIcons),
                 BuildModpackUrl(gameServer),
-                gameServer.ModpackFile is null ? null : gameServer.ModpackSize));
+                gameServer.ModpackFile is null ? null : gameServer.ModpackSize,
+                BuildSaveUrl(gameServer),
+                gameServer.SaveFile is null ? null : gameServer.SaveSize,
+                gameServer.SaveFile is null ? null : gameServer.SaveDate));
         }
 
         var created = 0;
@@ -146,6 +149,21 @@ public sealed class GameServersSyncUseCase(
             : $"{url}?v={Uri.EscapeDataString(gameServer.ModpackSha256)}";
     }
 
+    // Même principe que le modpack, versionnée par sa date : la sauvegarde pèse plusieurs Go et
+    // n'est jamais hachée.
+    private string? BuildSaveUrl(GameServerSyncDto gameServer)
+    {
+        if (string.IsNullOrWhiteSpace(gameServer.SaveFile))
+        {
+            return null;
+        }
+
+        var url = assetUrlBuilder.Build(gameServer.SaveFile);
+        return gameServer.SaveDate is { } saveDate
+            ? $"{url}?v={new DateTimeOffset(saveDate.ToUniversalTime()).ToUnixTimeSeconds()}"
+            : url;
+    }
+
     private static void Validate(IReadOnlyList<GameServerSyncDto> gameServers)
     {
         var slugs = new HashSet<string>(StringComparer.Ordinal);
@@ -193,6 +211,11 @@ public sealed class GameServersSyncUseCase(
             if (!string.IsNullOrWhiteSpace(gameServer.ModpackFile) && !IsDirectFileOf(gameServer.ModpackFile, "modpacks/"))
             {
                 throw AppException.Validation("INVALID_MODPACK_FILE", "modpackFile doit désigner un fichier direct du dossier modpacks.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(gameServer.SaveFile) && !IsDirectFileOf(gameServer.SaveFile, "saves/"))
+            {
+                throw AppException.Validation("INVALID_SAVE_FILE", "saveFile doit désigner un fichier direct du dossier saves.");
             }
 
             if (gameServer.Mods?.Any(mod => mod is null || string.IsNullOrWhiteSpace(mod.Name)) == true)

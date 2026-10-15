@@ -15,5 +15,8 @@ public sealed record GameServerListRow(
     string? ClientHost,
     int? ClientPort,
     int ModCount,
-    bool HasModpack
+    bool HasModpack,
+    string? SaveUrl,
+    long? SaveSize,
+    DateTime? SaveDate
 );

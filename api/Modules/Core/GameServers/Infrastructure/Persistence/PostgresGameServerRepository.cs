@@ -36,11 +36,11 @@ public sealed class PostgresGameServerRepository(
                 INSERT INTO tools_core.game_servers (
                     slug, game_code, protocol_type, server_name, steam_app_id,
                     game_name, picture_url, host, port, client_host, client_port,
-                    protocol_config, modpack_url, modpack_size, last_synced_at)
+                    protocol_config, modpack_url, modpack_size, save_url, save_size, save_date, last_synced_at)
                 VALUES (
                     @Slug, @GameCode, @ProtocolType, @ServerName, @SteamAppId,
                     @GameName, @PictureUrl, @Host, @Port, @ClientHost, @ClientPort,
-                    CAST(@ProtocolConfig AS jsonb), @ModpackUrl, @ModpackSize, now())
+                    CAST(@ProtocolConfig AS jsonb), @ModpackUrl, @ModpackSize, @SaveUrl, @SaveSize, @SaveDate, now())
                 """,
                 gameServer, session.Transaction));
             return GameServerUpsertResult.Created;
@@ -67,6 +67,9 @@ public sealed class PostgresGameServerRepository(
                 protocol_config = CAST(@ProtocolConfig AS jsonb),
                 modpack_url = @ModpackUrl,
                 modpack_size = @ModpackSize,
+                save_url = @SaveUrl,
+                save_size = @SaveSize,
+                save_date = @SaveDate,
                 last_synced_at = now()
             WHERE slug = @Slug
               AND (
@@ -83,6 +86,9 @@ public sealed class PostgresGameServerRepository(
                   OR protocol_config IS DISTINCT FROM CAST(@ProtocolConfig AS jsonb)
                   OR modpack_url IS DISTINCT FROM @ModpackUrl
                   OR modpack_size IS DISTINCT FROM @ModpackSize
+                  OR save_url IS DISTINCT FROM @SaveUrl
+                  OR save_size IS DISTINCT FROM @SaveSize
+                  OR save_date IS DISTINCT FROM @SaveDate
               )
             """,
             new
@@ -100,7 +106,10 @@ public sealed class PostgresGameServerRepository(
                 gameServer.ClientPort,
                 gameServer.ProtocolConfig,
                 gameServer.ModpackUrl,
-                gameServer.ModpackSize
+                gameServer.ModpackSize,
+                gameServer.SaveUrl,
+                gameServer.SaveSize,
+                gameServer.SaveDate
             }, session.Transaction));
 
         if (changed == 1)
@@ -291,7 +300,10 @@ public sealed class PostgresGameServerRepository(
                    (SELECT count(*)::int
                     FROM tools_core.game_server_mods mods
                     WHERE mods.game_server_id = game_servers.id) AS ModCount,
-                   modpack_url IS NOT NULL AS HasModpack
+                   modpack_url IS NOT NULL AS HasModpack,
+                   save_url AS SaveUrl,
+                   save_size AS SaveSize,
+                   save_date AS SaveDate
             FROM tools_core.game_servers
             WHERE is_visible = true
             ORDER BY COALESCE(game_name, game_code), server_name

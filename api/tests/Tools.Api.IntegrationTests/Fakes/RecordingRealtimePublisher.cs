@@ -15,5 +15,7 @@ public sealed class RecordingRealtimePublisher : IRealtimePublisher
         return Task.CompletedTask;
     }
 
+    public Task PublishToAllAsync(string eventType, object payload) => Task.CompletedTask;
+
     public void Clear() => LastPublish = null;
 }

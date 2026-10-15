@@ -154,6 +154,47 @@ public sealed class GameServerModsTests : IClassFixture<ApiWebApplicationFactory
     }
 
     [Fact]
+    public async Task The_widget_exposes_the_latest_save_with_a_url_versioned_by_its_date()
+    {
+        ManifestProvider.Manifests =
+        [
+            Manifest(mods: null) with
+            {
+                SaveFile = "saves/minecraft-cobblemon.zip",
+                SaveSize = 5_455_737_499L,
+                SaveDate = new DateTime(2026, 10, 15, 4, 48, 19, DateTimeKind.Utc)
+            },
+            Manifest(mods: null, slug: "rust")
+        ];
+        using var sync = await Sync();
+        sync.EnsureSuccessStatusCode();
+
+        using var client = factory.CreateClientWithRole("READ_ONLY");
+        var servers = await client.GetFromJsonAsync<JsonElement>("/gameservers");
+        var cobblemon = servers.EnumerateArray().Single(server => server.GetProperty("slug").GetString() == Slug);
+        var rust = servers.EnumerateArray().Single(server => server.GetProperty("slug").GetString() == "rust");
+        Assert.Equal(
+            "https://assets.tools.huiitre.fr/tools_core/gameservers/saves/minecraft-cobblemon.zip?v=1792039699",
+            cobblemon.GetProperty("saveUrl").GetString());
+        Assert.Equal(5_455_737_499L, cobblemon.GetProperty("saveSize").GetInt64());
+        Assert.Equal(new DateTime(2026, 10, 15, 4, 48, 19, DateTimeKind.Utc), cobblemon.GetProperty("saveDate").GetDateTime().ToUniversalTime());
+        Assert.Equal(JsonValueKind.Null, rust.GetProperty("saveUrl").ValueKind);
+    }
+
+    [Theory]
+    [InlineData("minecraft-cobblemon.zip")]
+    [InlineData("modpacks/minecraft-cobblemon.zip")]
+    [InlineData("saves/../gameservers.json")]
+    public async Task A_save_outside_the_saves_directory_is_rejected(string saveFile)
+    {
+        ManifestProvider.Manifests = [Manifest(mods: null) with { SaveFile = saveFile }];
+        using var sync = await Sync();
+
+        Assert.Equal(HttpStatusCode.BadRequest, sync.StatusCode);
+        Assert.Empty(Servers.GameServers);
+    }
+
+    [Fact]
     public async Task A_mod_without_a_name_is_rejected()
     {
         ManifestProvider.Manifests = [Manifest([Mod(" ", Accessories)])];

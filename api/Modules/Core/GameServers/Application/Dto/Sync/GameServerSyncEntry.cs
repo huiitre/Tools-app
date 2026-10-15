@@ -19,4 +19,7 @@ public sealed record GameServerSyncEntry(
     int ClientPort,
     IReadOnlyList<GameServerModEntry> Mods,
     string? ModpackUrl,
-    long? ModpackSize);
+    long? ModpackSize,
+    string? SaveUrl = null,
+    long? SaveSize = null,
+    DateTime? SaveDate = null);
