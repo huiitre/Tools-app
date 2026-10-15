@@ -293,6 +293,29 @@ n'est pas touchée.
 la liste est chargée à part par `GET /gameservers/{slug}/mods`, snapshot de la base comme le
 reste du widget.
 
+## Téléchargement de la sauvegarde (15/10/2026)
+
+Proposer la dernière sauvegarde d'un serveur en téléchargement public (pas de confidentialité
+attendue sur un monde). Extractor en production ; sync C#, front et migration `V2.77.0` codés, la
+migration reste à appliquer.
+
+**Le manifest** déclare `saveFile`, un motif relatif au dossier du serveur dont seul le nom de
+fichier accepte `*` (ex. `data/simplebackups/world/world_*.zip`) : les sauvegardes changent de nom.
+
+**L'extractor** prend, parmi les fichiers du motif, le plus récent qui est **terminé** :
+modifié il y a plus de 2 min, et, pour un `.zip`, dont la fin (répertoire central, écrit en
+dernier) est présente. SimpleBackups écrit le zip sous son nom final en ~10 s, ces deux
+garde-fous suffisent. Il le publie par **hardlink** vers `tools_core/gameservers/saves/<slug><ext>`
+— pas de copie ni de hash, plusieurs Go par fichier — refait seulement si l'inode change. Le lien
+garde le fichier lisible après sa rotation par le jeu ; coût : au plus une sauvegarde de plus sur
+disque. Il publie `saveFile`, `saveSize` et `saveDate` (date de la sauvegarde, servira de `?v=`).
+Une erreur sur la sauvegarde n'est qu'un avertissement et ne bloque jamais le passage.
+
+**Le sync** enregistre `save_url` (versionnée par `?v=<timestamp unix de saveDate>`), `save_size`
+et `save_date` sur `game_servers` ; `saveFile` doit désigner un fichier direct de `saves/`.
+`GET /gameservers` les expose tels quels et la carte du widget affiche un bouton « Save » qui
+pointe directement sur les assets, sa date et sa taille en infobulle.
+
 ## Ressources JVM du serveur Minecraft — piste retenue, rien codé (16/09/2026)
 
 Besoin exprimé : afficher la RAM (et éventuellement le CPU) **réellement utilisée par le process

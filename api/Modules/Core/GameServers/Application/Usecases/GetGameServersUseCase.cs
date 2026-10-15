@@ -38,7 +38,10 @@ public sealed class GetGameServersUseCase(
                 gameServer.ClientHost,
                 gameServer.ClientPort,
                 gameServer.ModCount,
-                gameServer.HasModpack))
+                gameServer.HasModpack,
+                gameServer.SaveUrl,
+                gameServer.SaveSize,
+                gameServer.SaveDate))
             .ToList();
     }
 }

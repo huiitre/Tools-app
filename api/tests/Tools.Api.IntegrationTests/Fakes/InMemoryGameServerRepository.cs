@@ -142,7 +142,10 @@ public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameS
                     gameServer.ClientHost,
                     gameServer.ClientPort,
                     ModsOf(gameServer.Slug).Count,
-                    gameServer.ModpackUrl is not null);
+                    gameServer.ModpackUrl is not null,
+                    gameServer.SaveUrl,
+                    gameServer.SaveSize,
+                    gameServer.SaveDate);
             })
             .ToArray();
         return Task.FromResult(views);
@@ -178,7 +181,10 @@ public sealed record StoredGameServer(
     int ClientPort,
     string ProtocolConfig,
     string? ModpackUrl,
-    long? ModpackSize)
+    long? ModpackSize,
+    string? SaveUrl,
+    long? SaveSize,
+    DateTime? SaveDate)
 {
     public static StoredGameServer From(GameServerSyncEntry entry, StoredGameServer? existing = null) => new(
         entry.Slug,
@@ -196,5 +202,8 @@ public sealed record StoredGameServer(
         entry.ClientPort,
         entry.ProtocolConfig,
         entry.ModpackUrl,
-        entry.ModpackSize);
+        entry.ModpackSize,
+        entry.SaveUrl,
+        entry.SaveSize,
+        entry.SaveDate);
 }

@@ -22,5 +22,10 @@ public sealed record GameServerDashboardView(
     // Suffisent au widget pour savoir s'il propose la liste des mods ; celle-ci est chargée à
     // part, par GET /gameservers/{slug}/mods.
     int ModCount,
-    bool HasModpack
+    bool HasModpack,
+    // Dernière sauvegarde publique, téléchargée directement depuis la carte ; null si le serveur
+    // n'en publie pas.
+    string? SaveUrl,
+    long? SaveSize,
+    DateTime? SaveDate
 );

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import type { GameServer } from '../types/gameServers.types'
 import { formatRelativeTime } from '@/utils/formatRelativeTime'
+import { formatBytes } from '@/utils/formatBytes'
 import { useClipboard } from '@/composables/useClipboard'
 
 const props = defineProps<{
@@ -16,6 +17,15 @@ const hasMods = computed(() => props.server.modCount > 0 || props.server.hasModp
 const modsLabel = computed(() =>
   props.server.modCount > 0 ? `${props.server.modCount} mod${props.server.modCount > 1 ? 's' : ''}` : 'Mods'
 )
+
+const saveTitle = computed(() => {
+  const { saveSize, saveDate } = props.server
+  const parts = [
+    saveDate ? `Sauvegarde du ${new Date(saveDate).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}` : 'Dernière sauvegarde',
+    saveSize ? formatBytes(saveSize) : null
+  ]
+  return parts.filter(Boolean).join(' · ')
+})
 
 const { copy } = useClipboard()
 
@@ -85,7 +95,7 @@ const copyConnection = () => {
       <p class="game-server-checked">{{ checkedLabel }}</p>
     </div>
 
-    <div v-if="server.hasDashboard || hasMods" class="game-server-actions">
+    <div v-if="server.hasDashboard || hasMods || server.saveUrl" class="game-server-actions">
       <!-- Absente tant qu'aucun provider de jeu ne sait alimenter un dashboard pour ce serveur. -->
       <button
         v-if="server.hasDashboard"
@@ -107,6 +117,18 @@ const copyConnection = () => {
         <i class="mdi mdi-puzzle-outline" aria-hidden="true" />
         {{ modsLabel }}
       </button>
+
+      <!-- Lien direct vers les assets : le fichier ne transite jamais par l'API. -->
+      <a
+        v-if="server.saveUrl"
+        class="game-server-action"
+        :href="server.saveUrl"
+        :title="saveTitle"
+        download
+      >
+        <i class="mdi mdi-download" aria-hidden="true" />
+        Save
+      </a>
     </div>
   </article>
 </template>
@@ -278,6 +300,7 @@ const copyConnection = () => {
   color: inherit;
   font-size: 0.8rem;
   font-weight: 600;
+  text-decoration: none;
   cursor: pointer;
 
   &:hover {
