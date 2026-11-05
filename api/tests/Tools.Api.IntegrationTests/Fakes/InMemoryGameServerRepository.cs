@@ -145,7 +145,8 @@ public sealed class InMemoryGameServerRepository : IGameServerRepository, IGameS
                     gameServer.ModpackUrl is not null,
                     gameServer.SaveUrl,
                     gameServer.SaveSize,
-                    gameServer.SaveDate);
+                    gameServer.SaveDate,
+                    gameServer.Infos);
             })
             .ToArray();
         return Task.FromResult(views);
@@ -184,7 +185,8 @@ public sealed record StoredGameServer(
     long? ModpackSize,
     string? SaveUrl,
     long? SaveSize,
-    DateTime? SaveDate)
+    DateTime? SaveDate,
+    string Infos)
 {
     public static StoredGameServer From(GameServerSyncEntry entry, StoredGameServer? existing = null) => new(
         entry.Slug,
@@ -205,5 +207,6 @@ public sealed record StoredGameServer(
         entry.ModpackSize,
         entry.SaveUrl,
         entry.SaveSize,
-        entry.SaveDate);
+        entry.SaveDate,
+        entry.Infos);
 }

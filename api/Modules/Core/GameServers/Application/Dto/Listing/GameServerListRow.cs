@@ -18,5 +18,7 @@ public sealed record GameServerListRow(
     bool HasModpack,
     string? SaveUrl,
     long? SaveSize,
-    DateTime? SaveDate
+    DateTime? SaveDate,
+    // Colonne jsonb brute, désérialisée par le use case.
+    string Infos
 );

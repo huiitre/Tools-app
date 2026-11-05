@@ -24,4 +24,6 @@ public sealed record GameServerSyncDto(
     // Null pour un serveur sans sauvegarde publiée. SaveFile désigne un fichier du dossier saves/, dont SaveDate est la version.
     string? SaveFile = null,
     long? SaveSize = null,
-    DateTime? SaveDate = null);
+    DateTime? SaveDate = null,
+    // Informations libres affichées sous le nom du serveur, dans l'ordre du manifest.
+    IReadOnlyList<GameServerInfoSyncDto>? Infos = null);

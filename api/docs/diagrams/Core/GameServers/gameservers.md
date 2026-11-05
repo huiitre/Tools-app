@@ -15,6 +15,8 @@ flowchart LR
   GameServerActionParameter["GameServerActionParameter"]
   GameServerDashboardView["GameServerDashboardView"]
   GameServerDetailsView["GameServerDetailsView"]
+  GameServerInfoSyncDto["GameServerInfoSyncDto"]
+  GameServerInfoView["GameServerInfoView"]
   GameServerListRow["GameServerListRow"]
   GameServerLiveCompanion["GameServerLiveCompanion"]
   GameServerLivePlayer["GameServerLivePlayer"]
@@ -103,6 +105,7 @@ flowchart LR
   GameServerActionDefinition --> GameServerActionParameter
   GameServerAssetUrlBuilder -.-> IGameServerAssetUrlBuilder
   GameServerDashboardController --> GetGameServerDashboardUseCase
+  GameServerDashboardView --> GameServerInfoView
   GameServerDetailsView --> GameServerActionDefinition
   GameServerLiveView --> GameServerLivePlayer
   GameServerLiveView --> GameServerLiveStructure

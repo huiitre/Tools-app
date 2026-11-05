@@ -195,6 +195,48 @@ public sealed class GameServerModsTests : IClassFixture<ApiWebApplicationFactory
     }
 
     [Fact]
+    public async Task The_widget_exposes_the_manifest_infos_in_order_and_a_changed_info_is_an_update()
+    {
+        ManifestProvider.Manifests =
+        [
+            Manifest(mods: null) with { Infos = [new("Minecraft", "1.21.1"), new(" NeoForge ", "21.1.172")] },
+            Manifest(mods: null, slug: "rust")
+        ];
+        using var first = await Sync();
+        await AssertReport(first, created: 2, updated: 0, unchanged: 0);
+
+        using var client = factory.CreateClientWithRole("READ_ONLY");
+        var servers = await client.GetFromJsonAsync<JsonElement>("/gameservers");
+        var cobblemon = servers.EnumerateArray().Single(server => server.GetProperty("slug").GetString() == Slug);
+        var rust = servers.EnumerateArray().Single(server => server.GetProperty("slug").GetString() == "rust");
+        var infos = cobblemon.GetProperty("infos").EnumerateArray().ToList();
+        Assert.Equal(new[] { "Minecraft", "NeoForge" }, infos.Select(info => info.GetProperty("label").GetString()!));
+        Assert.Equal(new[] { "1.21.1", "21.1.172" }, infos.Select(info => info.GetProperty("value").GetString()!));
+        Assert.Empty(rust.GetProperty("infos").EnumerateArray());
+
+        ManifestProvider.Manifests =
+        [
+            Manifest(mods: null) with { Infos = [new("Minecraft", "1.21.1"), new("NeoForge", "21.1.200")] },
+            Manifest(mods: null, slug: "rust")
+        ];
+        using var second = await Sync();
+        await AssertReport(second, created: 0, updated: 1, unchanged: 1);
+    }
+
+    [Theory]
+    [InlineData("", "1.21.1")]
+    [InlineData("Minecraft", " ")]
+    [InlineData("Minecraft", null)]
+    public async Task An_info_without_label_or_value_is_rejected(string? label, string? value)
+    {
+        ManifestProvider.Manifests = [Manifest(mods: null) with { Infos = [new(label, value)] }];
+        using var sync = await Sync();
+
+        Assert.Equal(HttpStatusCode.BadRequest, sync.StatusCode);
+        Assert.Empty(Servers.GameServers);
+    }
+
+    [Fact]
     public async Task A_mod_without_a_name_is_rejected()
     {
         ManifestProvider.Manifests = [Manifest([Mod(" ", Accessories)])];

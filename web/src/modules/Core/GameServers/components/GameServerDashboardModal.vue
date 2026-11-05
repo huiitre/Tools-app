@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import toast from '@/services/toast'
+import { useClipboard } from '@/composables/useClipboard'
 import { executeGameServerAction, fetchGameServerDetails } from '../fetch/gameServers.fetch'
 import GameServerActionCard from './GameServerActionCard.vue'
 import GameServerRawCommandConsole from './GameServerRawCommandConsole.vue'
@@ -12,6 +13,7 @@ import { useGameServersStore } from '../store/gameServers.store'
 const props = defineProps<{ server: GameServer }>()
 const emit = defineEmits<{ close: [] }>()
 const store = useGameServersStore()
+const { copy } = useClipboard()
 
 // Null tant qu'aucun snapshot n'est encore arrivé pour ce serveur (cold-start en vol, ou premier
 // push pas encore reçu) — le template affiche déjà « Indisponible » pour un `live` null.
@@ -29,7 +31,8 @@ const error = ref<string | null>(null)
 
 let previousBodyOverflow = ''
 
-// Aucun bloc n'est masqué quand la donnée manque : le jeu ne l'expose pas, on le dit.
+// Les KPI ne sont jamais masqués quand la donnée manque : le jeu ne l'expose pas, on le dit.
+// L'en-tête, lui, n'affiche que ce qui existe.
 const UNAVAILABLE = 'Indisponible'
 
 function metric(value: number | null | undefined, suffix = ''): string {
@@ -167,16 +170,21 @@ onUnmounted(() => {
           <div class="server-card-header">
             <h2 class="server-name">{{ details?.serverName ?? server.serverName }}</h2>
             <span v-if="details?.version" class="server-version">{{ details.version }}</span>
-            <span v-else class="server-version muted">{{ UNAVAILABLE }}</span>
           </div>
-          <p class="server-description">
-            <template v-if="details?.description">{{ details.description }}</template>
-            <span v-else class="muted">{{ UNAVAILABLE }}</span>
-          </p>
-          <p class="server-guid">
-            <template v-if="details?.worldId">{{ details.worldId }}</template>
-            <span v-else class="muted">{{ UNAVAILABLE }}</span>
-          </p>
+          <ul v-if="server.infos.length" class="server-infos">
+            <li
+              v-for="info in server.infos"
+              :key="info.label"
+              class="server-info"
+              :title="`Copier ${info.label}`"
+              @click="copy(info.value, info.label)"
+            >
+              <span class="server-info-label">{{ info.label }}</span>
+              <span class="server-info-value">{{ info.value }}</span>
+            </li>
+          </ul>
+          <p v-if="details?.description" class="server-description">{{ details.description }}</p>
+          <p v-if="details?.worldId" class="server-guid" title="Identifiant du monde">{{ details.worldId }}</p>
         </div>
 
         <div class="kpi-grid">
@@ -514,6 +522,42 @@ onUnmounted(() => {
 .server-version {
   font-size: 0.78rem;
   color: var(--pico-muted-color);
+}
+
+.server-infos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.server-info {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--pico-card-border-color);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  list-style: none;
+  max-width: 100%;
+}
+
+.server-info:hover {
+  border-color: var(--pico-primary);
+}
+
+.server-info-label {
+  color: var(--pico-muted-color);
+}
+
+.server-info-value {
+  font-weight: 600;
+  word-break: break-all;
 }
 
 .server-description {

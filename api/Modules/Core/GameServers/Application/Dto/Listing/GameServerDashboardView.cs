@@ -27,5 +27,7 @@ public sealed record GameServerDashboardView(
     // n'en publie pas.
     string? SaveUrl,
     long? SaveSize,
-    DateTime? SaveDate
+    DateTime? SaveDate,
+    // Informations libres du manifest, affichées sous le nom ; vide si le serveur n'en déclare pas.
+    IReadOnlyList<GameServerInfoView> Infos
 );
