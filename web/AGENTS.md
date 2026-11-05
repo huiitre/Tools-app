@@ -776,9 +776,12 @@ store/       gameServers.store.ts          static (sync) + live (push WebSocket)
 ```
 
 **Le front ne connaît aucun jeu, sauf en un point.** `hasDashboard` vient de l'API (elle sait quels
-providers existent), les actions sont décrites par l'API et rendues telles quelles, et les données
-manquantes s'affichent « Indisponible » plutôt que de masquer un bloc — le dashboard a la même
-forme pour tous les jeux, Ark laissant simplement la plupart des tuiles vides.
+providers existent), les actions sont décrites par l'API et rendues telles quelles, et les KPI
+manquants s'affichent « Indisponible » plutôt que de masquer une tuile — le dashboard a la même
+forme pour tous les jeux, Ark laissant simplement la plupart des tuiles vides. L'en-tête fait
+exception depuis le 05/11/2026 : version, description et identifiant du monde n'apparaissent que
+s'ils existent, et les `infos` libres du manifest (`GET /gameservers`, voir `api/docs/GAME_SERVERS.md`)
+s'y affichent en pastilles cliquables qui copient leur valeur.
 
 L'exception est `mapRegistry.ts`, **seul endroit du Core qui importe un module de jeu** :
 `@/modules/Palworld/server/map/palworldMapAdapter`. L'adaptateur y implémente `resolve()` (bornes

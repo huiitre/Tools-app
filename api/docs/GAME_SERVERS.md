@@ -316,6 +316,33 @@ et `save_date` sur `game_servers` ; `saveFile` doit désigner un fichier direct 
 `GET /gameservers` les expose tels quels et la carte du widget affiche un bouton « Save » qui
 pointe directement sur les assets, sa date et sa taille en infobulle.
 
+## Informations libres sous le nom du serveur (05/11/2026)
+
+Afficher sous le nom du serveur, dans le dashboard, des informations propres à un jeu ou à un
+serveur (version Minecraft, version NeoForge, empreinte AutoModpack à saisir à la connexion, carte
+Ark…) sans que l'API ni le front connaissent ces notions.
+
+**Le manifest** déclare un tableau optionnel `infos`, dans l'ordre d'affichage :
+
+```json
+"infos": [
+  { "label": "Minecraft", "value": "1.21.1" },
+  { "label": "NeoForge", "value": "21.1.172" },
+  { "label": "Empreinte AutoModpack", "value": "3f9a…c21e" }
+]
+```
+
+Les valeurs sont écrites à la main, ou par un script propre au serveur qui réécrit le manifest :
+l'extractor n'en interprète aucune, il les recopie telles quelles dans `gameservers.json`.
+
+**Le sync** exige un `label` et une `value` non vides (sinon `400 INVALID_GAME_SERVER_INFO`), les
+rogne et stocke le tableau dans `game_servers.infos` (`jsonb`, `[]` par défaut, migration
+`V2.78.0`). Une info modifiée compte comme une mise à jour.
+
+**La lecture** : `GET /gameservers` expose `infos` (snapshot de la base, toujours un tableau), et
+non `/details` : les infos restent affichées quand le serveur est éteint. Le dashboard les rend en
+pastilles « libellé valeur » ; un clic copie la valeur.
+
 ## Ressources JVM du serveur Minecraft — piste retenue, rien codé (16/09/2026)
 
 Besoin exprimé : afficher la RAM (et éventuellement le CPU) **réellement utilisée par le process

@@ -22,4 +22,6 @@ public sealed record GameServerSyncEntry(
     long? ModpackSize,
     string? SaveUrl = null,
     long? SaveSize = null,
-    DateTime? SaveDate = null);
+    DateTime? SaveDate = null,
+    // Tableau JSON de { label, value }, comparé en jsonb comme ProtocolConfig.
+    string Infos = "[]");

@@ -18,6 +18,13 @@ export interface GameServer {
   saveUrl: string | null
   saveSize: number | null
   saveDate: string | null
+  // Informations libres du manifest (versions, empreinte…), dans l'ordre d'affichage.
+  infos: GameServerInfo[]
+}
+
+export interface GameServerInfo {
+  label: string
+  value: string
 }
 
 export interface GameServerMod {

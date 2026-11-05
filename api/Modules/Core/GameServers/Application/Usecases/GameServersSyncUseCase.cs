@@ -1,5 +1,7 @@
+using System.Text.Json;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
 using Tools.Api.Modules.Core.Common.Application.Ports;
+using Tools.Api.Modules.Core.GameServers.Application.Dto.Listing;
 using Tools.Api.Modules.Core.GameServers.Application.Dto.Sync;
 using Tools.Api.Modules.Core.GameServers.Application.Ports.Sync;
 
@@ -47,7 +49,8 @@ public sealed class GameServersSyncUseCase(
                 gameServer.ModpackFile is null ? null : gameServer.ModpackSize,
                 BuildSaveUrl(gameServer),
                 gameServer.SaveFile is null ? null : gameServer.SaveSize,
-                gameServer.SaveFile is null ? null : gameServer.SaveDate));
+                gameServer.SaveFile is null ? null : gameServer.SaveDate,
+                BuildInfos(gameServer)));
         }
 
         var created = 0;
@@ -133,6 +136,12 @@ public sealed class GameServersSyncUseCase(
                 ? mod.Icon
                 : mod.Url is not null && modIcons.TryGetValue(mod.Url, out var iconUrl) ? iconUrl : null))
         .ToList();
+
+    private static string BuildInfos(GameServerSyncDto gameServer) => JsonSerializer.Serialize(
+        (gameServer.Infos ?? [])
+        .Select(info => new GameServerInfoView(info.Label!.Trim(), info.Value!.Trim()))
+        .ToList(),
+        JsonSerializerOptions.Web);
 
     // L'URL d'un modpack ne change pas quand il est remplacé : son hash en paramètre empêche un
     // cache de servir l'ancien.
@@ -221,6 +230,13 @@ public sealed class GameServersSyncUseCase(
             if (gameServer.Mods?.Any(mod => mod is null || string.IsNullOrWhiteSpace(mod.Name)) == true)
             {
                 throw AppException.Validation("INVALID_GAME_SERVER_MOD", "Chaque mod doit porter un nom.");
+            }
+
+            if (gameServer.Infos?.Any(info => info is null
+                                              || string.IsNullOrWhiteSpace(info.Label)
+                                              || string.IsNullOrWhiteSpace(info.Value)) == true)
+            {
+                throw AppException.Validation("INVALID_GAME_SERVER_INFO", "Chaque info doit porter un label et une value.");
             }
         }
     }

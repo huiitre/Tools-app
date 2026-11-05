@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Tools.Api.Modules.Core.GameServers.Application.Dto.Listing;
 using Tools.Api.Modules.Core.GameServers.Application.Ports.Games;
 using Tools.Api.Modules.Core.GameServers.Application.Ports.Listing;
@@ -41,7 +42,8 @@ public sealed class GetGameServersUseCase(
                 gameServer.HasModpack,
                 gameServer.SaveUrl,
                 gameServer.SaveSize,
-                gameServer.SaveDate))
+                gameServer.SaveDate,
+                JsonSerializer.Deserialize<List<GameServerInfoView>>(gameServer.Infos, JsonSerializerOptions.Web) ?? []))
             .ToList();
     }
 }

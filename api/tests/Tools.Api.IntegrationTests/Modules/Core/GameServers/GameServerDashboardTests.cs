@@ -49,8 +49,8 @@ public sealed class GameServerDashboardTests : IClassFixture<ApiWebApplicationFa
         await SyncAsync();
 
         using var anonymous = factory.CreateClient();
-        using var live = await anonymous.GetAsync("/gameservers/ark-survival-ascended/live");
-        Assert.Equal(HttpStatusCode.Unauthorized, live.StatusCode);
+        using var details = await anonymous.GetAsync("/gameservers/ark-survival-ascended/details");
+        Assert.Equal(HttpStatusCode.Unauthorized, details.StatusCode);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public sealed class GameServerDashboardTests : IClassFixture<ApiWebApplicationFa
         await SyncAsync();
 
         using var client = factory.CreateClientWithRole("READ_ONLY");
-        using var response = await client.GetAsync("/gameservers/inconnu/live");
+        using var response = await client.GetAsync("/gameservers/inconnu/details");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
@@ -69,7 +69,7 @@ public sealed class GameServerDashboardTests : IClassFixture<ApiWebApplicationFa
         await SyncAsync();
 
         using var client = factory.CreateClientWithRole("READ_ONLY");
-        using var response = await client.GetAsync("/gameservers/rust/live");
+        using var response = await client.GetAsync("/gameservers/rust/details");
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
