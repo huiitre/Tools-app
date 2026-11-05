@@ -12,7 +12,6 @@ flowchart LR
   ICurrentUserProvider(["ICurrentUserProvider"])
   IRoleRepository(["IRoleRepository"])
   ListRolesUseCase["ListRolesUseCase"]
-  RoleDto["RoleDto"]
   SecuredUseCase["SecuredUseCase"]
   UseCaseAuthorizer["UseCaseAuthorizer"]
   end
