@@ -18,7 +18,9 @@ namespace Tools.Api.Modules.Core.Security.Application.Usecases;
 //
 // Sans rien déclarer, le use case exige un compte portant au moins READ_ONLY : un appel anonyme
 // et un compte sans rôle sont refusés par défaut. Un use case plus exigeant surcharge
-// `RequiredRole`, un use case qui appartient à un module surcharge `RequiredModule`.
+// `RequiredRole`, un use case qui appartient à un module surcharge `RequiredModule`. Une clé
+// d'API est refusée partout, sauf dans un use case qui surcharge `RequiredScope` : elle y est
+// jugée sur ce scope, et un utilisateur reste jugé sur son rôle.
 //
 // Le contrôle ne dépend d'aucun middleware HTTP : il vaut aussi pour un appel venu d'un hub
 // SignalR. Ces use cases ne doivent en revanche pas être construits depuis une tâche de fond —
@@ -27,12 +29,19 @@ public abstract class SecuredUseCase
 {
     protected SecuredUseCase(UseCaseAuthorizer authorizer)
     {
-        CurrentUser = authorizer.EnsureAtLeast(RequiredRole, RequiredModule);
+        Caller = authorizer.Authorize(RequiredRole, RequiredModule, RequiredScope);
     }
 
-    // L'appelant validé : le use case dispose de son identité sans avoir à la résoudre lui-même,
-    // et sans jamais manipuler une valeur nulle.
-    protected CurrentUser CurrentUser { get; }
+    // L'appelant validé : un utilisateur ou une clé d'API.
+    protected Caller Caller { get; }
+
+    // L'utilisateur validé, sans jamais manipuler une valeur nulle. Un use case ouvert aux clés
+    // (RequiredScope) ne doit le lire qu'après avoir vérifié que l'appelant en est un : appelé
+    // par une clé, il lève une erreur au lieu de rendre un identifiant vide.
+    protected CurrentUser CurrentUser => Caller is UserCaller userCaller
+        ? userCaller.User
+        : throw new InvalidOperationException(
+            $"{GetType().Name} a été appelé par une clé d'API : aucun utilisateur n'est disponible.");
 
     // Rôle minimum exigé. READ_ONLY par défaut : le plus bas de la hiérarchie, donc « un compte,
     // avec un rôle, quel qu'il soit ».
@@ -49,4 +58,8 @@ public abstract class SecuredUseCase
     // (administration, compte, mail) ne relèvent d'aucun module. Même règle de valeur littérale
     // que `RequiredRole`.
     protected virtual ModuleCode? RequiredModule => null;
+
+    // Scope qu'une clé d'API doit porter pour exécuter ce use case. Absent par défaut : toute clé
+    // est alors refusée, seuls les utilisateurs passent. Même règle de valeur littérale.
+    protected virtual ApiKeyScope? RequiredScope => null;
 }

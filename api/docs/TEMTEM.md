@@ -183,10 +183,9 @@ supprimées.
 
 ## La synchronisation
 
-`POST /internal/temtem/sync` — **route interne**, authentifiée par le secret partagé
-`X-Internal-Token`, contrairement aux autres extracteurs qui se connectent avec un compte TECH.
-Un extracteur n'agit au nom d'aucun utilisateur. `SyncTemtemCatalogueUseCase` n'est donc pas un
-`SecuredUseCase`.
+`POST /internal/temtem/sync` — depuis le 11/11/2026, `SyncTemtemCatalogueUseCase` est un
+`SecuredUseCase` : TECH, ou une clé d'API portant `temtem:sync` (l'extracteur). L'ancien secret
+`X-Internal-Token` reste accepté le temps de la migration (voir `docs/SECURITY.md`).
 
 L'extracteur (`/data/docker/tools/tools_temtem_extractor/update_temtem.sh` sur le NAS) tourne
 toutes les 2 h de 8 h à 18 h, ne scrape que si une mise à jour du jeu est détectée, puis appelle

@@ -23,8 +23,8 @@ public class NotificationsController : ControllerBase
         return getMyNotificationsUseCase.Execute();
     }
 
-    // Le corps est celui de la route interne : une notification se décrit de la même façon,
-    // qu'elle vienne d'un humain ou d'un service. Seul le contrôle d'accès diffère.
+    // TECH ou clé d'API core.notifications:publish : une notification se décrit de la même façon,
+    // qu'elle vienne d'un humain ou d'un service.
     [HttpPost]
     public async Task<IActionResult> Send(
         [FromBody] PublishNotificationRequest request,

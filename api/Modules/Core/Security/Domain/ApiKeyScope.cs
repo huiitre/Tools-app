@@ -1,6 +1,7 @@
-namespace Tools.Api.Modules.Core.ApiKeys.Domain;
+namespace Tools.Api.Modules.Core.Security.Domain;
 
 // Droits qu'une clé d'API peut recevoir ; un use case n'est ouvert à une clé que s'il en déclare un.
+// Vit dans Security, comme ModuleCode : c'est ici qu'il est consommé.
 public enum ApiKeyScope
 {
     CoreMailSend,

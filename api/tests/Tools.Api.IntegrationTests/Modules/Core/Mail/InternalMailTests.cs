@@ -8,9 +8,8 @@ using Xunit;
 
 namespace Tools.Api.IntegrationTests.Modules.Core.Mail;
 
-// Route de service à service : elle n'est protégée ni par un jeton utilisateur, ni par le
-// réseau, mais par un secret partagé. Ces tests vérifient qu'aucun autre chemin n'y mène
-// (même structure que InternalNotificationsTests).
+// Ancienne URL des services, gardée le temps de leur migration vers les clés d'API : même use case
+// que POST /mail (TECH ou clé core.mail:send). Même structure que InternalNotificationsTests.
 public sealed class InternalMailTests : IClassFixture<ApiWebApplicationFactory>
 {
     private readonly ApiWebApplicationFactory factory;
@@ -66,49 +65,59 @@ public sealed class InternalMailTests : IClassFixture<ApiWebApplicationFactory>
         Assert.Equal("rapport", System.Text.Encoding.UTF8.GetString(attachment.Content));
     }
 
-    // 404 et non 401 : la réponse ne doit pas confirmer que la route existe.
     [Fact]
-    public async Task Sending_without_the_header_is_not_found()
+    public async Task Sending_without_any_credential_is_unauthorized()
     {
         using var response = await factory.CreateClient()
             .PostAsJsonAsync("/internal/mail", ValidPayload);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Null(factory.Services.GetRequiredService<RecordingMailSender>().LastCommand);
     }
 
     [Fact]
-    public async Task Sending_with_a_wrong_secret_is_not_found()
+    public async Task Sending_with_a_wrong_secret_is_unauthorized()
     {
         var client = ClientWithToken("mauvais-secret");
 
         using var response = await client.PostAsJsonAsync("/internal/mail", ValidPayload);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Null(factory.Services.GetRequiredService<RecordingMailSender>().LastCommand);
     }
 
     // Un préfixe correct ne doit pas davantage passer : la comparaison porte sur la valeur
     // entière, pas sur un début commun.
     [Fact]
-    public async Task Sending_with_a_prefix_of_the_secret_is_not_found()
+    public async Task Sending_with_a_prefix_of_the_secret_is_unauthorized()
     {
         var client = ClientWithToken(ApiWebApplicationFactory.TestInternalToken[..10]);
 
         using var response = await client.PostAsJsonAsync("/internal/mail", ValidPayload);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    // Le jeton utilisateur ne remplace pas le secret interne : ce sont deux choses distinctes.
+    // Même use case que POST /mail : un utilisateur TECH y a droit.
     [Fact]
-    public async Task A_technical_token_does_not_open_the_internal_route()
+    public async Task A_technical_token_opens_the_route()
     {
         var client = factory.CreateClientWithRole("TECH");
 
         using var response = await client.PostAsJsonAsync("/internal/mail", ValidPayload);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_user_token_is_forbidden()
+    {
+        var client = factory.CreateClientWithRole("USER");
+
+        using var response = await client.PostAsJsonAsync("/internal/mail", ValidPayload);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Null(factory.Services.GetRequiredService<RecordingMailSender>().LastCommand);
     }
 
     [Fact]

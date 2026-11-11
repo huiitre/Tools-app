@@ -19,9 +19,9 @@ L'API C# ne lit jamais `/data/docker/games`.
   visible ni soumis à un droit. Cela préserve l'organisation module-local de
   l'API sans transformer le widget en page produit.
 - La synchronisation est une route service-à-service de déclenchement,
-  `POST /internal/gameservers/sync`, protégée par `[InternalApi]` :
-  `X-Internal-Token` doit correspondre à `INTERNAL_API_TOKEN`. Ce n'est pas un
-  JWT. Le secret est injecté dans la configuration Docker de l'API. L'extractor
+  `POST /internal/gameservers/sync` : TECH, ou une clé d'API portant
+  `core.gameservers:sync` dans `X-Api-Key` (depuis le 11/11/2026 ; l'ancien
+  `X-Internal-Token` reste accepté le temps de la migration). L'extractor
   NAS reste un script lancé par cron : son shell charge un fichier `.env` local
   non versionné avant d'appeler l'API. Le secret n'est jamais commité, placé
   dans Bruno ou écrit dans un shell interactif.

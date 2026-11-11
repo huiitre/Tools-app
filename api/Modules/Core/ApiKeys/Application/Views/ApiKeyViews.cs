@@ -1,3 +1,4 @@
+using Tools.Api.Modules.Core.Security.Domain;
 using Tools.Api.Modules.Core.ApiKeys.Domain;
 
 namespace Tools.Api.Modules.Core.ApiKeys.Application.Views;

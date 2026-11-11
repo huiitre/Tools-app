@@ -8,6 +8,7 @@ flowchart LR
   ApiKeysController["ApiKeysController"]
   end
   subgraph Application
+  ApiKeyAuthenticator["ApiKeyAuthenticator"]
   ApiKeyView["ApiKeyView"]
   CreateApiKeyCommand["CreateApiKeyCommand"]
   CreateApiKeyUseCase["CreateApiKeyUseCase"]
@@ -19,17 +20,20 @@ flowchart LR
   end
   subgraph Domain
   ApiKey["ApiKey"]
-  ApiKeyScope["ApiKeyScope"]
-  ApiKeyScopes["ApiKeyScopes"]
   ApiKeySecret["ApiKeySecret"]
   end
   subgraph Infrastructure
+  ApiKeyAuthenticationHandler["ApiKeyAuthenticationHandler"]
   PostgresApiKeyRepository["PostgresApiKeyRepository"]
   end
   subgraph Autre
   ApiKeysModule["ApiKeysModule"]
   end
-  ApiKey --> ApiKeyScopes
+  ApiKeyAuthenticationHandler --> ApiKeyAuthenticator
+  ApiKeyAuthenticationHandler --> ApiKey
+  ApiKeyAuthenticator --> IApiKeyRepository
+  ApiKeyAuthenticator --> ApiKey
+  ApiKeyAuthenticator --> ApiKeySecret
   ApiKeyView --> ApiKey
   ApiKeysController --> CreateApiKeyUseCase
   ApiKeysController --> ListApiKeyScopesUseCase
@@ -37,12 +41,10 @@ flowchart LR
   ApiKeysController --> RevokeApiKeyUseCase
   CreateApiKeyUseCase --> IApiKeyRepository
   CreateApiKeyUseCase --> ApiKey
-  CreateApiKeyUseCase --> ApiKeyScopes
   CreateApiKeyUseCase --> ApiKeySecret
   CreatedApiKeyView --> ApiKeyView
   CreatedApiKeyView --> ApiKey
   IApiKeyRepository --> ApiKey
-  ListApiKeyScopesUseCase --> ApiKeyScopes
   ListApiKeysUseCase --> IApiKeyRepository
   PostgresApiKeyRepository -.-> IApiKeyRepository
   PostgresApiKeyRepository --> ApiKey

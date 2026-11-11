@@ -7,8 +7,8 @@ http:
   method: POST
   url: "{{apiUrl}}/internal/notifications"
   headers:
-    - name: X-Internal-Token
-      value: "{{internalApiToken}}"
+    - name: X-Api-Key
+      value: "{{apiKeyValue}}"
   body:
     type: json
     data: |-
@@ -45,4 +45,14 @@ settings:
   followRedirects: true
   maxRedirects: 5
 
-docs: Publication de notification pour un appelant de service à service. Un seul destinataire au choix est obligatoire.
+docs: |-
+  Ancienne URL des services, gardée le temps de leur migration : même use case que
+  `POST /notifications`, réponse d'origine (`200` + `id`, `204` sans destinataire). Un seul
+  destinataire au choix est obligatoire.
+
+  Authentification : un utilisateur **TECH** (Bearer), ou une **clé d'API** portant `core.notifications:publish`
+  dans `X-Api-Key` — la variable `apiKeyValue` est posée par « API Keys / 2. Créer une clé ». Le
+  temps de migrer les scripts du NAS, l'ancien secret `X-Internal-Token` (`INTERNAL_API_TOKEN`)
+  reste accepté et vaut tous les scopes ; chaque usage est journalisé (`API_KEY / LEGACY_USED`).
+  Sans identifiant : `401`. Clé inconnue, révoquée ou expirée : `401 INVALID_API_KEY`. Clé sans
+  ce scope : `403 INSUFFICIENT_SCOPE`.

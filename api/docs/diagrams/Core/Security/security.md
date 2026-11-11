@@ -8,20 +8,28 @@ flowchart LR
   RolesController["RolesController"]
   end
   subgraph Application
+  ApiKeyCaller["ApiKeyCaller"]
+  Caller["Caller"]
+  CurrentApiKey["CurrentApiKey"]
   CurrentUser["CurrentUser"]
   ICurrentUserProvider(["ICurrentUserProvider"])
   IRoleRepository(["IRoleRepository"])
   ListRolesUseCase["ListRolesUseCase"]
   SecuredUseCase["SecuredUseCase"]
   UseCaseAuthorizer["UseCaseAuthorizer"]
+  UserCaller["UserCaller"]
   end
   subgraph Domain
+  ApiKeyScope["ApiKeyScope"]
+  ApiKeyScopes["ApiKeyScopes"]
   ModuleCode["ModuleCode"]
   ModuleCodes["ModuleCodes"]
   RoleCode["RoleCode"]
   RoleCodes["RoleCodes"]
   end
   subgraph Infrastructure
+  ApiKeyAuthenticationDefaults["ApiKeyAuthenticationDefaults"]
+  ApiKeyClaims["ApiKeyClaims"]
   HttpCurrentUserProvider["HttpCurrentUserProvider"]
   JwtClaims["JwtClaims"]
   PostgresRoleRepository["PostgresRoleRepository"]
@@ -31,7 +39,10 @@ flowchart LR
   ModuleAuthorizationProbeResult["ModuleAuthorizationProbeResult"]
   SecurityModule["SecurityModule"]
   end
+  ApiKeyCaller --> CurrentApiKey
+  ApiKeyCaller -.-> Caller
   HttpCurrentUserProvider -.-> ICurrentUserProvider
+  HttpCurrentUserProvider --> ApiKeyScopes
   HttpCurrentUserProvider --> ModuleCodes
   HttpCurrentUserProvider --> RoleCodes
   ListRolesUseCase --> IRoleRepository
@@ -42,4 +53,6 @@ flowchart LR
   PostgresRoleRepository -.-> IRoleRepository
   RolesController --> ListRolesUseCase
   UseCaseAuthorizer --> ICurrentUserProvider
+  UserCaller --> CurrentUser
+  UserCaller -.-> Caller
 ```

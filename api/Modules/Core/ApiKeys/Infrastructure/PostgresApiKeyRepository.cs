@@ -1,3 +1,4 @@
+using Tools.Api.Modules.Core.Security.Domain;
 using System.Net;
 using Dapper;
 using Npgsql;
@@ -37,6 +38,16 @@ public sealed class PostgresApiKeyRepository(
 
         var row = await connection.QuerySingleOrDefaultAsync<ApiKeyRow>(new CommandDefinition(
             SelectApiKeys + " WHERE k.id = @Id", new { Id = id }));
+
+        return row is null ? null : ToDomain(row);
+    }
+
+    public async Task<ApiKey?> FindByHash(byte[] keyHash)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+
+        var row = await connection.QuerySingleOrDefaultAsync<ApiKeyRow>(new CommandDefinition(
+            SelectApiKeys + " WHERE k.key_hash = @KeyHash", new { KeyHash = keyHash }));
 
         return row is null ? null : ToDomain(row);
     }
@@ -99,6 +110,22 @@ public sealed class PostgresApiKeyRepository(
             session.Transaction));
 
         return affected == 1;
+    }
+
+    // Une écriture par minute et par clé au plus, quel que soit le rythme des appels.
+    public async Task TouchLastUsed(long id, IPAddress? ip, TimeSpan throttle)
+    {
+        const string sql = """
+            UPDATE tools_core.api_keys
+            SET last_used_at = now(), last_used_ip = CAST(@Ip AS inet)
+            WHERE id = @Id
+              AND (last_used_at IS NULL OR last_used_at < now() - @Throttle)
+            """;
+
+        await using var connection = await dataSource.OpenConnectionAsync();
+
+        await connection.ExecuteAsync(new CommandDefinition(
+            sql, new { Id = id, Ip = ip?.ToString(), Throttle = throttle }));
     }
 
     private NpgsqlConnection Connection() =>

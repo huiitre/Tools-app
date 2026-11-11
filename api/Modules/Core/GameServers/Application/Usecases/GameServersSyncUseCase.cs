@@ -4,17 +4,25 @@ using Tools.Api.Modules.Core.Common.Application.Ports;
 using Tools.Api.Modules.Core.GameServers.Application.Dto.Listing;
 using Tools.Api.Modules.Core.GameServers.Application.Dto.Sync;
 using Tools.Api.Modules.Core.GameServers.Application.Ports.Sync;
+using Tools.Api.Modules.Core.Security.Application.Services;
+using Tools.Api.Modules.Core.Security.Application.Usecases;
+using Tools.Api.Modules.Core.Security.Domain;
 
 namespace Tools.Api.Modules.Core.GameServers.Application.Usecases;
 
+// TECH, ou une clé d'API portant core.gameservers:sync (l'extracteur du NAS).
 public sealed class GameServersSyncUseCase(
+    UseCaseAuthorizer authorizer,
     IGameServerRepository gameServerRepository,
     IGameServersManifestProvider gameServersManifestProvider,
     ISteamAppDetailsProvider steamAppDetailsProvider,
     IGameServerAssetUrlBuilder assetUrlBuilder,
     IEnumerable<IModIconResolver> modIconResolvers,
-    ITransactionManager transactionManager)
+    ITransactionManager transactionManager) : SecuredUseCase(authorizer)
 {
+    protected override RoleCode RequiredRole => RoleCode.Tech;
+    protected override ApiKeyScope? RequiredScope => ApiKeyScope.CoreGameServersSync;
+
     public async Task<GameServersSyncReport> Execute()
     {
         var gameServers = await gameServersManifestProvider.FetchAsync();

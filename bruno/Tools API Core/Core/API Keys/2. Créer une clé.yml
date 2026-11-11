@@ -43,6 +43,9 @@ docs: |-
   la base n'en garde que le SHA-256 et les 12 premiers caractères (`keyPrefix`). Le script
   la range dans `apiKeyValue` et l'id dans `apiKeyId`. Rôle minimum : ADMIN.
 
+  Les requêtes appelées par les services (`… (internal)`, synchros) envoient `X-Api-Key:
+  {{apiKeyValue}}` : créer d'abord ici une clé portant le scope voulu.
+
   `expiresAt` est obligatoire, dans le futur et à 3 ans au plus de la création.
 
   - `400 API_KEY_NAME_REQUIRED` / `API_KEY_NAME_TOO_LONG` — nom absent ou au-delà de 100 caractères.

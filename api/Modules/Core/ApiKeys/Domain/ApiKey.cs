@@ -1,3 +1,4 @@
+using Tools.Api.Modules.Core.Security.Domain;
 using System.Net;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
 

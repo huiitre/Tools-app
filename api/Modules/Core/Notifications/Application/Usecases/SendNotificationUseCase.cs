@@ -5,16 +5,14 @@ using Tools.Api.Modules.Core.Security.Domain;
 
 namespace Tools.Api.Modules.Core.Notifications.Application.Usecases;
 
-// Envoi manuel d'une notification, déclenché par un humain.
-//
-// TECH, comme dans l'API Java : c'est un outil d'exploitation, pas une action de produit. À ne
-// pas confondre avec `PublishInternalNotificationUseCase`, qui sert les appels de service à
-// service et n'a aucun utilisateur à autoriser.
+// Envoi d'une notification, par un humain (TECH : outil d'exploitation, pas action de produit)
+// ou par un service muni d'une clé d'API portant core.notifications:publish.
 public sealed class SendNotificationUseCase(
     UseCaseAuthorizer authorizer,
     NotificationService notificationService) : SecuredUseCase(authorizer)
 {
     protected override RoleCode RequiredRole => RoleCode.Tech;
+    protected override ApiKeyScope? RequiredScope => ApiKeyScope.CoreNotificationsPublish;
 
     // Retourne l'identifiant créé, nul si la cible n'a désigné aucun destinataire.
     public Task<long?> Execute(SendNotificationCommand command)

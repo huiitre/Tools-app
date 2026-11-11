@@ -160,27 +160,27 @@ public sealed class RiotAuthorizationTests(ApiWebApplicationFactory factory)
     // `/riot/valorant/sync` — une route disparue, donc un 404 : le cas USER échouait, et le cas
     // TECH passait par accident, un 404 n'étant pas un 403.
 
-    // 404 et non 401 : `InternalApiAttribute` refuse sans confirmer que la route existe.
+    // Depuis les clés d'API, la synchro est un SecuredUseCase : TECH global, ou clé
+    // riot.valorant:sync (l'ancien secret en tenant lieu le temps de la migration).
     [Fact]
-    public async Task La_synchronisation_du_catalogue_refuse_un_appel_sans_secret_interne()
+    public async Task La_synchronisation_du_catalogue_refuse_un_appel_anonyme()
     {
         using var client = factory.CreateClient();
 
         using var response = await client.PostAsync("/internal/riot/valorant/sync", null);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    // Un jeton utilisateur, même TECH dans le module, ne vaut pas le secret interne : cette
-    // route ne regarde pas les rôles.
+    // Le rôle exigé est global : être TECH dans le module Riot ne suffit pas.
     [Fact]
-    public async Task La_synchronisation_du_catalogue_refuse_un_jeton_utilisateur()
+    public async Task La_synchronisation_du_catalogue_refuse_un_role_de_module()
     {
         using var client = ClientInRiot("TECH");
 
         using var response = await client.PostAsync("/internal/riot/valorant/sync", null);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
     [Fact]
@@ -192,9 +192,10 @@ public sealed class RiotAuthorizationTests(ApiWebApplicationFactory factory)
 
         using var response = await client.PostAsync("/internal/riot/valorant/sync", null);
 
-        // Le secret passe : la route n'oppose plus l'en-tête, donc plus de 404. Ce qu'elle fait
+        // Le secret passe : ni 401 ni 403. Ce qu'elle fait
         // ensuite dépend de PostgreSQL et des assets, hors de portée d'un test d'intégration
         // HTTP — seul compte ici qu'elle ait été atteinte.
-        Assert.NotEqual(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.NotEqual(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.NotEqual(HttpStatusCode.Forbidden, response.StatusCode);
     }
 }

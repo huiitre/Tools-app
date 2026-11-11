@@ -14,7 +14,6 @@ flowchart LR
   IMailSender(["IMailSender"])
   MailAttachment["MailAttachment"]
   MailService["MailService"]
-  SendInternalMailUseCase["SendInternalMailUseCase"]
   SendMailCommand["SendMailCommand"]
   SendMailUseCase["SendMailUseCase"]
   end
@@ -25,10 +24,9 @@ flowchart LR
   subgraph Autre
   MailModule["MailModule"]
   end
-  InternalMailController --> SendInternalMailUseCase
+  InternalMailController --> SendMailUseCase
   MailController --> SendMailUseCase
   MailService --> IMailSender
-  SendInternalMailUseCase --> MailService
   SendMailUseCase --> MailService
   SmtpMailSender --> SmtpMailOptions
   SmtpMailSender -.-> IMailSender

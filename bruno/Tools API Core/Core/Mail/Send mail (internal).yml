@@ -7,8 +7,8 @@ http:
   method: POST
   url: "{{apiUrl}}/internal/mail"
   headers:
-    - name: X-Internal-Token
-      value: "{{internalApiToken}}"
+    - name: X-Api-Key
+      value: "{{apiKeyValue}}"
   body:
     type: json
     data: |-
@@ -26,11 +26,14 @@ settings:
   forwardAuthorizationHeader: true
 
 docs: |-
-  Envoi de service à service, authentifié par le secret partagé `X-Internal-Token`
-  (`INTERNAL_API_TOKEN` côté conteneur). Sans lui, ou avec une valeur fausse, la route répond
-  **404 et non 401** : elle ne confirme pas son existence à qui la cherche. Un 404 sur cette
-  requête veut donc presque toujours dire « jeton absent ou faux dans l'environnement Bruno »,
-  la variable étant déclarée `secret:` et n'ayant donc aucune valeur dans le dépôt.
+  Ancienne URL des services, gardée le temps de leur migration : même use case que `POST /mail`.
+
+  Authentification : un utilisateur **TECH** (Bearer), ou une **clé d'API** portant `core.mail:send`
+  dans `X-Api-Key` — la variable `apiKeyValue` est posée par « API Keys / 2. Créer une clé ». Le
+  temps de migrer les scripts du NAS, l'ancien secret `X-Internal-Token` (`INTERNAL_API_TOKEN`)
+  reste accepté et vaut tous les scopes ; chaque usage est journalisé (`API_KEY / LEGACY_USED`).
+  Sans identifiant : `401`. Clé inconnue, révoquée ou expirée : `401 INVALID_API_KEY`. Clé sans
+  ce scope : `403 INSUFFICIENT_SCOPE`.
 
   ## `text` ou `html`, jamais les deux
 
@@ -49,4 +52,4 @@ docs: |-
   largeur ~600 px. `border-radius` et `box-shadow` sont ignorés par Outlook desktop.
 
   Réponse : `204` sans corps. `to` et `subject` sont obligatoires ; un corps qui en manque rend
-  `400` **avant** le contrôle du jeton, la validation de modèle passant en premier.
+  `400` **avant** le contrôle des droits, la validation de modèle passant en premier.

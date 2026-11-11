@@ -26,8 +26,9 @@ settings:
   maxRedirects: 5
 
 docs: |-
-  Envoi manuel d'une notification. Rôle minimum : **TECH** (outil d'exploitation, pas une action
-  de produit) — un compte USER reçoit 403 `INSUFFICIENT_ROLE`.
+  Envoi d'une notification. Rôle minimum : **TECH** (outil d'exploitation, pas une action de
+  produit) — un compte USER reçoit 403 `INSUFFICIENT_ROLE`. Un service peut l'appeler avec une
+  clé d'API portant `core.notifications:publish` dans `X-Api-Key`.
 
   Même corps que `/internal/notifications` : un seul destinataire au choix parmi `targetUserId`,
   `targetMinRole` (READ_ONLY/USER/MODERATOR/TECH/ADMIN/OWNER) et `targetModuleId`. `type`
