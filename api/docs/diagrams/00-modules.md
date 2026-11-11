@@ -15,7 +15,7 @@ flowchart LR
   Creatures["Creatures<br/>10 types"]
   Domain["Domain<br/>1 types"]
   Feedback["Feedback<br/>12 types"]
-  GameServers["GameServers<br/>77 types"]
+  GameServers["GameServers<br/>81 types"]
   Health["Health<br/>5 types"]
   Infrastructure["Infrastructure<br/>2 types"]
   Mail["Mail<br/>12 types"]
@@ -56,8 +56,10 @@ flowchart LR
   Creatures --> Types
   Feedback --> Security
   GameServers --> Common
+  GameServers --> Notifications
   GameServers --> Realtime
   GameServers --> Security
+  GameServers --> Users
   Mail --> Security
   Notifications --> Realtime
   Notifications --> Security

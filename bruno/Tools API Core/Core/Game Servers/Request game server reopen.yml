@@ -1,0 +1,34 @@
+info:
+  name: Request game server reopen
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{apiUrl}}/gameservers/{{gameCode}}/reopen-request"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Demande la réouverture d'un serveur hors ligne : une notification « Untel a demandé la
+  réouverture du serveur X (jeu) » part aux rôles ADMIN et OWNER. Tout utilisateur connecté (READ_ONLY).
+  Aucun corps.
+
+  Une demande par serveur et par heure, tous utilisateurs confondus. Le délai vit en mémoire de
+  l'API (un redémarrage l'oublie) et se remet à zéro quand le serveur revient en ligne.
+
+  Réponse `200` : `{ requestedAt, nextRequestAt }`. La date de la demande est aussi poussée en
+  direct à tous les écrans (`reopenRequestedAt` dans `Core.GameServersLiveUpdated`).
+
+  - `404 GAME_SERVER_NOT_FOUND` — slug inconnu ou masqué.
+  - `409 GAME_SERVER_NOT_OFFLINE` — le serveur est en ligne, ou pas encore interrogé depuis le démarrage de l'API.
+  - `409 GAME_SERVER_REOPEN_ALREADY_REQUESTED` — une demande a moins d'une heure.
+  - `503 GAME_SERVER_REOPEN_NOTIFICATION_FAILED` — la notification n'est pas partie ; la demande est annulée.

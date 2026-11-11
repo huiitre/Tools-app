@@ -20,6 +20,16 @@ export interface GameServer {
   saveDate: string | null
   // Informations libres du manifest (versions, empreinte…), dans l'ordre d'affichage.
   infos: GameServerInfo[]
+  // Dernière demande de réouverture d'un serveur hors ligne (état live) ; absente sinon.
+  reopenRequestedAt?: string | null
+}
+
+// Même délai que l'API (RequestGameServerReopenUseCase.Cooldown) : une demande par serveur et par heure.
+export const GAME_SERVER_REOPEN_COOLDOWN_MS = 60 * 60 * 1000
+
+export interface GameServerReopenRequest {
+  requestedAt: string
+  nextRequestAt: string
 }
 
 export interface GameServerInfo {
@@ -154,4 +164,5 @@ export interface GameServerLiveSnapshot {
   maxPlayers: number | null
   checkedAt: string
   live: GameServerLive | null
+  reopenRequestedAt: string | null
 }

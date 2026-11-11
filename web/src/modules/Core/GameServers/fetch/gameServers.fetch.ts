@@ -5,6 +5,7 @@ import type {
   GameServerLiveSnapshot,
   GameServerMods,
   GameServerRawCommandHistoryEntry,
+  GameServerReopenRequest,
 } from '../types/gameServers.types'
 
 export async function fetchGameServers(): Promise<GameServer[]> {
@@ -45,5 +46,11 @@ export async function executeGameServerRawCommand(slug: string, command: string)
 
 export async function fetchGameServerRawCommandHistory(slug: string): Promise<GameServerRawCommandHistoryEntry[]> {
   const { data } = await clientCore.get<GameServerRawCommandHistoryEntry[]>(`/gameservers/${slug}/raw-command/history`)
+  return data
+}
+
+// Prévient les administrateurs qu'un serveur hors ligne doit être relancé (une fois par heure et par serveur).
+export async function requestGameServerReopen(slug: string): Promise<GameServerReopenRequest> {
+  const { data } = await clientCore.post<GameServerReopenRequest>(`/gameservers/${slug}/reopen-request`)
   return data
 }

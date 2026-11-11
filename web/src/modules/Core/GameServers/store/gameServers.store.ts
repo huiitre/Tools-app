@@ -34,6 +34,7 @@ export const useGameServersStore = defineStore('gameServers', {
               numPlayers: live.numPlayers,
               maxPlayers: live.maxPlayers,
               checkedAt: live.checkedAt,
+              reopenRequestedAt: live.reopenRequestedAt ?? null,
             }
           : server
       })
@@ -49,6 +50,12 @@ export const useGameServersStore = defineStore('gameServers', {
   },
 
   actions: {
+    // Reflète tout de suite la demande envoyée ; le push live la confirmera pour tous les écrans.
+    markReopenRequested(slug: string, requestedAt: string) {
+      const live = this.liveBySlug[slug]
+      if (live) this.liveBySlug[slug] = { ...live, reopenRequestedAt: requestedAt }
+    },
+
     async load() {
       this.loading = true
       this.error = null

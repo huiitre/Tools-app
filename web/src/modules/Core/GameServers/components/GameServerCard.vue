@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { GameServer } from '../types/gameServers.types'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { GAME_SERVER_REOPEN_COOLDOWN_MS, type GameServer } from '../types/gameServers.types'
+import { requestGameServerReopen } from '../fetch/gameServers.fetch'
+import { useGameServersStore } from '../store/gameServers.store'
 import { formatRelativeTime } from '@/utils/formatRelativeTime'
 import { formatBytes } from '@/utils/formatBytes'
 import { useClipboard } from '@/composables/useClipboard'
+import { ApiException } from '@/services/ApiException'
+import toast from '@/services/toast'
 
 const props = defineProps<{
   server: GameServer
@@ -28,6 +32,49 @@ const saveTitle = computed(() => {
 })
 
 const { copy } = useClipboard()
+
+/* ── Demande de réouverture (serveur hors ligne) ─────────── */
+const store = useGameServersStore()
+const isOffline = computed(() => props.server.online === false)
+
+// Le tableau de bord d'un serveur éteint n'a rien à montrer : sa place revient à la demande.
+const showDashboard = computed(() => props.server.hasDashboard && !isOffline.value)
+
+// Rafraîchi chaque minute pour que le bouton se réactive seul à la fin de l'heure.
+const now = ref(Date.now())
+let ticker: ReturnType<typeof setInterval> | null = null
+onMounted(() => { ticker = setInterval(() => { now.value = Date.now() }, 60_000) })
+onBeforeUnmount(() => { if (ticker) clearInterval(ticker) })
+
+const nextReopenAt = computed(() => {
+  const requestedAt = props.server.reopenRequestedAt
+  return requestedAt ? new Date(requestedAt).getTime() + GAME_SERVER_REOPEN_COOLDOWN_MS : null
+})
+const reopenRequested = computed(() => nextReopenAt.value !== null && nextReopenAt.value > now.value)
+const sendingReopen = ref(false)
+
+const formatTime = (time: number | string) =>
+  new Date(time).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+
+const reopenTitle = computed(() =>
+  reopenRequested.value
+    ? `Demandée à ${formatTime(props.server.reopenRequestedAt!)} · nouvelle demande possible à ${formatTime(nextReopenAt.value!)}`
+    : 'Demander la réouverture : prévient les administrateurs que ce serveur est hors ligne'
+)
+
+const requestReopen = async () => {
+  if (reopenRequested.value || sendingReopen.value) return
+  sendingReopen.value = true
+  try {
+    const result = await requestGameServerReopen(props.server.slug)
+    store.markReopenRequested(props.server.slug, result.requestedAt)
+    toast.success('Les administrateurs ont été prévenus')
+  } catch (e) {
+    toast.error(e instanceof ApiException ? e.message : "La demande n'a pas pu être envoyée")
+  } finally {
+    sendingReopen.value = false
+  }
+}
 
 const statusClass = computed(() => {
   if (props.server.online === true) return 'online'
@@ -95,10 +142,10 @@ const copyConnection = () => {
       <p class="game-server-checked">{{ checkedLabel }}</p>
     </div>
 
-    <div v-if="server.hasDashboard || hasMods || server.saveUrl" class="game-server-actions">
-      <!-- Absente tant qu'aucun provider de jeu ne sait alimenter un dashboard pour ce serveur. -->
+    <div v-if="showDashboard || hasMods || server.saveUrl || isOffline" class="game-server-actions">
+      <!-- Absente tant qu'aucun provider ne sait alimenter un dashboard, et quand le serveur est éteint. -->
       <button
-        v-if="server.hasDashboard"
+        v-if="showDashboard"
         type="button"
         class="game-server-action"
         @click="emit('openDashboard')"
@@ -129,6 +176,20 @@ const copyConnection = () => {
         <i class="mdi mdi-download" aria-hidden="true" />
         Save
       </a>
+
+      <!-- Seulement hors ligne : prévient les administrateurs, une fois par heure et par serveur. -->
+      <button
+        v-if="isOffline"
+        type="button"
+        class="game-server-action game-server-action--reopen"
+        :class="{ requested: reopenRequested }"
+        :disabled="reopenRequested || sendingReopen"
+        :aria-busy="sendingReopen"
+        :title="reopenTitle"
+        @click="requestReopen"
+      >
+        {{ reopenRequested ? 'Demandée' : 'Demande de réouverture' }}
+      </button>
     </div>
   </article>
 </template>
@@ -300,12 +361,36 @@ const copyConnection = () => {
   color: inherit;
   font-size: 0.8rem;
   font-weight: 600;
+  white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
 
   &:hover {
     background: var(--pico-primary-background);
     color: var(--pico-primary-inverse);
+  }
+}
+
+// Teinté de l'accent pour se distinguer des autres actions, sans crier.
+.game-server-action--reopen {
+  background: color-mix(in srgb, var(--pico-primary) 14%, transparent);
+  color: var(--pico-primary);
+  // Libellé long : il passe sur deux lignes plutôt que d'être coupé quand la carte a trois boutons.
+  white-space: normal;
+  line-height: 1.2;
+  text-align: center;
+
+  &.requested,
+  &:disabled {
+    background: color-mix(in srgb, var(--pico-primary) 5%, transparent);
+    color: var(--pico-muted-color);
+    cursor: default;
+    opacity: 1;
+  }
+
+  &:disabled:hover {
+    background: color-mix(in srgb, var(--pico-primary) 5%, transparent);
+    color: var(--pico-muted-color);
   }
 }
 </style>
