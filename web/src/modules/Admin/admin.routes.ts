@@ -25,6 +25,12 @@ export const routes = [
         meta: { label: 'Modules' },
       },
       {
+        name: 'admin-api-keys',
+        path: 'api-keys',
+        component: () => import('@/modules/Admin/apiKeys/views/AdminApiKeys.vue'),
+        meta: { label: "Clés d'API" },
+      },
+      {
         name: 'admin-vpn',
         path: 'vpn',
         component: () => import('@/modules/Admin/vpn/views/AdminVpn.vue'),

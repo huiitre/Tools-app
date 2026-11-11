@@ -1,0 +1,9 @@
+info:
+  name: API Keys
+  type: folder
+  seq: 14
+
+request:
+  auth:
+    type: bearer
+    token: "{{authToken}}"

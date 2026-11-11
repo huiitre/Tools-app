@@ -282,6 +282,29 @@ src/modules/Admin/
         └── ModuleRolePickerModal.vue # Sélection de rôle après drop (props user+roles, émet confirm)
 ```
 
+### Page Clés d'API (`apiKeys/`, 11/11/2026)
+
+Onglet « Clés d'API » juste après Modules, route `admin-api-keys`, client `clientCore`
+(`/admin/api-keys`). Spec, stories et décisions : `api/Modules/Core/ApiKeys/README.md`.
+
+- **Tableau** : même mécanique que la page VPN (toolbar, header, row, colonnes masquables,
+  `gridTemplateColumns`). Un seul tableau pour toutes les clés : le filtre de statut de la
+  toolbar (`statusFilter` : Actives par défaut, Révoquées, Toutes, chacun avec son compteur)
+  choisit ce qu'il montre. Une révocation passe la ligne en `isRevoked` dans le store, sans
+  recharger ni supprimer. Une clé révoquée est estompée, porte le badge « Révoquée » (date au
+  survol) et n'a plus de bouton de révocation.
+- **Création** (`ApiKeyCreateModal`) : nom, description, scopes, expiration. Le bouton « Créer »
+  reste grisé tant qu'un champ manque. Les scopes se choisissent dans `ApiKeyScopeSelectorModal`,
+  calqué sur `BreedingPassiveSelectorModal` (recherche, compteur, Effacer, Valider) ; ils
+  s'affichent ensuite en pastilles, un clic en retire une.
+- **Expiration** : `<input type="date">` borné à demain → aujourd'hui + 3 ans, avec raccourcis
+  30 j / 90 j / 1 an / 3 ans. La clé vaut jusqu'à la fin du jour choisi, plafonnée à maintenant
+  + 3 ans − 1 min : l'API compte les 3 ans depuis l'instant de création et refuserait sinon la
+  toute dernière journée.
+- **Clé créée** (`ApiKeyCreatedModal`) : la clé en clair et un bouton copier (demande explicite,
+  exception assumée à la règle « pas de bouton copier » des listes). **Pas de fermeture au clic
+  sur le fond** : un clic de travers perdrait la clé pour toujours.
+
 ### Tableau utilisateurs — points clés
 
 - **Colonnes** : avatar (fixe 36px), nom, email, rôle, statut, date d'inscription. Même système de `gridTemplateColumns` dynamique que le catalogue Dofus.

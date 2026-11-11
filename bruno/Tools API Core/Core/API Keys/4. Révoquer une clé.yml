@@ -1,0 +1,25 @@
+info:
+  name: Révoquer une clé
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{apiUrl}}/admin/api-keys/{{apiKeyId}}/revoke"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-2. Révocation définitive, `204` sans corps. La clé reste en base et dans la liste, avec
+  `isRevoked: true`, et son nom redevient disponible. `apiKeyId` est posé par « Créer une clé ».
+  Rôle minimum : ADMIN.
+
+  - `404 API_KEY_NOT_FOUND` — clé inexistante.
+  - `409 API_KEY_ALREADY_REVOKED` — clé déjà révoquée.

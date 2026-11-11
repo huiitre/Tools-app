@@ -189,8 +189,8 @@ Un extracteur n'agit au nom d'aucun utilisateur. `SyncTemtemCatalogueUseCase` n'
 `SecuredUseCase`.
 
 L'extracteur (`/data/docker/tools/tools_temtem_extractor/update_temtem.sh` sur le NAS) tourne
-toutes les heures, ne scrape que si une mise à jour du jeu est détectée, puis appellera cette
-route — **le bloc d'appel est encore un TODO dans le script**.
+toutes les 2 h de 8 h à 18 h, ne scrape que si une mise à jour du jeu est détectée, puis appelle
+cette route (appel actif, vérifié dans les logs du NAS le 11/11/2026).
 
 Trois points de conception :
 

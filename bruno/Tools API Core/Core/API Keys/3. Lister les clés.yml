@@ -1,0 +1,24 @@
+info:
+  name: Lister les clés
+  type: http
+  seq: 3
+
+http:
+  method: GET
+  url: "{{apiUrl}}/admin/api-keys"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-3. Toutes les clés, révoquées comprises, de la plus récente à la plus ancienne. Rôle minimum : ADMIN.
+
+  Chaque `ApiKeyView` porte `isRevoked` et `isExpired` : c'est l'interface qui range les
+  révoquées à part. `unknownScopes` liste les scopes stockés que le catalogue ne connaît plus.
+  Ni la clé en clair ni son hash ne sont jamais renvoyés.

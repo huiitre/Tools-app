@@ -6,6 +6,7 @@
 flowchart LR
   Access["Access<br/>23 types"]
   Admin["Admin<br/>7 types"]
+  ApiKeys["ApiKeys<br/>15 types"]
   AppLogs["AppLogs<br/>21 types"]
   Auth["Auth<br/>70 types"]
   Common["Common<br/>18 types"]
@@ -32,6 +33,8 @@ flowchart LR
   Access --> Security
   Access --> Users
   Admin --> Security
+  ApiKeys --> Common
+  ApiKeys --> Security
   AppLogs --> Security
   Auth --> AppLogs
   Auth --> Common
