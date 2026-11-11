@@ -1,0 +1,33 @@
+info:
+  name: Traduire une page (fragments)
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/translation/translate"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "texts": ["Guten Tag", "Wie geht es dir?", "Das Wetter ist schön."],
+        "target": "fr"
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-5, même route que « Traduire un texte » : plusieurs fragments en un appel, comme le fera
+  l'extension pour une page. Sans `source`, la langue est détectée **une fois pour tout le lot**
+  (`detected`) : un fragment dans une autre langue que le reste peut rester non traduit.
+  La limite de 5 000 caractères porte sur le total des fragments.

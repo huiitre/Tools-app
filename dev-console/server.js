@@ -45,6 +45,7 @@ const TUNNELS = [
   // celle-ci est valable tant qu'il la retrouve, à revérifier s'il a été recréé entre-temps.
   { label: 'humanitz', host: '172.19.0.13', port: 8888 }, // RCON
   { label: 'docker', host: '127.0.0.1', port: 2375 }, // tools_docker_proxy, publié sur le loopback du NAS
+  { label: 'libretranslate', host: '127.0.0.1', port: 5001 }, // module Traduction, publié sur le NAS (5001 → 5000)
 ];
 
 function loadEnvFile(filePath) {

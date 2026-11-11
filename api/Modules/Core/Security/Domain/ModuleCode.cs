@@ -17,7 +17,8 @@ public enum ModuleCode
     EliteDangerous,
     Palworld,
     Temtem,
-    Codename
+    Codename,
+    Translation
 }
 
 public static class ModuleCodes
@@ -34,7 +35,8 @@ public static class ModuleCodes
         ["elite_dangerous"] = ModuleCode.EliteDangerous,
         ["palworld"] = ModuleCode.Palworld,
         ["temtem"] = ModuleCode.Temtem,
-        ["codename"] = ModuleCode.Codename
+        ["codename"] = ModuleCode.Codename,
+        ["translation"] = ModuleCode.Translation
     };
 
     // Un code inconnu ne doit jamais valoir un droit : il retourne null. Un module créé en base

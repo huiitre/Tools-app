@@ -6,14 +6,18 @@
 flowchart LR
   Access["Access<br/>23 types"]
   Admin["Admin<br/>7 types"]
+  Api["Api<br/>1 types"]
   ApiKeys["ApiKeys<br/>15 types"]
   AppLogs["AppLogs<br/>21 types"]
+  Application["Application<br/>10 types"]
   Auth["Auth<br/>70 types"]
   Common["Common<br/>18 types"]
   Creatures["Creatures<br/>10 types"]
+  Domain["Domain<br/>1 types"]
   Feedback["Feedback<br/>12 types"]
   GameServers["GameServers<br/>77 types"]
   Health["Health<br/>5 types"]
+  Infrastructure["Infrastructure<br/>2 types"]
   Mail["Mail<br/>12 types"]
   Notifications["Notifications<br/>17 types"]
   Realtime["Realtime<br/>11 types"]
@@ -33,10 +37,13 @@ flowchart LR
   Access --> Security
   Access --> Users
   Admin --> Security
+  Api --> Application
   ApiKeys --> AppLogs
   ApiKeys --> Common
   ApiKeys --> Security
   AppLogs --> Security
+  Application --> AppLogs
+  Application --> Security
   Auth --> AppLogs
   Auth --> Common
   Auth --> Mail

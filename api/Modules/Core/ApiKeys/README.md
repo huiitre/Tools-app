@@ -48,7 +48,7 @@ pouvoir d'avant) ; `LEGACY_USED` dit qui l'emploie encore. `/internal/mail` et
 ## Scopes et appelants
 
 Catalogue : `Security/Domain/ApiKeyScope.cs`. Chaque route ci-dessous accepte aussi un
-utilisateur **TECH** (même use case, jugé sur son rôle).
+utilisateur (même use case, jugé sur son rôle) : **TECH** pour les cinq premières.
 
 | Scope | Route | Use case |
 |---|---|---|
@@ -57,6 +57,7 @@ utilisateur **TECH** (même use case, jugé sur son rôle).
 | `core.gameservers:sync` | `POST /internal/gameservers/sync` | `GameServersSyncUseCase` |
 | `riot.valorant:sync` | `POST /internal/riot/valorant/sync` | `SyncValorantUseCase` |
 | `temtem:sync` | `POST /internal/temtem/sync` | `SyncTemtemCatalogueUseCase` |
+| `translation:translate` | `POST /translation/translate`, `GET /translation/languages`, `POST /translation/detect` | use cases du module Traduction (membres READ_ONLY côté utilisateur, pas TECH) |
 
 ### Appelants à migrer
 

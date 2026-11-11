@@ -1,0 +1,30 @@
+info:
+  name: Détecter la langue
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{apiUrl}}/translation/detect"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "text": "Dzień dobry"
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-3. Langues candidates, la plus probable en premier : `[{ language, confidence }]`.
+  Mêmes droits que la traduction ; 5 000 caractères au plus.

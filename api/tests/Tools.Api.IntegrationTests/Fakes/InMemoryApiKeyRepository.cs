@@ -44,6 +44,7 @@ public sealed class InMemoryApiKeyRepository : IApiKeyRepository
     {
         apiKeys.Clear();
         Touches.Clear();
+        nextId = 1;
     }
 
     public Task<List<ApiKey>> FindAll() => Task.FromResult(apiKeys.ToList());
