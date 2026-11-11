@@ -17,6 +17,7 @@ namespace Tools.Api.Modules.Core.GameServers.Application.Usecases;
 public sealed class PollGameServersUseCase(
     IGameServerPollingRepository gameServerPollingRepository,
     IGameServerLiveStateStore liveStateStore,
+    IGameServerReopenRequestStore reopenRequestStore,
     IRealtimePublisher realtimePublisher,
     IEnumerable<IGameServerProvider> gameProviders,
     ILogger<PollGameServersUseCase> logger)
@@ -112,7 +113,12 @@ public sealed class PollGameServersUseCase(
             }
 
             await gameServerPollingRepository.UpdateStatusAsync(gameServer.Id, new GameServerStatus(online, numPlayers, maxPlayers));
-            liveStateStore.Set(new GameServerLiveSnapshot(gameServer.Slug, online, numPlayers, maxPlayers, DateTime.UtcNow, live));
+            // De retour en ligne, la demande de réouverture est satisfaite : une prochaine panne
+            // pourra être signalée sans attendre.
+            if (online) reopenRequestStore.Clear(gameServer.Slug);
+            liveStateStore.Set(new GameServerLiveSnapshot(
+                gameServer.Slug, online, numPlayers, maxPlayers, DateTime.UtcNow, live,
+                online ? null : reopenRequestStore.Get(gameServer.Slug)));
 
             logger.LogInformation(
                 "Poll {Slug} ({GameCode}) : connexion {ConnectionResult}, {NumPlayers}/{MaxPlayers} joueurs.",
@@ -139,7 +145,10 @@ public sealed class PollGameServersUseCase(
 
     private async Task MarkOfflineAsync(GameServerTarget gameServer)
     {
-        liveStateStore.Set(GameServerLiveSnapshot.Unreachable(gameServer.Slug));
+        liveStateStore.Set(GameServerLiveSnapshot.Unreachable(gameServer.Slug) with
+        {
+            ReopenRequestedAt = reopenRequestStore.Get(gameServer.Slug)
+        });
 
         // Même un adapter défaillant laisse une trace fraîche et explicite en base.
         try

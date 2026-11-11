@@ -40,6 +40,7 @@ public static class GameServersModule
         // écrit et que n'importe quel lecteur (une future connexion WebSocket) doit relire sans
         // attendre le prochain tick.
         builder.Services.AddSingleton<IGameServerLiveStateStore, InMemoryGameServerLiveStateStore>();
+        builder.Services.AddSingleton<IGameServerReopenRequestStore, InMemoryGameServerReopenRequestStore>();
         builder.Services.AddHttpClient<IGameServersManifestProvider, GameServersManifestProvider>((services, client) =>
         {
             var appOptions = services.GetRequiredService<IOptions<AppOptions>>().Value;
@@ -116,6 +117,7 @@ public static class GameServersModule
         builder.Services.AddScoped<GetGameServersLiveStateUseCase>();
         builder.Services.AddScoped<GetGameServerDashboardUseCase>();
         builder.Services.AddScoped<GetGameServerModsUseCase>();
+        builder.Services.AddScoped<RequestGameServerReopenUseCase>();
 
         // Les tests n'ont jamais de poll de fond. En dev il ne tourne que si un hôte de
         // substitution est configuré : sans lui les cibles sont des IP docker injoignables depuis

@@ -35,4 +35,13 @@ public class GameServersController : ControllerBase
     {
         return getGameServerModsUseCase.Execute(slug);
     }
+
+    // Tout utilisateur connecté, sur un serveur hors ligne ; notifie les administrateurs.
+    [HttpPost("{slug}/reopen-request")]
+    public Task<GameServerReopenRequestView> RequestReopen(
+        string slug,
+        [FromServices] RequestGameServerReopenUseCase requestGameServerReopenUseCase)
+    {
+        return requestGameServerReopenUseCase.Execute(slug);
+    }
 }

@@ -30,6 +30,7 @@ flowchart LR
   GameServerRawCommandHistoryEntry["GameServerRawCommandHistoryEntry"]
   GameServerRawCommandRequest["GameServerRawCommandRequest"]
   GameServerRawCommandResult["GameServerRawCommandResult"]
+  GameServerReopenRequestView["GameServerReopenRequestView"]
   GameServerStatus["GameServerStatus"]
   GameServerSyncDto["GameServerSyncDto"]
   GameServerSyncEntry["GameServerSyncEntry"]
@@ -51,12 +52,14 @@ flowchart LR
   IGameServerProvider(["IGameServerProvider"])
   IGameServerRawCommand(["IGameServerRawCommand"])
   IGameServerRawCommandHistoryRepository(["IGameServerRawCommandHistoryRepository"])
+  IGameServerReopenRequestStore(["IGameServerReopenRequestStore"])
   IGameServerRepository(["IGameServerRepository"])
   IGameServerTargetRepository(["IGameServerTargetRepository"])
   IGameServersManifestProvider(["IGameServersManifestProvider"])
   IModIconResolver(["IModIconResolver"])
   ISteamAppDetailsProvider(["ISteamAppDetailsProvider"])
   PollGameServersUseCase["PollGameServersUseCase"]
+  RequestGameServerReopenUseCase["RequestGameServerReopenUseCase"]
   ScheduledGameServerAction["ScheduledGameServerAction"]
   SteamAppDetailsLookup["SteamAppDetailsLookup"]
   end
@@ -77,6 +80,7 @@ flowchart LR
   HumanitzProvider["HumanitzProvider"]
   HumanitzRconClient["HumanitzRconClient"]
   InMemoryGameServerLiveStateStore["InMemoryGameServerLiveStateStore"]
+  InMemoryGameServerReopenRequestStore["InMemoryGameServerReopenRequestStore"]
   ModrinthIconResolver["ModrinthIconResolver"]
   PalworldProvider["PalworldProvider"]
   PostgresGameServerRepository["PostgresGameServerRepository"]
@@ -114,6 +118,7 @@ flowchart LR
   GameServersController --> GetGameServerModsUseCase
   GameServersController --> GetGameServersLiveStateUseCase
   GameServersController --> GetGameServersUseCase
+  GameServersController --> RequestGameServerReopenUseCase
   GameServersManifestProvider -.-> IGameServersManifestProvider
   GameServersSyncController --> GameServersSyncUseCase
   GameServersSyncUseCase --> IGameServerAssetUrlBuilder
@@ -135,6 +140,7 @@ flowchart LR
   HumanitzProvider --> HumanitzRconClient
   HumanitzProvider -.-> IGameServerProvider
   InMemoryGameServerLiveStateStore -.-> IGameServerLiveStateStore
+  InMemoryGameServerReopenRequestStore -.-> IGameServerReopenRequestStore
   ModrinthIconResolver -.-> IModIconResolver
   PalworldProvider -.-> IGameServerProvider
   PalworldProvider -.-> IGameServerDashboard
@@ -142,11 +148,15 @@ flowchart LR
   PollGameServersUseCase --> IGameServerLiveStateStore
   PollGameServersUseCase --> IGameServerPollingRepository
   PollGameServersUseCase --> IGameServerProvider
+  PollGameServersUseCase --> IGameServerReopenRequestStore
   PostgresGameServerRepository -.-> IGameServerRepository
   PostgresGameServerRepository -.-> IGameServerPollingRepository
   PostgresGameServerRepository -.-> IGameServerDashboardRepository
   PostgresGameServerRepository -.-> IGameServerTargetRepository
   PostgresGameServerRepository -.-> IGameServerRawCommandHistoryRepository
+  RequestGameServerReopenUseCase --> IGameServerLiveStateStore
+  RequestGameServerReopenUseCase --> IGameServerReopenRequestStore
+  RequestGameServerReopenUseCase --> IGameServerTargetRepository
   RustProvider --> SteamA2sClient
   RustProvider -.-> IGameServerProvider
   ScheduledGameServerAction --> GameServerTarget

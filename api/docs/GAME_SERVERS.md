@@ -343,6 +343,28 @@ rogne et stocke le tableau dans `game_servers.infos` (`jsonb`, `[]` par défaut,
 non `/details` : les infos restent affichées quand le serveur est éteint. Le dashboard les rend en
 pastilles « libellé valeur » ; un clic copie la valeur.
 
+## Demande de réouverture d'un serveur hors ligne (11/11/2026)
+
+Sur un serveur hors ligne, la carte du widget remplace le bouton Dashboard (inutile serveur
+éteint) par **« Demande de réouverture »**. Un clic appelle `POST /gameservers/{slug}/reopen-request`
+(`RequestGameServerReopenUseCase`, tout utilisateur connecté) : les rôles **ADMIN et au-dessus**
+reçoivent la notification « *Untel* a demandé la réouverture du serveur *X* (*jeu*) ». Pas de mail pour
+l'instant.
+
+- **Hors ligne** = l'état du dernier poll (`IGameServerLiveStateStore`). Un serveur pas encore
+  interrogé depuis le démarrage de l'API est refusé (`409 GAME_SERVER_NOT_OFFLINE`). Aucune durée
+  minimale de panne : la base ne sait pas depuis quand un serveur est tombé, et ce n'était pas
+  souhaité.
+- **Anti-spam : une demande par serveur et par heure**, tous utilisateurs confondus, gardée **en
+  mémoire** (`IGameServerReopenRequestStore`, Singleton, verrou pour que deux clics simultanés
+  n'en passent qu'un). Choix assumé : pas de migration, au prix d'un compteur oublié au
+  redémarrage de l'API (au pire une notification de plus).
+- **Retour en ligne** : le poll efface la demande, une nouvelle panne peut être signalée aussitôt.
+- **Notification en échec** : la demande est annulée (`503 GAME_SERVER_REOPEN_NOTIFICATION_FAILED`),
+  pour ne pas bloquer la suivante une heure sans que personne ait été prévenu.
+- La date de la demande voyage dans l'état live (`reopenRequestedAt`) et est poussée aussitôt à
+  tous les écrans : le bouton passe en « Demandée » partout, désactivé jusqu'à la fin de l'heure.
+
 ## Ressources JVM du serveur Minecraft — piste retenue, rien codé (16/09/2026)
 
 Besoin exprimé : afficher la RAM (et éventuellement le CPU) **réellement utilisée par le process

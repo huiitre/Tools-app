@@ -862,6 +862,16 @@ mods à la connexion), la liste s'affiche seule. Les icônes sont servies par le
 (Modrinth, CurseForge) ; une icône absente ou cassée retombe sur un pictogramme. Décisions et
 contrat : `api/docs/GAME_SERVERS.md`, section « Mods et modpack ».
 
+**Demande de réouverture (11/11/2026).** Hors ligne, la carte masque Dashboard et affiche
+« Demande de réouverture » (fond légèrement teinté de l'accent, sur deux lignes si la carte a trois boutons) : `POST /gameservers/{slug}/reopen-request`
+notifie les administrateurs. Une demande par serveur et par heure : `reopenRequestedAt` arrive
+avec l'état live, le bouton devient « Demandée », grisé, et se réactive seul à la fin de l'heure
+(horloge locale rafraîchie chaque minute). Délai partagé avec l'API :
+`GAME_SERVER_REOPEN_COOLDOWN_MS`. Détails : `api/docs/GAME_SERVERS.md`, section « Demande de
+réouverture ». Piège rencontré : `--pico-muted-background-color`, utilisée par le fond des
+boutons de la carte, n'est pas définie par le thème ; un `color-mix` qui l'utilise est invalide,
+d'où un mélange avec `transparent`.
+
 **La page `/palworld/server` a été supprimée le 29/08/2026** au profit de cette popup, avec ses
 composants (`PalworldServerDashboard`, `PalworldOverviewMap`, `PalworldPlayerDetailsModal`),
 `palworldServer.fetch.ts`, ses types et `utils/palworldMap.ts`. **Rien de tout `serverdata` n'a
