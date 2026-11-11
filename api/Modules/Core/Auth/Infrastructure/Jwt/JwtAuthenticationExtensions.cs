@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Tools.Api.Modules.Core.Common.Api.Errors;
 using Tools.Api.Modules.Core.Realtime;
+using Tools.Api.Modules.Core.Security.Infrastructure;
 
 namespace Tools.Api.Modules.Core.Auth.Infrastructure.Jwt;
 
@@ -15,10 +16,18 @@ namespace Tools.Api.Modules.Core.Auth.Infrastructure.Jwt;
 // portée par les use cases (voir docs/SECURITY.md).
 public static class JwtAuthenticationExtensions
 {
+    // Schéma par défaut : choisit, par requête, entre un utilisateur (JWT) et un service (clé
+    // d'API, schéma enregistré par le module ApiKeys). Un appel ne relève que de l'un des deux.
+    public const string CoreScheme = "Core";
+
     public static IServiceCollection AddCoreJwtAuthentication(this IServiceCollection services)
     {
         services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddAuthentication(CoreScheme)
+            .AddPolicyScheme(CoreScheme, "Utilisateur ou clé d'API", options =>
+            {
+                options.ForwardDefaultSelector = SelectScheme;
+            })
             .AddJwtBearer();
 
         // La configuration est résolue paresseusement, à la construction des options, et non
@@ -57,6 +66,14 @@ public static class JwtAuthenticationExtensions
 
         return services;
     }
+
+    // Un en-tête de clé, même invalide, désigne un service : il est jugé comme tel et refusé
+    // comme tel, sans retomber sur le JWT.
+    private static string SelectScheme(HttpContext context) =>
+        context.Request.Headers.ContainsKey(ApiKeyAuthenticationDefaults.HeaderName)
+        || context.Request.Headers.ContainsKey(ApiKeyAuthenticationDefaults.LegacyHeaderName)
+            ? ApiKeyAuthenticationDefaults.SchemeName
+            : JwtBearerDefaults.AuthenticationScheme;
 
     // Le navigateur ne peut pas poser d'en-tête personnalisé sur la poignée de main WebSocket :
     // le token voyage donc en query string pour cette seule route, jamais ailleurs.

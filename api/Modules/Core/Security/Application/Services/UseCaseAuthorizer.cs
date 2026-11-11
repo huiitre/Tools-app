@@ -13,6 +13,44 @@ public sealed class UseCaseAuthorizer(
     ICurrentUserProvider currentUserProvider,
     ILogger<UseCaseAuthorizer> logger)
 {
+    // Point d'entrée de SecuredUseCase : un utilisateur est jugé sur son rôle, une clé d'API sur
+    // son scope. Sans `requiredScope`, toute clé est refusée.
+    public Caller Authorize(RoleCode requiredRole, ModuleCode? requiredModule, ApiKeyScope? requiredScope)
+    {
+        var apiKey = currentUserProvider.CurrentApiKey;
+        if (apiKey is null)
+        {
+            return new UserCaller(EnsureAtLeast(requiredRole, requiredModule));
+        }
+
+        if (requiredScope is null)
+        {
+            logger.LogWarning(
+                "Clé d'API refusée apiKeyId={ApiKeyId} name={Name} : ce use case n'accepte aucune clé",
+                apiKey.Id,
+                apiKey.Name);
+
+            throw AppException.Forbidden(
+                "API_KEY_NOT_ALLOWED",
+                "Cette action n'est pas ouverte aux clés d'API.");
+        }
+
+        if (!apiKey.Scopes.Contains(requiredScope.Value))
+        {
+            logger.LogWarning(
+                "Clé d'API refusée apiKeyId={ApiKeyId} name={Name} requiredScope={RequiredScope}",
+                apiKey.Id,
+                apiKey.Name,
+                requiredScope.Value.ToCode());
+
+            throw AppException.Forbidden(
+                "INSUFFICIENT_SCOPE",
+                "Cette clé d'API n'a pas le droit nécessaire pour cette action.");
+        }
+
+        return new ApiKeyCaller(apiKey);
+    }
+
     // Retourne l'appelant validé : le use case y accède sans avoir à le résoudre lui-même.
     //
     // `requiredModule` désigne le module auquel le use case appartient. Le rôle comparé est

@@ -70,23 +70,19 @@ client mail (tables, styles inline, largeur bornée), pas pour un navigateur.
 POST /internal/mail
 ```
 
-Même contrat JSON que `POST /mail` ci-dessus. Réservé aux appelants machine — l'API Java pour
-commencer, le temps de retirer progressivement sa propre gestion de l'envoi d'email — jamais à
-un utilisateur : la route n'accepte aucun jeton JWT, uniquement le secret partagé attendu par
-`[InternalApi]` (voir `docs/ARCHITECTURE.md`, section réservée à `/internal/`), dans l'en-tête
+Ancienne URL des services, gardée le temps de leur migration vers les clés d'API (11/11/2026) :
+même contrat JSON et **même use case** que `POST /mail` (`SendMailUseCase`) — TECH, ou une clé
+d'API portant `core.mail:send` :
 
 ```text
-X-Internal-Token: <INTERNAL_API_TOKEN>
+X-Api-Key: <clé créée dans l'administration>
 ```
 
-Un appel sans le secret, ou avec un secret incorrect, renvoie `404` — jamais `401`, pour ne pas
-confirmer l'existence de la route à qui la cherche. Même modèle que `POST /internal/notifications`.
+L'ancien `X-Internal-Token: <INTERNAL_API_TOKEN>` reste accepté pendant la migration. Sans
+identifiant : `401` (et non plus `404`). Voir `docs/SECURITY.md`, section « Clés d'API ».
 
-`InternalMailController` appelle `SendInternalMailUseCase`, pas `MailService` directement : un
-endpoint appelle toujours un use case, qui orchestre et appelle le service — l'absence
-d'utilisateur courant à autoriser ne change rien à cette règle, elle explique seulement pourquoi
-ce use case n'est pas un `SecuredUseCase` (qui exige un `CurrentUser` résolu depuis une requête
-authentifiée) mais une classe autonome, sans rôle ni module requis.
+`SendInternalMailUseCase` a été supprimé le 11/11/2026 : avec les scopes, le même use case sert
+l'humain et le service.
 
 Les requêtes Bruno correspondantes sont dans `bruno/Tools API Core/Mail/`.
 

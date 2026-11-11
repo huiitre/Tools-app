@@ -9,7 +9,25 @@ public interface ICurrentUserProvider
     // Appelant authentifié, ou null si l'appel est anonyme ou effectué hors d'une
     // requête HTTP (tâche de fond, par exemple).
     CurrentUser? Current { get; }
+
+    // Clé d'API présentée par un service, ou null. Jamais renseignée en même temps que Current :
+    // un appel vient d'un utilisateur ou d'une clé, pas des deux.
+    CurrentApiKey? CurrentApiKey { get; }
 }
+
+// Clé déjà validée par l'authentification (existante, ni révoquée ni expirée).
+// `Id` est nul pour l'ancien secret partagé X-Internal-Token, toléré le temps de la migration.
+public sealed record CurrentApiKey(long? Id, string Name, IReadOnlySet<ApiKeyScope> Scopes)
+{
+    public bool IsLegacy => Id is null;
+}
+
+// Appelant validé d'un use case : un utilisateur ou une clé.
+public abstract record Caller;
+
+public sealed record UserCaller(CurrentUser User) : Caller;
+
+public sealed record ApiKeyCaller(CurrentApiKey ApiKey) : Caller;
 
 // Les rôles proviennent de l'access token et font autorité pendant sa durée de vie :
 // un droit retiré s'applique au renouvellement du token, pas immédiatement.

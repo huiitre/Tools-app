@@ -7,8 +7,8 @@ http:
   method: POST
   url: "{{apiUrl}}/internal/riot/valorant/sync"
   headers:
-    - name: X-Internal-Token
-      value: "{{internalApiToken}}"
+    - name: X-Api-Key
+      value: "{{apiKeyValue}}"
   auth: none
 
 settings:
@@ -24,9 +24,12 @@ docs: |-
   Niveaux et chromas sont purgés puis réinsérés. Rend un rapport créés/modifiés/supprimés par
   famille.
 
-  **Route de service à service**, appelée par `update_valorant.sh` sur le NAS après une synchro
-  des assets. L'authentification se fait par le secret partagé `X-Internal-Token`
-  (`INTERNAL_API_TOKEN`), jamais par jeton utilisateur.
+  Appelée par `update_valorant.sh` sur le NAS après une synchro des assets, et relançable à la
+  main par un TECH (une synchro ratée ne se rejoue pas toute seule).
 
-  Sans le secret, ou avec une valeur fausse : **404**, jamais 401 — la route ne confirme pas son
-  existence.
+  Authentification : un utilisateur **TECH** (Bearer), ou une **clé d'API** portant `riot.valorant:sync`
+  dans `X-Api-Key` — la variable `apiKeyValue` est posée par « API Keys / 2. Créer une clé ». Le
+  temps de migrer les scripts du NAS, l'ancien secret `X-Internal-Token` (`INTERNAL_API_TOKEN`)
+  reste accepté et vaut tous les scopes ; chaque usage est journalisé (`API_KEY / LEGACY_USED`).
+  Sans identifiant : `401`. Clé inconnue, révoquée ou expirée : `401 INVALID_API_KEY`. Clé sans
+  ce scope : `403 INSUFFICIENT_SCOPE`.

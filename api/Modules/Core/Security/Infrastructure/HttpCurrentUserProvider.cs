@@ -39,6 +39,28 @@ public sealed class HttpCurrentUserProvider(IHttpContextAccessor httpContextAcce
         }
     }
 
+    // Une identité de clé ne porte jamais de `sub` : Current et CurrentApiKey s'excluent.
+    public CurrentApiKey? CurrentApiKey
+    {
+        get
+        {
+            var principal = httpContextAccessor.HttpContext?.User;
+            if (principal?.Identity?.IsAuthenticated != true
+                || principal.Identity.AuthenticationType != ApiKeyAuthenticationDefaults.SchemeName)
+            {
+                return null;
+            }
+
+            long? id = long.TryParse(principal.FindFirstValue(ApiKeyClaims.Id), out var parsed) ? parsed : null;
+            var scopes = principal.FindAll(ApiKeyClaims.Scope)
+                .Select(claim => ApiKeyScopes.Parse(claim.Value))
+                .OfType<ApiKeyScope>()
+                .ToHashSet();
+
+            return new CurrentApiKey(id, principal.FindFirstValue(ApiKeyClaims.Name) ?? "", scopes);
+        }
+    }
+
     // Rôle global. Le claim `role` porte une chaîne unique ; `roles`, un tableau, est la forme
     // antérieure et n'est lu que si le premier est absent. Un code inconnu de l'énumération est
     // ignoré plutôt que d'accorder un droit.

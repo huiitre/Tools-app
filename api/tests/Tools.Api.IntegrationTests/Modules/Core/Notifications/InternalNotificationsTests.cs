@@ -9,8 +9,10 @@ using Xunit;
 
 namespace Tools.Api.IntegrationTests.Modules.Core.Notifications;
 
-// Route de service à service : elle n'est protégée ni par un jeton utilisateur, ni par le
-// réseau, mais par un secret partagé. Ces tests vérifient qu'aucun autre chemin n'y mène.
+// Ancienne URL des services, gardée le temps de leur migration vers les clés d'API. Elle sert le
+// même use case que POST /notifications : TECH, ou une clé (l'ancien secret partagé en tenant
+// lieu, avec tous les scopes). Ces tests vérifient que le secret marche encore et que rien
+// d'autre n'y mène.
 public sealed class InternalNotificationsTests : IClassFixture<ApiWebApplicationFactory>
 {
     private readonly ApiWebApplicationFactory factory;
@@ -65,49 +67,59 @@ public sealed class InternalNotificationsTests : IClassFixture<ApiWebApplication
         Assert.Equal([InMemoryNotificationRepository.AdminUserId], push.UserIds);
     }
 
-    // 404 et non 401 : la réponse ne doit pas confirmer que la route existe.
     [Fact]
-    public async Task Publishing_without_the_header_is_not_found()
+    public async Task Publishing_without_any_credential_is_unauthorized()
     {
         using var response = await factory.CreateClient()
             .PostAsJsonAsync("/internal/notifications", ValidPayload);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Empty(Notifications.Notifications);
     }
 
     [Fact]
-    public async Task Publishing_with_a_wrong_secret_is_not_found()
+    public async Task Publishing_with_a_wrong_secret_is_unauthorized()
     {
         var client = ClientWithToken("mauvais-secret");
 
         using var response = await client.PostAsJsonAsync("/internal/notifications", ValidPayload);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Empty(Notifications.Notifications);
     }
 
     // Un préfixe correct ne doit pas davantage passer : la comparaison porte sur la valeur
     // entière, pas sur un début commun.
     [Fact]
-    public async Task Publishing_with_a_prefix_of_the_secret_is_not_found()
+    public async Task Publishing_with_a_prefix_of_the_secret_is_unauthorized()
     {
         var client = ClientWithToken(ApiWebApplicationFactory.TestInternalToken[..10]);
 
         using var response = await client.PostAsJsonAsync("/internal/notifications", ValidPayload);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    // Le jeton utilisateur ne remplace pas le secret interne : ce sont deux choses distinctes.
+    // Même use case que POST /notifications : un utilisateur TECH y a droit.
     [Fact]
-    public async Task An_administrator_token_does_not_open_the_internal_route()
+    public async Task A_technical_token_opens_the_route()
     {
-        var client = factory.CreateClientWithRole("ADMIN");
+        var client = factory.CreateClientWithRole("TECH");
 
         using var response = await client.PostAsJsonAsync("/internal/notifications", ValidPayload);
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task A_user_token_is_forbidden()
+    {
+        var client = factory.CreateClientWithRole("USER");
+
+        using var response = await client.PostAsJsonAsync("/internal/notifications", ValidPayload);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Empty(Notifications.Notifications);
     }
 
     [Fact]

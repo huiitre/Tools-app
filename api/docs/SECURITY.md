@@ -26,7 +26,7 @@ Sans rien déclarer de plus, l'appel exige un compte authentifié portant au moi
 
 En contrepartie, la classe de base **n'impose aucune méthode** : la méthode métier porte le nom, les arguments et le type de retour que le use case veut. C'est le point qui a motivé la refonte du 2026-08-17 — les anciennes `SecuredQuery<TResult>` / `SecuredUseCase<TCommand>` / `SecuredUseCase<TCommand, TResult>` obligeaient à choisir sa classe de base selon la forme de la signature, et à passer `CurrentUser` en paramètre de `Handle`.
 
-Un use case non sécurisé reste une classe ordinaire : l'absence d'héritage est un choix visible à la lecture (`PublishInternalNotificationUseCase`, appelé de service à service, n'a aucun utilisateur à autoriser).
+Un use case non sécurisé reste une classe ordinaire : l'absence d'héritage est un choix visible à la lecture. Un appel de service à service n'en est plus un : il passe par une clé d'API et un use case sécurisé (section « Clés d'API »).
 
 ### Deux règles qui viennent avec cette forme
 
@@ -181,6 +181,34 @@ au format décrit dans `ARCHITECTURE.md`.
 clé privée et publierait la clé publique ; chaque service la récupérerait **une fois au
 démarrage**. Plus aucun secret recopié d'un conteneur à l'autre — la cause de l'incident du
 15/08/2026 — et toujours zéro appel réseau par requête. Non fait.
+
+## Clés d'API
+
+Depuis le 11/11/2026, un service (extracteur du NAS, API Java) s'authentifie avec une **clé d'API** créée dans l'administration, et non plus avec un secret unique partagé. Le module, ses user stories et son modèle de données : `Modules/Core/ApiKeys/README.md`.
+
+**Un appel vient d'un utilisateur ou d'une clé, jamais des deux.** Le schéma d'authentification par défaut (`Core`, dans `JwtAuthenticationExtensions`) choisit par requête : en-tête `X-Api-Key` (ou l'ancien `X-Internal-Token`) → schéma `ApiKey` ; sinon → JWT. Un en-tête de clé, même invalide, désigne un service : une clé refusée ne retombe jamais sur le jeton.
+
+**Une clé est jugée sur son scope, un utilisateur sur son rôle.** Un use case s'ouvre aux clés en surchargeant `RequiredScope`, en valeur littérale comme les deux autres :
+
+```csharp
+public sealed class SendMailUseCase(UseCaseAuthorizer authorizer, MailService mailService)
+    : SecuredUseCase(authorizer)
+{
+    protected override RoleCode RequiredRole => RoleCode.Tech;
+    protected override ApiKeyScope? RequiredScope => ApiKeyScope.CoreMailSend;
+    …
+}
+```
+
+- **Refus par défaut** : sans `RequiredScope`, toute clé est refusée (`403 API_KEY_NOT_ALLOWED`), même celle qui porte tous les scopes. Une clé sans le scope demandé : `403 INSUFFICIENT_SCOPE`.
+- **Les deux portes mènent au même use case** : la synchro Valorant s'exécute pour l'extracteur (clé) comme pour un TECH qui la relance à la main. Deux use cases jumeaux ne se justifient que si le traitement diffère réellement selon l'appelant.
+- **`CurrentUser` lève une erreur quand une clé appelle** : un use case ouvert aux clés ne le lit qu'après avoir vérifié `Caller` (`UserCaller` ou `ApiKeyCaller`). Un identifiant vide passerait inaperçu, une exception non.
+- **Mode « clé seulement »** (aucun utilisateur) : prévu mais pas écrit, aucun use case n'en a besoin. Ce sera une déclaration explicite (`AllowsUsers => false`), jamais `RequiredRole => null`, qui se lirait « ouvert à tous ».
+- Le catalogue des scopes (`ApiKeyScope`) vit dans `Security/Domain`, comme `ModuleCode` : c'est ici qu'il est consommé.
+
+**Ancien secret `X-Internal-Token`** : accepté le temps de migrer les appelants, comme une clé portant **tous** les scopes — exactement son pouvoir d'avant. Chaque usage est journalisé (`API_KEY / LEGACY_USED`) : le journal dit qui l'emploie encore. Il disparaîtra avec `INTERNAL_API_TOKEN` une fois le dernier appelant migré. `/internal/realtime/publish` garde `[InternalApi]`, aucun appelant ne l'utilisant.
+
+**Journal** : chaque appel portant une clé écrit une ligne `API_KEY` dans `application_logs`, au départ de la réponse et avec son code HTTP (`USED` + `status`, `REJECTED` + `reason`). Un `USED` en 403 est une clé valide employée hors de ses scopes. Ni la clé ni son hash n'y figurent, seulement l'id, le nom ou les 12 premiers caractères.
 
 ## Tâches de fond
 

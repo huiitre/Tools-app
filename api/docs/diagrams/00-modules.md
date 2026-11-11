@@ -6,6 +6,7 @@
 flowchart LR
   Access["Access<br/>23 types"]
   Admin["Admin<br/>7 types"]
+  ApiKeys["ApiKeys<br/>15 types"]
   AppLogs["AppLogs<br/>21 types"]
   Auth["Auth<br/>70 types"]
   Common["Common<br/>18 types"]
@@ -13,11 +14,11 @@ flowchart LR
   Feedback["Feedback<br/>12 types"]
   GameServers["GameServers<br/>77 types"]
   Health["Health<br/>5 types"]
-  Mail["Mail<br/>13 types"]
-  Notifications["Notifications<br/>18 types"]
+  Mail["Mail<br/>12 types"]
+  Notifications["Notifications<br/>17 types"]
   Realtime["Realtime<br/>11 types"]
   RoadToRiches["RoadToRiches<br/>21 types"]
-  Security["Security<br/>17 types"]
+  Security["Security<br/>25 types"]
   Settings["Settings<br/>18 types"]
   Sync["Sync<br/>58 types"]
   Teams["Teams<br/>20 types"]
@@ -32,6 +33,9 @@ flowchart LR
   Access --> Security
   Access --> Users
   Admin --> Security
+  ApiKeys --> AppLogs
+  ApiKeys --> Common
+  ApiKeys --> Security
   AppLogs --> Security
   Auth --> AppLogs
   Auth --> Common
@@ -53,6 +57,7 @@ flowchart LR
   RoadToRiches --> Security
   Settings --> Security
   Sync --> Common
+  Sync --> Security
   Teams --> Common
   Teams --> Creatures
   Teams --> Security

@@ -20,7 +20,6 @@ flowchart LR
   NotificationType["NotificationType"]
   NotificationTypes["NotificationTypes"]
   NotificationView["NotificationView"]
-  PublishInternalNotificationUseCase["PublishInternalNotificationUseCase"]
   SendNotificationCommand["SendNotificationCommand"]
   SendNotificationUseCase["SendNotificationUseCase"]
   end
@@ -32,7 +31,7 @@ flowchart LR
   end
   DeleteNotificationsUseCase --> INotificationRepository
   GetMyNotificationsUseCase --> INotificationRepository
-  InternalNotificationsController --> PublishInternalNotificationUseCase
+  InternalNotificationsController --> SendNotificationUseCase
   MarkNotificationsAsReadUseCase --> INotificationRepository
   NotificationService --> INotificationRepository
   NotificationsController --> DeleteNotificationsUseCase
@@ -40,7 +39,6 @@ flowchart LR
   NotificationsController --> MarkNotificationsAsReadUseCase
   NotificationsController --> SendNotificationUseCase
   PostgresNotificationRepository -.-> INotificationRepository
-  PublishInternalNotificationUseCase --> NotificationService
   SendNotificationCommand --> NotificationType
   SendNotificationUseCase --> NotificationService
 ```

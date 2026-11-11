@@ -1,7 +1,5 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using Tools.Api.Modules.Core.Common.Api.Internal;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
 using Tools.Api.Modules.Core.Notifications.Application;
 using Tools.Api.Modules.Core.Notifications.Application.Usecases;
@@ -9,19 +7,19 @@ using Tools.Api.Modules.Core.Security.Domain;
 
 namespace Tools.Api.Modules.Core.Notifications.Api;
 
-// Publication de notification pour un appelant de service à service, authentifié par secret partagé.
+// Ancienne URL des services (scripts du NAS, API Java), gardée le temps de leur migration : même
+// use case que POST /notifications, avec la réponse d'origine (200 + id). À supprimer ensuite.
 [ApiController]
 [Route("internal/notifications")]
-[AllowAnonymous]
-[InternalApi]
-public class InternalNotificationsController(PublishInternalNotificationUseCase publishInternalNotificationUseCase)
-    : ControllerBase
+public class InternalNotificationsController : ControllerBase
 {
     // 200 + id si créée, 204 si aucun destinataire n'a été trouvé.
     [HttpPost]
-    public async Task<IActionResult> Publish(PublishNotificationRequest request)
+    public async Task<IActionResult> Publish(
+        PublishNotificationRequest request,
+        [FromServices] SendNotificationUseCase sendNotificationUseCase)
     {
-        var notificationId = await publishInternalNotificationUseCase.Execute(request.ToCommand());
+        var notificationId = await sendNotificationUseCase.Execute(request.ToCommand());
         return notificationId is { } id ? Ok(new PublishNotificationResponse(id)) : NoContent();
     }
 }

@@ -609,7 +609,9 @@ Quatre décisions le distinguent des autres modules :
   TECH avant d'appeler leur sync ; celui de Temtem présente le secret partagé, comme pour
   `/internal/mail`. Un extracteur n'agit au nom d'aucun utilisateur : lui faire porter un mot de
   passe de compte était le vrai écart. `SyncTemtemCatalogueUseCase` n'est donc pas un
-  `SecuredUseCase`, pour la même raison que `SendInternalMailUseCase`.
+  `SecuredUseCase`, pour la même raison que `SendInternalMailUseCase`. *Dépassé le 11/11/2026 :
+  les services s'authentifient par clé d'API et la sync est un `SecuredUseCase` à scope
+  (`docs/SECURITY.md`, « Clés d'API »).*
 - **Un fichier source vide interrompt la synchronisation.** Le catalogue se recharge par upsert
   puis suppression de ce qui a disparu de la source : une extraction ratée qui publierait un
   tableau vide viderait la table, et emporterait le reste par cascade. Le garde-fou est dans le

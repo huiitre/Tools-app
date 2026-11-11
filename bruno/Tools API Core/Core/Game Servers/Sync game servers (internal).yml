@@ -7,8 +7,8 @@ http:
   method: POST
   url: "{{apiUrl}}/internal/gameservers/sync"
   headers:
-    - name: X-Internal-Token
-      value: "{{internalApiToken}}"
+    - name: X-Api-Key
+      value: "{{apiKeyValue}}"
 
 settings:
   encodeUrl: true
@@ -19,8 +19,9 @@ settings:
 docs: >-
   Déclenche le sync : l'API lit elle-même le fichier consolidé
   https://assets.tools.huiitre.fr/tools_core/gameservers/gameservers.json produit par l'extractor.
-  Cette route n'accepte aucun body. X-Internal-Token est le secret partagé INTERNAL_API_TOKEN,
-  jamais un JWT. Une réponse 200 retourne created, updated, unchanged et deleted.
+  Cette route n'accepte aucun body. TECH, ou clé d'API core.gameservers:sync dans X-Api-Key
+  (variable apiKeyValue) ; l'ancien X-Internal-Token reste accepté le temps de la migration.
+  Une réponse 200 retourne created, updated, unchanged et deleted.
   Les mods et le modpack de chaque serveur y sont enregistrés : une liste de mods modifiée
   compte comme une mise à jour. Les icônes des nouveaux mods sont demandées à leur hébergeur
   (Modrinth, CurseForge si la clé est configurée) une seule fois ; une panne les laisse vides

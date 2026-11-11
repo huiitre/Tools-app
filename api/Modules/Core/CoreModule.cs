@@ -1,5 +1,6 @@
 using Tools.Api.Modules.Core.Access;
 using Tools.Api.Modules.Core.Admin;
+using Tools.Api.Modules.Core.ApiKeys;
 using Tools.Api.Modules.Core.AppLogs;
 using Tools.Api.Modules.Core.Auth;
 using Tools.Api.Modules.Core.Common;
@@ -46,6 +47,7 @@ public static class CoreModule
             .AddAdminModule()
             .AddHealthModule()
             .AddGameServersModule()
-            .AddVpnModule();
+            .AddVpnModule()
+            .AddApiKeysModule();
     }
 }

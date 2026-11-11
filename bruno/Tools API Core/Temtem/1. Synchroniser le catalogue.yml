@@ -7,8 +7,8 @@ http:
   method: POST
   url: "{{apiUrl}}/internal/temtem/sync"
   headers:
-    - name: X-Internal-Token
-      value: "{{internalApiToken}}"
+    - name: X-Api-Key
+      value: "{{apiKeyValue}}"
   auth: none
 
 settings:
@@ -21,16 +21,15 @@ docs: |-
   Recharge tout le catalogue Temtem depuis les données de l'extracteur, lues en HTTP sur le CDN
   des assets (`tools_temtem/*.json`). Aucun corps de requête.
 
-  **Route de service à service**, appelée par `update_temtem.sh` sur le NAS après un scraping —
-  le cron tourne toutes les heures et ne scrape que si une mise à jour du jeu est détectée.
-  L'authentification se fait par le secret partagé `X-Internal-Token` (`INTERNAL_API_TOKEN`),
-  jamais par jeton utilisateur : c'est la seule sync du projet dans ce cas, les autres passent
-  par un compte TECH.
+  Appelée par `update_temtem.sh` sur le NAS après un scraping — le cron tourne toutes les
+  2 heures et ne scrape que si une mise à jour du jeu est détectée.
 
-  Sans le secret, ou avec une valeur fausse : **404**, jamais 401 — la route ne confirme pas son
-  existence. Un 404 ici veut donc presque toujours dire « jeton absent ou faux dans
-  l'environnement Bruno », la variable étant déclarée `secret:` et n'ayant aucune valeur dans le
-  dépôt.
+  Authentification : un utilisateur **TECH** (Bearer), ou une **clé d'API** portant `temtem:sync`
+  dans `X-Api-Key` — la variable `apiKeyValue` est posée par « API Keys / 2. Créer une clé ». Le
+  temps de migrer les scripts du NAS, l'ancien secret `X-Internal-Token` (`INTERNAL_API_TOKEN`)
+  reste accepté et vaut tous les scopes ; chaque usage est journalisé (`API_KEY / LEGACY_USED`).
+  Sans identifiant : `401`. Clé inconnue, révoquée ou expirée : `401 INVALID_API_KEY`. Clé sans
+  ce scope : `403 INSUFFICIENT_SCOPE`.
 
   ## Réponse
 

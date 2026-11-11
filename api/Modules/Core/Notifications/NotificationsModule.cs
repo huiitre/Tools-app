@@ -17,7 +17,6 @@ public static class NotificationsModule
     {
         builder.Services.AddScoped<INotificationRepository, PostgresNotificationRepository>();
         builder.Services.AddScoped<NotificationService>();
-        builder.Services.AddScoped<PublishInternalNotificationUseCase>();
         builder.Services.AddScoped<GetMyNotificationsUseCase>();
         builder.Services.AddScoped<MarkNotificationsAsReadUseCase>();
         builder.Services.AddScoped<DeleteNotificationsUseCase>();

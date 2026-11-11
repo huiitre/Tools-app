@@ -2,24 +2,30 @@ using Tools.Api.Modules.Core.Common.Application.Exceptions;
 using Tools.Api.Modules.Core.Common.Application.Ports;
 using Tools.Api.Modules.Temtem.Sync.Application.Data;
 using Tools.Api.Modules.Temtem.Sync.Application.Ports;
+using Tools.Api.Modules.Core.Security.Application.Services;
+using Tools.Api.Modules.Core.Security.Application.Usecases;
+using Tools.Api.Modules.Core.Security.Domain;
 
 namespace Tools.Api.Modules.Temtem.Sync.Application.Usecases;
 
 // Recharge le catalogue Temtem depuis les données de l'extracteur.
 //
-// **Ce n'est pas un SecuredUseCase** : la route est réservée aux appels de service à service et
-// authentifiée par secret partagé, aucun utilisateur n'est identifié. Même raison que
-// SendInternalMailUseCase.
+// TECH, ou une clé d'API portant temtem:sync (l'extracteur du NAS). Le use case ne lit jamais
+// l'utilisateur : il sert aussi bien l'un que l'autre.
 //
 // Tout se joue dans une seule transaction. L'ordre n'est pas négociable : les référentiels avant
 // ce qui les référence, les liaisons réécrites avant les suppressions — sinon une ligne de
 // liaison désignerait une entité qu'on vient de supprimer.
 public sealed class SyncTemtemCatalogueUseCase(
+    UseCaseAuthorizer authorizer,
     ITemtemDataProvider dataProvider,
     ITemtemCatalogueRepository catalogueRepository,
     ITransactionManager transactionManager,
-    ILogger<SyncTemtemCatalogueUseCase> logger)
+    ILogger<SyncTemtemCatalogueUseCase> logger) : SecuredUseCase(authorizer)
 {
+    protected override RoleCode RequiredRole => RoleCode.Tech;
+    protected override ApiKeyScope? RequiredScope => ApiKeyScope.TemtemSync;
+
     public async Task<TemtemCatalogueSyncReport> Execute()
     {
         var categories = Guard(await dataProvider.FetchCategories(), "category.json");

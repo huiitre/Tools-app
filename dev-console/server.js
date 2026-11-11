@@ -504,6 +504,13 @@ const server = http.createServer((req, res) => {
 
 server.listen(CONSOLE_PORT, () => {
   console.log(`dev-console: http://localhost:${CONSOLE_PORT}`);
+  console.log(`front:       http://localhost:${PORTS.web}`);
+  if (QA) {
+    console.log('api:         QA distantes (web/.env.qa)');
+  } else {
+    console.log(`api (C#):    http://localhost:${PORTS.api}`);
+    console.log(`api java:    http://localhost:${PORTS.java}/api/v3`);
+  }
   main().catch((err) => {
     console.error(err);
     process.exitCode = 1;

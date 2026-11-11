@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Tools.Api.IntegrationTests.Fakes;
 using Tools.Api.Modules.Core.Auth.Application.Ports;
+using Tools.Api.Modules.Core.ApiKeys.Application.Ports;
 using Tools.Api.Modules.Core.AppLogs.Application.Ports;
 using Tools.Api.Modules.Core.Auth.Application.Services;
 using Tools.Api.Modules.Core.Auth.Domain;
@@ -170,6 +171,11 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<ITemtemTeamRepository>();
             services.AddSingleton<ITemtemTeamRepository, InMemoryTemtemTeamRepository>();
 
+            services.RemoveAll<IApiKeyRepository>();
+            services.AddSingleton<InMemoryApiKeyRepository>();
+            services.AddSingleton<IApiKeyRepository>(
+                provider => provider.GetRequiredService<InMemoryApiKeyRepository>());
+
             services.RemoveAll<IRecipientResolver>();
             services.AddSingleton<InMemoryRecipientResolver>();
             services.AddSingleton<IRecipientResolver>(
@@ -179,6 +185,7 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
 
     public InMemoryAuthStore Store => Services.GetRequiredService<InMemoryAuthStore>();
     public RecordingAppLogRepository AppLogs => Services.GetRequiredService<RecordingAppLogRepository>();
+    public InMemoryApiKeyRepository ApiKeys => Services.GetRequiredService<InMemoryApiKeyRepository>();
 
     // Le token est produit par le vrai ITokenService : émission et lecture du rôle sont donc
     // testées ensemble, exactement comme en production.

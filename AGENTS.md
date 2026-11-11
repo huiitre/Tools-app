@@ -40,6 +40,7 @@ sous `/api/core`. La cible et le mécanisme de bascule sont décrits dans `api/d
     - Un use case = une classe ; s'il exige des droits, il hérite de `SecuredUseCase` (voir `api/docs/SECURITY.md`).
     - Les contrôleurs résolvent leurs use cases **par action** (`[FromServices]`), jamais dans leur constructeur.
     - Composition explicite par module (`<Module>Module.cs`), aucune découverte par réflexion.
+    - Documentation : depuis le 11/11/2026, chaque module a son `README.md` à la racine de son dossier (modèle : `api/Modules/_MODULE_TEMPLATE.md`), tenu à jour par l'IA au fil du travail (état, user stories, modèle de données en tableaux, décisions). `api/docs/` ne reçoit plus de doc de module ; les existantes y restent tant qu'elles ne sont pas migrées.
 - **API Java (`api-java/`)** :
     - JDBC pur (`JdbcTemplate`). JAMAIS de Hibernate/JPA.
     - Chaque Use Case est une classe @Service unique.
