@@ -36,6 +36,7 @@ using Tools.Api.Modules.Riot.Valorant.Application.Core.Ports;
 using Tools.Api.Modules.Temtem.Creatures.Application.Ports;
 using Tools.Api.Modules.Temtem.Teams.Application.Ports;
 using Tools.Api.Modules.Temtem.Types.Application.Ports;
+using Tools.Api.Modules.Translation.Application.Ports;
 
 namespace Tools.Api.IntegrationTests.Fixtures;
 
@@ -170,6 +171,10 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
                 provider => provider.GetRequiredService<InMemoryTemtemCatalogueRepository>());
             services.RemoveAll<ITemtemTeamRepository>();
             services.AddSingleton<ITemtemTeamRepository, InMemoryTemtemTeamRepository>();
+
+            services.RemoveAll<ITranslationProvider>();
+            services.AddSingleton<FakeTranslationProvider>();
+            services.AddSingleton<ITranslationProvider>(provider => provider.GetRequiredService<FakeTranslationProvider>());
 
             services.RemoveAll<IApiKeyRepository>();
             services.AddSingleton<InMemoryApiKeyRepository>();

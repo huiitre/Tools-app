@@ -8,7 +8,8 @@ public enum ApiKeyScope
     CoreNotificationsPublish,
     CoreGameServersSync,
     RiotValorantSync,
-    TemtemSync
+    TemtemSync,
+    TranslationTranslate
 }
 
 public static class ApiKeyScopes
@@ -20,7 +21,8 @@ public static class ApiKeyScopes
         ["core.notifications:publish"] = ApiKeyScope.CoreNotificationsPublish,
         ["core.gameservers:sync"] = ApiKeyScope.CoreGameServersSync,
         ["riot.valorant:sync"] = ApiKeyScope.RiotValorantSync,
-        ["temtem:sync"] = ApiKeyScope.TemtemSync
+        ["temtem:sync"] = ApiKeyScope.TemtemSync,
+        ["translation:translate"] = ApiKeyScope.TranslationTranslate
     };
 
     // Un code inconnu ne vaut jamais un droit.

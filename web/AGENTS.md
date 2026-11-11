@@ -492,6 +492,31 @@ de recopier ces 144 données synchronisées en TypeScript. La sélection est vol
 Le **trait** d'un membre d'équipe n'est pas encore choisissable : la table
 `team_member_technique` n'a pas d'équivalent pour les traits, ce sera une migration.
 
+## Module Traduction (`src/modules/Translation/`, 11/11/2026)
+
+Une seule page, `/translation` (route racine nommée `translation`, `requireModule: 'translation'`),
+client `clientCore`. API, accès et limites : `api/Modules/Translation/README.md`.
+
+- **`TranslatorView.vue`** : deux volets comme les traducteurs en ligne. La traduction part après
+  650 ms de pause dans la frappe, ou tout de suite avec Ctrl+Entrée ; une frappe plus récente
+  **annule** la requête en cours (`AbortController`). Inversion des langues (reprend la langue
+  détectée si la source était en auto), compteur jusqu'à 5 000 caractères (le champ bloque à la
+  limite et signale un collage coupé), copie et lecture à voix haute (`speechSynthesis`).
+- **Hauteur et défilement** : la page remplit la zone de contenu de `Page.vue` (`height: 100%`,
+  chaîne `flex: 1` / `min-height: 0`) et **chaque volet défile seul** (champ et `.target-body` en
+  `overflow-y: auto`), sans double défilement de la page. Ne pas revenir à un champ qui s'agrandit
+  avec son texte : avec `overflow: hidden`, la molette n'avait plus rien à faire défiler. Sur
+  mobile, volets empilés à `46dvh` chacun, et c'est la page qui défile.
+- **`LanguagePicker.vue`** : panneau flottant (`@floating-ui/vue`) avec recherche ; « Détecter la
+  langue » côté source. Noms de langues en français via `Intl.DisplayNames` (`utils/languageName.ts`) :
+  le moteur les donne en anglais.
+- **`translation.store.ts`** : la liste des langues est chargée une fois ; les cibles proposées
+  dépendent de la source. Les dernières langues choisies sont gardées dans `localStorage`
+  (`translation.languages`), jamais le texte.
+- **Rien dans l'interface ne nomme le moteur** (LibreTranslate) : détail technique.
+- Piège rencontré : `--pico-background-color` vaut l'accent **dans un bouton** (même mécanisme que
+  `--pico-color`, voir plus bas) ; le bouton d'inversion utilise `--pico-card-background-color`.
+
 ## `useImagePreview` — taille minimale
 
 `src/composables/useImagePreview.ts` accepte un troisième paramètre optionnel `minSize` (en px) :

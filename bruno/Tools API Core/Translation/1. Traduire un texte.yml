@@ -1,0 +1,48 @@
+info:
+  name: Traduire un texte
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{apiUrl}}/translation/translate"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "texts": ["Bonjour tout le monde, comment allez-vous ?"],
+        "source": "fr",
+        "target": "en"
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-1 / US-4 / US-5. `texts` : un texte (page Traduction) ou les fragments d'une page
+  (extension), rendus traduits **dans le même ordre**. `source` facultatif, absent ou `"auto"` :
+  détection automatique — une seule langue détectée pour tout le lot.
+
+  Droits : membre du module `translation` (READ_ONLY), ou clé d'API `translation:translate` dans
+  `X-Api-Key` (remplacer l'auth Bearer par l'en-tête `X-Api-Key: {{apiKeyValue}}`).
+
+  Réponse `200` :
+  `{ texts, source, target, detected: { language, confidence } | null, characters, durationMs, provider }`.
+  Chaque appel laisse une ligne `TRANSLATION / TRANSLATED` (ou `FAILED`) dans le journal :
+  langues, caractères, fragments, durée — jamais le texte.
+
+  - `400 TRANSLATION_TEXT_REQUIRED` — aucun texte, ou que des textes vides.
+  - `400 TRANSLATION_TEXT_TOO_LONG` — plus de 5 000 caractères au total.
+  - `400 TRANSLATION_TARGET_REQUIRED` / `TRANSLATION_LANGUAGE_INVALID` / `TRANSLATION_SAME_LANGUAGE`.
+  - `400 TRANSLATION_LANGUAGE_UNSUPPORTED` — langue non chargée par le moteur (voir « Lister les langues »).
+  - `403 NO_MODULE_ACCESS` — pas membre du module ; `403 INSUFFICIENT_SCOPE` — clé sans le scope.
+  - `503 TRANSLATION_UNAVAILABLE` — moteur injoignable ou trop lent (délai : 60 s).

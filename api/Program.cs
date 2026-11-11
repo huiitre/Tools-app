@@ -8,6 +8,7 @@ using Tools.Api.Modules.Core.Security;
 using Tools.Api.Modules.EliteDangerous;
 using Tools.Api.Modules.Riot;
 using Tools.Api.Modules.Temtem;
+using Tools.Api.Modules.Translation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,7 @@ builder.AddCoreModules();
 builder.AddEliteDangerousModule();
 builder.AddRiotModule();
 builder.AddTemtemModule();
+builder.AddTranslationModule();
 
 var app = builder.Build();
 
