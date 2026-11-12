@@ -156,19 +156,14 @@ public sealed class ApiKeyAuthenticationTests : IClassFixture<ApiWebApplicationF
     }
 
     [Fact]
-    public async Task Each_use_is_logged_and_updates_the_last_use()
+    public async Task A_successful_use_is_not_logged_but_updates_the_last_use()
     {
         var key = factory.ApiKeys.Add([ApiKeyScope.CoreMailSend]);
 
         using var response = await ClientWithKey(key).PostAsJsonAsync("/mail", MailPayload);
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
-        var log = Assert.Single(ApiKeyLogs());
-        Assert.Equal("USED", log.Action);
-        Assert.Equal(1, log.Metadata.GetProperty("apiKeyId").GetInt64());
-        Assert.Equal("/mail", log.Metadata.GetProperty("path").GetString());
-        Assert.Equal(204, log.Metadata.GetProperty("status").GetInt32());
-        Assert.Null(factory.AppLogs.Entries.Single().UserId);
+        Assert.Empty(ApiKeyLogs());
         Assert.Equal(1, Assert.Single(factory.ApiKeys.Touches).Id);
     }
 
@@ -183,6 +178,9 @@ public sealed class ApiKeyAuthenticationTests : IClassFixture<ApiWebApplicationF
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         var log = Assert.Single(ApiKeyLogs());
         Assert.Equal("USED", log.Action);
+        Assert.Equal(1, log.Metadata.GetProperty("apiKeyId").GetInt64());
+        Assert.Equal("/mail", log.Metadata.GetProperty("path").GetString());
+        Assert.Null(factory.AppLogs.Entries.Single().UserId);
         Assert.Equal(403, log.Metadata.GetProperty("status").GetInt32());
     }
 

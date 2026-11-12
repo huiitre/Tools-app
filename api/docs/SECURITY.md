@@ -208,7 +208,7 @@ public sealed class SendMailUseCase(UseCaseAuthorizer authorizer, MailService ma
 
 **Ancien secret `X-Internal-Token`** : accepté le temps de migrer les appelants, comme une clé portant **tous** les scopes — exactement son pouvoir d'avant. Chaque usage est journalisé (`API_KEY / LEGACY_USED`) : le journal dit qui l'emploie encore. Il disparaîtra avec `INTERNAL_API_TOKEN` une fois le dernier appelant migré. `/internal/realtime/publish` garde `[InternalApi]`, aucun appelant ne l'utilisant.
 
-**Journal** : chaque appel portant une clé écrit une ligne `API_KEY` dans `application_logs`, au départ de la réponse et avec son code HTTP (`USED` + `status`, `REJECTED` + `reason`). Un `USED` en 403 est une clé valide employée hors de ses scopes. Ni la clé ni son hash n'y figurent, seulement l'id, le nom ou les 12 premiers caractères.
+**Journal** : un appel portant une clé n'écrit une ligne `API_KEY` dans `application_logs` que s'il échoue, au départ de la réponse et avec son code HTTP (`USED` + `status` ≥ 400, `REJECTED` + `reason`) ; un succès ne laisse que `last_used_at`. Un `USED` en 403 est une clé valide employée hors de ses scopes. Ni la clé ni son hash n'y figurent, seulement l'id, le nom ou les 12 premiers caractères.
 
 ## Tâches de fond
 

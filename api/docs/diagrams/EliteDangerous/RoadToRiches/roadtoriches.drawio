@@ -20,25 +20,25 @@
           <mxGeometry x="600" y="0" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="DeleteExpeditionUseCase" value="DeleteExpeditionUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="738" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="810" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="Expedition" value="Expedition" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="1204" y="738" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ExpeditionDetailView" value="ExpeditionDetailView" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="306" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ExpeditionSummaryView" value="ExpeditionSummaryView" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="90" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="378" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ExpeditionsController" value="ExpeditionsController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="666" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ExportExpeditionUseCase" value="ExportExpeditionUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="522" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="594" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="GetExpeditionUseCase" value="GetExpeditionUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="666" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="522" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IExpeditionRepository" value="IExpeditionRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="602" y="669" width="200" height="40" as="geometry" />
@@ -47,7 +47,7 @@
           <mxGeometry x="602" y="882" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ImportExpeditionCommand" value="ImportExpeditionCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="234" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="90" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ImportExpeditionRequest" value="ImportExpeditionRequest" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="594" width="200" height="40" as="geometry" />
@@ -56,31 +56,31 @@
           <mxGeometry x="301" y="882" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ListExpeditionsUseCase" value="ListExpeditionsUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="810" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="450" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PostgresExpeditionRepository" value="PostgresExpeditionRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="903" y="669" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RenameExpeditionCommand" value="RenameExpeditionCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="378" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="234" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RenameExpeditionRequest" value="RenameExpeditionRequest" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="450" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RenameExpeditionUseCase" value="RenameExpeditionUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="594" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="666" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="SpanshJsonRouteImporter" value="SpanshJsonRouteImporter" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="903" y="882" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="UpdateProgressCommand" value="UpdateProgressCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="306" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="UpdateProgressRequest" value="UpdateProgressRequest" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="522" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="UpdateProgressUseCase" value="UpdateProgressUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="450" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="738" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="DeleteExpeditionUseCase" target="IExpeditionRepository">
           <mxGeometry relative="1" as="geometry" />
