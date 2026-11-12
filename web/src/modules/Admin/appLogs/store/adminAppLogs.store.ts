@@ -79,9 +79,10 @@ export const useAdminAppLogsStore = defineStore('adminAppLogs', () => {
     }
   }
 
-  async function load() {
+  // `silent` : rafraîchissement sans skeleton, les lignes affichées restent en place.
+  async function load(silent = false) {
     const request = ++currentRequest
-    loading.value = true
+    if (!silent) loading.value = true
     error.value = null
     try {
       const result = await fetchAdminAppLogs(buildRequest())

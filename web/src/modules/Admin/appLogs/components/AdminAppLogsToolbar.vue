@@ -4,6 +4,7 @@ import { useFloating, offset } from "@floating-ui/vue";
 import { useAdminAppLogsStore } from "../store/adminAppLogs.store";
 import { APP_LOG_PAGE_SIZES } from "../types/adminAppLogs.types";
 import AppLogFilterSelectorModal from "./AppLogFilterSelectorModal.vue";
+import AutoRefreshControl from "@/components/ui/AutoRefreshControl.vue";
 
 const store = useAdminAppLogsStore();
 const selector = ref<
@@ -257,6 +258,10 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </div>
+      <AutoRefreshControl
+        storage-key="admin.appLogs.autoRefreshSeconds"
+        @refresh="(silent) => store.load(silent)"
+      />
       <span class="toolbar-separator" />
       <button type="button" class="filter-button" @click="selector = 'users'">
         <i class="mdi mdi-account-multiple-outline" /> Utilisateurs
