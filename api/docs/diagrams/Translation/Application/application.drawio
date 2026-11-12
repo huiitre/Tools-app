@@ -11,34 +11,34 @@
           <mxGeometry x="150" y="0" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="DetectLanguageUseCase" value="DetectLanguageUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="594" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="522" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="DetectedLanguage" value="DetectedLanguage" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="234" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ITranslationProvider" value="ITranslationProvider" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="522" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="450" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ListTranslationLanguagesUseCase" value="ListTranslationLanguagesUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="450" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ProviderTranslation" value="ProviderTranslation" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="306" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="234" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="TranslateCommand" value="TranslateCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="378" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="306" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="TranslateUseCase" value="TranslateUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="522" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="378" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="TranslationLanguage" value="TranslationLanguage" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="90" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="TranslationService" value="TranslationService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="522" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="450" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="TranslationView" value="TranslationView" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="90" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="594" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="DetectLanguageUseCase" target="TranslationService">
           <mxGeometry relative="1" as="geometry" />

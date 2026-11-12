@@ -29,12 +29,14 @@ SHA-256 et ses 12 premiers caractères (pour la reconnaître dans la liste).
    - il ne déclare aucun scope → `403 API_KEY_NOT_ALLOWED` (refus par défaut) ;
    - la clé ne porte pas le scope déclaré → `403 INSUFFICIENT_SCOPE`.
 
-**Trace** — `last_used_at` / `last_used_ip` sont rafraîchis au plus une fois par minute. Chaque
-appel portant une clé écrit une ligne `API_KEY` dans `application_logs`, au départ de la réponse :
+**Trace** — `last_used_at` / `last_used_ip` sont rafraîchis au plus une fois par minute. Seul ce qui
+mérite l'attention écrit une ligne `API_KEY` dans `application_logs`, au départ de la réponse. Un appel
+réussi n'en écrit pas : un extracteur lancé chaque minute noyait le journal (décision du 12/11/2026),
+`last_used_at` suffit à dire qu'une clé sert.
 
 | Action | Quand | Métadonnées |
 |---|---|---|
-| `USED` | clé acceptée (un `status` 403 = clé valide employée hors de ses scopes) | `apiKeyId`, `apiKeyName`, `method`, `path`, `status` |
+| `USED` | clé acceptée mais réponse en erreur, `status` ≥ 400 (403 = clé valide employée hors de ses scopes) | `apiKeyId`, `apiKeyName`, `method`, `path`, `status` |
 | `REJECTED` | clé refusée | `reason` (`UNKNOWN`, `REVOKED`, `EXPIRED`, `LEGACY_TOKEN_MISMATCH`), 12 premiers caractères |
 | `LEGACY_USED` | ancien `X-Internal-Token` | `method`, `path`, `status` |
 
@@ -71,8 +73,8 @@ utilisateur (même use case, jugé sur son rôle) : **TECH** pour les cinq premi
 | API Java (`ApiCoreNotificationHttpAdapter`, en-tête à renommer) | `core.notifications:publish` |
 
 Migrer un script = créer sa clé dans l'admin, la poser dans son `.env`, remplacer l'en-tête
-`X-Internal-Token: $internal_api_token` par `X-Api-Key: …`, puis vérifier dans le journal un
-`USED` en 2xx et plus aucun `LEGACY_USED` venant de lui. Les synchros Dofus et Palworld, encore
+`X-Internal-Token: $internal_api_token` par `X-Api-Key: …`, puis vérifier que `last_used_at` de
+la clé avance et que plus aucun `LEGACY_USED` ne vient de lui. Les synchros Dofus et Palworld, encore
 servies par l'API Java, gardent leur compte TECH : hors de ce module.
 
 ## Règles métier

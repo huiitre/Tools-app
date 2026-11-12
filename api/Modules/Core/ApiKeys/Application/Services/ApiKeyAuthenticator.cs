@@ -54,10 +54,10 @@ public sealed class ApiKeyAuthenticator(
         return apiKey;
     }
 
-    // Appelé au départ de la réponse : 403 = clé valide employée hors de ses scopes.
-    // `apiKey` nul désigne l'ancien secret partagé, qui n'a pas de ligne en base.
+    // Appelé au départ de la réponse ; un succès n'est pas journalisé, `last_used_at` en garde la trace.
+    // `apiKey` nul désigne l'ancien secret partagé, journalisé à chaque usage tant qu'il existe.
     public Task LogUse(ApiKey? apiKey, string method, string path, int status) =>
-        appLogService.Log(new AppLogCommand(null, LogArea, apiKey is null ? "LEGACY_USED" : "USED", Metadata: new
+        apiKey is not null && status < 400 ? Task.CompletedTask : appLogService.Log(new AppLogCommand(null, LogArea, apiKey is null ? "LEGACY_USED" : "USED", Metadata: new
         {
             ApiKeyId = apiKey?.Id,
             ApiKeyName = apiKey?.Name,
