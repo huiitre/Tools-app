@@ -22,14 +22,15 @@ const emptyLabel = computed(() => {
   return 'Aucune clé active'
 })
 
-const load = async () => {
-  store.loading = true
+// `silent` : rafraîchissement sans skeleton, les lignes affichées restent en place.
+const load = async (silent = false) => {
+  if (!silent) store.loading = true
   try {
     const [apiKeys, scopes] = await Promise.all([fetchApiKeys(), fetchApiKeyScopes()])
     store.apiKeys = apiKeys
     store.scopes = scopes
   } catch {
-    toast.error("Impossible de charger les clés d'API")
+    if (!silent) toast.error("Impossible de charger les clés d'API")
   } finally {
     store.loading = false
   }
@@ -49,12 +50,12 @@ const onCreated = (result: CreatedApiKey) => {
   created.value = result
 }
 
-onMounted(load)
+onMounted(() => load())
 </script>
 
 <template>
   <main class="admin-api-keys">
-    <AdminApiKeysToolbar @create="createOpen = true" />
+    <AdminApiKeysToolbar @create="createOpen = true" @refresh="load" />
     <AdminApiKeysHeader />
 
     <template v-if="store.loading">

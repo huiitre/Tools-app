@@ -293,6 +293,10 @@ Onglet « Clés d'API » juste après Modules, route `admin-api-keys`, client `c
   choisit ce qu'il montre. Une révocation passe la ligne en `isRevoked` dans le store, sans
   recharger ni supprimer. Une clé révoquée est estompée, porte le badge « Révoquée » (date au
   survol) et n'a plus de bouton de révocation.
+- **Rafraîchissement** (12/11/2026) : `src/components/ui/AutoRefreshControl.vue`, partagé avec le
+  journal applicatif. Il contient un bouton de rafraîchissement et le délai de l'auto-refresh, en
+  secondes (0 = désactivé), gardé en localStorage par tableau (`admin.apiKeys.autoRefreshSeconds`,
+  `admin.appLogs.autoRefreshSeconds`). L'auto-refresh recharge sans skeleton (`load(true)`).
 - **Création** (`ApiKeyCreateModal`) : nom, description, scopes, expiration. Le bouton « Créer »
   reste grisé tant qu'un champ manque. Les scopes se choisissent dans `ApiKeyScopeSelectorModal`,
   calqué sur `BreedingPassiveSelectorModal` (recherche, compteur, Effacer, Valider) ; ils

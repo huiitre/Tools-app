@@ -3,8 +3,9 @@ import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useFloating, offset } from '@floating-ui/vue'
 import { useAdminApiKeysStore } from '../store/adminApiKeys.store'
 import { ADMIN_API_KEY_PAGE_SIZES, type ApiKeyStatusFilter } from '../types/adminApiKeys.types'
+import AutoRefreshControl from '@/components/ui/AutoRefreshControl.vue'
 
-const emit = defineEmits<{ create: [] }>()
+const emit = defineEmits<{ create: []; refresh: [silent: boolean] }>()
 
 const store = useAdminApiKeysStore()
 
@@ -114,6 +115,11 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </div>
+
+      <AutoRefreshControl
+        storage-key="admin.apiKeys.autoRefreshSeconds"
+        @refresh="silent => emit('refresh', silent)"
+      />
     </div>
 
     <!-- RIGHT : recherche + ajout -->
