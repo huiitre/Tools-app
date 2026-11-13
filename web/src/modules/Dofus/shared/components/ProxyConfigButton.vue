@@ -95,6 +95,7 @@ watch(() => configStore.config.forceManual, () => {
             {{ configStore.status.active ? 'STOP' : 'START' }}
           </button>
         </header>
+        <p class="retro-only">Pour Dofus Retro uniquement. Pour Dofus 3, voir le bouton Capture Dofus 3.</p>
 
         <section class="status-section" v-if="configStore.status.active">
             <div class="status-row">
@@ -214,6 +215,7 @@ watch(() => configStore.config.forceManual, () => {
     strong { text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
     .global-toggle { margin: 0; padding: 0.2rem 0.6rem; font-size: 0.65rem; font-weight: 800; width: auto; display: flex; align-items: center; gap: 0.3rem; border-radius: 4px; }
   }
+  .retro-only { margin: -0.4rem 0 0.75rem; font-size: 0.65rem; color: var(--pico-muted-color); line-height: 1.35; }
   .status-section {
     display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.5rem; padding: 0.5rem;
     background: var(--pico-card-background-color); border-radius: 4px;

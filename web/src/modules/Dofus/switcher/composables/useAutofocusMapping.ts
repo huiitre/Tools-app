@@ -8,6 +8,10 @@ export interface AutofocusMapping {
 
 const mapping = ref<Record<string, string>>({});
 
+// Les listeners IPC ne se retirent pas : un seul pour toute la page, quel que soit le nombre
+// d'appels au composable.
+let updateListenerRegistered = false;
+
 export function useAutofocusMapping() {
     async function loadMapping() {
         const log = (msg: string, data?: any) => {
@@ -87,7 +91,8 @@ export function useAutofocusMapping() {
 
     // Listener pour les mises à jour automatiques depuis le sniffer
     const api = window.electron || window.switcher;
-    if (api && 'onAutofocusMappingUpdated' in api) {
+    if (!updateListenerRegistered && api && 'onAutofocusMappingUpdated' in api) {
+        updateListenerRegistered = true;
         (api as any).onAutofocusMappingUpdated(async (newMapping: Record<string, string>) => {
             for (const [id, name] of Object.entries(newMapping)) {
                 if (mapping.value[id] !== name) {

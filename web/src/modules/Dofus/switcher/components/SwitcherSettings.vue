@@ -9,7 +9,6 @@ interface HotkeyConfig {
   nextLabel: string | null
   debounce: number
   syncMode: boolean
-  autofocus: boolean
 }
 
 const KEYCODE_LABELS: Record<number, string> = {
@@ -62,7 +61,6 @@ const config = ref<HotkeyConfig>({
   nextLabel: null,
   debounce: props.debounce,
   syncMode: true,
-  autofocus: false,
 })
 
 const capturingPrev = ref(false)
@@ -151,10 +149,6 @@ function onSyncModeChange(e: Event) {
   save()
 }
 
-function onAutofocusChange(e: Event) {
-  config.value.autofocus = (e.target as HTMLInputElement).checked
-  save()
-}
 </script>
 
 <template>
@@ -168,23 +162,9 @@ function onAutofocusChange(e: Event) {
 
     <div class="settings__body">
 
-      <!-- Autofocus -->
-      <div class="settings__group">
-        <div class="settings__row">
-          <span class="settings__label">Autofocus (Auto-turn)</span>
-          <label class="settings__toggle settings__toggle--primary">
-            <input
-              type="checkbox"
-              :checked="config.autofocus"
-              @change="onAutofocusChange"
-            />
-            <span class="settings__toggle-track" />
-          </label>
-        </div>
-        <p class="settings__desc">
-          Focalise automatiquement la fenêtre du personnage suivant quand le tour actuel se termine. Nécessite <b>tshark</b>.
-        </p>
-      </div>
+      <p class="settings__desc settings__desc--moved">
+        L'autofocus s'active désormais depuis le bouton <b>Capture Dofus 3</b> du header Dofus, dans la fenêtre principale.
+      </p>
 
       <!-- Debounce -->
       <div class="settings__group">

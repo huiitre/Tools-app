@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useHdvSnifferStore } from '../hdvSniffer.store';
-import { useDofusStore } from '@/modules/Dofus/dofus.store';
-import { useOS } from '@/composables/useOS';
-import { useEnv } from '@/composables/useEnv';
 import HdvSnifferRow from '../components/HdvSnifferRow.vue';
+import HdvBatchRow from '../components/HdvBatchRow.vue';
 
+//* Journal des prix capturés. La réception et l'envoi à l'API tournent en tâche de fond
+//* (useDofusBackgroundSession), que cette page soit ouverte ou non.
 const hdvStore = useHdvSnifferStore();
-const dofusStore = useDofusStore();
-const { isLinux } = useOS();
-const { isElectron } = useEnv();
 
-const isRetro = computed(() => dofusStore.currentGameVersion?.code === 'retro');
-const isEnvCompatible = computed(() => isElectron && isLinux && isRetro.value);
+const ignoredLabel = computed(() => {
+  const ignored = hdvStore.lastIgnored;
+  if (!ignored) return null;
+  const game = ignored.source === 'dofus3' ? 'Dofus 3' : 'Dofus Retro';
+  const time = new Date(ignored.at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  return `${ignored.count} prix ${game} ignorés à ${time} : le sélecteur de jeu n'est pas sur ${game}, ou aucun serveur n'est choisi.`;
+});
 
 const expandedCaptureId = ref<string | null>(null);
 
@@ -28,12 +30,6 @@ const progressPercent = computed(() => {
     if (!hdvStore.scanProgress || hdvStore.scanProgress.total === 0) return 0;
     return Math.round((hdvStore.scanProgress.current / hdvStore.scanProgress.total) * 100);
 });
-
-onMounted(() => {
-  if (isEnvCompatible.value) {
-    hdvStore.setupListener();
-  }
-});
 </script>
 
 <template>
@@ -44,6 +40,13 @@ onMounted(() => {
           <h1>Hôtel de Vente</h1>
           <p>Scan automatique des prix par catégories</p>
         </hgroup>
+        <p class="source-hint">
+          Dofus Retro : prix capturés par le service MitM du header.<br />
+          Dofus 3 : activer le Sniffer HDV depuis le bouton Capture Dofus 3 du header.
+        </p>
+        <p v-if="ignoredLabel" class="ignored-hint">
+          <span class="mdi mdi-alert-outline" /> {{ ignoredLabel }}
+        </p>
 
         <div class="main-controls">
           <div v-if="hdvStore.scanProgress" class="scan-progress-container">
@@ -55,7 +58,7 @@ onMounted(() => {
           </div>
 
           <div v-if="hdvStore.captures.length > 0" class="status-summary">
-             <span class="badge contrast">{{ hdvStore.captures.length }} items en session</span>
+             <span class="badge contrast">{{ hdvStore.captures.length }} captures en session</span>
              <button 
                 class="outline contrast btn-clear" 
                 :disabled="!!hdvStore.scanProgress"
@@ -72,22 +75,29 @@ onMounted(() => {
     <main class="results-main">
       <div class="container results-container">
         <div v-if="hdvStore.captures.length > 0" class="results-list">
-          <HdvSnifferRow 
-            v-for="capture in hdvStore.captures" 
-            :key="capture.id"
-            :capture-id="capture.id"
-            :item="hdvStore.itemsMetadata[capture.itemId]"
-            :item-id="capture.itemId"
-            :instances="capture.instances"
-            :average-price="capture.averagePrice"
-            :is-expanded="expandedCaptureId === capture.id"
-            @toggle="toggleExpand(capture.id)"
-          />
+          <template v-for="capture in hdvStore.captures" :key="capture.id">
+            <HdvBatchRow
+              v-if="capture.kind === 'batch'"
+              :capture="capture"
+              :is-expanded="expandedCaptureId === capture.id"
+              @toggle="toggleExpand(capture.id)"
+            />
+            <HdvSnifferRow
+              v-else
+              :capture-id="capture.id"
+              :item="hdvStore.metadataFor(capture)"
+              :item-id="capture.itemId"
+              :instances="capture.instances"
+              :average-price="capture.averagePrice"
+              :is-expanded="expandedCaptureId === capture.id"
+              @toggle="toggleExpand(capture.id)"
+            />
+          </template>
         </div>
         <div v-else class="empty-state">
           <div class="status-indicator"></div>
           <h3>Prêt pour le scan</h3>
-          <p class="muted">Sélectionnez une catégorie en HDV pour lancer la capture automatique.</p>
+          <p class="muted">Les prix apparaîtront ici dès qu'ils seront capturés, depuis Dofus Retro ou Dofus 3.</p>
         </div>
       </div>
     </main>
@@ -123,4 +133,6 @@ onMounted(() => {
 }
 @keyframes blink { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 .muted { color: var(--pico-muted-color); }
+.source-hint { margin: 0; text-align: center; font-size: 0.75rem; color: var(--pico-muted-color); line-height: 1.5; }
+.ignored-hint { margin: 0; font-size: 0.75rem; color: var(--pico-del-color); }
 </style>

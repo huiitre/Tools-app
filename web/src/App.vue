@@ -10,9 +10,12 @@ import ImagePreviewModal from '@/components/ui/ImagePreviewModal.vue'
 import ValorantSkinDetailModal from '@/modules/Riot/valorant/components/ValorantSkinDetailModal.vue'
 import { useAuthStore } from '@/modules/Auth/auth.store'
 import { isModuleAllowed } from '@/router/moduleAccess'
+import { useDofusBackgroundSession } from '@/modules/Dofus/capture/useDofusBackgroundSession'
 
 const uiStore = useUIStore()
 const authStore = useAuthStore()
+
+useDofusBackgroundSession()
 
 const route = useRoute()
 const router = useRouter()

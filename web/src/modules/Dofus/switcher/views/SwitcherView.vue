@@ -5,7 +5,7 @@ import SwitcherHeader from '../components/SwitcherHeader.vue'
 import SwitcherEmptyState from '../components/SwitcherEmptyState.vue'
 import SwitcherSettings from '../components/SwitcherSettings.vue'
 import SwitcherWindowItem from '../components/SwitcherWindowItem.vue'
-import { useAutofocusMapping } from '../composables/useAutofocusMapping'
+import LS from '@/services/localStorage'
 
 interface DofusWindow {
   windowId: string
@@ -21,10 +21,8 @@ interface HotkeyConfig {
   nextLabel: string | null
   debounce: number
   syncMode: boolean
-  autofocus: boolean
 }
 
-const { mapping, loadMapping } = useAutofocusMapping()
 const windows = ref<DofusWindow[]>([])
 const scanning = ref(false)
 const showSettings = ref(false)
@@ -68,8 +66,6 @@ async function renameWindow(windowId: string, name: string) {
 }
 
 async function onHotkeysChanged(config: HotkeyConfig) {
-  window.switcher!.log({ level: 'info', service: 'SwitcherView', message: 'onHotkeysChanged triggered', data: { autofocus: config.autofocus } })
-  console.log('[SwitcherView] onHotkeysChanged →', JSON.stringify(config))
   try {
     debounce.value = config.debounce
     await window.switcher!.configureHotkeys({
@@ -77,22 +73,6 @@ async function onHotkeysChanged(config: HotkeyConfig) {
       nextKeycode: config.nextKeycode,
       debounce: config.debounce,
     })
-
-    if (config.autofocus) {
-      window.switcher!.log({ level: 'info', service: 'SwitcherView', message: 'Loading mapping...' })
-      await loadMapping()
-      window.switcher!.log({ level: 'info', service: 'SwitcherView', message: 'Mapping loaded, calling startAutofocus...', data: { mappingSize: Object.keys(mapping.value).length } })
-      
-      const result = await window.switcher!.startAutofocus({
-        interface: 'any',
-        mapping: { ...mapping.value }
-      })
-      window.switcher!.log({ level: 'info', service: 'SwitcherView', message: 'startAutofocus result received', data: result })
-      console.log('[Switcher] startAutofocus result:', result)
-    } else {
-      await window.switcher!.stopAutofocus()
-      window.switcher!.log({ level: 'info', service: 'SwitcherView', message: 'Autofocus stopped' })
-    }
   } catch (e: any) {
     window.switcher!.log({ level: 'error', service: 'SwitcherView', message: 'Error in onHotkeysChanged', data: e.message })
     console.error('[Switcher] onHotkeysChanged error:', e)
@@ -101,6 +81,12 @@ async function onHotkeysChanged(config: HotkeyConfig) {
 
 onMounted(async () => {
   await scan()
+
+  //* Les paramètres ne sont montés qu'une fois ouverts : sans cette lecture, les raccourcis
+  //* enregistrés n'étaient transmis au moteur qu'à la première ouverture du panneau.
+  const savedHotkeys = LS.get('switcher:hotkeys')
+  if (savedHotkeys) await onHotkeysChanged(savedHotkeys)
+
   await window.switcher!.startHotkeys()
   window.switcher!.onCurrentChanged((windowId: string | null) => {
     currentWindowId.value = windowId

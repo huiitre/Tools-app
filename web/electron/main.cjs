@@ -1,12 +1,13 @@
 const { app, BrowserWindow, ipcMain, nativeImage, session, shell, protocol, net } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const path = require('path')
-const { createSwitcherWindow } = require('./windows/dofusSwitcher.cjs')
+const { createSwitcherWindow, getSwitcherWindow } = require('./windows/dofusSwitcher.cjs')
 const { registerSwitcherIpc } = require('./ipc/switcher.ipc.cjs')
 const { registerSnifferIpc } = require('./ipc/sniffer.ipc.cjs')
 const { registerProxyIpc } = require('./ipc/proxy.ipc.cjs')
 const { registerAutofocusIpc } = require('./ipc/autofocus.ipc.cjs')
 const { registerLogsIpc } = require('./ipc/logs.ipc.cjs')
+const { registerCaptureIpc } = require('./ipc/capture.ipc.cjs')
 const logger = require('./logger/LoggerService.cjs')
 
 let mainWindow = null
@@ -75,6 +76,8 @@ function createWindow() {
   autofocusService.setMainWindow(mainWindow)
   snifferService.setMainWindow(mainWindow)
   proxyService.setMainWindow(mainWindow)
+  require('./capture/Dofus3CaptureService.cjs').setMainWindow(mainWindow)
+  require('./capture/Dofus3PriceSniffer.cjs').setMainWindow(mainWindow)
 
   const isDev = process.env.ELECTRON_DEV === 'true'
 
@@ -143,6 +146,14 @@ function createWindow() {
     logger.info('Main', 'Ouverture de la fenêtre Switcher')
     createSwitcherWindow()
   })
+
+  ipcMain.handle('switcher:close', () => {
+    const win = getSwitcherWindow()
+    if (win && !win.isDestroyed()) {
+      logger.info('Main', 'Fermeture de la fenêtre Switcher')
+      win.close()
+    }
+  })
 }
 
 protocol.registerSchemesAsPrivileged([{
@@ -187,11 +198,17 @@ app.whenReady().then(() => {
   registerSnifferIpc()
   registerProxyIpc()
   registerAutofocusIpc(switcherService)
+  registerCaptureIpc()
   createWindow()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+})
+
+// tshark est un process enfant : sans arrêt explicite il peut survivre à l'application.
+app.on('before-quit', () => {
+  require('./capture/Dofus3CaptureService.cjs').stopAll()
 })
 
 app.on('window-all-closed', () => {
