@@ -1,17 +1,9 @@
 const logger = require('../logger/LoggerService.cjs');
 const captureService = require('./Dofus3CaptureService.cjs');
-const {
-    MESSAGES,
-    TYPE_PREFIX,
-    readVarint,
-    decodeFields,
-    decodePackedVarints,
-} = require('./AnkamaMessages.cjs');
+const { MESSAGES, decodeFields, decodePackedVarints } = require('./AnkamaMessages.cjs');
+const { StreamReassembler } = require('./StreamReassembler.cjs');
 
 const SVC = 'Dofus3PriceSniffer';
-
-const MAX_STREAM_BUFFER = 4 * 1024 * 1024;
-const MAX_MESSAGE_SIZE = 2 * 1024 * 1024;
 
 // Seuils de reconnaissance de la liste des prix moyens par sa forme : plusieurs milliers
 // d'entrées identiques { id, prix }. Le nom du message change à chaque mise à jour du client,
@@ -21,11 +13,11 @@ const PRICE_LIST_MIN_ENTRIES = 1000;
 const PRICE_LIST_MIN_CONFORMITY = 0.9;
 
 // Le prix moyen tombe en un seul message de ~70 Ko, découpé en dizaines de segments TCP : le flux
-// serveur → client est recollé avant d'être lu.
+// serveur → client est recollé (StreamReassembler) avant d'être lu.
 class Dofus3PriceSniffer {
     constructor() {
         this.mainWindow = null;
-        this.streams = new Map();
+        this.reassembler = new StreamReassembler((name, value) => this._onMessage(name, value));
         this.knownAverages = new Map();
         this.active = false;
     }
@@ -36,76 +28,16 @@ class Dofus3PriceSniffer {
 
     start() {
         if (this.active) return;
-        captureService.subscribe('prices', (packet) => this._onPacket(packet));
+        captureService.subscribe('prices', (packet) => this.reassembler.push(packet));
         this.active = true;
         logger.info(SVC, 'Sniffer de prix démarré');
     }
 
     stop() {
         captureService.unsubscribe('prices');
-        this.streams.clear();
+        this.reassembler.reset();
         this.active = false;
         logger.info(SVC, 'Sniffer de prix arrêté');
-    }
-
-    _onPacket({ stream, fromServer, seq, data }) {
-        if (!fromServer) return;
-
-        let s = this.streams.get(stream);
-        if (!s) {
-            s = { buf: Buffer.alloc(0), nextSeq: null };
-            this.streams.set(stream, s);
-        }
-
-        if (s.nextSeq !== null) {
-            if (seq + data.length <= s.nextSeq) return; // retransmission complète
-            if (seq < s.nextSeq) {
-                data = data.subarray(s.nextSeq - seq);   // retransmission partielle
-            } else if (seq > s.nextSeq) {
-                s.buf = Buffer.alloc(0);                 // trou : le message en cours est perdu
-            }
-        }
-
-        s.nextSeq = Math.max(s.nextSeq ?? 0, seq + data.length);
-        s.buf = s.buf.length ? Buffer.concat([s.buf, data]) : Buffer.from(data);
-
-        if (s.buf.length > MAX_STREAM_BUFFER) {
-            logger.warn(SVC, `Flux ${stream} : tampon saturé, réinitialisé`);
-            s.buf = Buffer.alloc(0);
-            return;
-        }
-
-        this._drain(s);
-    }
-
-    // Lit tous les messages complets du tampon. Format : type.ankama.com/<nom> 12 <len> <valeur>.
-    _drain(s) {
-        let buf = s.buf;
-        for (;;) {
-            const start = buf.indexOf(TYPE_PREFIX);
-            if (start === -1) {
-                buf = buf.subarray(Math.max(0, buf.length - TYPE_PREFIX.length));
-                break;
-            }
-
-            let i = start + TYPE_PREFIX.length;
-            while (i < buf.length && buf[i] >= 0x61 && buf[i] <= 0x7a) i++;
-            if (i + 1 >= buf.length) { buf = buf.subarray(start); break; }
-
-            const name = buf.subarray(start + TYPE_PREFIX.length, i).toString();
-            if (buf[i] !== 0x12 || name.length === 0) { buf = buf.subarray(start + 1); continue; }
-
-            const len = readVarint(buf, i + 1);
-            if (!len) { buf = buf.subarray(start); break; }
-            if (len.value > MAX_MESSAGE_SIZE) { buf = buf.subarray(start + 1); continue; }
-
-            const end = len.next + len.value;
-            if (end > buf.length) { buf = buf.subarray(start); break; }
-
-            this._onMessage(name, buf.subarray(len.next, end));
-            buf = buf.subarray(end);
-        }
-        s.buf = Buffer.from(buf);
     }
 
     _onMessage(name, value) {

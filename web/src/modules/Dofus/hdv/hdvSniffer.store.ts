@@ -35,6 +35,9 @@ export interface SnifferBatchCapture {
   versionId: number;
   count: number;
   pricedCount: number;
+  //* Comptés au fil de l'envoi : enregistrés en base, ou absents de la base (non envoyables).
+  savedCount: number;
+  unknownCount: number;
   //* markRaw : plusieurs milliers d'entrées, jamais modifiées, affichées par pages.
   entries: { id: number; price: number }[];
   timestamp: number;
@@ -55,6 +58,10 @@ const API_BATCH_SIZE = 500;
 const DUPLICATE_LIST_WINDOW_MS = 60_000;
 
 const metaKey = (versionId: number, assetId: number) => `${versionId}:${assetId}`;
+
+//* Objets de chaque liste de prix encore en attente d'un verdict (enregistré ou inconnu), pour
+//* compter ce qui a réellement été enregistré. Hors du state : jamais affiché tel quel.
+const batchPending = new Map<string, Set<number>>();
 
 const chunk = <T>(list: T[], size: number): T[][] => {
   const out: T[][] = [];
@@ -186,10 +193,13 @@ export const useHdvSnifferStore = defineStore('hdvSniffer', {
         versionId,
         count: entries.length,
         pricedCount: priced.length,
+        savedCount: 0,
+        unknownCount: 0,
         entries: markRaw(priced),
         timestamp: receivedAt,
       });
 
+      batchPending.set(`batch-${receivedAt}`, new Set(priced.map(e => e.id)));
       this._queue(versionId, priced.map(e => [e.id, e.price]));
       this._debounceSync(true);
     },
@@ -199,15 +209,34 @@ export const useHdvSnifferStore = defineStore('hdvSniffer', {
       if (this.captures.length > MAX_CAPTURES) this.captures.pop();
     },
 
+    //* Reporte le verdict d'un objet sur les listes de prix qui l'attendaient encore.
+    _settleBatches(assetIds: number[], outcome: 'saved' | 'unknown') {
+      if (batchPending.size === 0) return;
+      for (const capture of this.captures) {
+        if (capture.kind !== 'batch') continue;
+        const waiting = batchPending.get(capture.id);
+        if (!waiting) continue;
+        for (const id of assetIds) {
+          if (!waiting.delete(id)) continue;
+          if (outcome === 'saved') capture.savedCount++;
+          else capture.unknownCount++;
+        }
+        if (waiting.size === 0) batchPending.delete(capture.id);
+      }
+    },
+
     _queue(versionId: number, prices: [number, number][]) {
       let pending = this.pendingPrices.get(versionId);
       if (!pending) {
         pending = new Map();
         this.pendingPrices.set(versionId, pending);
       }
+      const alreadyUnknown: number[] = [];
       for (const [assetId, price] of prices) {
-        if (!this.failedAssetIds.has(metaKey(versionId, assetId))) pending.set(assetId, price);
+        if (this.failedAssetIds.has(metaKey(versionId, assetId))) alreadyUnknown.push(assetId);
+        else pending.set(assetId, price);
       }
+      this._settleBatches(alreadyUnknown, 'unknown');
       this._debounceSync();
     },
 
@@ -240,12 +269,12 @@ export const useHdvSnifferStore = defineStore('hdvSniffer', {
             const foundIds = new Set(data.map(item => item.assetId));
             data.forEach(item => this.itemsMetadata[metaKey(versionId!, item.assetId)] = markRaw(item));
 
-            ids.forEach(id => {
-                if (!foundIds.has(id)) {
-                    this.failedAssetIds.add(metaKey(versionId!, id));
-                    pending.delete(id);
-                }
+            const unknown = ids.filter(id => !foundIds.has(id));
+            unknown.forEach(id => {
+                this.failedAssetIds.add(metaKey(versionId!, id));
+                pending.delete(id);
             });
+            this._settleBatches(unknown, 'unknown');
           } catch (e) {
             console.error('[SnifferStore] Metadata fetch error:', e);
           }
@@ -261,6 +290,7 @@ export const useHdvSnifferStore = defineStore('hdvSniffer', {
         for (const batch of chunk(priceBatch, API_BATCH_SIZE)) {
           await useMutationItemPrices(batch.map(({ itemId, price }) => ({ itemId, price })));
           batch.forEach(p => pending.delete(p.assetId));
+          this._settleBatches(batch.map(p => p.assetId), 'saved');
         }
 
         //* Seuls les prix déjà affichés quelque part sont rafraîchis : relire les 7 600 objets de

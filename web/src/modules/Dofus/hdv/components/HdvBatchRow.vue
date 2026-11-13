@@ -46,7 +46,11 @@ const time = computed(() =>
       <div class="batch-text">
         <span class="batch-title">Prix moyens Dofus 3</span>
         <span class="batch-meta">
-          {{ formatNumber(capture.pricedCount) }} prix envoyés · {{ formatNumber(capture.count) }} objets reçus à {{ time }}
+          {{ formatNumber(capture.savedCount) }} / {{ formatNumber(capture.pricedCount) }} enregistrés
+          · {{ formatNumber(capture.count) }} objets reçus à {{ time }}
+          <template v-if="capture.unknownCount > 0">
+            · {{ formatNumber(capture.unknownCount) }} absents de la base
+          </template>
         </span>
       </div>
       <span class="mdi chevron" :class="isExpanded ? 'mdi-chevron-up' : 'mdi-chevron-down'" />

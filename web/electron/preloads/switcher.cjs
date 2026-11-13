@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('switcher', {
   setOrder: (windowIds) => ipcRenderer.invoke('switcher:set-order', windowIds),
   renameWindow: (windowId, name) => ipcRenderer.invoke('switcher:rename-window', windowId, name),
   getWindows: () => ipcRenderer.invoke('switcher:get-windows'),
+  refreshWindow: (windowId) => ipcRenderer.invoke('switcher:refresh-window', windowId),
   configureHotkeys: (config) => ipcRenderer.invoke('switcher:configure-hotkeys', config),
   startHotkeys: () => ipcRenderer.invoke('switcher:start-hotkeys'),
   stopHotkeys: () => ipcRenderer.invoke('switcher:stop-hotkeys'),

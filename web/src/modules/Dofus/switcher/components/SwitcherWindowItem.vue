@@ -17,6 +17,7 @@ const emit = defineEmits<{
   focus: [windowId: string]
   toggleEnabled: [windowId: string]
   rename: [windowId: string, name: string]
+  refresh: [windowId: string]
 }>()
 
 const editing = ref(false)
@@ -64,8 +65,15 @@ function cancelEdit() {
         <span class="item__name-text" @dblclick="startEdit">
           {{ window.characterName ?? window.windowId }}
         </span>
-        <button class="btn btn--ghost" @click="startEdit">
+        <button class="btn btn--ghost" title="Renommer" @click="startEdit">
           <span class="mdi mdi-pencil-outline" />
+        </button>
+        <button
+          class="btn btn--ghost"
+          title="Revérifier la fenêtre et reprendre le nom détecté"
+          @click="emit('refresh', window.windowId)"
+        >
+          <span class="mdi mdi-refresh" />
         </button>
       </template>
     </div>

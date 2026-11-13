@@ -36,6 +36,12 @@ const hotkeyManager = new HotkeyManager(
   },
 )
 
+// Liste modifiée hors d'une action de la fenêtre switcher (suivi automatique, personnage détecté).
+service.setOnChange((windows) => {
+  const win = getSwitcherWindow()
+  if (win && !win.isDestroyed()) win.webContents.send('switcher:windows-updated', windows)
+})
+
 function registerSwitcherIpc() {
   ipcMain.handle('switcher:scan', async () => service.scan())
   ipcMain.handle('switcher:focus-next', async () => service.focusNext())
@@ -52,6 +58,7 @@ function registerSwitcherIpc() {
     return service.renameWindow(windowId, name)
   })
   ipcMain.handle('switcher:get-windows', async () => service.getWindows())
+  ipcMain.handle('switcher:refresh-window', async (_, windowId) => service.refreshWindow(windowId))
   ipcMain.handle('switcher:get-current', async () => service.getCurrentWindowId())
 
   ipcMain.handle('switcher:configure-hotkeys', async (_, config) => {

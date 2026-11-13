@@ -62,6 +62,8 @@ declare global {
       checkCaptureRequirements: () => Promise<CaptureStatus['requirements']>;
       startPriceCapture: () => Promise<{ success: boolean; error?: string }>;
       stopPriceCapture: () => Promise<{ success: boolean }>;
+      startWindowDetection: () => Promise<{ success: boolean; error?: string }>;
+      stopWindowDetection: () => Promise<{ success: boolean }>;
       stopAllCaptures: () => Promise<{ success: boolean }>;
       onCaptureStatus: (callback: (status: CaptureStatus) => void) => void;
       onCapturePriceList: (callback: (payload: CapturePriceList) => void) => void;
@@ -86,6 +88,9 @@ declare global {
       setOrder: (windowIds: string[]) => Promise<DofusWindow[]>
       renameWindow: (windowId: string, name: string) => Promise<DofusWindow[]>
       getWindows: () => Promise<DofusWindow[]>
+      refreshWindow: (windowId: string) => Promise<DofusWindow[]>
+      onWindowsUpdated: (callback: (windows: DofusWindow[]) => void) => void
+      offWindowsUpdated: () => void
       getCurrent: () => Promise<string | null>
       configureHotkeys: (config: { prevKeycode: number | null; nextKeycode: number | null; debounce: number }) => Promise<void>
       startHotkeys: () => Promise<void>

@@ -76,6 +76,13 @@ function createWindow() {
   mainWindow.setIcon(appIcon)
 
   logger.setMainWindow(mainWindow)
+
+  // Le switcher est une fenêtre à part entière : tant qu'il reste ouvert, 'window-all-closed' ne
+  // se déclenche pas et l'application (tshark compris) survit à la fermeture de la fenêtre principale.
+  mainWindow.on('closed', () => {
+    const switcher = getSwitcherWindow()
+    if (switcher && !switcher.isDestroyed()) switcher.close()
+  })
   logger.info('Main', 'Fenêtre principale créée')
 
   // Initialisation du mainWindow sur les services qui en ont besoin
@@ -180,6 +187,11 @@ protocol.registerSchemesAsPrivileged([{
 app.commandLine.appendSwitch('disable-features', 'ServiceWorker')
 
 app.whenReady().then(() => {
+  // Seconde instance (lien tools://, double lancement) : elle a transmis ses arguments à la
+  // première via 'second-instance' et va quitter. app.quit() n'interrompt pas ce code : sans ce
+  // retour, elle créait quand même une fenêtre complète et lançait la recherche de mise à jour.
+  if (!gotTheLock) return
+
   logger.info('Main', 'App prête — enregistrement des IPC')
 
   // Riot auth endpoint ne renvoie pas de headers CORS — on les injecte côté Electron

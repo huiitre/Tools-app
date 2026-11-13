@@ -9,7 +9,7 @@ const GAME_PORT = 5555;
 
 // tcp.payload et non data : quand une heuristique de tshark croit reconnaître un autre protocole
 // dans un segment, `data` reste vide et le message en cours de réception est perdu.
-const FIELDS = ['tcp.stream', 'tcp.srcport', 'tcp.seq', 'tcp.flags.syn', 'tcp.flags.ack', 'tcp.payload'];
+const FIELDS = ['tcp.stream', 'tcp.srcport', 'tcp.dstport', 'tcp.seq', 'tcp.flags.syn', 'tcp.flags.ack', 'tcp.payload'];
 
 const isTrue = (v) => v === '1' || v === 'True';
 
@@ -55,7 +55,8 @@ class Dofus3CaptureService {
         return this.status.requirements;
     }
 
-    // handler({ stream, fromServer, seq, data }) — data est un Buffer, jamais vide.
+    // handler({ stream, fromServer, clientPort, seq, data, hex }) — data est un Buffer, jamais vide.
+    // clientPort : port local du client Dofus, qui permet de retrouver son process (ss).
     subscribe(name, handler) {
         const reqs = this.checkRequirements();
         if (!reqs.tsharkInstalled) {
@@ -150,10 +151,11 @@ class Dofus3CaptureService {
     }
 
     _onLine(line) {
-        const [stream, srcPort, seq, syn, ack, hex] = line.trim().split('|');
+        const [stream, srcPort, dstPort, seq, syn, ack, hex] = line.trim().split('|');
         if (stream === undefined) return;
 
         const fromServer = Number(srcPort) === GAME_PORT;
+        const clientPort = Number(fromServer ? dstPort : srcPort);
 
         // SYN du client vers le serveur : une connexion de jeu commence.
         if (isTrue(syn) && !isTrue(ack) && !fromServer) {
@@ -164,7 +166,7 @@ class Dofus3CaptureService {
 
         if (!hex) return;
 
-        const packet = { stream, fromServer, seq: Number(seq), data: Buffer.from(hex, 'hex'), hex };
+        const packet = { stream, fromServer, clientPort, seq: Number(seq), data: Buffer.from(hex, 'hex'), hex };
         for (const [name, handler] of this.consumers) {
             try {
                 handler(packet);

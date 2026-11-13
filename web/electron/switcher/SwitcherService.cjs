@@ -3,6 +3,9 @@ const logger = require('../logger/LoggerService.cjs')
 
 const SVC = 'SwitcherService'
 
+// Suivi automatique des fenêtres : fréquence du scan léger (sans lecture mémoire du jeu).
+const WATCH_INTERVAL_MS = 2000
+
 class SwitcherService {
   constructor(scanner, focuser, nameResolver) {
     this.scanner = scanner
@@ -10,6 +13,110 @@ class SwitcherService {
     this.nameResolver = nameResolver
     this.windows = []
     this.currentIndex = 0
+    // pid du client Dofus → dernier nom de personnage détecté à sa connexion (capture réseau)
+    this.detectedNames = new Map()
+    this.watchTimer = null
+    this.onChange = null
+  }
+
+  // Appelé à chaque changement de la liste hors d'une action de la fenêtre switcher (suivi
+  // automatique, personnage détecté), pour qu'elle se mette à jour sans refresh.
+  setOnChange(callback) {
+    this.onChange = callback
+  }
+
+  startWatching() {
+    if (this.watchTimer) return
+    logger.info(SVC, 'Suivi automatique des fenêtres démarré')
+    this.watchTimer = setInterval(() => this._watchTick(), WATCH_INTERVAL_MS)
+    this._watchTick()
+  }
+
+  stopWatching() {
+    if (!this.watchTimer) return
+    clearInterval(this.watchTimer)
+    this.watchTimer = null
+    logger.info(SVC, 'Suivi automatique des fenêtres arrêté')
+  }
+
+  async _watchTick() {
+    const before = this._signature()
+    await this._lightScan()
+    if (this._signature() !== before) this._emitChange()
+  }
+
+  // Scan sans résolution du nom par la mémoire du jeu : titre actuel des fenêtres, et nom
+  // détecté s'il y en a un pour ce process.
+  async _lightScan() {
+    const scanned = await this.scanner.scan()
+    const resolved = scanned.map((w) => {
+      const detected = this.detectedNames.get(w.pid)
+      if (detected && !this.windows.some((prev) => prev.windowId === w.windowId)) {
+        this._setTitle(w.windowId, detected)
+        return { ...w, characterName: detected }
+      }
+      return { ...w, characterName: this._stripDofusPrefix(w.characterName) }
+    })
+    this._merge(resolved)
+
+    const alive = new Set(scanned.map((w) => w.pid))
+    for (const pid of this.detectedNames.keys()) {
+      if (!alive.has(pid)) this.detectedNames.delete(pid)
+    }
+  }
+
+  // Personnage détecté à la connexion d'un client : la fenêtre prend son nom, même renommée à la
+  // main avant (une nouvelle connexion peut être un autre personnage).
+  async applyDetectedName(pid, name) {
+    this.detectedNames.set(pid, name)
+    if (!this.windows.some((w) => w.pid === pid)) await this._lightScan()
+
+    let changed = false
+    this.windows = this.windows.map((w) => {
+      if (w.pid !== pid) return w
+      this._setTitle(w.windowId, name)
+      changed = true
+      return { ...w, characterName: name }
+    })
+    logger.info(SVC, `Nom détecté pour le pid ${pid} : "${name}"`, { appliqué: changed })
+    if (changed) this._emitChange()
+  }
+
+  // Bouton refresh d'une fenêtre : retirée si elle n'existe plus, sinon elle reprend le dernier
+  // nom détecté pour son process, ou son titre actuel à défaut.
+  async refreshWindow(windowId) {
+    const scanned = await this.scanner.scan()
+    const live = scanned.find((w) => w.windowId === windowId)
+
+    if (!live) {
+      this.windows = this.windows.filter((w) => w.windowId !== windowId)
+      logger.info(SVC, `Refresh wid=${windowId} : fenêtre fermée, retirée`)
+      return this.windows
+    }
+
+    const detected = this.detectedNames.get(live.pid)
+    if (detected) this._setTitle(windowId, detected)
+    const characterName = detected ?? this._stripDofusPrefix(live.characterName)
+
+    this.windows = this.windows.map((w) =>
+      w.windowId === windowId ? { ...w, pid: live.pid, characterName } : w
+    )
+    logger.info(SVC, `Refresh wid=${windowId} → "${characterName}"`, { détecté: !!detected })
+    return this.windows
+  }
+
+  _setTitle(windowId, name) {
+    try {
+      execSync(`xdotool set_window --name "${name}" ${windowId}`)
+    } catch {}
+  }
+
+  _signature() {
+    return this.windows.map((w) => `${w.windowId}:${w.characterName}`).join('|')
+  }
+
+  _emitChange() {
+    if (this.onChange) this.onChange(this.windows)
   }
 
   async scan() {
@@ -106,17 +213,27 @@ class SwitcherService {
     return this.windows.filter((w) => w.enabled)
   }
 
+  // L'ordre choisi par glisser-déposer est conservé : les fenêtres connues gardent leur place,
+  // les nouvelles s'ajoutent à la fin, les fermées disparaissent. Reconstruire la liste dans
+  // l'ordre de `xdotool search` écrasait cet ordre à chaque scan.
   _merge(scanned) {
-    const existing = new Map(this.windows.map((w) => [w.windowId, w]))
-    this.windows = scanned.map((w) => {
-      const prev = existing.get(w.windowId)
-      if (!prev) return w
-      return {
-        ...w,
-        enabled: prev.enabled,
-        characterName: w.characterName ?? prev.characterName,
-      }
-    })
+    const scannedById = new Map(scanned.map((w) => [w.windowId, w]))
+
+    const kept = this.windows
+      .filter((prev) => scannedById.has(prev.windowId))
+      .map((prev) => {
+        const w = scannedById.get(prev.windowId)
+        return {
+          ...w,
+          enabled: prev.enabled,
+          characterName: w.characterName ?? prev.characterName,
+        }
+      })
+
+    const known = new Set(this.windows.map((w) => w.windowId))
+    const added = scanned.filter((w) => !known.has(w.windowId))
+
+    this.windows = [...kept, ...added]
   }
 }
 
