@@ -1,3 +1,5 @@
+import type { CaptureStatus, CapturePriceList, CaptureItemOffers } from '@/modules/Dofus/capture/capture.types'
+
 interface ElectronLogEntry {
   id: string
   timestamp: string
@@ -19,6 +21,7 @@ declare global {
       openSwitcher: () => void
       onSwitcherClosed: (callback: () => void) => void
       offSwitcherClosed: () => void
+      closeSwitcher: () => Promise<void>
       
       // Sniffer (Old)
       startSniffing: (forcedConfig?: { remoteIp: string; remotePort: string } | null) => Promise<{ success: boolean; error?: string }>;
@@ -48,9 +51,21 @@ declare global {
       onBankItemCaptured: (callback: (item: any) => void) => void;
       onBankFullDump: (callback: () => void) => void;
 
-      // Autofocus Mapping
+      // Autofocus
+      startAutofocus: (config: { interface?: string; mapping: Record<string, string> }) => Promise<{ success: boolean; error?: string }>;
+      stopAutofocus: () => Promise<{ success: boolean }>;
       setAutofocusMapping: (mapping: Record<string, string>) => void;
       onAutofocusMappingUpdated: (callback: (mapping: Record<string, string>) => void) => void;
+
+      // Capture Dofus 3 (tshark partagé)
+      getCaptureStatus: () => Promise<CaptureStatus>;
+      checkCaptureRequirements: () => Promise<CaptureStatus['requirements']>;
+      startPriceCapture: () => Promise<{ success: boolean; error?: string }>;
+      stopPriceCapture: () => Promise<{ success: boolean }>;
+      stopAllCaptures: () => Promise<{ success: boolean }>;
+      onCaptureStatus: (callback: (status: CaptureStatus) => void) => void;
+      onCapturePriceList: (callback: (payload: CapturePriceList) => void) => void;
+      onCaptureItemOffers: (callback: (payload: CaptureItemOffers) => void) => void;
 
       // Electron Logs
       getElectronLogs: () => Promise<ElectronLogEntry[]>;

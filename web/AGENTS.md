@@ -70,10 +70,16 @@ The main process is split into services using Node.js EventEmitter patterns:
 |-----------|---------|
 | `electron/main.cjs` | App lifecycle, window creation |
 | `electron/preload.cjs` | Context bridge — exposes IPC API to renderer |
-| `electron/ipc/` | IPC handler registration (`sniffer`, `proxy`, `switcher`, `autofocus`) |
+| `electron/ipc/` | IPC handler registration (`sniffer`, `proxy`, `switcher`, `autofocus`, `capture`) |
+| `electron/capture/` | Capture passive Dofus 3 via tshark (autofocus + prix HDV), voir plus bas |
 | `electron/sniffer/` | Packet capture via tcpdump (SnifferService, BankSniffer, etc.) |
 | `electron/proxy/` | MITM proxy using Node `net` module + iptables traffic redirection |
 | `electron/switcher/` | Account switcher with global hotkeys (uiohook-napi) |
+
+**Linux : Electron tourne en Wayland natif.** Une fenêtre Wayland ne peut pas se mettre au premier plan
+d'elle-même, et `xdotool`/`wmctrl` ne la voient pas : la fenêtre switcher passe derrière le jeu à chaque
+focus. Forcer X11 (`ozone-platform=x11`) a été essayé le 13/11/2026 : le process GPU plante en boucle
+(`exit_code=139`, pilote NVIDIA) et l'application ne s'affiche plus. Ne pas réintroduire tel quel.
 
 ### IPC Pattern
 
@@ -84,22 +90,38 @@ Key channels:
 - `proxy:*` — start/stop MITM proxy, update active modules, stream results via `proxy:hdv-prices`, `proxy:bank-items`, `proxy:scan-progress`
 - `switcher:*` — open switcher window, hotkey binding
 - `autofocus:*` — monitor and redirect window focus between game accounts
+- `capture:*` — capture tshark Dofus 3 : état, sniffer de prix (`capture:price-list`, `capture:item-offers`)
 - `update-available` / `apply-update` — electron-updater flow
 
-## Dofus Autofocus
+## Capture Dofus 3 (tshark) — autofocus et sniffer HDV
 
-Moteur de focus automatique pour le multi-compte Dofus Retro, intégré via `tshark` et `xdotool`.
+Écoute **passive** du serveur de jeu Dofus 3 (port 5555) : un seul `tshark`, partagé par l'autofocus
+et le sniffer de prix, allumé dès que l'un des deux est activé et arrêté quand plus aucun ne l'est.
+Rien n'est intercepté — c'est l'opposé du MITM, qui ne concerne que **Dofus Retro**.
 
-- **Moteur :** `electron/sniffer/AutofocusService.cjs` (spawn `tshark`).
-- **Détection :**
-    - `6a626c` : Mapping ID réseau → Nom du personnage.
-    - `697977` : Ordre d'initiative.
-    - `6a6163` : Changement de tour (déclenche le focus xdotool après 150ms).
-- **Persistance :** IndexedDB store `autofocus_mapping` (front-end) synchronisé via IPC.
-- **UI :**
-    - Gestion du mapping dans `Settings > Modules > Dofus`.
-    - Toggle d'activation dans les paramètres du `Switcher`.
-- **Dépendances système :** `tshark` (avec accès non-root aux interfaces), `xdotool`.
+- **Activation :** bouton « Capture Dofus 3 » du header Dofus (`modules/Dofus/capture/components/CaptureConfigButton.vue`),
+  deux toggles mémorisés (`localStorage` `dofus.capture`, repris de l'ancien `switcher:hotkeys.autofocus`).
+  La capture tourne **en tâche de fond**, indépendamment de la fenêtre switcher et de la page HDV :
+  `useDofusBackgroundSession` (appelé dans `App.vue`) la démarre à la connexion d'un compte qui a le
+  module Dofus, la coupe et ferme la fenêtre switcher à la déconnexion.
+- **Electron :** `electron/capture/`
+    - `Dofus3CaptureService.cjs` — le process tshark, ses abonnés, l'état envoyé au front (`capture:status`).
+    - `AnkamaMessages.cjs` — noms obfusqués des messages (`MESSAGES`) et décodage protobuf.
+    - `Dofus3PriceSniffer.cjs` — recolle le flux TCP serveur → client (le message des prix fait ~70 Ko) et émet `capture:price-list` / `capture:item-offers`.
+    - **Piège** : lire `tcp.payload`, jamais `data`. Quand une heuristique de tshark croit reconnaître un autre protocole dans un segment, `data` reste vide : il manquait ainsi ~6 Ko au milieu du message des prix, perdu à chaque connexion (vu le 13/11/2026).
+    - `electron/sniffer/AutofocusService.cjs` — abonné `autofocus`, lit paquet par paquet.
+- **Messages** (`type.ankama.com/<nom>`, relevés le 13/11/2026) :
+    - `jxh` : mapping ID réseau → nom du personnage (avant : `jbl`).
+    - `jvu` : ordre d'initiative (avant : `iyw`).
+    - `jug` : fin de tour → focus xdotool du personnage suivant après 150 ms (avant : `jac`).
+    - `isr` : prix moyens de tous les objets de l'HDV (~7 600), **reçu une fois à la connexion d'un personnage**. Reconnu par sa **forme** (milliers d'entrées `{id, prix}`) et non par son nom : il survit à un renommage, un avertissement est logué.
+    - `jzs` : prix des lots x1/x10/x100/x1000 d'un objet, reçu **au clic** dans l'HDV (pas au cochage d'une catégorie).
+    - Ankama renomme ces messages à chaque mise à jour du client, et les numéros de champs peuvent bouger avec. Pour les retrouver : capturer le port 5555 pendant une connexion, un changement de map, un combat ou un clic HDV, puis chercher les ID `e082…`, les noms de personnages ou des prix connus encodés en varint.
+- **Envoi des prix :** `hdvSniffer.store.ts`, en tâche de fond, par paquets de 500 (`metadata/batch` puis `PUT prices/batch`, ~1 s pour 7 600 prix mesuré en local). Rangés sous le **jeu et le serveur du sélecteur du header** (intercepteur de `clientV3Dofus`). Seule garde : un prix Dofus 3 n'est jamais envoyé si le sélecteur est sur Retro, ni l'inverse. Une liste identique reçue à moins de 60 s (plusieurs comptes) est ignorée. Prix unitaire d'un objet cliqué : le prix moyen reçu à la connexion s'il est connu, sinon `calculateAverageUnitPrice` sur les lots.
+- **Page HDV sniffer :** simple journal des prix reçus (Retro et Dofus 3). Une ligne par objet, une ligne par liste de prix moyens dont le détail s'affiche par pages de 50.
+- **Persistance du mapping autofocus :** IndexedDB store `autofocus_mapping`, alimenté depuis la fenêtre principale ; gestion dans `Settings > Modules > Dofus`.
+- **Détection de connexion (proxy MITM) :** `ss -tpn` sans `-4` — Dofus se connecte via des sockets IPv6 en IPv4 encapsulé (`::ffff:`).
+- **Dépendances système :** `tshark` (avec accès non-root aux interfaces : groupe `wireshark`), `xdotool`.
 
 ### API Clients
 

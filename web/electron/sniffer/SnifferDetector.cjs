@@ -5,8 +5,9 @@ const SVC = 'SnifferDetector';
 
 function detectPotentialConnections() {
     try {
-        logger.debug(SVC, 'Scan des connexions réseau (ss -4tpn)...');
-        const output = execSync('ss -4tpn').toString();
+        // Pas de -4 : Dofus ouvre des sockets IPv6 et s'y connecte en IPv4 encapsulé (::ffff:a.b.c.d).
+        logger.debug(SVC, 'Scan des connexions réseau (ss -tpn)...');
+        const output = execSync('ss -tpn').toString();
         const lines = output.split('\n');
 
         const { switcherService } = require('../ipc/switcher.ipc.cjs');
@@ -18,9 +19,12 @@ function detectPotentialConnections() {
                 const parts = l.trim().split(/\s+/);
                 const localAddr = parts[3];
                 const remoteAddr = parts[4];
-                const processPart = parts[6] || "";
+                // State Recv-Q Send-Q Local Peer Process
+                const processPart = parts.slice(5).join(' ');
 
                 if (!remoteAddr || !remoteAddr.includes(':')) return null;
+                // IPv6 natif (CDN, HTTPS du client) : hors sujet, le proxy n'écoute qu'en IPv4.
+                if (remoteAddr.startsWith('[') && !remoteAddr.startsWith('[::ffff:')) return null;
 
                 const remoteSep = remoteAddr.lastIndexOf(':');
                 const ip = remoteAddr.substring(0, remoteSep).replace('[::ffff:', '').replace(']', '').trim();

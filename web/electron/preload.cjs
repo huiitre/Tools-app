@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electron', {
   },
   onSwitcherClosed: (callback) => ipcRenderer.on('switcher:closed', () => callback()),
   offSwitcherClosed: () => ipcRenderer.removeAllListeners('switcher:closed'),
+  closeSwitcher: () => ipcRenderer.invoke('switcher:close'),
 
   // Proxy
   startProxy: (config) => ipcRenderer.invoke('proxy:start', config),
@@ -46,6 +47,16 @@ contextBridge.exposeInMainWorld('electron', {
   stopAutofocus: () => ipcRenderer.invoke('autofocus:stop'),
   setAutofocusMapping: (mapping) => ipcRenderer.invoke('autofocus:set-mapping', mapping),
   onAutofocusMappingUpdated: (callback) => ipcRenderer.on('autofocus:mapping-updated', (event, mapping) => callback(mapping)),
+
+  // Capture Dofus 3 (tshark partagé : autofocus + prix HDV)
+  getCaptureStatus: () => ipcRenderer.invoke('capture:get-status'),
+  checkCaptureRequirements: () => ipcRenderer.invoke('capture:check-requirements'),
+  startPriceCapture: () => ipcRenderer.invoke('capture:start-prices'),
+  stopPriceCapture: () => ipcRenderer.invoke('capture:stop-prices'),
+  stopAllCaptures: () => ipcRenderer.invoke('capture:stop-all'),
+  onCaptureStatus: (callback) => ipcRenderer.on('capture:status', (_, status) => callback(status)),
+  onCapturePriceList: (callback) => ipcRenderer.on('capture:price-list', (_, payload) => callback(payload)),
+  onCaptureItemOffers: (callback) => ipcRenderer.on('capture:item-offers', (_, payload) => callback(payload)),
 
   // Logs
   getElectronLogs: () => ipcRenderer.invoke('electron:get-logs'),

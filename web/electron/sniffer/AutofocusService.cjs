@@ -1,18 +1,22 @@
-const { spawn, execSync } = require('child_process');
+const { execSync } = require('child_process');
 const logger = require('../logger/LoggerService.cjs');
-const { checkRequirements } = require('./SnifferDoctor.cjs');
+const captureService = require('../capture/Dofus3CaptureService.cjs');
+const { MESSAGES, messagesOfType, byteAlignedMatches } = require('../capture/AnkamaMessages.cjs');
 
 const SVC = 'AutofocusService';
 
+// Les noms des messages et la procédure pour les retrouver après une mise à jour du client sont
+// dans capture/AnkamaMessages.cjs. Les numéros de champs des motifs ci-dessous peuvent bouger
+// avec les noms : à revérifier ensemble.
+
 class AutofocusService {
     constructor() {
-        this.process = null;
+        this.active = false;
         this.mapping = {};
         this.initiativeOrder = [];
         this.lastCharId = null;
         this.mainWindow = null;
         this.switcherService = null;
-        this.interface = 'any'; // Par défaut 'any' pour plus de compatibilité
     }
 
     setMainWindow(window) {
@@ -34,110 +38,51 @@ class AutofocusService {
     }
 
     start(config = {}) {
-        if (this.process) {
-            logger.warn(SVC, 'Processus déjà actif — arrêt avant redémarrage');
-            this.stop();
-        }
-
-        // Vérification des pré-requis
-        const reqs = checkRequirements();
-        if (!reqs.tsharkInstalled) {
-            logger.error(SVC, 'tshark n\'est pas installé sur le système');
-            throw new Error('tshark n\'est pas installé. Veuillez l\'installer via "sudo dnf install wireshark".');
-        }
-        if (!reqs.tsharkPermissions) {
-            logger.warn(SVC, 'tshark semble manquer de permissions pour capturer sur le réseau (setcap manquant)');
-            // On continue quand même car le check getcap peut être imprécis selon le chemin
-        }
-
         this.initiativeOrder = [];
         this.lastCharId = null;
-
-        if (config.interface) this.interface = config.interface;
         if (config.mapping) this.mapping = config.mapping;
 
-        logger.info(SVC, `Démarrage sur l'interface "${this.interface}"`, {
-            interface: this.interface,
-            mappingSize: Object.keys(this.mapping).length,
-        });
+        logger.info(SVC, 'Démarrage', { mappingSize: Object.keys(this.mapping).length });
 
-        const args = ['-i', this.interface, '-f', 'tcp port 5555', '-l', '-T', 'fields', '-e', 'data'];
-        logger.debug(SVC, `Spawn tshark avec args : ${args.join(' ')}`);
+        // Paquet par paquet, comme avant le partage de la capture : les messages de combat
+        // tiennent dans un seul segment TCP.
+        captureService.subscribe('autofocus', ({ hex }) => this.handlePacket(hex));
+        this.active = true;
+    }
 
-        try {
-            this.process = spawn('tshark', args);
-            logger.info(SVC, `tshark démarré (PID ${this.process.pid})`);
-        } catch (e) {
-            logger.error(SVC, `Impossible de lancer tshark (problème spawn) : ${e.message}`, { code: e.code });
-            throw e;
+    handlePacket(hex) {
+        for (const message of messagesOfType(hex, MESSAGES.mapping)) {
+            logger.debug(SVC, `Message mapping détecté (${MESSAGES.mapping})`);
+            this.extractAndUpdateMapping(message);
         }
-
-        this.process.stdout.on('data', (data) => {
-            const line = data.toString().trim();
-            if (!line) return;
-
-            // tshark avec -T fields -e data peut sortir plusieurs lignes ou des colonnes
-            const hexPackets = line.split(/\s+/);
-            
-            for (const hex of hexPackets) {
-                if (hex.includes("6a626c")) {
-                    logger.debug(SVC, 'Paquet mapping détecté (6a626c)');
-                    this.extractAndUpdateMapping(hex);
-                } else if (hex.includes("697977")) {
-                    logger.debug(SVC, 'Paquet initiative détecté (697977)');
-                    this.processInitiative(hex);
-                } else if (hex.includes("6a6163")) {
-                    logger.debug(SVC, 'Paquet changement de tour détecté (6a6163)');
-                    this.processTurn(hex);
-                }
-            }
-        });
-
-        this.process.stderr.on('data', (data) => {
-            const msg = data.toString().trim();
-            if (msg) {
-                // Certains messages tshark sont informatifs (ex: Capturing on 'any')
-                if (msg.toLowerCase().includes('error') || msg.toLowerCase().includes('denied') || msg.toLowerCase().includes('permission')) {
-                    logger.error(SVC, `tshark stderr : ${msg}`);
-                } else {
-                    logger.warn(SVC, `tshark stderr : ${msg}`);
-                }
-            }
-        });
-
-        this.process.on('error', (err) => {
-            logger.error(SVC, `Erreur processus tshark : ${err.message}`, { code: err.code });
-        });
-
-        this.process.on('exit', (code, signal) => {
-            logger.info(SVC, `Processus tshark arrêté`, { code, signal });
-            this.process = null;
-        });
+        for (const message of messagesOfType(hex, MESSAGES.initiative)) {
+            logger.debug(SVC, `Message initiative détecté (${MESSAGES.initiative})`);
+            this.processInitiative(message);
+        }
+        for (const message of messagesOfType(hex, MESSAGES.turnEnd)) {
+            logger.debug(SVC, `Message fin de tour détecté (${MESSAGES.turnEnd})`);
+            this.processTurn(message);
+        }
     }
 
     stop() {
-        if (this.process) {
-            logger.info(SVC, 'Arrêt du moteur (SIGTERM)...');
-            this.process.kill('SIGTERM');
-            this.process = null;
-        }
+        captureService.unsubscribe('autofocus');
+        this.active = false;
         this.initiativeOrder = [];
         this.lastCharId = null;
         logger.info(SVC, 'Service stoppé et état réinitialisé');
     }
 
-    extractAndUpdateMapping(line) {
-        const idx = line.indexOf("6a626c");
-        if (idx === -1) return;
-
-        const segment = line.substring(idx);
-        const regex = /18(e082[a-f0-9]{6})22[0-9a-f]{2}0a[0-9a-f]{2}([0-9a-f]+?)20/g;
-        let match;
+    // Une entrée par personnage : 18 <ID> 2a <len> 12 <len nom> <nom utf8>
+    extractAndUpdateMapping(segment) {
+        const regex = /18(e082[0-9a-f]{6})2a[0-9a-f]{2}12([0-9a-f]{2})/g;
         let updated = false;
 
-        while ((match = regex.exec(segment)) !== null) {
+        for (const match of byteAlignedMatches(regex, segment)) {
             const id = match[1];
-            const name = Buffer.from(match[2], 'hex').toString('utf8').trim();
+            const nameStart = match.index + match[0].length;
+            const nameHex = segment.substr(nameStart, parseInt(match[2], 16) * 2);
+            const name = Buffer.from(nameHex, 'hex').toString('utf8').trim();
 
             if (name.length > 0 && this.mapping[id] !== name) {
                 this.mapping[id] = name;
@@ -152,16 +97,12 @@ class AutofocusService {
         }
     }
 
-    processInitiative(line) {
-        const idx = line.indexOf("697977");
-        if (idx === -1) return;
-
-        const segment = line.substring(idx);
+    // Une entrée par combattant : 12 06 08 <ID>. Les monstres ont des ID négatifs, sans e082.
+    processInitiative(segment) {
         const ids = [];
-        const regex = /0a0608(e082[a-f0-9]{6})/g;
-        let match;
+        const regex = /120608(e082[0-9a-f]{6})/g;
 
-        while ((match = regex.exec(segment)) !== null) {
+        for (const match of byteAlignedMatches(regex, segment)) {
             if (this.mapping[match[1]] && !ids.includes(match[1])) {
                 ids.push(match[1]);
             }
@@ -187,20 +128,18 @@ class AutofocusService {
         }
     }
 
-    processTurn(line) {
+    // 12 06 10 <ID>. Une fin de tour de monstre n'a pas d'ID e082 : rien à faire.
+    processTurn(segment) {
         if (this.initiativeOrder.length === 0) {
-            logger.warn(SVC, 'Paquet tour reçu mais ordre initiative vide — ignoré');
+            logger.warn(SVC, 'Fin de tour reçue mais ordre initiative vide — ignorée');
             return;
         }
 
-        const idxJ = line.indexOf("6a6163");
-        if (idxJ === -1) return;
-
-        const match = line.substring(idxJ).match(/e082[a-f0-9]{6}/);
-        const charId = match ? match[0] : null;
+        const match = byteAlignedMatches(/10(e082[0-9a-f]{6})/g, segment).next().value;
+        const charId = match ? match[1] : null;
 
         if (!charId) {
-            logger.warn(SVC, 'Paquet tour reçu mais aucun charId extrait');
+            logger.debug(SVC, 'Fin de tour d\'un combattant non joueur — ignorée');
             return;
         }
 

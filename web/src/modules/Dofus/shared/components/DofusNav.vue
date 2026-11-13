@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import DofusGameSelect from './DofusGameSelect.vue'
 import DofusConfigButton from './DofusConfigButton.vue'
 import ProxyConfigButton from './ProxyConfigButton.vue'
+import CaptureConfigButton from '@/modules/Dofus/capture/components/CaptureConfigButton.vue'
 import { useAuthStore } from '@/modules/Auth/auth.store'
 import { RoleCode } from '@/modules/Auth/types/auth.types'
 import DofusSwitcherButton from '@/modules/Dofus/switcher/components/DofusSwitcherButton.vue'
@@ -68,6 +69,7 @@ const goTo = (tabName: string) => {
     <div class="dofus-nav-spacer">
       <DofusConfigButton />
       <ProxyConfigButton />
+      <CaptureConfigButton />
       <DofusSwitcherButton />
     </div>
   </nav>
