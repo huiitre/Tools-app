@@ -201,6 +201,11 @@ Le scheduler suit la même option : il ne tourne en Development **que si**
 `HostOverride` est renseigné. Sans lui, chaque passage écraserait les statuts
 clonés par des « hors ligne » sans valeur.
 
+`GameServers:PollingEnabled` (vrai par défaut) coupe le scheduler quel que soit
+l'environnement. Il sert à faire taire le poll sur un poste de dev qui ne travaille
+pas sur les serveurs de jeux : `"PollingEnabled": false` dans
+`appsettings.Local.json`, non commité.
+
 `ssh -L` ne transportant que du TCP, les serveurs interrogés en A2S resteront
 hors ligne en local quoi qu'il arrive.
 

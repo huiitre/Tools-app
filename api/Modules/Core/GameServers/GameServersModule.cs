@@ -122,7 +122,10 @@ public static class GameServersModule
         // Les tests n'ont jamais de poll de fond. En dev il ne tourne que si un hôte de
         // substitution est configuré : sans lui les cibles sont des IP docker injoignables depuis
         // le poste, et chaque passage écraserait les statuts clonés par des « hors ligne ».
-        var pollingEnabled = !builder.Environment.IsEnvironment("Testing")
+        var pollingSwitch = builder.Configuration.GetValue(
+            $"{GameServersOptions.SectionName}:{nameof(GameServersOptions.PollingEnabled)}", defaultValue: true);
+        var pollingEnabled = pollingSwitch
+                             && !builder.Environment.IsEnvironment("Testing")
                              && (!builder.Environment.IsDevelopment() || hostOverride is not null);
         if (pollingEnabled)
         {

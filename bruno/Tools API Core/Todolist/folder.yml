@@ -1,0 +1,15 @@
+info:
+  name: Todolist
+  type: folder
+  seq: 6
+
+request:
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+docs: |-
+  Listes de tâches de l'appelant. Reprend à l'identique le contrat de l'API Java (`/api/v3/todolists`).
+
+  **Rôle minimum : USER dans le module Todolist.** Le propriétaire n'est jamais un paramètre : il
+  vient de l'appelant validé.

@@ -1,0 +1,41 @@
+info:
+  name: Créer une todolist
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/todolists"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Ma todolist",
+        "active": true,
+        "favorite": false,
+        "colorHex": "#3366FF",
+        "displayOrder": 0
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
+
+docs: |-
+  Crée une todolist. `201` sans corps.
+
+  Seul `name` est obligatoire. Valeurs par défaut : `active` true, `favorite` false,
+  `colorHex` `#FFFFFF`, `displayOrder` 0.
+
+  - `400 NAME_REQUIRED` — nom absent ou fait d'espaces.
+  - `400 COLOR_HEX_INVALID` — couleur qui n'est pas `#RGB` ou `#RRGGBB`.
+  - `400 INACTIVE_TODOLIST_CANNOT_BE_FAVORITE` — `active` false et `favorite` true.

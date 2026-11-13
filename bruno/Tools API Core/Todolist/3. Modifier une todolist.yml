@@ -1,0 +1,40 @@
+info:
+  name: Modifier une todolist
+  type: http
+  seq: 3
+
+http:
+  method: PATCH
+  url: "{{apiUrl}}/todolists/1"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Nouveau nom",
+        "active": true,
+        "favorite": true,
+        "colorHex": "#FF9900",
+        "displayOrder": 1
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Modifie la todolist. `204` sans corps.
+
+  Mise à jour partielle : un champ absent ou `null` est laissé tel quel. Les invariants sont
+  revérifiés sur l'état obtenu.
+
+  - `400 TODOLIST_NOT_FOUND` — todolist inexistante ou appartenant à un autre.
+  - `400 NAME_REQUIRED`, `COLOR_HEX_REQUIRED`, `COLOR_HEX_INVALID`,
+    `INACTIVE_TODOLIST_CANNOT_BE_FAVORITE` — comme à la création.

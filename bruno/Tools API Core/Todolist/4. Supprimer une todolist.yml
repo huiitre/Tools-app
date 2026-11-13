@@ -1,0 +1,22 @@
+info:
+  name: Supprimer une todolist
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/todolists/1"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  Supprime la todolist et ses todos. `204` sans corps.
+
+  `400 TODOLIST_NOT_FOUND_OR_NOT_OWNED` — todolist inexistante ou appartenant à un autre.
