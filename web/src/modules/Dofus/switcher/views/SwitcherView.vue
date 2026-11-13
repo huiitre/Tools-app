@@ -61,6 +61,11 @@ async function focusWindow(windowId: string) {
   await refreshCurrent()
 }
 
+async function refreshWindow(windowId: string) {
+  windows.value = await window.switcher!.refreshWindow(windowId)
+  await refreshCurrent()
+}
+
 async function renameWindow(windowId: string, name: string) {
   windows.value = await window.switcher!.renameWindow(windowId, name)
 }
@@ -91,11 +96,18 @@ onMounted(async () => {
   window.switcher!.onCurrentChanged((windowId: string | null) => {
     currentWindowId.value = windowId
   })
+
+  //* Détection automatique activée (bouton Capture Dofus 3) : nouvelles fenêtres et noms détectés
+  //* arrivent ici sans refresh.
+  window.switcher!.onWindowsUpdated((list: DofusWindow[]) => {
+    windows.value = list
+  })
 })
 
 onUnmounted(async () => {
   await window.switcher!.stopHotkeys()
   window.switcher!.offCurrentChanged()
+  window.switcher!.offWindowsUpdated()
 })
 </script>
 
@@ -137,6 +149,7 @@ onUnmounted(async () => {
           @focus="focusWindow"
           @toggle-enabled="toggleEnabled"
           @rename="renameWindow"
+          @refresh="refreshWindow"
         />
       </VueDraggable>
     </div>

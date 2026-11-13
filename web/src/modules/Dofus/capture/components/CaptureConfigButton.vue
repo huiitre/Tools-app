@@ -63,7 +63,7 @@ const savedUnder = computed(() => {
   return version && server ? `${version} · ${server}` : null
 })
 
-const toggle = (feature: 'autofocus' | 'hdvSniffer', e: Event) => {
+const toggle = (feature: 'autofocus' | 'hdvSniffer' | 'windowDetection', e: Event) => {
   capture.setFeature(feature, (e.target as HTMLInputElement).checked)
 }
 
@@ -143,6 +143,20 @@ onBeforeUnmount(() => {
           </span>
         </label>
         <p v-if="capture.errors.hdvSniffer" class="line error">{{ capture.errors.hdvSniffer }}</p>
+
+        <label class="feature" :class="{ on: capture.isFeatureActive('windowDetection') }">
+          <input
+            type="checkbox"
+            role="switch"
+            :checked="capture.prefs.windowDetection"
+            @change="toggle('windowDetection', $event)"
+          />
+          <span class="feature-text">
+            <span class="feature-name">Détection des fenêtres</span>
+            <span class="feature-desc">Ajoute les fenêtres Dofus au switcher et les nomme avec le personnage connecté</span>
+          </span>
+        </label>
+        <p v-if="capture.errors.windowDetection" class="line error">{{ capture.errors.windowDetection }}</p>
       </section>
 
       <hr />

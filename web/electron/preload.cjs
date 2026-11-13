@@ -53,6 +53,8 @@ contextBridge.exposeInMainWorld('electron', {
   checkCaptureRequirements: () => ipcRenderer.invoke('capture:check-requirements'),
   startPriceCapture: () => ipcRenderer.invoke('capture:start-prices'),
   stopPriceCapture: () => ipcRenderer.invoke('capture:stop-prices'),
+  startWindowDetection: () => ipcRenderer.invoke('capture:start-detection'),
+  stopWindowDetection: () => ipcRenderer.invoke('capture:stop-detection'),
   stopAllCaptures: () => ipcRenderer.invoke('capture:stop-all'),
   onCaptureStatus: (callback) => ipcRenderer.on('capture:status', (_, status) => callback(status)),
   onCapturePriceList: (callback) => ipcRenderer.on('capture:price-list', (_, payload) => callback(payload)),

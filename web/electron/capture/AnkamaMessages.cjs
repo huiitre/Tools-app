@@ -9,6 +9,7 @@ const MESSAGES = {
     turnEnd: 'jug',        // fin de tour d'un combattant
     averagePrices: 'isr',  // prix moyens de tous les objets de l'HDV, reçu à la connexion
     itemOffers: 'jzs',     // prix des lots d'un objet, reçu au clic dans l'HDV
+    characterSelected: 'ksb', // personnage de la connexion (ID, date, nom), reçu à sa connexion
 };
 
 const TYPE_PREFIX = Buffer.from('type.ankama.com/');
