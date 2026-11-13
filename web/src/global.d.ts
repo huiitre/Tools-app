@@ -89,6 +89,9 @@ declare global {
       renameWindow: (windowId: string, name: string) => Promise<DofusWindow[]>
       getWindows: () => Promise<DofusWindow[]>
       refreshWindow: (windowId: string) => Promise<DofusWindow[]>
+      setPinned: (windowId: string, pinned: boolean) => Promise<DofusWindow[]>
+      getPrefs: () => Promise<{ pinnedNames: string[]; autoOrder: boolean }>
+      setAutoOrder: (enabled: boolean) => Promise<{ pinnedNames: string[]; autoOrder: boolean }>
       onWindowsUpdated: (callback: (windows: DofusWindow[]) => void) => void
       offWindowsUpdated: () => void
       getCurrent: () => Promise<string | null>
@@ -114,6 +117,7 @@ declare global {
     pid: number
     characterName: string | null
     enabled: boolean
+    pinned?: boolean
   }
 }
 

@@ -2,6 +2,7 @@ const { ipcMain } = require('electron')
 const { execSync } = require('child_process')
 const { SwitcherService } = require('../switcher/SwitcherService.cjs')
 const { HotkeyManager } = require('../switcher/HotkeyManager.cjs')
+const { SwitcherPrefs } = require('../switcher/SwitcherPrefs.cjs')
 const { getSwitcherWindow } = require('../windows/dofusSwitcher.cjs')
 
 const isWindows = process.platform === 'win32'
@@ -17,6 +18,7 @@ const service = new SwitcherService(
   isWindows ? new WindowsWindowScanner() : new LinuxWindowScanner(),
   isWindows ? new WindowsWindowFocuser() : new LinuxWindowFocuser(),
   isWindows ? new WindowsCharacterNameResolver() : new LinuxCharacterNameResolver(),
+  new SwitcherPrefs(),
 )
 
 const hotkeyManager = new HotkeyManager(
@@ -59,6 +61,9 @@ function registerSwitcherIpc() {
   })
   ipcMain.handle('switcher:get-windows', async () => service.getWindows())
   ipcMain.handle('switcher:refresh-window', async (_, windowId) => service.refreshWindow(windowId))
+  ipcMain.handle('switcher:set-pinned', async (_, windowId, pinned) => service.setPinned(windowId, pinned))
+  ipcMain.handle('switcher:get-prefs', async () => service.getPrefs())
+  ipcMain.handle('switcher:set-auto-order', async (_, enabled) => service.setAutoOrder(enabled))
   ipcMain.handle('switcher:get-current', async () => service.getCurrentWindowId())
 
   ipcMain.handle('switcher:configure-hotkeys', async (_, config) => {

@@ -6,6 +6,7 @@ interface DofusWindow {
   pid: number
   characterName: string | null
   enabled: boolean
+  pinned?: boolean
 }
 
 const props = defineProps<{
@@ -18,6 +19,7 @@ const emit = defineEmits<{
   toggleEnabled: [windowId: string]
   rename: [windowId: string, name: string]
   refresh: [windowId: string]
+  togglePin: [windowId: string]
 }>()
 
 const editing = ref(false)
@@ -79,6 +81,17 @@ function cancelEdit() {
     </div>
 
     <div class="item__actions">
+      <button
+        class="btn"
+        :title="window.pinned ? 'Ne plus garder en tête de liste' : 'Toujours garder en tête de liste'"
+        @click="emit('togglePin', window.windowId)"
+      >
+        <span
+          class="mdi"
+          :class="window.pinned ? 'mdi-pin' : 'mdi-pin-outline'"
+          :style="{ color: window.pinned ? 'var(--pico-primary)' : undefined }"
+        />
+      </button>
       <button class="btn" title="Focus" @click="emit('focus', window.windowId)">
         <span class="mdi mdi-cursor-default-click-outline" />
       </button>

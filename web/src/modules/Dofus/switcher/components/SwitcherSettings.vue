@@ -63,10 +63,15 @@ const config = ref<HotkeyConfig>({
   syncMode: true,
 })
 
+//* Préférence du process principal (le réordonnancement a lieu même fenêtre switcher fermée).
+const autoOrder = ref(true)
+
 const capturingPrev = ref(false)
 const capturingNext = ref(false)
 
-onMounted(() => {
+onMounted(async () => {
+  autoOrder.value = (await window.switcher!.getPrefs()).autoOrder
+
   const saved = LS.get(LS_KEY)
   if (saved) {
     config.value = { ...config.value, ...saved }
@@ -144,6 +149,10 @@ function onDebounceChange(e: Event) {
   save()
 }
 
+async function onAutoOrderChange(e: Event) {
+  autoOrder.value = (await window.switcher!.setAutoOrder((e.target as HTMLInputElement).checked)).autoOrder
+}
+
 function onSyncModeChange(e: Event) {
   config.value.syncMode = (e.target as HTMLInputElement).checked
   save()
@@ -165,6 +174,24 @@ function onSyncModeChange(e: Event) {
       <p class="settings__desc settings__desc--moved">
         L'autofocus s'active désormais depuis le bouton <b>Capture Dofus 3</b> du header Dofus, dans la fenêtre principale.
       </p>
+
+      <!-- Ordre de combat -->
+      <div class="settings__group">
+        <div class="settings__row">
+          <span class="settings__label">Ordre de combat</span>
+          <label class="settings__toggle">
+            <input
+              type="checkbox"
+              :checked="autoOrder"
+              @change="onAutoOrderChange"
+            />
+            <span class="settings__toggle-track" />
+          </label>
+        </div>
+        <p class="settings__desc">
+          Réordonne les fenêtres selon l'ordre de passage au début de chaque combat (autofocus activé). Les fenêtres épinglées restent en tête.
+        </p>
+      </div>
 
       <!-- Debounce -->
       <div class="settings__group">
