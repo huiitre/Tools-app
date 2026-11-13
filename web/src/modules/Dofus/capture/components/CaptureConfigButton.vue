@@ -79,13 +79,21 @@ const onClickOutside = (e: MouseEvent) => {
   }
 }
 
+const onScroll = (e: Event) => {
+  if (isOpen.value && !floating.value?.contains(e.target as Node)) {
+    isOpen.value = false
+  }
+}
+
 onMounted(() => {
   document.addEventListener('click', onClickOutside)
+  window.addEventListener('scroll', onScroll, true) // Capture scroll even on containers
   clock = window.setInterval(() => (now.value = Date.now()), 5000)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', onClickOutside)
+  window.removeEventListener('scroll', onScroll, true)
   if (clock !== null) clearInterval(clock)
 })
 </script>
