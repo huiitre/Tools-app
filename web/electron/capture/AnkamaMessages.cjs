@@ -4,9 +4,12 @@
 
 // Relevés le 13/11/2026.
 const MESSAGES = {
-    mapping: 'jxh',        // ID réseau → nom du personnage
+    mapping: 'jxh',        // ID réseau → nom du personnage (vu à la connexion, plus au changement de map)
+    mapActors: 'jnj',      // acteurs présents sur la map au changement de map : { #1 ID, …, nom }
+    actorShown: 'jns',     // un acteur apparaît sur la map, même forme qu'une entrée de jnj
     initiative: 'jvu',     // ordre des combattants, monstres compris
     turnEnd: 'jug',        // fin de tour d'un combattant
+    turnStart: 'jvj',      // début de tour d'un combattant (ID négatif pour monstres et invocations)
     averagePrices: 'isr',  // prix moyens de tous les objets de l'HDV, reçu à la connexion
     itemOffers: 'jzs',     // prix des lots d'un objet, reçu au clic dans l'HDV
     characterSelected: 'ksb', // personnage de la connexion (ID, date, nom), reçu à sa connexion
@@ -81,6 +84,62 @@ function decodeFields(buf) {
     return fields;
 }
 
+// Champ texte protobuf `<tag> <len> <nom>` contenant un nom de personnage Dofus (lettre initiale,
+// lettres, chiffres, tirets). Le numéro de champ n'est pas figé (champ 6 de `ksb` en 3.7.13) : seul
+// le type « texte » (tag ...010) et une longueur égale au nom sont exigés.
+const NAME_FIELD = /([\x0a\x12\x1a\x22\x2a\x32\x3a\x42\x4a\x52])([\x02-\x14])([A-Za-z][A-Za-z0-9-]{1,19})/g;
+
+function extractCharacterName(value) {
+    const text = value.toString('latin1');
+    for (const match of text.matchAll(NAME_FIELD)) {
+        if (match[2].charCodeAt(0) === match[3].length) return match[3];
+    }
+    return null;
+}
+
+function encodeVarintHex(value) {
+    const bytes = [];
+    let v = value;
+    do {
+        let b = v % 128;
+        v = Math.floor(v / 128);
+        if (v > 0) b |= 0x80;
+        bytes.push(b);
+    } while (v > 0);
+    return Buffer.from(bytes).toString('hex');
+}
+
+// Premier champ texte (parcours en profondeur) ressemblant à un nom de personnage.
+function findCharacterName(buf, depth = 0) {
+    const fields = decodeFields(buf);
+    if (!fields || depth > 5) return null;
+    for (const f of fields) {
+        if (f.wire !== 2) continue;
+        const text = f.value.toString('latin1');
+        if (/^[A-Za-z][A-Za-z0-9-]{1,19}$/.test(text)) return text;
+        const nested = findCharacterName(f.value, depth + 1);
+        if (nested) return nested;
+    }
+    return null;
+}
+
+// Acteurs d'une map (jnj) ou acteur qui apparaît (jns) : chaque entrée porte l'ID en champ 1 et le
+// nom plus profond. Seuls les personnages joueurs (ID e082…) sont retenus.
+function extractActors(value) {
+    const actors = [];
+    for (const entry of decodeFields(value) ?? []) {
+        if (entry.wire !== 2) continue;
+        const fields = decodeFields(entry.value);
+        const idField = fields?.find(f => f.field === 1 && f.wire === 0);
+        if (!idField) continue;
+        const id = encodeVarintHex(idField.value);
+        if (!/^e082[0-9a-f]{6}$/.test(id)) continue;
+        const name = findCharacterName(entry.value);
+        if (name) actors.push({ id, name });
+    }
+    return actors;
+}
+
 function decodePackedVarints(buf) {
     const values = [];
     let i = 0;
@@ -102,4 +161,6 @@ module.exports = {
     readVarint,
     decodeFields,
     decodePackedVarints,
+    extractCharacterName,
+    extractActors,
 };
