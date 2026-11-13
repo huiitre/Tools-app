@@ -76,6 +76,10 @@ The main process is split into services using Node.js EventEmitter patterns:
 | `electron/proxy/` | MITM proxy using Node `net` module + iptables traffic redirection |
 | `electron/switcher/` | Account switcher with global hotkeys (uiohook-napi) |
 
+**Console fermée (EPIPE)** : lancée depuis le menu, l'AppImage n'a pas de terminal et toute écriture
+console lève `EPIPE`. `main.cjs` ignore cette erreur sur stdout/stderr (sinon : un popup « A JavaScript
+error occurred » par écriture), et `electron-updater` journalise via `LoggerService` (`autoUpdater.logger`).
+
 **Linux : Electron tourne en Wayland natif.** Une fenêtre Wayland ne peut pas se mettre au premier plan
 d'elle-même, et `xdotool`/`wmctrl` ne la voient pas : la fenêtre switcher passe derrière le jeu à chaque
 focus. Forcer X11 (`ozone-platform=x11`) a été essayé le 13/11/2026 : le process GPU plante en boucle

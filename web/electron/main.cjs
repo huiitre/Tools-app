@@ -10,6 +10,15 @@ const { registerLogsIpc } = require('./ipc/logs.ipc.cjs')
 const { registerCaptureIpc } = require('./ipc/capture.ipc.cjs')
 const logger = require('./logger/LoggerService.cjs')
 
+// Lancée depuis le menu ou un raccourci, l'AppImage n'a pas de terminal : stdout/stderr sont des
+// pipes déjà fermés, et la moindre écriture console lève EPIPE de façon asynchrone, sur le flux.
+// Sans écouteur, chaque écriture devenait un popup « A JavaScript error occurred ».
+for (const stream of [process.stdout, process.stderr]) {
+  stream.on('error', (err) => {
+    if (err.code !== 'EPIPE') throw err
+  })
+}
+
 let mainWindow = null
 
 function handleDeepLink(url) {
@@ -96,6 +105,13 @@ function createWindow() {
       })
     }
 
+    // Les logs de l'updater rejoignent ceux de l'application (page des logs) au lieu de la console.
+    autoUpdater.logger = {
+      info: (msg) => logger.info('Updater', String(msg)),
+      warn: (msg) => logger.warn('Updater', String(msg)),
+      error: (msg) => logger.error('Updater', String(msg)),
+      debug: (msg) => logger.debug('Updater', String(msg)),
+    }
     autoUpdater.autoDownload = false
     autoUpdater.autoInstallOnAppQuit = false
 
