@@ -81,6 +81,7 @@ public class SyncItemUseCase implements SecuredUseCase {
 
                 List<String> created = new ArrayList<>();
                 List<String> updated = new ArrayList<>();
+                List<String> skipped = new ArrayList<>();
 
                 List<ItemType> itemTypes = itemTypeRepository.findAllByGameVersionId(gameVersion.getId());
 
@@ -93,10 +94,17 @@ public class SyncItemUseCase implements SecuredUseCase {
 
                         Item existing = currentByAssetId.get(ext.getAssetId());
 
-                        Long itemTypeId = Optional.ofNullable(
-                                        itemTypeIdByAssetId.get(ext.getItemTypeId()))
-                                        .orElseThrow(() -> new IllegalArgumentException(
-                                                        "Item type not found for assetId: " + ext.getItemTypeId()));
+                        // Un objet dont le type n'est pas exporté par le client (vu en 3.7 : un seul objet,
+                        // type 264, sans icône) ne doit pas annuler toute la synchro, qui est transactionnelle.
+                        Long itemTypeId = itemTypeIdByAssetId.get(ext.getItemTypeId());
+                        if (itemTypeId == null) {
+                                logger.warn("Item ignored, unknown item type: assetId={} itemTypeId={} name=\"{}\"",
+                                                ext.getAssetId(), ext.getItemTypeId(), ext.getName());
+                                skipped.add("assetId=" + ext.getAssetId()
+                                                + " name=\"" + ext.getName() + "\""
+                                                + " itemTypeId=" + ext.getItemTypeId() + " (type inconnu)");
+                                continue;
+                        }
 
                         if (existing == null) {
                                 Item createdItem = Item.create(
@@ -171,6 +179,7 @@ public class SyncItemUseCase implements SecuredUseCase {
                                 "items",
                                 "Items",
                                 created,
-                                updated);
+                                updated,
+                                skipped);
         }
 }
