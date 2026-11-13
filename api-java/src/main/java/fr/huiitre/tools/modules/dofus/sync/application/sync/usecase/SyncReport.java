@@ -6,7 +6,12 @@ public record SyncReport(
         String code,
         String label,
         List<String> created,
-        List<String> updated) {
+        List<String> updated,
+        List<String> skipped) {
+
+    public SyncReport(String code, String label, List<String> created, List<String> updated) {
+        this(code, label, created, updated, List.of());
+    }
 
     public int createdCount() {
         return created.size();
@@ -37,6 +42,12 @@ public record SyncReport(
         } else {
             sb.append("MODIFICATIONS:\n");
             updated.forEach(l -> sb.append(" ~ ").append(l).append('\n'));
+        }
+
+        if (!skipped.isEmpty()) {
+            sb.append('\n');
+            sb.append("IGNORÉS:\n");
+            skipped.forEach(l -> sb.append(" ! ").append(l).append('\n'));
         }
 
         return sb.toString();
