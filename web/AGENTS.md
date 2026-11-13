@@ -80,6 +80,12 @@ The main process is split into services using Node.js EventEmitter patterns:
 console lève `EPIPE`. `main.cjs` ignore cette erreur sur stdout/stderr (sinon : un popup « A JavaScript
 error occurred » par écriture), et `electron-updater` journalise via `LoggerService` (`autoUpdater.logger`).
 
+**Release (semantic-release, workflow Deploy Web Production)** : si l'étape échoue après avoir poussé le
+tag et le commit `chore(release)` (vu le 13/11/2026 pour la 2.63.0 : push de `refs/notes/semantic-release-vX`
+refusé ponctuellement par GitHub), aucune release GitHub n'est publiée et les jobs `docker`/`electron` sont
+sautés. Relancer le run ne marche pas (il repart d'avant le commit de release et bute sur le tag existant) :
+pousser un nouveau commit `fix:`/`feat:` touchant `web/`, qui produit la version suivante.
+
 **Mises à jour Electron** : vérifiées au chargement de la fenêtre principale **et toutes les 5 minutes**
 (`UPDATE_CHECK_INTERVAL_MS` dans `main.cjs`), en production seulement ; la vérification périodique
 s'arrête dès qu'une version est trouvée. Plus fréquent risquerait d'être limité par GitHub.
