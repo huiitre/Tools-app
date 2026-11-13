@@ -21,6 +21,9 @@ for (const stream of [process.stdout, process.stderr]) {
 
 let mainWindow = null
 
+// Vérification périodique des mises à jour (une requête GitHub ; plus souvent risquerait d'être limité).
+const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000
+
 function handleDeepLink(url) {
   try {
     const parsed = new URL(url)
@@ -163,6 +166,16 @@ function createWindow() {
     mainWindow.webContents.on('did-finish-load', () => {
       autoUpdater.checkForUpdates()
     })
+
+    // En plus de la vérification au chargement : une application laissée ouverte plusieurs jours
+    // voyait une nouvelle version seulement au redémarrage. Arrêt dès qu'une version est trouvée,
+    // pour ne pas renvoyer 'update-available' pendant le téléchargement.
+    let updateFound = false
+    autoUpdater.on('update-available', () => { updateFound = true })
+    setInterval(() => {
+      if (updateFound) return
+      Promise.resolve(autoUpdater.checkForUpdates()).catch(() => {}) // déjà journalisé par 'error'
+    }, UPDATE_CHECK_INTERVAL_MS)
   }
 
   ipcMain.handle('switcher:open', () => {
