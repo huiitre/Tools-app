@@ -109,6 +109,12 @@ class AutofocusService {
         }
 
         if (ids.length > 0) {
+            // À chaque combat, même ordre identique au précédent : l'ordre a pu être changé à la main
+            // entre deux combats. Le switcher ignore un ordre déjà en place.
+            if (this.switcherService?.applyFightOrder) {
+                this.switcherService.applyFightOrder(ids.map(id => this.mapping[id]));
+            }
+
             const orderStr = ids.join(",");
             const currentStr = this.initiativeOrder.join(",");
             if (orderStr !== currentStr) {

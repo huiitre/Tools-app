@@ -80,6 +80,10 @@ The main process is split into services using Node.js EventEmitter patterns:
 console lève `EPIPE`. `main.cjs` ignore cette erreur sur stdout/stderr (sinon : un popup « A JavaScript
 error occurred » par écriture), et `electron-updater` journalise via `LoggerService` (`autoUpdater.logger`).
 
+**Mises à jour Electron** : vérifiées au chargement de la fenêtre principale **et toutes les 5 minutes**
+(`UPDATE_CHECK_INTERVAL_MS` dans `main.cjs`), en production seulement ; la vérification périodique
+s'arrête dès qu'une version est trouvée. Plus fréquent risquerait d'être limité par GitHub.
+
 **Linux : Electron tourne en Wayland natif.** Une fenêtre Wayland ne peut pas se mettre au premier plan
 d'elle-même, et `xdotool`/`wmctrl` ne la voient pas : la fenêtre switcher passe derrière le jeu à chaque
 focus. Forcer X11 (`ozone-platform=x11`) a été essayé le 13/11/2026 : le process GPU plante en boucle
@@ -126,6 +130,7 @@ Rien n'est intercepté — c'est l'opposé du MITM, qui ne concerne que **Dofus 
     - Ankama renomme ces messages à chaque mise à jour du client, et les numéros de champs peuvent bouger avec. Pour les retrouver : capturer le port 5555 pendant une connexion, un changement de map, un combat ou un clic HDV, puis chercher les ID `e082…`, les noms de personnages ou des prix connus encodés en varint.
 - **Envoi des prix :** `hdvSniffer.store.ts`, en tâche de fond, par paquets de 500 (`metadata/batch` puis `PUT prices/batch`, ~1 s pour 7 600 prix mesuré en local). Rangés sous le **jeu et le serveur du sélecteur du header** (intercepteur de `clientV3Dofus`). Seule garde : un prix Dofus 3 n'est jamais envoyé si le sélecteur est sur Retro, ni l'inverse. Une liste identique reçue à moins de 60 s (plusieurs comptes) est ignorée. Prix unitaire d'un objet cliqué : le prix moyen reçu à la connexion s'il est connu, sinon `calculateAverageUnitPrice` sur les lots.
 - **Détection des fenêtres (switcher) :** toggle activé, `SwitcherService` scanne les fenêtres `Dofus.x64` toutes les 2 s (sans la lecture mémoire du résolveur, refusée par `ptrace_scope=1`) et pousse la liste à la fenêtre switcher (`switcher:windows-updated`) : nouvelles fenêtres ajoutées à la fin, fermées retirées, ordre conservé. Un personnage détecté renomme sa fenêtre (titre X11 compris, l'autofocus en dépend), même renommée à la main avant. Le bouton refresh d'une ligne retire la fenêtre si elle est fermée, sinon lui redonne le dernier nom détecté (ou son titre actuel). Le refresh du haut reste pour le mode manuel et conserve l'ordre.
+- **Ordre de combat et épinglage (switcher) :** à chaque combat, l'autofocus transmet l'ordre de passage (`jvu`) à `SwitcherService.applyFightOrder` : fenêtres épinglées en tête, puis celles du combat dans l'ordre de passage, puis les autres. Désactivable dans les paramètres du switcher (« Ordre de combat », activé par défaut). L'épinglage (icône 📌) est rattaché au **nom du personnage**, suit un renommage, et s'impose aussi au glisser-déposer. Ces deux préférences vivent côté process principal dans `userData/switcher-prefs.json` (`SwitcherPrefs.cjs`), pas en `localStorage` : la fenêtre principale (`app://`) et la fenêtre switcher (`file://`) n'ont pas la même origine en production.
 - **Page HDV sniffer :** simple journal des prix reçus (Retro et Dofus 3). Une ligne par objet, une ligne par liste de prix moyens dont le détail s'affiche par pages de 50.
 - **Persistance du mapping autofocus :** IndexedDB store `autofocus_mapping`, alimenté depuis la fenêtre principale ; gestion dans `Settings > Modules > Dofus`.
 - **Détection de connexion (proxy MITM) :** `ss -tpn` sans `-4` — Dofus se connecte via des sockets IPv6 en IPv4 encapsulé (`::ffff:`).

@@ -12,6 +12,7 @@ interface DofusWindow {
   pid: number
   characterName: string | null
   enabled: boolean
+  pinned?: boolean
 }
 
 interface HotkeyConfig {
@@ -59,6 +60,12 @@ async function toggleEnabled(windowId: string) {
 async function focusWindow(windowId: string) {
   await window.switcher!.focusWindow(windowId)
   await refreshCurrent()
+}
+
+async function togglePin(windowId: string) {
+  const w = windows.value.find(w => w.windowId === windowId)
+  if (!w) return
+  windows.value = await window.switcher!.setPinned(windowId, !w.pinned)
 }
 
 async function refreshWindow(windowId: string) {
@@ -150,6 +157,7 @@ onUnmounted(async () => {
           @toggle-enabled="toggleEnabled"
           @rename="renameWindow"
           @refresh="refreshWindow"
+          @toggle-pin="togglePin"
         />
       </VueDraggable>
     </div>
