@@ -23,6 +23,7 @@ import fr.huiitre.tools.modules.dofus.sync.application.item.SyncItemUseCase;
 import fr.huiitre.tools.modules.dofus.sync.application.itemtype.SyncItemTypesUseCase;
 import fr.huiitre.tools.modules.dofus.sync.application.monster.SyncMonsterUseCase;
 import fr.huiitre.tools.modules.dofus.sync.application.recipe.SyncRecipesUseCase;
+import fr.huiitre.tools.modules.dofus.sync.application.workshop.AlignWorkshopsWithRecipesUseCase;
 
 /**
  * Orchestrateur de synchronisation pour Dofus Retro.
@@ -47,6 +48,7 @@ public class SyncRetroDataUseCase implements SecuredUseCase {
     private final SyncItemUseCase syncItemUseCase;
     private final SyncRecipesUseCase syncRecipeUseCase;
     private final SyncMonsterUseCase syncMonsterUseCase;
+    private final AlignWorkshopsWithRecipesUseCase alignWorkshopsWithRecipesUseCase;
 
     public SyncRetroDataUseCase(
             ReportFileGenerator reportFileGenerator,
@@ -54,13 +56,15 @@ public class SyncRetroDataUseCase implements SecuredUseCase {
             SyncItemTypesUseCase syncItemTypesUseCase,
             SyncItemUseCase syncItemUseCase,
             SyncRecipesUseCase syncRecipeUseCase,
-            SyncMonsterUseCase syncMonsterUseCase) {
+            SyncMonsterUseCase syncMonsterUseCase,
+            AlignWorkshopsWithRecipesUseCase alignWorkshopsWithRecipesUseCase) {
         this.reportFileGenerator = reportFileGenerator;
         this.mailSenderService = mailSenderService;
         this.syncItemTypesUseCase = syncItemTypesUseCase;
         this.syncItemUseCase = syncItemUseCase;
         this.syncRecipeUseCase = syncRecipeUseCase;
         this.syncMonsterUseCase = syncMonsterUseCase;
+        this.alignWorkshopsWithRecipesUseCase = alignWorkshopsWithRecipesUseCase;
     }
 
     @Override
@@ -84,6 +88,7 @@ public class SyncRetroDataUseCase implements SecuredUseCase {
 
         // 3. Synchronisation des Recettes (Source : crafts.json)
         SyncReport recipeReport = syncRecipeUseCase.execute(gameVersion);
+        SyncReport workshopReport = alignWorkshopsWithRecipesUseCase.execute(gameVersion);
 
         // 4. Synchronisation des Monstres (Source : monsters.json)
         // SyncReport monsterReport = syncMonsterUseCase.execute(gameVersion);
@@ -114,6 +119,9 @@ public class SyncRetroDataUseCase implements SecuredUseCase {
         appendReportSection(recipeReport, gameVersion, body, attachments);
         globalCreated += recipeReport.createdCount();
         globalUpdated += recipeReport.updatedCount();
+
+        appendReportSection(workshopReport, gameVersion, body, attachments);
+        globalUpdated += workshopReport.updatedCount();
 
         // Section Monstres
         /* appendReportSection(monsterReport, gameVersion, body, attachments);

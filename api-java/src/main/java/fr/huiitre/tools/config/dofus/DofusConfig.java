@@ -34,6 +34,8 @@ import fr.huiitre.tools.modules.dofus.workshop.application.repository.WorkshopRe
 import fr.huiitre.tools.modules.dofus.workshop.application.repository.WorkshopTagRepository;
 import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopTag;
 import fr.huiitre.tools.modules.dofus.workshop.infrastructure.PostgresWorkshopRepository;
+import fr.huiitre.tools.modules.dofus.workshop.infrastructure.PostgresWorkshopRecipeAlignmentRepository;
+import fr.huiitre.tools.modules.dofus.workshop.application.repository.WorkshopRecipeAlignmentRepository;
 import fr.huiitre.tools.modules.dofus.workshop.infrastructure.PostgresWorkshopTagRepository;
 
 @Configuration
@@ -136,5 +138,11 @@ public class DofusConfig {
                         JdbcTemplate jdbcTemplate) {
                 return new PostgresWorkshopRepository(
                         jdbcTemplate);
+        }
+
+        @Bean
+        public WorkshopRecipeAlignmentRepository workshopRecipeAlignmentRepository(
+                        JdbcTemplate jdbcTemplate) {
+                return new PostgresWorkshopRecipeAlignmentRepository(jdbcTemplate);
         }
 }
