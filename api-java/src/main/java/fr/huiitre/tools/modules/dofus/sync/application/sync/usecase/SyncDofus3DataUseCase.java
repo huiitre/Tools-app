@@ -25,6 +25,7 @@ import fr.huiitre.tools.modules.dofus.sync.application.item.SyncItemUseCase;
 import fr.huiitre.tools.modules.dofus.sync.application.itemtype.SyncItemTypesUseCase;
 import fr.huiitre.tools.modules.dofus.sync.application.monster.SyncMonsterUseCase;
 import fr.huiitre.tools.modules.dofus.sync.application.recipe.SyncRecipesUseCase;
+import fr.huiitre.tools.modules.dofus.sync.application.workshop.AlignWorkshopsWithRecipesUseCase;
 import fr.huiitre.tools.modules.dofus.sync.application.subarea.SyncSubareaUseCase;
 import fr.huiitre.tools.modules.dofus.sync.application.sync.ports.Dofus3LanguageDataProvider;
 
@@ -49,6 +50,7 @@ public class SyncDofus3DataUseCase implements SecuredUseCase {
     private final SyncAreaUseCase syncAreaUseCase;
     private final SyncSubareaUseCase syncSubareaUseCase;
     private final SyncMonsterUseCase syncMonsterUseCase;
+    private final AlignWorkshopsWithRecipesUseCase alignWorkshopsWithRecipesUseCase;
 
     public SyncDofus3DataUseCase(
             ReportFileGenerator reportFileGenerator,
@@ -60,7 +62,8 @@ public class SyncDofus3DataUseCase implements SecuredUseCase {
             SyncRecipesUseCase syncRecipeUseCase,
             SyncAreaUseCase syncAreaUseCase,
             SyncSubareaUseCase syncSubareaUseCase,
-            SyncMonsterUseCase syncMonsterUseCase) {
+            SyncMonsterUseCase syncMonsterUseCase,
+            AlignWorkshopsWithRecipesUseCase alignWorkshopsWithRecipesUseCase) {
         this.reportFileGenerator = reportFileGenerator;
         this.mailSenderService = mailSenderService;
         this.syncItemTypesUseCase = syncItemTypesUseCase;
@@ -71,6 +74,7 @@ public class SyncDofus3DataUseCase implements SecuredUseCase {
         this.syncAreaUseCase = syncAreaUseCase;
         this.syncSubareaUseCase = syncSubareaUseCase;
         this.syncMonsterUseCase = syncMonsterUseCase;
+        this.alignWorkshopsWithRecipesUseCase = alignWorkshopsWithRecipesUseCase;
     }
 
     @Override
@@ -106,6 +110,11 @@ public class SyncDofus3DataUseCase implements SecuredUseCase {
         // RECIPES
         // =====================================================
         SyncReport recipeReport = syncRecipeUseCase.execute(gameVersion);
+
+        // =====================================================
+        // ATELIERS (réalignés sur les recettes à jour)
+        // =====================================================
+        SyncReport workshopReport = alignWorkshopsWithRecipesUseCase.execute(gameVersion);
 
         // =====================================================
         // AREAS
@@ -176,6 +185,15 @@ public class SyncDofus3DataUseCase implements SecuredUseCase {
         );
         globalCreated += recipeReport.createdCount();
         globalUpdated += recipeReport.updatedCount();
+
+        // ------------- ATELIERS -------------
+        appendReportSection(
+            workshopReport,
+            gameVersion,
+            body,
+            attachments
+        );
+        globalUpdated += workshopReport.updatedCount();
 
         // ------------- AREAS -------------
         appendReportSection(

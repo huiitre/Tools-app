@@ -51,6 +51,18 @@ Table BDD cibles : tools_dofus.workshop, tools_dofus.workshop_item,
   tools_dofus.workshop_item_ingredient, tools_dofus.workshop_tag,
   tools_dofus.workshop_has_tag, tools_dofus.workshop_link
 
+Arbre des ingrédients : copié depuis les recettes à l'ajout d'un objet (ingrédients directs seulement) ;
+les sous-ingrédients n'existent que si l'utilisateur crafte un ingrédient (CraftIngredientUseCase). Seule
+la progression (`quantity_obtained`) est stockée : quantités requises et totaux du résumé sont recalculés
+à chaque lecture depuis les recettes actuelles.
+
+Réalignement après synchro (13-14/11/2026) : `AlignWorkshopsWithRecipesUseCase` (module sync), appelé par
+les synchros Dofus 3 et Retro juste après les recettes, dans la même transaction. Sur chaque niveau existant
+(ingrédients directs d'un objet, ingrédients d'un ingrédient crafté) : ingrédient absent de la recette
+supprimé avec ses sous-ingrédients (cascade), ingrédient manquant ajouté à 0 obtenu sans créer de
+sous-niveau, ingrédients conservés intouchés. Port dédié `WorkshopRecipeAlignmentRepository` (tous
+utilisateurs, contrairement à WorkshopRepository). Section « Ateliers » du rapport de synchro.
+
 5. Feature Workshop Links — COMPLÈTE (2026-05-03)
 
 Domaine : WorkshopLink (id, source, url, label, createdAt) dans l'agrégat Workshop.
@@ -276,6 +288,7 @@ UserModuleRoleRepository.findAllByModuleId() : JOIN user_module_role + users + r
 [Feature] Palworld/Breeding — moteur de reproduction, endpoints result/parents, sync breeding.json (voir section 9b). Pas de cache précalculé (décision motivée). Frontend pas commencé, spec dans web/AGENTS.md.
 [Fix] Palworld — guildId du direct normalisé en UUID canonique dans PalworldRestAdapter : le direct et les snapshots écrivaient le même GUID différemment (voir section 9c).
 [Fix] Dofus/Sync (13/11/2026, correctif exceptionnel sur l'API figée) — `SyncItemUseCase` ignore et journalise un objet dont le type n'existe pas au lieu de lever une `IllegalArgumentException` : la synchro étant transactionnelle, un seul objet de la 3.7 (assetId 34569, type 264 non exporté par le client) annulait toute la synchro (HTTP 400). Les objets ignorés apparaissent dans la section « IGNORÉS » du rapport (`SyncReport.skipped`).
+[Fix] Dofus/Sync (14/11/2026, correctif exceptionnel sur l'API figée) — les ateliers sont réalignés sur les recettes à chaque synchro (voir section 4) : une recette changée (Trame Dimensionnelle retirée du Nev'Arc en 3.7) restait figée dans les ateliers existants. Testé sur un clone de la prod : 4 ingrédients retirés, 3 ajoutés, 403 conservés sans changement, seconde synchro sans effet.
 
 11. Module Notifications — MIGRÉ sur l'API Core (à jour 2026-08-17)
 
