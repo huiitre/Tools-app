@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import fr.huiitre.tools.modules.dofus.pricing.api.dto.ItemPricesBatchRequest;
 import fr.huiitre.tools.modules.dofus.pricing.api.dto.ItemPricesRequest;
+import fr.huiitre.tools.modules.dofus.pricing.application.usecase.PriceSource;
 import fr.huiitre.tools.modules.dofus.pricing.application.usecase.UpdateItemPricesUseCase;
 import fr.huiitre.tools.modules.dofus.pricing.application.view.ItemPriceDto;
 
@@ -45,9 +47,10 @@ public class ItemPricesController {
     @PutMapping("/batch")
     public ResponseEntity<Void> getItemPricesBatch(
         @RequestHeader(value = "X-Game-Serve-Id") Long gameServerId,
+        @RequestParam(value = "source", required = false) String source,
         @RequestBody List<ItemPricesBatchRequest> requests
     ) {
-        updateItemPricesUseCase.execute(gameServerId, requests);
+        updateItemPricesUseCase.execute(gameServerId, requests, PriceSource.fromParam(source));
         return ResponseEntity.ok().build();
     }
 }

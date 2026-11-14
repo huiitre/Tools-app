@@ -1,6 +1,6 @@
 package fr.huiitre.tools.modules.dofus.pricing.application.view;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public class ItemPriceDto {
 
@@ -18,9 +18,9 @@ public class ItemPriceDto {
     private final Long craftLastPrice;
     private final Long craftCalculatedPrice;
 
-    private final LocalDateTime userPriceCreatedAt;
-    private final LocalDateTime communityAveragePriceCreatedAt;
-    private final LocalDateTime lastUpdatedPriceCreatedAt;
+    private final OffsetDateTime userPriceCreatedAt;
+    private final OffsetDateTime communityAveragePriceCreatedAt;
+    private final OffsetDateTime lastUpdatedPriceCreatedAt;
 
     public ItemPriceDto(
         Long itemId,
@@ -32,9 +32,9 @@ public class ItemPriceDto {
         Long craftCommunityPrice,
         Long craftLastPrice,
         Long craftCalculatedPrice,
-        LocalDateTime userPriceCreatedAt,
-        LocalDateTime communityAveragePriceCreatedAt,
-        LocalDateTime lastUpdatedPriceCreatedAt
+        OffsetDateTime userPriceCreatedAt,
+        OffsetDateTime communityAveragePriceCreatedAt,
+        OffsetDateTime lastUpdatedPriceCreatedAt
     ) {
         this.itemId = itemId;
         this.parentItemIds = parentItemIds;
@@ -86,15 +86,15 @@ public class ItemPriceDto {
         return craftCalculatedPrice;
     }
 
-    public LocalDateTime getUserPriceCreatedAt() {
+    public OffsetDateTime getUserPriceCreatedAt() {
         return userPriceCreatedAt;
     }
 
-    public LocalDateTime getCommunityAveragePriceCreatedAt() {
+    public OffsetDateTime getCommunityAveragePriceCreatedAt() {
         return communityAveragePriceCreatedAt;
     }
 
-    public LocalDateTime getLastUpdatedPriceCreatedAt() {
+    public OffsetDateTime getLastUpdatedPriceCreatedAt() {
         return lastUpdatedPriceCreatedAt;
     }
 }

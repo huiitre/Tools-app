@@ -1,0 +1,38 @@
+info:
+  name: Update batch prix des items (capture)
+  type: http
+  seq: 4
+
+http:
+  method: PUT
+  url: "{{apiJavaUrl}}/dofus/item/prices/batch?source=capture"
+  params:
+    - name: source
+      value: capture
+      type: query
+  body:
+    type: json
+    data: "[\r
+
+      \    {\r
+
+      \        \"itemId\": 198310,\r
+
+      \        \"price\": 299999\r
+
+      \    }\r
+
+      ]"
+  auth: inherit
+
+docs: |-
+  Prix moyens du serveur capturés automatiquement (sniffer HDV : MITM Retro, tshark Dofus 3).
+  Enregistrés au nom du compte de capture (`tools.dofus.pricing.capture-user-email`), jamais au nom
+  de l'utilisateur connecté : un prix saisi à la main n'est donc jamais écrasé.
+  Sans `source` (ou `source=manual`) : prix de l'utilisateur connecté, comme avant.
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

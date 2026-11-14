@@ -5,8 +5,15 @@ export const useFetchItemPrices = async (itemIds: number[]) => {
   return clientV3Dofus.post("/dofus/item/prices", { itemIds })
 }
 
-export const useMutationItemPrices = async(items: { itemId: number; price: number }[]) => {
-  return clientV3Dofus.put("/dofus/item/prices/batch", items)
+//* `capture` : prix moyens du serveur capturés automatiquement (sniffer HDV), enregistrés par l'API
+//* au nom du compte de capture pour ne jamais écraser un prix saisi par l'utilisateur.
+export const useMutationItemPrices = async(
+  items: { itemId: number; price: number }[],
+  options: { source?: 'capture' } = {},
+) => {
+  return clientV3Dofus.put("/dofus/item/prices/batch", items, {
+    params: options.source ? { source: options.source } : undefined,
+  })
 }
 
 export const useFetchItemsByAssetIds = async (assetIds: number[]) => {
