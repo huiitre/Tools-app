@@ -78,6 +78,16 @@ function createWindow() {
 
   mainWindow.setIcon(appIcon)
 
+  // Les liens externes s'ouvrent dans le navigateur du système ; la fenêtre Tools ne sert plus que de repli.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (!/^https?:\/\//.test(url)) return { action: 'allow' }
+    shell.openExternal(url).catch((err) => {
+      logger.warn('Main', `Navigateur système indisponible, ouverture dans Tools : ${err.message}`)
+      new BrowserWindow({ width: 1200, height: 800, icon: appIcon }).loadURL(url)
+    })
+    return { action: 'deny' }
+  })
+
   logger.setMainWindow(mainWindow)
 
   // Le switcher est une fenêtre à part entière : tant qu'il reste ouvert, 'window-all-closed' ne

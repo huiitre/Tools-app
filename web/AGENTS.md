@@ -86,6 +86,12 @@ refusé ponctuellement par GitHub), aucune release GitHub n'est publiée et les 
 sautés. Relancer le run ne marche pas (il repart d'avant le commit de release et bute sur le tag existant) :
 pousser un nouveau commit `fix:`/`feat:` touchant `web/`, qui produit la version suivante.
 
+**Liens externes (14/11/2026)** : `setWindowOpenHandler` de la fenêtre principale (`main.cjs`) envoie
+tout `window.open` / `target="_blank"` en http(s) au navigateur du système (`shell.openExternal`) : une
+fenêtre Electron n'a pas les sessions de l'utilisateur (Google Agenda de l'Almanax, liens d'atelier).
+Une fenêtre Tools ne s'ouvre plus qu'en repli, si `openExternal` échoue ; les autres schémas gardent
+le comportement par défaut d'Electron.
+
 **Mises à jour Electron** : vérifiées au chargement de la fenêtre principale **et toutes les 5 minutes**
 (`UPDATE_CHECK_INTERVAL_MS` dans `main.cjs`), en production seulement ; la vérification périodique
 s'arrête dès qu'une version est trouvée. Plus fréquent risquerait d'être limité par GitHub.
