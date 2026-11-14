@@ -25,6 +25,8 @@ import fr.huiitre.tools.modules.dofus.monster.application.ports.MonsterRepositor
 import fr.huiitre.tools.modules.dofus.monster.domain.Monster;
 import fr.huiitre.tools.modules.dofus.monster.infrastructure.PostgresMonsterRepository;
 import fr.huiitre.tools.modules.dofus.pricing.application.ports.ItemPriceRepository;
+import fr.huiitre.tools.modules.dofus.pricing.application.ports.CaptureAccountRepository;
+import fr.huiitre.tools.modules.dofus.pricing.infrastructure.PostgresCaptureAccountRepository;
 import fr.huiitre.tools.modules.dofus.pricing.infrastructure.PostgresItemPriceRepository;
 import fr.huiitre.tools.modules.dofus.recipe.application.ports.RecipeRepository;
 import fr.huiitre.tools.modules.dofus.recipe.infrastructure.PostgresRecipeRepository;
@@ -138,6 +140,12 @@ public class DofusConfig {
                         JdbcTemplate jdbcTemplate) {
                 return new PostgresWorkshopRepository(
                         jdbcTemplate);
+        }
+
+        @Bean
+        public CaptureAccountRepository captureAccountRepository(
+                        JdbcTemplate jdbcTemplate) {
+                return new PostgresCaptureAccountRepository(jdbcTemplate);
         }
 
         @Bean

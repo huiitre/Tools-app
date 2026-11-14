@@ -288,7 +288,7 @@ export const useHdvSnifferStore = defineStore('hdvSniffer', {
           .filter((p): p is { assetId: number; itemId: number; price: number } => p !== null);
 
         for (const batch of chunk(priceBatch, API_BATCH_SIZE)) {
-          await useMutationItemPrices(batch.map(({ itemId, price }) => ({ itemId, price })));
+          await useMutationItemPrices(batch.map(({ itemId, price }) => ({ itemId, price })), { source: 'capture' });
           batch.forEach(p => pending.delete(p.assetId));
           this._settleBatches(batch.map(p => p.assetId), 'saved');
         }

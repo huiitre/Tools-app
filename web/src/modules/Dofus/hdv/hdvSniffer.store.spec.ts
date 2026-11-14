@@ -6,13 +6,13 @@ const UNKNOWN_FROM = 990
 
 const selection = { code: 'dofus3', versionId: 3, serverId: 1 as number | null }
 
-const mutation = vi.fn(async (_items: { itemId: number; price: number }[]) => ({}))
+const mutation = vi.fn(async (_items: { itemId: number; price: number }[], _options?: { source?: string }) => ({}))
 
 vi.mock('@/modules/Dofus/item/fetch/item.fetch', () => ({
   useFetchItemsByAssetIds: vi.fn(async (ids: number[]) => ({
     data: ids.filter(id => id < UNKNOWN_FROM).map(id => ({ id: id + 100_000, assetId: id, name: `Objet ${id}` })),
   })),
-  useMutationItemPrices: (items: { itemId: number; price: number }[]) => mutation(items),
+  useMutationItemPrices: (items: { itemId: number; price: number }[], options?: { source?: string }) => mutation(items, options),
 }))
 
 vi.mock('@/modules/Dofus/dofus.store', () => ({
@@ -56,8 +56,9 @@ describe('hdvSniffer — liste des prix moyens Dofus 3', () => {
     expect(batch.savedCount).toBe(990)
     expect(batch.unknownCount).toBe(10)
 
-    //* Envoi par paquets de 500 au plus.
+    //* Envoi par paquets de 500 au plus, au nom du compte de capture (jamais du prix de l'utilisateur).
     expect(mutation.mock.calls.map(c => c[0].length)).toEqual([500, 490])
+    expect(mutation.mock.calls.every(c => c[1]?.source === 'capture')).toBe(true)
   })
 
   it('ignore une liste identique reçue moins de 60 s plus tard', async () => {

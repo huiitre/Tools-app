@@ -1,8 +1,11 @@
 package fr.huiitre.tools.modules.dofus.pricing.infrastructure;
 
-import java.sql.Timestamp;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +23,18 @@ public class PostgresItemPriceRepository implements ItemPriceRepository {
 
     public PostgresItemPriceRepository(NamedParameterJdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+    }
+
+    // `created_at` est un timestamp sans fuseau rempli par NOW() sur une base en UTC : sans le fuseau,
+    // le navigateur lisait l'heure comme locale et chaque prix paraissait vieux d'une heure de plus.
+    // Le prix communautaire est la moyenne des prix de ce nombre de jours, à défaut le prix le plus récent :
+    // un compte qui n'envoie plus de prix (le compte technique, prix de mai 2026) tirait la moyenne vers
+    // des valeurs périmées pour toujours.
+    private static final int COMMUNITY_PRICE_WINDOW_DAYS = 90;
+
+    private static OffsetDateTime utcDateTime(ResultSet rs, String column) throws SQLException {
+        LocalDateTime value = rs.getObject(column, LocalDateTime.class);
+        return value == null ? null : value.atOffset(ZoneOffset.UTC);
     }
 
     private static final RowMapper<ItemPriceDto> ITEM_PRICE_DTO_ROW_MAPPER =
@@ -45,14 +60,11 @@ public class PostgresItemPriceRepository implements ItemPriceRepository {
                 rs.getLong("craft_last_price"),
                 rs.getLong("craft_calculated_price"),
 
-                Optional.ofNullable(rs.getTimestamp("user_price_created_at"))
-                    .map(Timestamp::toLocalDateTime).orElse(null),
+                utcDateTime(rs, "user_price_created_at"),
 
-                Optional.ofNullable(rs.getTimestamp("community_average_price_created_at"))
-                    .map(Timestamp::toLocalDateTime).orElse(null),
+                utcDateTime(rs, "community_average_price_created_at"),
 
-                Optional.ofNullable(rs.getTimestamp("last_updated_price_created_at"))
-                    .map(Timestamp::toLocalDateTime).orElse(null)
+                utcDateTime(rs, "last_updated_price_created_at")
             );
         };
 
@@ -153,7 +165,11 @@ public class PostgresItemPriceRepository implements ItemPriceRepository {
             ========================= */
 
             LEFT JOIN LATERAL (
-                SELECT AVG(NULLIF(price, 0)) AS avg_price, MAX(created_at) AS created_at
+                SELECT COALESCE(
+                    AVG(NULLIF(price, 0)) FILTER (WHERE created_at >= LOCALTIMESTAMP - make_interval(days => :communityWindowDays)),
+                    (ARRAY_AGG(price ORDER BY created_at DESC) FILTER (WHERE price > 0))[1]
+                ) AS avg_price,
+                COALESCE(MAX(created_at) FILTER (WHERE price > 0), MAX(created_at)) AS created_at
                 FROM tools_dofus.item_price_user
                 WHERE item_id = i.id
                 AND game_server_id = :serverId
@@ -253,7 +269,10 @@ public class PostgresItemPriceRepository implements ItemPriceRepository {
                     SELECT SUM(rr.quantity * p.avg_price) AS price
                     FROM tools_dofus.recipe rr
                     LEFT JOIN LATERAL (
-                        SELECT AVG(NULLIF(price, 0)) AS avg_price
+                        SELECT COALESCE(
+                            AVG(NULLIF(price, 0)) FILTER (WHERE created_at >= LOCALTIMESTAMP - make_interval(days => :communityWindowDays)),
+                            (ARRAY_AGG(price ORDER BY created_at DESC) FILTER (WHERE price > 0))[1]
+                        ) AS avg_price
                         FROM tools_dofus.item_price_user
                         WHERE item_id = rr.ingredient_id
                         AND game_server_id = :serverId
@@ -266,7 +285,10 @@ public class PostgresItemPriceRepository implements ItemPriceRepository {
                     FROM tools_dofus.recipe rr1
                     JOIN tools_dofus.recipe rr2 ON rr2.item_id = rr1.ingredient_id
                     LEFT JOIN LATERAL (
-                        SELECT AVG(NULLIF(price, 0)) AS avg_price
+                        SELECT COALESCE(
+                            AVG(NULLIF(price, 0)) FILTER (WHERE created_at >= LOCALTIMESTAMP - make_interval(days => :communityWindowDays)),
+                            (ARRAY_AGG(price ORDER BY created_at DESC) FILTER (WHERE price > 0))[1]
+                        ) AS avg_price
                         FROM tools_dofus.item_price_user
                         WHERE item_id = rr2.ingredient_id
                         AND game_server_id = :serverId
@@ -275,7 +297,10 @@ public class PostgresItemPriceRepository implements ItemPriceRepository {
                 ) lvl2 ON TRUE
 
                 LEFT JOIN LATERAL (
-                    SELECT AVG(NULLIF(price, 0)) AS avg_price
+                    SELECT COALESCE(
+                        AVG(NULLIF(price, 0)) FILTER (WHERE created_at >= LOCALTIMESTAMP - make_interval(days => :communityWindowDays)),
+                        (ARRAY_AGG(price ORDER BY created_at DESC) FILTER (WHERE price > 0))[1]
+                    ) AS avg_price
                     FROM tools_dofus.item_price_user
                     WHERE item_id = r.ingredient_id
                     AND game_server_id = :serverId
@@ -402,7 +427,8 @@ public class PostgresItemPriceRepository implements ItemPriceRepository {
         MapSqlParameterSource params = new MapSqlParameterSource()
             .addValue("itemIds", itemIds.toArray(new Long[0]))
             .addValue("userId", userId)
-            .addValue("serverId", serverId);
+            .addValue("serverId", serverId)
+            .addValue("communityWindowDays", COMMUNITY_PRICE_WINDOW_DAYS);
 
         return jdbcTemplate.query(sql, params, ITEM_PRICE_DTO_ROW_MAPPER);
     }
