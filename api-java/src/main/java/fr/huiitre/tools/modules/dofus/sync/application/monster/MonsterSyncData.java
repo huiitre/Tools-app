@@ -9,18 +9,21 @@ public class MonsterSyncData {
     private final Long iconId;
     private final List<Long> subareaIds;
     private final List<Long> itemIds;
+    private final boolean boss;
 
     public MonsterSyncData(
             Long assetId,
             String name,
             Long iconId,
             List<Long> subareaIds,
-            List<Long> itemIds) {
+            List<Long> itemIds,
+            boolean boss) {
         this.assetId = assetId;
         this.name = name;
         this.iconId = iconId;
         this.subareaIds = subareaIds;
         this.itemIds = itemIds;
+        this.boss = boss;
     }
 
     public Long getAssetId() {
@@ -41,5 +44,9 @@ public class MonsterSyncData {
 
     public List<Long> getItemIds() {
         return itemIds;
+    }
+
+    public boolean isBoss() {
+        return boss;
     }
 }

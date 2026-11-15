@@ -13,3 +13,5 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: "Chaque monstre des farmZones (objet principal et ingrédients) porte boss (is_boss, rempli par la synchro Dofus 3 ; toujours false en Retro)."

@@ -35,14 +35,15 @@ public class PostgresMonsterRepository implements MonsterRepository {
             rs.getLong("id"),
             rs.getLong("asset_id"),
             rs.getLong("game_version_id"),
-            rs.getString("name")
+            rs.getString("name"),
+            rs.getBoolean("is_boss")
     );
 
     @Override
     public List<Monster> findAllByGameVersionId(Long gameVersionId) {
         
         final String sql = """
-            SELECT id, asset_id, game_version_id, name
+            SELECT id, asset_id, game_version_id, name, is_boss
             FROM tools_dofus.monster
             WHERE game_version_id = ?
         """;
@@ -53,8 +54,8 @@ public class PostgresMonsterRepository implements MonsterRepository {
     @Override
     public Long insert(Monster monster) {
         final String sql = """
-            INSERT INTO tools_dofus.monster (asset_id, game_version_id, name)
-            VALUES (?, ?, ?)
+            INSERT INTO tools_dofus.monster (asset_id, game_version_id, name, is_boss)
+            VALUES (?, ?, ?, ?)
             RETURNING id
         """;
         return jdbcTemplate.queryForObject(
@@ -62,7 +63,8 @@ public class PostgresMonsterRepository implements MonsterRepository {
             Long.class,
             monster.getAssetId(),
             monster.getGameVersionId(),
-            monster.getName()
+            monster.getName(),
+            monster.isBoss()
         );
     }
 
@@ -70,10 +72,10 @@ public class PostgresMonsterRepository implements MonsterRepository {
     public void update(Monster monster) {
         final String sql = """
             UPDATE tools_dofus.monster
-            SET asset_id = ?, game_version_id = ?, name = ?
+            SET asset_id = ?, game_version_id = ?, name = ?, is_boss = ?
             WHERE id = ?
         """;
-        jdbcTemplate.update(sql, monster.getAssetId(), monster.getGameVersionId(), monster.getName(), monster.getId());
+        jdbcTemplate.update(sql, monster.getAssetId(), monster.getGameVersionId(), monster.getName(), monster.isBoss(), monster.getId());
     }
 
     @Override

@@ -613,6 +613,19 @@ chaîne (objet → ingrédient → sous-ingrédient). Fonctions pures et testée
   minimum à chaque niveau, une soustraction donnerait faux.
 - L'ancien champ `strategy` (choix manuel achat/craft) n'a jamais été rempli nulle part : supprimé.
 
+## Dofus — Icône boss (16/11/2026)
+
+`Monster.boss` (type `item.types.ts`) vient de `tools_dofus.monster.is_boss`, rempli par la synchro
+Dofus 3 (toujours false en Retro). Icône : `BOSS_ICON_URL` (`modules/Dofus/item/utils/bossIcon.ts`),
+`dofus3/img/misc/guildrank/58-28.png` sur l'hôte des assets — exportée par doduda, donc pas écrasée
+à la mise à jour du jeu (tout `tools_dofus/dofus3/` est vidé puis recopié). Affichée à côté du nom des
+monstres boss dans l'infobulle des ressources (`ItemContextFloating.vue`). Atelier : icône à côté des
+ressources qui ne tombent **que** sur des boss (résumé `WorkshopResourceItem.vue`, cartes
+`WorkshopItemCardIngredients.vue`), via `isBossOnlyDrop(item)` (même fichier, testé) : au moins un
+monstre dans les `farmZones`, tous boss. Calcul volontairement côté front, sur les zones comme
+l'infobulle, et pas une propriété ajoutée au type `Item` (donnée dérivée) ni un champ de l'API (voir
+api-java/AGENTS.md, entrée Dofus/Boss).
+
 ## Workshop — Navigateur d'objets (16/11/2026)
 
 `WorkshopItemNavigator.vue` (`components/workshopdetail/`), monté dans `WorkshopDetailPage.vue` : colonne

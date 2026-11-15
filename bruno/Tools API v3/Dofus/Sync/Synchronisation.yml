@@ -16,3 +16,5 @@ settings:
   timeout: 0
   followRedirects: true
   maxRedirects: 5
+
+docs: "Synchronise objets, recettes, ateliers et monstres de la version de jeu (rôle TECH). Dofus 3 : is_boss des monstres est lu dans monsters.json, bit 2 de m_flags (déduit des données, couvre les 137 boss de dungeons.json). Un changement de statut boss apparaît dans le rapport (boss=false -> true)."

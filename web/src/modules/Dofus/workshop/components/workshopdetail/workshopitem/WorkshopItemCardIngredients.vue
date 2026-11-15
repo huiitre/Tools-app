@@ -14,6 +14,7 @@ import { useMutationItemPrices } from '@/modules/Dofus/item/fetch/item.fetch'
 import { useItemPrices } from '@/modules/Dofus/almanax/composables/useItemPrices'
 import { getPriceAgeStatus } from '@/modules/Dofus/item/utils/itemPriceSelector'
 import { useDofusConfigStore } from '@/modules/Dofus/preferences/preferences.store'
+import { BOSS_ICON_URL, isBossOnlyDrop } from '@/modules/Dofus/item/utils/bossIcon'
 
 type CraftCard = {
   type: 'main' | 'craft'
@@ -190,9 +191,12 @@ async function updateItemPrice(itemId: number, rawValue: string) {
         </ItemContextTrigger>
 
         <div class="ing-info">
-          <span class="ing-name copyable" @click="copy(ingredient.item.name)">
-            {{ ingredient.item.name }}
-          </span>
+          <div class="ing-name-row">
+            <img v-if="isBossOnlyDrop(ingredient.item)" :src="BOSS_ICON_URL" class="boss-icon" alt="Boss" title="Ne tombe que sur des boss" />
+            <span class="ing-name copyable" @click="copy(ingredient.item.name)">
+              {{ ingredient.item.name }}
+            </span>
+          </div>
         </div>
 
         <div class="ing-controls">
@@ -247,7 +251,7 @@ async function updateItemPrice(itemId: number, rawValue: string) {
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
-    padding: 0.25rem;
+    padding: 0.25rem 0.25rem 0.25rem 0;
     border-radius: var(--pico-border-radius);
     transition: background 0.15s;
 
@@ -300,11 +304,25 @@ async function updateItemPrice(itemId: number, rawValue: string) {
       flex: 1;
     }
 
+    .ing-name-row {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      min-width: 0;
+    }
+
     .ing-name {
       font-size: 0.7rem;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .boss-icon {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      object-fit: contain;
     }
 
     .ing-controls {

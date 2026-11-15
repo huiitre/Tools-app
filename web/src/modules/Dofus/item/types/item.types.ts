@@ -74,6 +74,8 @@ type Monster = {
   id: number
   name: string
   images: MonsterImage[]
+  //* Rempli par la synchro Dofus 3 ; toujours false en Retro.
+  boss: boolean
 }
 
 type FarmZone = {
