@@ -51,7 +51,8 @@ const prices = computed(() => ({
   craft: summary.value.craftCost,
   craftAdjusted: summary.value.craftAdjusted,
   mixedCost: summary.value.mixedCost,
-  mixedAdjusted: summary.value.mixedAdjusted
+  mixedAdjusted: summary.value.mixedAdjusted,
+  preview: summary.value.preview
 }))
 
 const zones = computed(() => {
@@ -129,6 +130,8 @@ function updateResourceQty(itemId: number, value: number) {
           :craft-adjusted="prices.craftAdjusted"
           :mixed="prices.mixedCost"
           :mixed-adjusted="prices.mixedAdjusted"
+          :preview="prices.preview"
+          @clear-preview="workshopDetailStore.clearPreview()"
         />
 
         <WorkshopFilters

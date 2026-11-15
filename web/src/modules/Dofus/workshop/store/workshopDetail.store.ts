@@ -2,7 +2,7 @@ import { useItemPrices } from '@/modules/Dofus/almanax/composables/useItemPrices
 import { useDofusStore } from '@/modules/Dofus/dofus.store'
 import { useFetchWorkshopDetail } from '@/modules/Dofus/workshop/fetch/workshop.fetch'
 import { useAddItemsToWorkshop, useCraftIngredient, useDeleteWorkshopItem, useUncraftIngredient, useUpdateIngredientQuantityObtained, useUpdateWorkshopItemQuantity } from '@/modules/Dofus/workshop/fetch/workshopItem.fetch'
-import { WorkshopItem, WorkshopSummary } from '@/modules/Dofus/workshop/types/workshop.types'
+import { WorkshopItem, WorkshopLink, WorkshopSummary } from '@/modules/Dofus/workshop/types/workshop.types'
 import { defineStore } from 'pinia'
 
 const { refreshRecursive } = useItemPrices()
@@ -13,6 +13,8 @@ export type WorkshopSortOrder = 'asc' | 'desc'
 type WorkshopDetailState = {
   workshopId: number | null
   items: WorkshopItem[]
+  //* Liens renvoyés à l'ouverture de l'atelier : présents aussi en lecture seule.
+  links: WorkshopLink[]
   summary: WorkshopSummary | null
   loading: boolean
   owner: boolean
@@ -20,6 +22,8 @@ type WorkshopDetailState = {
   displayByZone: boolean
   sortBy: WorkshopSortBy
   sortOrder: WorkshopSortOrder
+  //* Ressources prévues (« si elles étaient complètes ») : indicateur visuel, jamais enregistré.
+  previewedItemIds: number[]
 }
 
 const STORAGE_KEY_CONDENSED = 'dofus.workshop.condensed'
@@ -31,13 +35,15 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
   state: (): WorkshopDetailState => ({
     workshopId: null,
     items: [],
+    links: [],
     summary: null,
     loading: false,
     owner: false,
     condensed: localStorage.getItem(STORAGE_KEY_CONDENSED) !== 'false',
     displayByZone: localStorage.getItem(STORAGE_KEY_DISPLAY_BY_ZONE) !== 'false',
     sortBy: (localStorage.getItem(STORAGE_KEY_SORT_BY) as WorkshopSortBy) || 'name',
-    sortOrder: (localStorage.getItem(STORAGE_KEY_SORT_ORDER) as WorkshopSortOrder) || 'asc'
+    sortOrder: (localStorage.getItem(STORAGE_KEY_SORT_ORDER) as WorkshopSortOrder) || 'asc',
+    previewedItemIds: []
   }),
 
   getters: {
@@ -46,6 +52,8 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
     isCondensed: (state) => state.condensed,
 
     isDisplayByZone: (state) => state.displayByZone,
+
+    isPreviewed: (state) => (itemId: number) => state.previewedItemIds.includes(itemId),
 
     isIngredientCrafted: (state) => (ingredientId: number) => {
       for (const item of state.items) {
@@ -63,6 +71,7 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
       await this.getItems(workshopId)
       this.workshopId = workshopId
       this.summary = null
+      this.previewedItemIds = []
       this.refreshPrices()
     },
 
@@ -76,6 +85,7 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
         })
       }
       this.items = response.data.items
+      this.links = response.data.links ?? []
       this.owner = response.data.owner
     },
 
@@ -133,8 +143,24 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
     close() {
       this.workshopId = null
       this.items = []
+      this.links = []
       this.summary = null
       this.loading = false
+      this.previewedItemIds = []
+    },
+
+    setLinks(links: WorkshopLink[]) {
+      this.links = links
+    },
+
+    togglePreview(itemId: number) {
+      this.previewedItemIds = this.previewedItemIds.includes(itemId)
+        ? this.previewedItemIds.filter(id => id !== itemId)
+        : [...this.previewedItemIds, itemId]
+    },
+
+    clearPreview() {
+      this.previewedItemIds = []
     },
 
     setCondensed(value: boolean) {

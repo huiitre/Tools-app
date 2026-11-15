@@ -580,6 +580,65 @@ open(url: string, alt?: string, minSize?: number)
 
 `ImagePreviewModal.vue` applique `min-width` et `min-height` en style inline quand `minSize` est défini. Utilisé pour les avatars admin (200px) sans impacter les autres usages (images catalogue Dofus en taille naturelle).
 
+## Workshop — Prix du résumé (15/11/2026)
+
+Tout est calculé dans le front ; l'API ne renvoie que les quantités, déjà multipliées sur toute la
+chaîne (objet → ingrédient → sous-ingrédient). Fonctions pures et testées :
+`src/modules/Dofus/workshop/utils/workshopCost.ts` (+ `.spec.ts`), appelées par `useWorkshopSummary.ts`.
+
+- **Craft** : seules les ressources de base (feuilles de l'arbre) sont payées ; un ingrédient crafté
+  compte par ses sous-ingrédients, jamais en plus de son prix d'achat (double comptage corrigé le 15/11).
+  Total = quantités requises, ajusté = quantités restantes.
+- **Mixte** (« Meilleur prix »), objet par objet : total = min(achat, craft total), ajusté =
+  min(achat, craft restant), où le craft est lui-même optimisé à **chaque niveau** (`bestCraftCost`) :
+  un ingrédient que l'utilisateur crafte est pris au moins cher entre son achat et son craft. Les
+  lignes « Prix craft » restent le plan tel que prévu, sans optimisation.
+- **Piège** : choisir de crafter un ingrédient le passe à 1/1 côté API (`CraftIngredientUseCase`).
+  Ce 1/1 veut dire « je le crafte », pas « je l'ai » : sa quantité obtenue est ignorée partout,
+  l'acheter coûte son prix plein et ce qui reste à payer, ce sont ses ressources. Les données de test
+  doivent reproduire ce 1/1 (un test à 0/1 a laissé passer un bug le 15/11).
+  Les deux sont **indépendants** : un objet peut être en achat dans le total et en craft dans l'ajusté
+  (ressources déjà récoltées), jamais l'inverse. Crafter un ingrédient change la recette, donc les deux.
+  Prix à 0 = inconnu (ne gagne jamais), égalité → achat. L'étiquette Achat/Craft de la carte
+  (`WorkshopItemCardHeader.vue`) affiche le choix de l'**ajusté**, le seul qui dit quoi faire.
+- **Achat ajusté** : un objet en sort quand il est terminé (`isComplete`), c'est-à-dire quand toutes
+  ses ressources de base sont obtenues, sous-ingrédients craftés compris (avant le 15/11, ceux-ci
+  étaient ignorés). Libellés du résumé : « Meilleur prix » / « Meilleur prix ajusté » (ex-« mixte »).
+- **Prévisions** (`utils/workshopPreview.ts` + `.spec.ts`) : bouton œil sur les lignes de ressources
+  du résumé (absent des lignes complètes et des ingrédients craftés). La ressource compte « comme
+  complète » dans une **copie** de l'atelier (`applyPreview`), sur laquelle on relance les mêmes
+  calculs (`adjustedPrices`, aussi utilisée pour les vrais prix ajustés) ; le résultat s'affiche entre
+  parenthèses à gauche des trois prix ajustés. Rien n'est enregistré : `previewedItemIds` du store,
+  vidé à l'ouverture et à la fermeture d'un atelier. Pas de soustraction : le meilleur prix est un
+  minimum à chaque niveau, une soustraction donnerait faux.
+- L'ancien champ `strategy` (choix manuel achat/craft) n'a jamais été rempli nulle part : supprimé.
+
+## Workshop — Navigateur d'objets (16/11/2026)
+
+`WorkshopItemNavigator.vue` (`components/workshopdetail/`), monté dans `WorkshopDetailPage.vue` : colonne
+des images des objets principaux (`store.items`, pas les sous-crafts), toujours visible, en
+`position: fixed` à droite et centrée verticalement, z-index 900 (sous les popups à 1000). Pas de bouton
+d'ouverture (jugé moche, retiré le 16/11). Survol d'une image → un encart en `position: fixed` recouvre
+exactement l'entrée et s'étend vers la gauche avec nom · type · niveau (calculé sur le rectangle de
+l'entrée : la colonne ne s'élargit pas et son scroll ne le coupe pas ; `pointer-events: none` pour que
+le clic atteigne l'entrée). Clic → `scrollIntoView` sur la carte portant `data-workshop-item-id` (posé
+par `WorkshopItemsList.vue` sur les seules cartes principales). Le scroll s'arrête un peu au-dessus de la
+carte (`scroll-margin-top` sur `[data-workshop-item-id]`, dans `WorkshopItemsList.vue`).
+Masqué quand l'atelier est vide ; présent en lecture seule. Pas de mise en évidence de la carte (refusée).
+Pour que la colonne ne recouvre pas le contenu : `margin-right: 1.5rem` sur `.workshop-detail`
+(`WorkshopDetailPage.vue`), et la sidebar des ateliers passée de 250 à 220 px pour compenser.
+
+## Workshop — Sidebar repliée dans le détail (16/11/2026)
+
+`WorkshopSidebar.vue` : sur la route `dofus-workshop-detail` uniquement, la sidebar est repliée sur
+l'ampoule du lien « Ateliers ». Un conteneur `.sidebar-host` l'enveloppe : `display: contents` partout
+ailleurs (la page `/workshop` est inchangée), colonne de 56 px avec la bordure droite dans le détail.
+La sidebar y est `position: sticky` (l'ampoule reste visible au scroll) et z-index 950 (au-dessus du
+contenu et de la colonne d'objets à 900, sous les popups à 1000). Au survol, elle passe à 220 px
+**par-dessus** le contenu, sans le pousser ; elle se replie 150 ms après la sortie de la souris (évite
+le clignotement) et à chaque changement de route. Survol uniquement : le clic sur l'ampoule mène
+toujours à la liste. Rien de spécial pour « Modifier les tags » (décision : on verra à l'usage).
+
 ## Workshop — Liens et popup de visualisation
 
 Chaque atelier peut avoir jusqu'à 3 liens (source `DOFUSBOOK` ou `CUSTOM`).
@@ -590,7 +649,7 @@ Chaque atelier peut avoir jusqu'à 3 liens (source `DOFUSBOOK` ou `CUSTOM`).
 
 - **`WorkshopList.vue`** — les liens des cartes sont des `<span>` qui ouvrent `WorkshopLinkViewer` (plus de `<a target="_blank">`).
 
-- **`WorkshopLinksButton.vue`** (`src/modules/Dofus/workshop/components/workshopdetail/workshopsummary/`) — bouton icône dans la barre de filtres du détail atelier. Ouvre un floating panel (`@floating-ui/vue`, `placement: bottom-end`) avec la gestion complète des liens (add/edit/delete). Accède à l'atelier courant via `useWorkshopDetailStore().workshopId` + `useWorkshopStore()`. Le clic sur un lien (mode lecture) ouvre `WorkshopLinkViewer` et ferme le panel. Le scroll ferme le panel sauf si le scroll vient de l'intérieur du panel (fix coller/paste).
+- **`WorkshopLinksButton.vue`** (`src/modules/Dofus/workshop/components/workshopdetail/workshopsummary/`) — bouton icône dans la barre de filtres du détail atelier. Ouvre un floating panel (`@floating-ui/vue`, `placement: bottom-end`) avec la gestion complète des liens (add/edit/delete), cachée en lecture seule (`isOwner`) : il ne reste alors que les liens, cliquables. Les liens sont lus dans `useWorkshopDetailStore().links`, rempli par `GET /workshops/{id}` (renvoyés à tout lecteur) — jamais dans `useWorkshopStore().workshops`, qui ne contient que les ateliers de l'utilisateur connecté (bug du 15/11/2026 : panneau vide en lecture seule). Chaque modification est reportée dans les deux stores, la liste affichant aussi les liens sur ses cartes. L'API refuse de toute façon add/edit/delete à un non-propriétaire (`existsByIdAndUserId`). Le clic sur un lien (mode lecture) ouvre `WorkshopLinkViewer` et ferme le panel. Le scroll ferme le panel sauf si le scroll vient de l'intérieur du panel (fix coller/paste).
 
 ### Fetch liens
 

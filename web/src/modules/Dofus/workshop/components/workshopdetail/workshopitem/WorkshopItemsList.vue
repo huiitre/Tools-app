@@ -88,11 +88,12 @@ function findCraftableIngredientsRecursive(
           v-for="(card, cardIndex) in group"
           :key="cardIndex"
           :card="card"
+          :data-workshop-item-id="card.type === 'main' ? card.workshopItem.id : undefined"
         />
       </div>
 
       <!-- ITEM SANS CRAFT -->
-      <WorkshopItemCard v-else :card="group[0]" />
+      <WorkshopItemCard v-else :card="group[0]" :data-workshop-item-id="group[0].workshopItem.id" />
 
     </template>
   </div>
@@ -104,6 +105,11 @@ function findCraftableIngredientsRecursive(
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1rem;
+}
+
+/* Cible du navigateur d'objets : le scroll s'arrête un peu au-dessus de la carte */
+[data-workshop-item-id] {
+  scroll-margin-top: 1.5rem;
 }
 
 /* GROUP (prend toute la largeur) */

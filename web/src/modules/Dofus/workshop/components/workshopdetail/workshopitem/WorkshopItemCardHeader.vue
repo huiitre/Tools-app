@@ -5,6 +5,8 @@ import ItemContextTrigger from '@/modules/Dofus/item/components/ItemContextTrigg
 import { AssetResolution } from '@/modules/Dofus/item/types/assetResolution.enum'
 import { getItemImageByResolution } from '@/modules/Dofus/item/utils/itemImageSelector'
 import { useWorkshopDetailStore } from '@/modules/Dofus/workshop/store/workshopDetail.store'
+import { useWorkshopPriceCalculator } from '@/modules/Dofus/workshop/composables/useWorkshopPriceCalculator'
+import { mixedCost } from '@/modules/Dofus/workshop/utils/workshopCost'
 import type { WorkshopItem, WorkshopItemIngredient } from '@/modules/Dofus/workshop/types/workshop.types'
 import { normalizePositiveIntegerInput } from '@/utils/formatNumber'
 import { storeToRefs } from 'pinia'
@@ -25,6 +27,12 @@ const { open: openImagePreview } = useImagePreview()
 
 const store = useWorkshopDetailStore()
 const { isOwner } = storeToRefs(store)
+const { getUnitPrice } = useWorkshopPriceCalculator()
+
+//* Le choix du meilleur prix ajusté : le moins cher pour ce qu'il reste à payer.
+const mixedStrategy = computed(() =>
+  props.card.type === 'main' ? mixedCost(props.card.workshopItem, getUnitPrice).adjusted.strategy : null
+)
 
 async function handleIncrement() {
   const newQuantity = props.card.workshopItem.quantity + 1
@@ -94,6 +102,12 @@ const itemImage = computed(() => {
       <small>
         {{ itemTypeName }}
         · Niv {{ itemLevel }}
+        <span
+          v-if="mixedStrategy"
+          class="mixed-strategy"
+          :class="mixedStrategy"
+          title="Choix du meilleur prix ajusté : le moins cher pour ce qu'il reste à payer"
+        >· {{ mixedStrategy === 'craft' ? 'Craft' : 'Achat' }}</span>
       </small>
     </div>
 
@@ -152,6 +166,18 @@ const itemImage = computed(() => {
     small {
       font-size: 0.7rem;
       color: var(--pico-muted-color);
+    }
+
+    .mixed-strategy {
+      font-weight: 600;
+
+      &.craft {
+        color: var(--pico-ins-color);
+      }
+
+      &.buy {
+        color: var(--pico-primary);
+      }
     }
   }
 

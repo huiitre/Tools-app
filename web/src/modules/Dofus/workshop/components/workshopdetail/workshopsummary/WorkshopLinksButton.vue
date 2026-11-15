@@ -11,15 +11,21 @@ import {
 } from '@/modules/Dofus/workshop/fetch/workshopLink.fetch'
 import toast from '@/services/toast'
 import WorkshopLinkViewer from '@/modules/Dofus/workshop/components/WorkshopLinkViewer.vue'
+import { storeToRefs } from 'pinia'
 
 const workshopDetailStore = useWorkshopDetailStore()
 const workshopStore = useWorkshopStore()
+const { isOwner } = storeToRefs(workshopDetailStore)
 
-const workshop = computed(() =>
-  workshopStore.workshops.find(w => w.id === workshopDetailStore.workshopId)
-)
+//* Liens renvoyés à l'ouverture de l'atelier : un atelier d'un autre n'est pas dans la liste de l'utilisateur.
+const links = computed(() => workshopDetailStore.links)
 
-const links = computed(() => workshop.value?.links ?? [])
+//* Toute modification est aussi reportée sur la liste des ateliers, qui affiche les liens sur ses cartes.
+const updateLinks = (next: WorkshopLink[]) => {
+  workshopDetailStore.setLinks(next)
+  const listed = workshopStore.workshops.find(w => w.id === workshopDetailStore.workshopId)
+  if (listed) listed.links = next
+}
 
 /* ========================= FLOATING ========================= */
 const isOpen = ref(false)
@@ -86,16 +92,15 @@ const openAddForm = () => {
 const cancelAdd = () => { showAddForm.value = false }
 
 const confirmAdd = async () => {
-  if (!newUrl.value.trim() || addLoading.value || !workshop.value) return
+  const workshopId = workshopDetailStore.workshopId
+  if (!newUrl.value.trim() || addLoading.value || !workshopId) return
   addLoading.value = true
   try {
-    const res = await useAddWorkshopLink(workshop.value.id, {
+    const res = await useAddWorkshopLink(workshopId, {
       url: newUrl.value.trim(),
       source: newSource.value,
     })
-    if (workshop.value) {
-      workshop.value.links = [...(workshop.value.links ?? []), res.data]
-    }
+    updateLinks([...links.value, res.data])
     showAddForm.value = false
   } catch (e: any) {
     toast.error(e instanceof Error ? e.message : "Erreur lors de l'ajout du lien")
@@ -120,15 +125,15 @@ const startEditLink = (link: WorkshopLink) => {
 const cancelEdit = () => { editingId.value = null }
 
 const saveEdit = async (link: WorkshopLink) => {
-  if (!editUrl.value.trim() || editLoading.value || !workshop.value) return
+  const workshopId = workshopDetailStore.workshopId
+  if (!editUrl.value.trim() || editLoading.value || !workshopId) return
   editLoading.value = true
   try {
-    const res = await useUpdateWorkshopLink(workshop.value.id, link.id, {
+    const res = await useUpdateWorkshopLink(workshopId, link.id, {
       url: editUrl.value.trim(),
       label: editLabel.value.trim(),
     })
-    const idx = workshop.value.links?.findIndex(l => l.id === link.id) ?? -1
-    if (idx !== -1) workshop.value.links![idx] = res.data
+    updateLinks(links.value.map(l => l.id === link.id ? res.data : l))
     editingId.value = null
   } catch (e: any) {
     toast.error(e instanceof Error ? e.message : 'Erreur lors de la modification du lien')
@@ -139,12 +144,11 @@ const saveEdit = async (link: WorkshopLink) => {
 
 /* ========================= SUPPRESSION ========================= */
 const deleteLink = async (linkId: number) => {
-  if (!workshop.value) return
+  const workshopId = workshopDetailStore.workshopId
+  if (!workshopId) return
   try {
-    await useDeleteWorkshopLink(workshop.value.id, linkId)
-    if (workshop.value.links) {
-      workshop.value.links = workshop.value.links.filter(l => l.id !== linkId)
-    }
+    await useDeleteWorkshopLink(workshopId, linkId)
+    updateLinks(links.value.filter(l => l.id !== linkId))
   } catch (e: any) {
     toast.error(e instanceof Error ? e.message : 'Erreur lors de la suppression du lien')
   }
@@ -181,8 +185,10 @@ const deleteLink = async (linkId: number) => {
           <div v-if="editingId !== link.id" class="link-row" @click.stop="openLink(link)">
             <span class="mdi mdi-link-variant link-icon"></span>
             <span class="link-label">{{ link.label }}</span>
-            <span class="mdi mdi-pencil-outline action" @click.stop="startEditLink(link)"></span>
-            <span class="mdi mdi-delete-outline action" @click.stop="deleteLink(link.id)"></span>
+            <template v-if="isOwner">
+              <span class="mdi mdi-pencil-outline action" @click.stop="startEditLink(link)"></span>
+              <span class="mdi mdi-delete-outline action" @click.stop="deleteLink(link.id)"></span>
+            </template>
           </div>
 
           <!-- Mode édition -->
@@ -225,7 +231,7 @@ const deleteLink = async (linkId: number) => {
       </div>
 
       <button
-        v-if="!showAddForm"
+        v-if="isOwner && !showAddForm"
         class="add-link-btn"
         :disabled="links.length >= 3"
         @click.stop="openAddForm"

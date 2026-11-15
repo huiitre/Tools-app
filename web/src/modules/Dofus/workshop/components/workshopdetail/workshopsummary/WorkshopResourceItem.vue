@@ -95,6 +95,16 @@ function findAllIngredients(itemId: number): WorkshopItemIngredient[] {
   return ingredients
 }
 
+//* Prévision : seulement s'il reste une ressource de base à obtenir (un ingrédient crafté, à 1/1,
+//* n'a rien à prévoir). Rien n'est enregistré.
+const previewable = computed(() =>
+  findAllIngredients(props.resource.item.id).some(ing =>
+    !workshopDetailStore.isIngredientCrafted(ing.id) && ing.quantityObtained < ing.quantityRequired
+  )
+)
+
+const previewed = computed(() => workshopDetailStore.isPreviewed(props.resource.item.id))
+
 async function setMin() {
   const ingredients = findAllIngredients(props.resource.item.id)
   const toUpdate = ingredients
@@ -172,7 +182,7 @@ async function onInput(event: Event) {
 <template>
   <div
     class="resource"
-    :class="{ complete: resource.qty === resource.max }"
+    :class="{ complete: resource.qty === resource.max, previewed: previewed && previewable }"
   >
     <ItemContextTrigger :item="resource.item">
       <img :src="resource.icon" @click="openImagePreview(resource.icon, resource.name)">
@@ -189,6 +199,15 @@ async function onInput(event: Event) {
 
     <div class="controls">
       <div class="controls-row">
+        <button
+          v-if="previewable"
+          class="preview-toggle"
+          :class="{ active: previewed }"
+          :title="previewed ? 'Retirer la prévision' : 'Prévoir : compter comme complète dans les prix ajustés, sans rien enregistrer'"
+          @click="workshopDetailStore.togglePreview(resource.item.id)"
+        >
+          <i class="mdi" :class="previewed ? 'mdi-eye' : 'mdi-eye-outline'" />
+        </button>
         <button class="min" @click="setMin" v-if="isOwner">min</button>
         <button class="max" @click="setMax" v-if="isOwner">max</button>
         <button class="decrement" @click="decrement" v-if="isOwner">−</button>
@@ -237,6 +256,10 @@ async function onInput(event: Event) {
 
   &.complete {
     opacity: 0.5;
+  }
+
+  &.previewed {
+    background: var(--pico-primary-focus);
   }
 
   img {
@@ -333,6 +356,12 @@ async function onInput(event: Event) {
   .decrement,
   .increment {
     font-size: 0.98rem;
+  }
+
+  .preview-toggle.active {
+    background: var(--pico-primary-background);
+    border-color: var(--pico-primary-border);
+    color: var(--pico-primary-inverse);
   }
 
   .max-label {
