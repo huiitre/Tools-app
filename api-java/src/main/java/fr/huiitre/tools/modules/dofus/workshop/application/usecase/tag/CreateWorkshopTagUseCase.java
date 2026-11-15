@@ -45,8 +45,9 @@ public class CreateWorkshopTagUseCase implements SecuredUseCase {
 
         Long userId = authenticatedUserProvider.getUserId();
 
-        boolean exists = workshopTagRepository.existsByUserIdAndName(
+        boolean exists = workshopTagRepository.existsByUserIdAndGameVersionIdAndName(
                 userId,
+                gameVersionId,
                 request.name());
 
         if (exists) {

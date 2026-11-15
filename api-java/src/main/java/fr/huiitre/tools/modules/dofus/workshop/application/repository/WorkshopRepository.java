@@ -12,7 +12,10 @@ import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopTag;
 
 public interface WorkshopRepository {
     
-    boolean existsByUserIdAndName(Long userId, String name);
+    boolean existsByUserIdAndGameVersionIdAndName(Long userId, Long gameVersionId, String name);
+
+    //* Même nom ailleurs dans la version du jeu de workshopId, en dehors de lui-même.
+    boolean existsOtherWithNameInSameGameVersion(Long userId, Long workshopId, String name);
 
     boolean existsByIdAndUserId(Long userId, Long workshopId);
 

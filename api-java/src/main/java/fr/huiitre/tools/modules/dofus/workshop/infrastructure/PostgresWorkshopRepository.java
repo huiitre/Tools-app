@@ -31,12 +31,12 @@ public class PostgresWorkshopRepository implements WorkshopRepository {
     }
 
     @Override
-    public boolean existsByUserIdAndName(Long userId, String name) {
+    public boolean existsByUserIdAndGameVersionIdAndName(Long userId, Long gameVersionId, String name) {
         String sql = """
             SELECT EXISTS (
                 SELECT 1
                 FROM tools_dofus.workshop
-                WHERE user_id = ? AND name = ?
+                WHERE user_id = ? AND game_version_id = ? AND name = ?
             )
         """;
 
@@ -44,6 +44,32 @@ public class PostgresWorkshopRepository implements WorkshopRepository {
             jdbcTemplate.queryForObject(
                 sql,
                 Boolean.class,
+                userId,
+                gameVersionId,
+                name
+            )
+        );
+    }
+
+    @Override
+    public boolean existsOtherWithNameInSameGameVersion(Long userId, Long workshopId, String name) {
+        String sql = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM tools_dofus.workshop other
+                JOIN tools_dofus.workshop current ON current.id = ? AND current.user_id = other.user_id
+                WHERE other.user_id = ?
+                  AND other.game_version_id = current.game_version_id
+                  AND other.name = ?
+                  AND other.id <> current.id
+            )
+        """;
+
+        return Boolean.TRUE.equals(
+            jdbcTemplate.queryForObject(
+                sql,
+                Boolean.class,
+                workshopId,
                 userId,
                 name
             )

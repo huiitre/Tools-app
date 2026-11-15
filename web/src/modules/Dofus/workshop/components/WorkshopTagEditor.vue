@@ -93,7 +93,7 @@ const deleteTag = async (id: number) => {
         :key="tag.id"
         class="row"
       >
-        <span class="mdi mdi-tag icon"></span>
+        <span class="mdi mdi-tag icon" :style="{ color: tag.color }"></span>
 
         <template v-if="editingId === tag.id">
           <input
@@ -181,8 +181,9 @@ const deleteTag = async (id: number) => {
   border-bottom: 1px solid var(--pico-muted-border-color);
 }
 
+/* Couleur enregistrée du tag (pas celle en cours d'édition), en plein comme dans la sidebar. */
 .icon {
-  opacity: 0.6;
+  flex-shrink: 0;
 }
 
 .action {
