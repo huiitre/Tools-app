@@ -2,7 +2,7 @@ import { useItemPrices } from '@/modules/Dofus/almanax/composables/useItemPrices
 import { useDofusStore } from '@/modules/Dofus/dofus.store'
 import { useFetchWorkshopDetail } from '@/modules/Dofus/workshop/fetch/workshop.fetch'
 import { useAddItemsToWorkshop, useCraftIngredient, useDeleteWorkshopItem, useUncraftIngredient, useUpdateIngredientQuantityObtained, useUpdateWorkshopItemQuantity } from '@/modules/Dofus/workshop/fetch/workshopItem.fetch'
-import { WorkshopItem, WorkshopSummary } from '@/modules/Dofus/workshop/types/workshop.types'
+import { WorkshopItem, WorkshopLink, WorkshopSummary } from '@/modules/Dofus/workshop/types/workshop.types'
 import { defineStore } from 'pinia'
 
 const { refreshRecursive } = useItemPrices()
@@ -13,6 +13,8 @@ export type WorkshopSortOrder = 'asc' | 'desc'
 type WorkshopDetailState = {
   workshopId: number | null
   items: WorkshopItem[]
+  //* Liens renvoyés à l'ouverture de l'atelier : présents aussi en lecture seule.
+  links: WorkshopLink[]
   summary: WorkshopSummary | null
   loading: boolean
   owner: boolean
@@ -33,6 +35,7 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
   state: (): WorkshopDetailState => ({
     workshopId: null,
     items: [],
+    links: [],
     summary: null,
     loading: false,
     owner: false,
@@ -82,6 +85,7 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
         })
       }
       this.items = response.data.items
+      this.links = response.data.links ?? []
       this.owner = response.data.owner
     },
 
@@ -139,9 +143,14 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
     close() {
       this.workshopId = null
       this.items = []
+      this.links = []
       this.summary = null
       this.loading = false
       this.previewedItemIds = []
+    },
+
+    setLinks(links: WorkshopLink[]) {
+      this.links = links
     },
 
     togglePreview(itemId: number) {
