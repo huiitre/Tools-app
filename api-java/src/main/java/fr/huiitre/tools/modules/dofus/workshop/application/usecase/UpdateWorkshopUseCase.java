@@ -51,11 +51,12 @@ public class UpdateWorkshopUseCase implements SecuredUseCase {
         Workshop current = workshopRepository.findByIdAndUserId(userId, workshopId)
                 .orElseThrow(() -> new WorkshopNotFoundException());
 
-        boolean exists = workshopRepository.existsByUserIdAndName(
+        boolean exists = workshopRepository.existsOtherWithNameInSameGameVersion(
                 userId,
+                workshopId,
                 request.name());
 
-        if (exists && !current.getName().equalsIgnoreCase(request.name())) {
+        if (exists) {
             throw new IllegalArgumentException("Un atelier avec ce nom existe déjà.");
         }
 

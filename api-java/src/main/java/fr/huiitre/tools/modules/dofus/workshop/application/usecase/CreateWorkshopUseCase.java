@@ -50,7 +50,7 @@ public class CreateWorkshopUseCase implements SecuredUseCase {
         
         Long userId = authenticatedUserProvider.getUserId();
 
-        boolean exists = workshopRepository.existsByUserIdAndName(userId, request.name());
+        boolean exists = workshopRepository.existsByUserIdAndGameVersionIdAndName(userId, gameVersionId, request.name());
 
         if (exists) throw new IllegalArgumentException("Un atelier avec ce nom existe déjà.");
 

@@ -49,11 +49,12 @@ public class UpdateWorkshopTagUseCase implements SecuredUseCase {
                 userId,
                 tagId).orElseThrow(() -> new IllegalArgumentException("Le tag spécifié est introuvable."));
 
-        boolean exists = workshopTagRepository.existsByUserIdAndName(
+        boolean exists = workshopTagRepository.existsOtherWithNameInSameGameVersion(
                 userId,
+                tagId,
                 request.name());
 
-        if (exists && !current.getName().equalsIgnoreCase(request.name())) {
+        if (exists) {
             throw new IllegalArgumentException("Un tag avec ce nom existe déjà.");
         }
 

@@ -7,7 +7,10 @@ import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopTag;
 
 public interface WorkshopTagRepository {
     
-    boolean existsByUserIdAndName(Long userId, String name);
+    boolean existsByUserIdAndGameVersionIdAndName(Long userId, Long gameVersionId, String name);
+
+    //* Même nom ailleurs dans la version du jeu de tagId, en dehors de lui-même.
+    boolean existsOtherWithNameInSameGameVersion(Long userId, Long tagId, String name);
 
     boolean existsByIdAndUserId(Long userId, Long tagId);
 
