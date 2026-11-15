@@ -628,6 +628,17 @@ Masqué quand l'atelier est vide ; présent en lecture seule. Pas de mise en év
 Pour que la colonne ne recouvre pas le contenu : `margin-right: 1.5rem` sur `.workshop-detail`
 (`WorkshopDetailPage.vue`), et la sidebar des ateliers passée de 250 à 220 px pour compenser.
 
+## Workshop — Sidebar repliée dans le détail (16/11/2026)
+
+`WorkshopSidebar.vue` : sur la route `dofus-workshop-detail` uniquement, la sidebar est repliée sur
+l'ampoule du lien « Ateliers ». Un conteneur `.sidebar-host` l'enveloppe : `display: contents` partout
+ailleurs (la page `/workshop` est inchangée), colonne de 56 px avec la bordure droite dans le détail.
+La sidebar y est `position: sticky` (l'ampoule reste visible au scroll) et z-index 950 (au-dessus du
+contenu et de la colonne d'objets à 900, sous les popups à 1000). Au survol, elle passe à 220 px
+**par-dessus** le contenu, sans le pousser ; elle se replie 150 ms après la sortie de la souris (évite
+le clignotement) et à chaque changement de route. Survol uniquement : le clic sur l'ampoule mène
+toujours à la liste. Rien de spécial pour « Modifier les tags » (décision : on verra à l'usage).
+
 ## Workshop — Liens et popup de visualisation
 
 Chaque atelier peut avoir jusqu'à 3 liens (source `DOFUSBOOK` ou `CUSTOM`).
