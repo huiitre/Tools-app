@@ -31,6 +31,19 @@ const STORAGE_KEY_DISPLAY_BY_ZONE = 'dofus.workshop.displayByZone'
 const STORAGE_KEY_SORT_BY = 'dofus.workshop.sortBy'
 const STORAGE_KEY_SORT_ORDER = 'dofus.workshop.sortOrder'
 
+//* Ordre d'affichage unique : appliqué au chargement ET à l'ajout, sinon un objet ajouté
+//* saute à sa place au premier rechargement (changement de quantité) et le focus change de carte.
+//* Derniers ajoutés en premier : l'id de workshop_item suit l'ordre d'ajout et ne change jamais.
+function sortItems(items: WorkshopItem[]): void {
+  items.sort((a, b) => b.id - a.id)
+  for (const item of items) {
+    item.ingredients.sort((a, b) => {
+      if (a.quantityRequired !== b.quantityRequired) return a.quantityRequired - b.quantityRequired
+      return a.item.name.localeCompare(b.item.name)
+    })
+  }
+}
+
 export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
   state: (): WorkshopDetailState => ({
     workshopId: null,
@@ -77,13 +90,7 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
 
     async getItems(workshopId: number) {
       const response = await useFetchWorkshopDetail(workshopId)
-      response.data.items.sort((a: any, b: any) => a.item.name.localeCompare(b.item.name))
-      for (const item of response.data.items) {
-        item.ingredients.sort((a: any, b: any) => {
-          if (a.quantityRequired !== b.quantityRequired) return a.quantityRequired - b.quantityRequired
-          return a.item.name.localeCompare(b.item.name)
-        })
-      }
+      sortItems(response.data.items)
       this.items = response.data.items
       this.links = response.data.links ?? []
       this.owner = response.data.owner
@@ -92,7 +99,9 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
     async addItems(itemIds: number[]) {
       if (!this.workshopId) return
       const newItems = await useAddItemsToWorkshop(this.workshopId, itemIds)
-      this.items.push(...newItems)
+      const items = [...this.items, ...newItems]
+      sortItems(items)
+      this.items = items
       this.refreshPrices()
     },
 
