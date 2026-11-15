@@ -626,6 +626,15 @@ monstre dans les `farmZones`, tous boss. Calcul volontairement côté front, sur
 l'infobulle, et pas une propriété ajoutée au type `Item` (donnée dérivée) ni un champ de l'API (voir
 api-java/AGENTS.md, entrée Dofus/Boss).
 
+## Workshop — Ordre des objets (16/11/2026)
+
+`sortItems` (`workshopDetail.store.ts`) : objets **derniers ajoutés en premier** (`id` de `workshop_item`
+décroissant : il suit l'ordre d'ajout et ne change jamais, donc rien ne bouge en cours d'édition ; l'objet
+ajouté arrive sous la barre de recherche), ingrédients par quantité requise puis nom. Appliqué
+au chargement (`getItems`) **et à l'ajout** (`addItems`). Avant, l'ajout faisait un `push` en fin de liste et
+le premier rechargement (quantité, ressource obtenue, craft) retriait : l'objet sautait à sa place et le
+champ sous le curseur devenait celui d'une autre carte. Tout nouvel ordre doit passer par cette fonction. Cartes et colonne d'objets lisent `store.items` tel quel, sans tri propre.
+
 ## Workshop — Navigateur d'objets (16/11/2026)
 
 `WorkshopItemNavigator.vue` (`components/workshopdetail/`), monté dans `WorkshopDetailPage.vue` : colonne
