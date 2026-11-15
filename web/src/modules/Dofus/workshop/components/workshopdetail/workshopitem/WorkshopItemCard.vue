@@ -48,7 +48,7 @@ const props = defineProps<{
   background: var(--pico-card-background-color);
   border: 1px solid var(--pico-card-border-color);
   border-radius: var(--pico-border-radius);
-  padding: 0.75rem;
+  padding: 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;

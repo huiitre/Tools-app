@@ -13,6 +13,7 @@ import { useMutationItemPrices } from '@/modules/Dofus/item/fetch/item.fetch'
 import { useItemPrices } from '@/modules/Dofus/almanax/composables/useItemPrices'
 import { getPriceAgeStatus } from '@/modules/Dofus/item/utils/itemPriceSelector'
 import { useDofusConfigStore } from '@/modules/Dofus/preferences/preferences.store'
+import { BOSS_ICON_URL, isBossOnlyDrop } from '@/modules/Dofus/item/utils/bossIcon'
 
 interface Resource {
   id: number
@@ -189,7 +190,10 @@ async function onInput(event: Event) {
     </ItemContextTrigger>
 
     <div class="resource-info">
-      <div class="name copyable" @click="copy(resource.name)">{{ resource.name }}</div>
+      <div class="name-row">
+        <span class="name copyable" @click="copy(resource.name)">{{ resource.name }}</span>
+        <img v-if="isBossOnlyDrop(resource.item)" :src="BOSS_ICON_URL" class="boss-icon" alt="Boss" title="Ne tombe que sur des boss" />
+      </div>
       <div class="price-details" v-if="!condensed">
         <span>Prix unitaire : <PriceAgeColor :status="priceStatus">{{ resource.price.toLocaleString() }} ₭</PriceAgeColor></span>
         <span>Prix total : {{ (resource.price * resource.max).toLocaleString() }} ₭</span>
@@ -276,11 +280,27 @@ async function onInput(event: Event) {
   gap: 0.15rem;
   min-width: 0;
 
+  /* Le nom se tronque, l'icône boss reste toujours visible à sa droite. */
+  .name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .boss-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+
   .name {
     font-size: 0.75rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-width: 0;
   }
 }
 

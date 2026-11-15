@@ -107,7 +107,8 @@ public class SyncMonsterUseCase implements SecuredUseCase {
                 Monster createdItem = Monster.create(
                     ext.getAssetId(),
                     gameVersion.getId(),
-                    ext.getName()
+                    ext.getName(),
+                    ext.isBoss()
                 );
 
                 Long id = monsterRepository.insert(createdItem);
@@ -116,6 +117,7 @@ public class SyncMonsterUseCase implements SecuredUseCase {
                     "assetId=" + ext.getAssetId()
                     + " name=\"" + ext.getName() + "\""
                     + " iconId=" + ext.getIconId()
+                    + (ext.isBoss() ? " boss" : "")
                 );
 
                 monsterRepository.refreshImages(id, ext.getIconId());
@@ -126,17 +128,20 @@ public class SyncMonsterUseCase implements SecuredUseCase {
             }
 
             boolean nameChanged = !existing.getName().equals(ext.getName());
+            boolean bossChanged = existing.isBoss() != ext.isBoss();
 
-            if (nameChanged) {
+            if (nameChanged || bossChanged) {
 
                 String oldName = existing.getName();
+                boolean oldBoss = existing.isBoss();
 
-                existing.update(ext.getName());
+                existing.update(ext.getName(), ext.isBoss());
                 monsterRepository.update(existing);
 
                 updated.add(
                     "assetId=" + ext.getAssetId()
-                    + " name=\"" + oldName + "\" -> \"" + ext.getName() + "\""
+                    + (nameChanged ? " name=\"" + oldName + "\" -> \"" + ext.getName() + "\"" : "")
+                    + (bossChanged ? " boss=" + oldBoss + " -> " + ext.isBoss() : "")
                 );
             }
 

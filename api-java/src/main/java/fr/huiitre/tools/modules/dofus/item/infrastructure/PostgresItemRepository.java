@@ -390,7 +390,8 @@ public class PostgresItemRepository implements ItemRepository {
                         s.name AS subarea_name,
 
                         m.id AS monster_id,
-                        m.name AS monster_name
+                        m.name AS monster_name,
+                        m.is_boss AS monster_is_boss
 
                     FROM tools_dofus.monster_drop md
                     INNER JOIN tools_dofus.monster m ON md.monster_id = m.id
@@ -439,7 +440,8 @@ public class PostgresItemRepository implements ItemRepository {
                         MonsterDto monster = new MonsterDto(
                                 ((Number) row.get("monster_id")).longValue(),
                                 (String) row.get("monster_name"),
-                                null);
+                                null,
+                                Boolean.TRUE.equals(row.get("monster_is_boss")));
 
                         existingZone.getMonsters().add(monster);
 

@@ -96,7 +96,8 @@ public class ItemEnrichmentService {
                     MonsterDto monsterWithImages = new MonsterDto(
                         monster.getId(),
                         monster.getName(),
-                        monsterImages
+                        monsterImages,
+                        monster.isBoss()
                     );
 
                     enrichedMonsters.add(monsterWithImages);

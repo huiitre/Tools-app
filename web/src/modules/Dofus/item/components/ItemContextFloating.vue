@@ -7,6 +7,7 @@ import { PriceDisplayMode } from '@/modules/Dofus/preferences/types/priceDisplay
 import { getItemImageByResolution } from '@/modules/Dofus/item/utils/itemImageSelector'
 import { getItemPriceDateByMode, getPriceAgeStatus } from '@/modules/Dofus/item/utils/itemPriceSelector'
 import PriceAgeColor from '@/modules/Dofus/item/components/PriceAgeColor.vue'
+import { BOSS_ICON_URL } from '@/modules/Dofus/item/utils/bossIcon'
 
 const props = defineProps<{
   item: Item
@@ -135,6 +136,7 @@ const lastPriceStatus = computed(() => props.price ? getPriceAgeStatus(props.pri
               class="monster-icon"
             />
             <span class="monster-name">{{ monster.name }}</span>
+            <img v-if="monster.boss" :src="BOSS_ICON_URL" class="boss-icon" alt="Boss" title="Boss" />
           </div>
         </div>
       </div>
@@ -283,6 +285,12 @@ const lastPriceStatus = computed(() => props.price ? getPriceAgeStatus(props.pri
 .monster-name {
   font-size: 0.7rem;
   white-space: nowrap;
+}
+
+.boss-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
 }
 
 /* OTHER ZONES */
