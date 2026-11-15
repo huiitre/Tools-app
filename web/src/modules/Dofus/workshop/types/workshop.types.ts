@@ -78,6 +78,8 @@ export interface WorkshopSummary {
     resources: AggregatedResource[]
   }[],
   buyItemsRemaining: number
+  //* Prix ajustés si les ressources prévues étaient complètes ; null sans prévision.
+  preview: { buyItemsRemaining: number; craftAdjusted: number; mixedAdjusted: number } | null
 }
 
 export type CraftCard = {

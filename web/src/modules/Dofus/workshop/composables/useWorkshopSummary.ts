@@ -2,7 +2,8 @@ import { computed } from 'vue'
 import { useWorkshopDetailStore } from '@/modules/Dofus/workshop/store/workshopDetail.store'
 import { useWorkshopPriceCalculator } from '@/modules/Dofus/workshop/composables/useWorkshopPriceCalculator'
 import type { WorkshopItem, WorkshopItemIngredient, AggregatedResource, WorkshopSummary } from '@/modules/Dofus/workshop/types/workshop.types'
-import { craftCostRemaining, craftCostTotal, isComplete, mixedCost } from '@/modules/Dofus/workshop/utils/workshopCost'
+import { craftCostTotal, mixedCost } from '@/modules/Dofus/workshop/utils/workshopCost'
+import { adjustedPrices, applyPreview } from '@/modules/Dofus/workshop/utils/workshopPreview'
 
 export function useWorkshopSummary() {
   const workshopDetailStore = useWorkshopDetailStore()
@@ -72,24 +73,21 @@ export function useWorkshopSummary() {
       return sum + (unitPrice * item.quantity)
     }, 0)
 
-    // Prix d'achat des items restant (items dont ingrédients de base non tous validés)
-    const buyItemsRemaining = items.reduce((sum, item) => {
-      // Complet quand toutes les ressources de base sont validées, sous-ingrédients craftés compris
-      if (isComplete(item.ingredients)) return sum
-
-      const unitPrice = getUnitPrice(item.item.id)
-      return sum + (unitPrice * item.quantity)
-    }, 0)
-
     // Prix craft : ressources de base uniquement, un ingrédient crafté compte par ses sous-ingrédients
     const craftItems = items.filter(item => item.item.hasRecipe)
     const totalCraftCostTotal = craftItems.reduce((sum, item) => sum + craftCostTotal(item.ingredients, getUnitPrice), 0)
-    const totalCraftAdjusted = craftItems.reduce((sum, item) => sum + craftCostRemaining(item.ingredients, getUnitPrice), 0)
 
     // Prix mixte : le moins cher entre achat et craft, objet par objet
-    const mixed = items.map(item => mixedCost(item, getUnitPrice))
-    const mixedTotal = mixed.reduce((sum, m) => sum + m.total.cost, 0)
-    const mixedAdjusted = mixed.reduce((sum, m) => sum + m.adjusted.cost, 0)
+    const mixedTotal = items.reduce((sum, item) => sum + mixedCost(item, getUnitPrice).total.cost, 0)
+
+    // Prix ajustés : achat (objets non terminés), craft restant, meilleur prix restant
+    const adjusted = adjustedPrices(items, getUnitPrice)
+
+    // Prévisions : les mêmes prix ajustés, si les ressources prévues étaient complètes
+    const previewed = workshopDetailStore.previewedItemIds
+    const preview = previewed.length > 0
+      ? adjustedPrices(applyPreview(items, new Set(previewed)), getUnitPrice)
+      : null
 
     return {
       totalItems: items.length,
@@ -97,12 +95,13 @@ export function useWorkshopSummary() {
       totalMissing,
       totalComplete,
       buyItemsCost,
-      buyItemsRemaining, // NOUVEAU
+      buyItemsRemaining: adjusted.buyItemsRemaining,
       totalCost: 0, // DEPRECATED - sera supprimé du type
       craftCost: totalCraftCostTotal, // MODIFIÉ - maintenant craft total
-      craftAdjusted: totalCraftAdjusted,
+      craftAdjusted: adjusted.craftAdjusted,
       mixedCost: mixedTotal,
-      mixedAdjusted,
+      mixedAdjusted: adjusted.mixedAdjusted,
+      preview,
       resources: allResources,
       zones: sortedZones
     }
@@ -177,6 +176,7 @@ export function useWorkshopSummary() {
       craftAdjusted: 0,
       mixedCost: 0,
       mixedAdjusted: 0,
+      preview: null,
       resources: [],
       zones: []
     }

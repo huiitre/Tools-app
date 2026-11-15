@@ -604,6 +604,13 @@ chaîne (objet → ingrédient → sous-ingrédient). Fonctions pures et testée
 - **Achat ajusté** : un objet en sort quand il est terminé (`isComplete`), c'est-à-dire quand toutes
   ses ressources de base sont obtenues, sous-ingrédients craftés compris (avant le 15/11, ceux-ci
   étaient ignorés). Libellés du résumé : « Meilleur prix » / « Meilleur prix ajusté » (ex-« mixte »).
+- **Prévisions** (`utils/workshopPreview.ts` + `.spec.ts`) : bouton œil sur les lignes de ressources
+  du résumé (absent des lignes complètes et des ingrédients craftés). La ressource compte « comme
+  complète » dans une **copie** de l'atelier (`applyPreview`), sur laquelle on relance les mêmes
+  calculs (`adjustedPrices`, aussi utilisée pour les vrais prix ajustés) ; le résultat s'affiche entre
+  parenthèses à gauche des trois prix ajustés. Rien n'est enregistré : `previewedItemIds` du store,
+  vidé à l'ouverture et à la fermeture d'un atelier. Pas de soustraction : le meilleur prix est un
+  minimum à chaque niveau, une soustraction donnerait faux.
 - L'ancien champ `strategy` (choix manuel achat/craft) n'a jamais été rempli nulle part : supprimé.
 
 ## Workshop — Liens et popup de visualisation

@@ -20,6 +20,8 @@ type WorkshopDetailState = {
   displayByZone: boolean
   sortBy: WorkshopSortBy
   sortOrder: WorkshopSortOrder
+  //* Ressources prévues (« si elles étaient complètes ») : indicateur visuel, jamais enregistré.
+  previewedItemIds: number[]
 }
 
 const STORAGE_KEY_CONDENSED = 'dofus.workshop.condensed'
@@ -37,7 +39,8 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
     condensed: localStorage.getItem(STORAGE_KEY_CONDENSED) !== 'false',
     displayByZone: localStorage.getItem(STORAGE_KEY_DISPLAY_BY_ZONE) !== 'false',
     sortBy: (localStorage.getItem(STORAGE_KEY_SORT_BY) as WorkshopSortBy) || 'name',
-    sortOrder: (localStorage.getItem(STORAGE_KEY_SORT_ORDER) as WorkshopSortOrder) || 'asc'
+    sortOrder: (localStorage.getItem(STORAGE_KEY_SORT_ORDER) as WorkshopSortOrder) || 'asc',
+    previewedItemIds: []
   }),
 
   getters: {
@@ -46,6 +49,8 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
     isCondensed: (state) => state.condensed,
 
     isDisplayByZone: (state) => state.displayByZone,
+
+    isPreviewed: (state) => (itemId: number) => state.previewedItemIds.includes(itemId),
 
     isIngredientCrafted: (state) => (ingredientId: number) => {
       for (const item of state.items) {
@@ -63,6 +68,7 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
       await this.getItems(workshopId)
       this.workshopId = workshopId
       this.summary = null
+      this.previewedItemIds = []
       this.refreshPrices()
     },
 
@@ -135,6 +141,17 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
       this.items = []
       this.summary = null
       this.loading = false
+      this.previewedItemIds = []
+    },
+
+    togglePreview(itemId: number) {
+      this.previewedItemIds = this.previewedItemIds.includes(itemId)
+        ? this.previewedItemIds.filter(id => id !== itemId)
+        : [...this.previewedItemIds, itemId]
+    },
+
+    clearPreview() {
+      this.previewedItemIds = []
     },
 
     setCondensed(value: boolean) {

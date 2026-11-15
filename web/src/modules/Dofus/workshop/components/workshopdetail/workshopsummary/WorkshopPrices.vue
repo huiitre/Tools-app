@@ -6,9 +6,14 @@ interface Props {
   craftAdjusted: number
   mixed: number
   mixedAdjusted: number
+  //* Prix ajustés si les ressources prévues étaient complètes ; null sans prévision.
+  preview: { buyItemsRemaining: number; craftAdjusted: number; mixedAdjusted: number } | null
 }
 
 defineProps<Props>()
+const emit = defineEmits<{ (e: 'clear-preview'): void }>()
+
+const PREVIEW_TITLE = 'Prévision : si les ressources prévues étaient complètes'
 </script>
 
 <template>
@@ -20,7 +25,10 @@ defineProps<Props>()
       </div>
       <div class="price-cell">
         <span class="label">Prix d'achat ajusté</span>
-        <span class="value">{{ buyItemsRemaining.toLocaleString() }} ₭</span>
+        <span class="value">
+          <span v-if="preview" class="preview" :title="PREVIEW_TITLE">({{ preview.buyItemsRemaining.toLocaleString() }})</span>
+          {{ buyItemsRemaining.toLocaleString() }} ₭
+        </span>
       </div>
     </div>
 
@@ -31,7 +39,10 @@ defineProps<Props>()
       </div>
       <div class="price-cell">
         <span class="label">Prix craft ajusté</span>
-        <span class="value">{{ craftAdjusted.toLocaleString() }} ₭</span>
+        <span class="value">
+          <span v-if="preview" class="preview" :title="PREVIEW_TITLE">({{ preview.craftAdjusted.toLocaleString() }})</span>
+          {{ craftAdjusted.toLocaleString() }} ₭
+        </span>
       </div>
     </div>
 
@@ -42,8 +53,15 @@ defineProps<Props>()
       </div>
       <div class="price-cell">
         <span class="label">Meilleur prix ajusté</span>
-        <span class="value">{{ mixedAdjusted.toLocaleString() }} ₭</span>
+        <span class="value">
+          <span v-if="preview" class="preview" :title="PREVIEW_TITLE">({{ preview.mixedAdjusted.toLocaleString() }})</span>
+          {{ mixedAdjusted.toLocaleString() }} ₭
+        </span>
       </div>
+    </div>
+
+    <div v-if="preview" class="preview-row">
+      <button class="clear-preview" @click="emit('clear-preview')">Effacer les prévisions</button>
     </div>
   </div>
 </template>
@@ -83,5 +101,38 @@ defineProps<Props>()
 
 .prices-row.highlight .value {
   color: var(--pico-ins-color);
+}
+
+.preview {
+  font-weight: 400;
+  color: var(--pico-primary);
+  margin-right: 0.25rem;
+  cursor: help;
+}
+
+.preview-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.clear-preview {
+  padding: 0.05rem 0.25rem;
+  font-size: 0.65rem;
+  line-height: 1.2;
+  background: var(--pico-form-element-background-color);
+  border: 1px solid var(--pico-form-element-border-color);
+  color: var(--pico-form-element-color);
+  border-radius: var(--pico-border-radius);
+  cursor: pointer;
+  transition: all 0.15s;
+  margin: 0;
+  width: auto;
+  height: auto;
+
+  &:hover {
+    background: var(--pico-primary-background);
+    border-color: var(--pico-primary-border);
+    color: var(--pico-primary-inverse);
+  }
 }
 </style>
