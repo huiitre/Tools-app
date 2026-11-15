@@ -593,6 +593,10 @@ chaîne (objet → ingrédient → sous-ingrédient). Fonctions pures et testée
   min(achat, craft restant), où le craft est lui-même optimisé à **chaque niveau** (`bestCraftCost`) :
   un ingrédient que l'utilisateur crafte est pris au moins cher entre son achat et son craft. Les
   lignes « Prix craft » restent le plan tel que prévu, sans optimisation.
+- **Piège** : choisir de crafter un ingrédient le passe à 1/1 côté API (`CraftIngredientUseCase`).
+  Ce 1/1 veut dire « je le crafte », pas « je l'ai » : sa quantité obtenue est ignorée partout,
+  l'acheter coûte son prix plein et ce qui reste à payer, ce sont ses ressources. Les données de test
+  doivent reproduire ce 1/1 (un test à 0/1 a laissé passer un bug le 15/11).
   Les deux sont **indépendants** : un objet peut être en achat dans le total et en craft dans l'ajusté
   (ressources déjà récoltées), jamais l'inverse. Crafter un ingrédient change la recette, donc les deux.
   Prix à 0 = inconnu (ne gagne jamais), égalité → achat. L'étiquette Achat/Craft de la carte

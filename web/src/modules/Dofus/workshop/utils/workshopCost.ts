@@ -76,15 +76,17 @@ export function bestCraftCost(ingredients: WorkshopItemIngredient[], priceOf: Pr
 
   const best = (ing: WorkshopItemIngredient): BestCost => {
     const price = priceOf(ing.item.id)
-    const buy = { total: price * ing.quantityRequired, remaining: price * remainingQuantity(ing) }
     const children = childrenByParent.get(ing.id)
-    if (!children) return buy
+    if (!children) return { total: price * ing.quantityRequired, remaining: price * remainingQuantity(ing) }
 
+    //* Un ingrédient crafté est passé à 1/1 par l'API : ça veut dire « je le crafte », pas « je l'ai ».
+    //* L'acheter coûte donc toujours son prix plein ; ce qui reste à payer pour lui, ce sont ses ressources.
+    const buy = price * ing.quantityRequired
     const craft = sum(children.map(best))
     const craftKnown = craft.total > 0
     return {
-      total: cheapest(buy.total, price > 0, craft.total, craftKnown).cost,
-      remaining: cheapest(buy.remaining, price > 0, craft.remaining, craftKnown).cost,
+      total: cheapest(buy, price > 0, craft.total, craftKnown).cost,
+      remaining: cheapest(buy, price > 0, craft.remaining, craftKnown).cost,
     }
   }
 

@@ -49,15 +49,20 @@ const PRICES = {
   [SOUS_B]: 50_000,
 }
 
-const amulette = (obtained: { hamatum?: number } = {}, ardoniteCraftee = false) => {
+//* Données conformes à l'API : choisir de crafter un ingrédient le passe à 1/1
+//* (CraftIngredientUseCase), et ses sous-ingrédients sont ajoutés à 0.
+const amulette = (
+  obtained: { hamatum?: number; sousA?: number; sousB?: number } = {},
+  ardoniteCraftee = false,
+) => {
   const ingredients = [
     ing(1, HAMATUM, 1, obtained.hamatum ?? 0),
-    ing(2, ARDONITE, 1),
+    ing(2, ARDONITE, 1, ardoniteCraftee ? 1 : 0),
     ing(3, AUTRE, 1),
   ]
   if (ardoniteCraftee) {
     //* Ardonite craftée : 2 × 100 000 + 2 × 50 000 = 300 000 au lieu de 500 000.
-    ingredients.push(ing(4, SOUS_A, 2, 0, 2), ing(5, SOUS_B, 2, 0, 2))
+    ingredients.push(ing(4, SOUS_A, 2, obtained.sousA ?? 0, 2), ing(5, SOUS_B, 2, obtained.sousB ?? 0, 2))
   }
   return workshopItem(AMULETTE, ingredients)
 }
@@ -148,14 +153,14 @@ describe('isComplete (prix d\'achat ajusté)', () => {
     expect(legacyIsComplete([])).toBe(true)
   })
 
-  it('Ardonite craftée dont les minerais manquent : pas terminé (l\'ancienne règle disait terminé)', () => {
-    const ingredients = [ing(1, HAMATUM, 1, 1), ing(2, ARDONITE, 1, 0), ing(3, AUTRE, 1, 1), ing(4, SOUS_A, 2, 0, 2), ing(5, SOUS_B, 2, 2, 2)]
+  it('Ardonite craftée (1/1) dont les minerais manquent : pas terminé (l\'ancienne règle disait terminé)', () => {
+    const ingredients = [ing(1, HAMATUM, 1, 1), ing(2, ARDONITE, 1, 1), ing(3, AUTRE, 1, 1), ing(4, SOUS_A, 2, 0, 2), ing(5, SOUS_B, 2, 2, 2)]
     expect(legacyIsComplete(ingredients)).toBe(true)
     expect(isComplete(ingredients)).toBe(false)
   })
 
-  it('Ardonite craftée dont les minerais sont obtenus : terminé, même si l\'Ardonite n\'est pas cochée', () => {
-    const ingredients = [ing(1, HAMATUM, 1, 1), ing(2, ARDONITE, 1, 0), ing(3, AUTRE, 1, 1), ing(4, SOUS_A, 2, 2, 2), ing(5, SOUS_B, 2, 2, 2)]
+  it('Ardonite craftée (1/1) dont les minerais sont obtenus : terminé', () => {
+    const ingredients = [ing(1, HAMATUM, 1, 1), ing(2, ARDONITE, 1, 1), ing(3, AUTRE, 1, 1), ing(4, SOUS_A, 2, 2, 2), ing(5, SOUS_B, 2, 2, 2)]
     expect(isComplete(ingredients)).toBe(true)
     expect(legacyIsComplete(ingredients)).toBe(true)
   })
@@ -213,9 +218,56 @@ describe('mixedCost — les cas discutés', () => {
     })
   })
 
-  it('Ardonite déjà obtenue (cochée) : plus rien à payer pour elle, même si ses minerais manquent', () => {
-    const ingredients = [ing(1, HAMATUM, 1), ing(2, ARDONITE, 1, 1), ing(3, AUTRE, 1), ing(4, SOUS_A, 2, 0, 2), ing(5, SOUS_B, 2, 0, 2)]
-    expect(bestCraftCost(ingredients, p).remaining).toBe(200_000 + 0 + 3_810_000)
+  it('Ardonite craftée (1/1), minerais manquants : ses minerais restent à payer', () => {
+    //* 200 000 + min(500 000, 300 000) + 3 810 000. Le 1/1 veut dire « je la crafte », pas « je l'ai ».
+    const wi = amulette({}, true)
+    expect(bestCraftCost(wi.ingredients, p)).toEqual({ total: 4_310_000, remaining: 4_310_000 })
+    expect(mixedCost(wi, p).adjusted).toEqual({ strategy: 'craft', cost: 4_310_000 })
+  })
+
+  it('Ardonite craftée (1/1), minerais en partie obtenus : seuls les minerais restants sont payés', () => {
+    //* SOUS_A obtenu : il reste 2 × 50 000 = 100 000 pour l'Ardonite.
+    expect(bestCraftCost(amulette({ sousA: 2 }, true).ingredients, p).remaining).toBe(200_000 + 100_000 + 3_810_000)
+  })
+
+  it('Ardonite craftée (1/1), minerais tous obtenus : plus rien à payer pour elle', () => {
+    expect(bestCraftCost(amulette({ sousA: 2, sousB: 2 }, true).ingredients, p).remaining).toBe(200_000 + 3_810_000)
+  })
+
+  it('Ardonite craftée plus chère, rien d\'obtenu : le meilleur prix ajusté l\'achète au prix plein', () => {
+    const cher = prices({ ...PRICES, [SOUS_A]: 250_000 })
+    //* min(500 000, 600 000) = 500 000, même si elle est à 1/1.
+    expect(bestCraftCost(amulette({}, true).ingredients, cher).remaining).toBe(200_000 + 500_000 + 3_810_000)
+  })
+
+  it('Ardonite craftée plus chère, mais minerais en partie obtenus : finir son craft redevient moins cher', () => {
+    const cher = prices({ ...PRICES, [SOUS_A]: 250_000 })
+    //* SOUS_A obtenu : il reste 100 000 de minerais, contre 500 000 pour l'acheter.
+    expect(bestCraftCost(amulette({ sousA: 2 }, true).ingredients, cher)).toEqual({
+      total: 200_000 + 500_000 + 3_810_000,
+      remaining: 200_000 + 100_000 + 3_810_000,
+    })
+  })
+
+  it('la quantité obtenue d\'un ingrédient crafté ne change jamais le résultat (1/1 ou décochée)', () => {
+    const coche = amulette({ sousA: 1 }, true)
+    const decoche = { ...coche, ingredients: coche.ingredients.map(i => i.id === 2 ? { ...i, quantityObtained: 0 } : i) }
+    expect(bestCraftCost(decoche.ingredients, p)).toEqual(bestCraftCost(coche.ingredients, p))
+    expect(mixedCost(decoche, p)).toEqual(mixedCost(coche, p))
+  })
+
+  it('Ardonite craftée en quantité 3 : achat et minerais comptés × 3, sans re-multiplier', () => {
+    const ingredients = [ing(1, HAMATUM, 3), ing(2, ARDONITE, 3, 3), ing(3, AUTRE, 3), ing(4, SOUS_A, 6, 0, 2), ing(5, SOUS_B, 6, 0, 2)]
+    const best = bestCraftCost(ingredients, p)
+    expect(best.total).toBe(3 * 200_000 + 3 * 300_000 + 3 * 3_810_000)
+    expect(best.remaining).toBe(best.total)
+  })
+
+  it('plusieurs niveaux craftés (1/1) : les ressources du dernier niveau restent à payer', () => {
+    //* 2 crafté (1/1) ; 3 sous 2, crafté (2/2) ; 4 sous 3 manquant ; 5 sous 2 manquant.
+    const ingredients = [ing(1, 10, 1), ing(2, 11, 1, 1), ing(3, 20, 2, 2, 2), ing(4, 21, 4, 0, 3), ing(5, 22, 1, 0, 2)]
+    const p2 = prices({ 10: 5, 11: 1_000, 20: 500, 21: 7, 22: 3 })
+    expect(bestCraftCost(ingredients, p2)).toEqual({ total: 36, remaining: 36 })
   })
 
   it('ingrédient crafté sans prix d\'achat : son craft est pris', () => {
@@ -306,7 +358,11 @@ describe('mixedCost — invariants sur des ateliers aléatoires', () => {
         const obtained = Math.floor(rand() * (required + 3))
         priceMap[itemId] = rand() < 0.1 ? 0 : Math.floor(rand() * 50_000)
         ingredients.push(ing(id, itemId, required, obtained, parentId))
-        if (depth < 3 && rand() < 0.3) addLevel(id, depth + 1)
+        if (depth < 3 && rand() < 0.3) {
+          //* Comme l'API : un ingrédient crafté passe à quantité requise = obtenue.
+          ingredients[ingredients.length - 1].quantityObtained = required
+          addLevel(id, depth + 1)
+        }
       }
     }
     addLevel(undefined, 0)
@@ -336,6 +392,14 @@ describe('mixedCost — invariants sur des ateliers aléatoires', () => {
       expect(adjusted.cost).toBe(adjusted.strategy === 'buy' ? buy : best.remaining)
       //* Le meilleur reste à payer ne dépasse jamais le meilleur total.
       expect(best.remaining).toBeLessThanOrEqual(best.total)
+      //* La quantité obtenue d'un ingrédient crafté n'a aucun effet : on la remet à 0 partout.
+      const parents = new Set(wi.ingredients.map(i => i.parentIngredientId))
+      const decoches = wi.ingredients.map(i => parents.has(i.id) ? { ...i, quantityObtained: 0 } : i)
+      expect(bestCraftCost(decoches, priceOf)).toEqual(best)
+      //* Sans aucune ressource de base obtenue, le reste à payer égale le total.
+      const rienObtenu = wi.ingredients.map(i => parents.has(i.id) ? i : { ...i, quantityObtained: 0 })
+      const bestRien = bestCraftCost(rienObtenu, priceOf)
+      expect(bestRien.remaining).toBe(bestRien.total)
       //* Choisir à chaque niveau ne coûte jamais plus que le plan de craft prévu.
       if (allPricesKnown) {
         expect(best.total).toBeLessThanOrEqual(craftTotal)
