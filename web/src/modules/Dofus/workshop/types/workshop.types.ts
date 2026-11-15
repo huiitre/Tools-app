@@ -34,7 +34,6 @@ export type WorkshopItem = {
   item: Item
   quantity: number
   ingredients: WorkshopItemIngredient[]
-  strategy: WorkshopItemStrategy
 }
 
 export type WorkshopItemIngredient = {
@@ -88,9 +87,4 @@ export type CraftCard = {
   subIngredients?: WorkshopItemIngredient[]
   level?: number
   parentName?: string
-}
-
-export enum WorkshopItemStrategy {
-  CRAFT = 'craft',
-  BUY = 'buy'
 }

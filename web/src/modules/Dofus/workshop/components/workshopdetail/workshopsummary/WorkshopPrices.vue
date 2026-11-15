@@ -37,11 +37,11 @@ defineProps<Props>()
 
     <div class="prices-row highlight">
       <div class="price-cell">
-        <span class="label">Prix mixte total</span>
+        <span class="label">Meilleur prix</span>
         <span class="value">{{ mixed.toLocaleString() }} ₭</span>
       </div>
       <div class="price-cell">
-        <span class="label">Prix mixte ajusté</span>
+        <span class="label">Meilleur prix ajusté</span>
         <span class="value">{{ mixedAdjusted.toLocaleString() }} ₭</span>
       </div>
     </div>

@@ -580,6 +580,28 @@ open(url: string, alt?: string, minSize?: number)
 
 `ImagePreviewModal.vue` applique `min-width` et `min-height` en style inline quand `minSize` est défini. Utilisé pour les avatars admin (200px) sans impacter les autres usages (images catalogue Dofus en taille naturelle).
 
+## Workshop — Prix du résumé (15/11/2026)
+
+Tout est calculé dans le front ; l'API ne renvoie que les quantités, déjà multipliées sur toute la
+chaîne (objet → ingrédient → sous-ingrédient). Fonctions pures et testées :
+`src/modules/Dofus/workshop/utils/workshopCost.ts` (+ `.spec.ts`), appelées par `useWorkshopSummary.ts`.
+
+- **Craft** : seules les ressources de base (feuilles de l'arbre) sont payées ; un ingrédient crafté
+  compte par ses sous-ingrédients, jamais en plus de son prix d'achat (double comptage corrigé le 15/11).
+  Total = quantités requises, ajusté = quantités restantes.
+- **Mixte** (« Meilleur prix »), objet par objet : total = min(achat, craft total), ajusté =
+  min(achat, craft restant), où le craft est lui-même optimisé à **chaque niveau** (`bestCraftCost`) :
+  un ingrédient que l'utilisateur crafte est pris au moins cher entre son achat et son craft. Les
+  lignes « Prix craft » restent le plan tel que prévu, sans optimisation.
+  Les deux sont **indépendants** : un objet peut être en achat dans le total et en craft dans l'ajusté
+  (ressources déjà récoltées), jamais l'inverse. Crafter un ingrédient change la recette, donc les deux.
+  Prix à 0 = inconnu (ne gagne jamais), égalité → achat. L'étiquette Achat/Craft de la carte
+  (`WorkshopItemCardHeader.vue`) affiche le choix de l'**ajusté**, le seul qui dit quoi faire.
+- **Achat ajusté** : un objet en sort quand il est terminé (`isComplete`), c'est-à-dire quand toutes
+  ses ressources de base sont obtenues, sous-ingrédients craftés compris (avant le 15/11, ceux-ci
+  étaient ignorés). Libellés du résumé : « Meilleur prix » / « Meilleur prix ajusté » (ex-« mixte »).
+- L'ancien champ `strategy` (choix manuel achat/craft) n'a jamais été rempli nulle part : supprimé.
+
 ## Workshop — Liens et popup de visualisation
 
 Chaque atelier peut avoir jusqu'à 3 liens (source `DOFUSBOOK` ou `CUSTOM`).
