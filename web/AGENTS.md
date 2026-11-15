@@ -613,6 +613,21 @@ chaîne (objet → ingrédient → sous-ingrédient). Fonctions pures et testée
   minimum à chaque niveau, une soustraction donnerait faux.
 - L'ancien champ `strategy` (choix manuel achat/craft) n'a jamais été rempli nulle part : supprimé.
 
+## Workshop — Navigateur d'objets (16/11/2026)
+
+`WorkshopItemNavigator.vue` (`components/workshopdetail/`), monté dans `WorkshopDetailPage.vue` : colonne
+des images des objets principaux (`store.items`, pas les sous-crafts), toujours visible, en
+`position: fixed` à droite et centrée verticalement, z-index 900 (sous les popups à 1000). Pas de bouton
+d'ouverture (jugé moche, retiré le 16/11). Survol d'une image → un encart en `position: fixed` recouvre
+exactement l'entrée et s'étend vers la gauche avec nom · type · niveau (calculé sur le rectangle de
+l'entrée : la colonne ne s'élargit pas et son scroll ne le coupe pas ; `pointer-events: none` pour que
+le clic atteigne l'entrée). Clic → `scrollIntoView` sur la carte portant `data-workshop-item-id` (posé
+par `WorkshopItemsList.vue` sur les seules cartes principales). Le scroll s'arrête un peu au-dessus de la
+carte (`scroll-margin-top` sur `[data-workshop-item-id]`, dans `WorkshopItemsList.vue`).
+Masqué quand l'atelier est vide ; présent en lecture seule. Pas de mise en évidence de la carte (refusée).
+Pour que la colonne ne recouvre pas le contenu : `margin-right: 1.5rem` sur `.workshop-detail`
+(`WorkshopDetailPage.vue`), et la sidebar des ateliers passée de 250 à 220 px pour compenser.
+
 ## Workshop — Liens et popup de visualisation
 
 Chaque atelier peut avoir jusqu'à 3 liens (source `DOFUSBOOK` ou `CUSTOM`).

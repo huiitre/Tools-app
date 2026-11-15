@@ -5,6 +5,7 @@ import { useWorkshopDetailStore } from '@/modules/Dofus/workshop/store/workshopD
 import WorkshopSummary from '@/modules/Dofus/workshop/components/workshopdetail/workshopsummary/WorkshopSummary.vue';
 import WorkshopItemsList from '@/modules/Dofus/workshop/components/workshopdetail/workshopitem/WorkshopItemsList.vue';
 import WorkshopReadonlyBanner from '@/modules/Dofus/workshop/components/workshopdetail/WorkshopReadonlyBanner.vue';
+import WorkshopItemNavigator from '@/modules/Dofus/workshop/components/workshopdetail/WorkshopItemNavigator.vue';
 import { storeToRefs } from 'pinia';
 import { useDofusStore } from '@/modules/Dofus/dofus.store';
 
@@ -49,6 +50,8 @@ onUnmounted(() => {
     <!-- ===== ITEMS ===== -->
     <WorkshopItemsList />
 
+    <WorkshopItemNavigator />
+
   </div>
 </template>
 
@@ -57,5 +60,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  margin-right: 1.5rem;
 }
 </style>

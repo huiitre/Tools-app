@@ -102,7 +102,7 @@ const showEditor = ref(false)
 
 <style lang="scss" scoped>
 .sidebar {
-  width: 250px;
+  width: 220px;
   height: 100%;
   flex-shrink: 0;
   border-right: 1px solid var(--pico-muted-border-color);
