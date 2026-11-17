@@ -3,6 +3,7 @@ export interface SnifferItemInstance {
   p1: number;
   p10: number;
   p100: number;
+  p1000?: number;
 }
 
 /**
@@ -18,6 +19,7 @@ export function calculateAverageUnitPrice(instances: SnifferItemInstance[]): num
     // pour ignorer les lots s'ils sont 20% plus chers que le x1 (optionnel)
     if (ins.p10 > 0) p.push(ins.p10 / 10);
     if (ins.p100 > 0) p.push(ins.p100 / 100);
+    if (ins.p1000 && ins.p1000 > 0) p.push(ins.p1000 / 1000);
     return p;
   });
 
