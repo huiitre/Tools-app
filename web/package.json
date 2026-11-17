@@ -3,7 +3,7 @@
   "description": "Sandbox privée — modules utilitaires personnels",
   "author": "Huiitre",
   "private": true,
-  "version": "2.65.2",
+  "version": "2.65.3",
   "type": "module",
   "main": "electron/main.cjs",
   "build": {
