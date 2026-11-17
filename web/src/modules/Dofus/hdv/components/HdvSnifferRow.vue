@@ -26,7 +26,8 @@ const sortedInstances = computed(() => {
   return [...props.instances].sort((a, b) => {
     if (a.p1 !== b.p1) return (a.p1 || Infinity) - (b.p1 || Infinity);
     if (a.p10 !== b.p10) return (a.p10 || Infinity) - (b.p10 || Infinity);
-    return (a.p100 || Infinity) - (b.p100 || Infinity);
+    if (a.p100 !== b.p100) return (a.p100 || Infinity) - (b.p100 || Infinity);
+    return (a.p1000 || Infinity) - (b.p1000 || Infinity);
   });
 })
 </script>
@@ -91,6 +92,10 @@ const sortedInstances = computed(() => {
           <div class="detail-price">
             <span class="label">x100</span>
             <span class="value">{{ formatNumber(ins.p100) }} <small>k</small></span>
+          </div>
+          <div v-if="ins.p1000 !== undefined" class="detail-price">
+            <span class="label">x1000</span>
+            <span class="value">{{ formatNumber(ins.p1000) }} <small>k</small></span>
           </div>
         </div>
       </div>

@@ -131,8 +131,8 @@ export const useHdvSnifferStore = defineStore('hdvSniffer', {
       //* Capture tshark — Dofus 3.
       window.electron.onCapturePriceList((payload: CapturePriceList) => this._onPriceList(payload));
       window.electron.onCaptureItemOffers((offer: CaptureItemOffers) => {
-        const [p1, p10, p100] = offer.lots;
-        const instances = [{ instanceId: `${offer.itemId}-${offer.receivedAt}`, p1, p10, p100 }];
+        const [p1, p10, p100, p1000] = offer.lots;
+        const instances = [{ instanceId: `${offer.itemId}-${offer.receivedAt}`, p1, p10, p100, p1000 }];
         //* Le prix moyen reçu à la connexion prime ; à défaut, on le déduit des lots.
         const price = offer.knownAverage ?? calculateAverageUnitPrice(instances as any);
         this._onItemCaptured('dofus3', offer.itemId, instances, price);
