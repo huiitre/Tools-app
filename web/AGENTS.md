@@ -675,6 +675,10 @@ s'applique ensuite.
   les tags disparus (suppression, rechargement de la liste des tags).
 - Les tags ne sont plus dans la sidebar, ni sur la liste ni dans le détail, et la route
   `dofus-workshop-tag` (`/workshop/tag/:tagId`) a été supprimée.
+- **Atelier tout juste créé** : `newWorkshopId` du store, posé par `createWorkshop`. Affiché en
+  **premier**, avant les épinglés et quels que soient les filtres, avec un contour jaune et un badge
+  « Nouveau ». Remis à `null` au démontage de `WorkshopList` : ouvrir un atelier, passer sur Archive
+  ou changer de module lui rend sa place (et un F5 aussi, l'état n'étant qu'en mémoire).
 - `sortWorkshops` du store est conservé : la sidebar (épinglés) et `AddToWorkshopModal` lisent
   `store.workshops` dans cet ordre.
 

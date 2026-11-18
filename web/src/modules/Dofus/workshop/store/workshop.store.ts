@@ -38,6 +38,8 @@ type WorkshopState = {
   selectedTagIds: Set<number>
   sortKey: WorkshopSortKey
   sortDir: WorkshopSortDir
+  //* Atelier tout juste créé, affiché en tête de liste jusqu'à ce qu'on la quitte.
+  newWorkshopId: number | null
 }
 
 export const useWorkshopStore = defineStore('dofus.workshop', {
@@ -45,7 +47,8 @@ export const useWorkshopStore = defineStore('dofus.workshop', {
     workshops: [],
     tags: [],
     selectedTagIds: new Set(),
-    ...readSort()
+    ...readSort(),
+    newWorkshopId: null
   }),
 
   getters: {
@@ -99,6 +102,7 @@ export const useWorkshopStore = defineStore('dofus.workshop', {
       const response = await useCreateWorkshop({ name, tagIds })
       this.workshops.push(response.data)
       this.workshops = this.sortWorkshops(this.workshops)
+      this.newWorkshopId = response.data.id
       return response.data
     },
 

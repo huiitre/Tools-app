@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useWorkshopStore } from '@/modules/Dofus/workshop/store/workshop.store'
 import { Workshop } from '@/modules/Dofus/workshop/types/workshop.types'
@@ -26,15 +26,25 @@ const scopedWorkshops = computed(() =>
 const matchesTags = (workshop: Workshop) =>
   !store.selectedTagIds.size || workshop.tags.some(t => store.selectedTagIds.has(t.id))
 
-//* Épinglés toujours en tête, puis le tri choisi.
+const newWorkshop = computed(() =>
+  store.workshops.find(w => w.id === store.newWorkshopId) ?? null
+)
+
+//* L'atelier tout juste créé passe devant tout, filtres compris ; puis épinglés, puis le tri choisi.
 const workshops = computed(() => {
   const direction = store.sortDir === 'asc' ? 1 : -1
-  return scopedWorkshops.value
-    .filter(matchesTags)
+  const sorted = scopedWorkshops.value
+    .filter(w => w.id !== store.newWorkshopId && matchesTags(w))
     .sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
       return direction * a.name.localeCompare(b.name)
     })
+  return newWorkshop.value ? [newWorkshop.value, ...sorted] : sorted
+})
+
+//* Quitter la liste (atelier ouvert, autre page) lui rend sa place.
+onBeforeUnmount(() => {
+  store.newWorkshopId = null
 })
 
 /* =========================
@@ -88,8 +98,11 @@ const pinWorkshop = async (workshop: Workshop) => {
       v-for="workshop in workshops"
       :key="workshop.id"
       class="workshop-card"
+      :class="{ 'is-new': workshop.id === store.newWorkshopId }"
       @click="openWorkshop(workshop)"
     >
+      <span v-if="workshop.id === store.newWorkshopId" class="new-badge">Nouveau</span>
+
       <!-- HEADER -->
       <div class="card-header">
         <h3>{{ workshop.name }}</h3>
@@ -216,6 +229,26 @@ const pinWorkshop = async (workshop: Workshop) => {
       opacity: 1;
     }
   }
+}
+
+/* NOUVEL ATELIER */
+.workshop-card.is-new {
+  border-color: #fbbf24;
+  box-shadow: 0 0 0.75rem color-mix(in srgb, #fbbf24 45%, transparent);
+}
+
+.new-badge {
+  position: absolute;
+  top: -0.6rem;
+  right: 0.75rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: #fbbf24;
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* HEADER */
