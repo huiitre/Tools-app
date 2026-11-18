@@ -87,6 +87,7 @@ const scrollTo = (workshopItemId: number) => {
   border: 1px solid var(--pico-muted-border-color);
   border-radius: var(--pico-border-radius);
   box-shadow: var(--pico-card-box-shadow);
+  scrollbar-width: none;
 }
 
 .navigator-entry {
