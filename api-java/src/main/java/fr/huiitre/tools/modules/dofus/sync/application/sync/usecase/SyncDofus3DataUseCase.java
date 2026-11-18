@@ -20,6 +20,8 @@ import fr.huiitre.tools.modules.core.role.domain.RoleCode;
 import fr.huiitre.tools.modules.core.security.application.usecase.SecuredUseCase;
 import fr.huiitre.tools.modules.dofus.game.application.view.GameVersionData;
 import fr.huiitre.tools.modules.dofus.sync.application.almanax.SyncAlmanaxUseCase;
+import fr.huiitre.tools.modules.dofus.sync.application.breed.SyncBreedUseCase;
+import fr.huiitre.tools.modules.dofus.sync.application.job.SyncJobUseCase;
 import fr.huiitre.tools.modules.dofus.sync.application.area.SyncAreaUseCase;
 import fr.huiitre.tools.modules.dofus.sync.application.item.SyncItemUseCase;
 import fr.huiitre.tools.modules.dofus.sync.application.itemtype.SyncItemTypesUseCase;
@@ -50,6 +52,8 @@ public class SyncDofus3DataUseCase implements SecuredUseCase {
     private final SyncAreaUseCase syncAreaUseCase;
     private final SyncSubareaUseCase syncSubareaUseCase;
     private final SyncMonsterUseCase syncMonsterUseCase;
+    private final SyncBreedUseCase syncBreedUseCase;
+    private final SyncJobUseCase syncJobUseCase;
     private final AlignWorkshopsWithRecipesUseCase alignWorkshopsWithRecipesUseCase;
 
     public SyncDofus3DataUseCase(
@@ -63,6 +67,8 @@ public class SyncDofus3DataUseCase implements SecuredUseCase {
             SyncAreaUseCase syncAreaUseCase,
             SyncSubareaUseCase syncSubareaUseCase,
             SyncMonsterUseCase syncMonsterUseCase,
+            SyncBreedUseCase syncBreedUseCase,
+            SyncJobUseCase syncJobUseCase,
             AlignWorkshopsWithRecipesUseCase alignWorkshopsWithRecipesUseCase) {
         this.reportFileGenerator = reportFileGenerator;
         this.mailSenderService = mailSenderService;
@@ -74,6 +80,8 @@ public class SyncDofus3DataUseCase implements SecuredUseCase {
         this.syncAreaUseCase = syncAreaUseCase;
         this.syncSubareaUseCase = syncSubareaUseCase;
         this.syncMonsterUseCase = syncMonsterUseCase;
+        this.syncBreedUseCase = syncBreedUseCase;
+        this.syncJobUseCase = syncJobUseCase;
         this.alignWorkshopsWithRecipesUseCase = alignWorkshopsWithRecipesUseCase;
     }
 
@@ -130,6 +138,16 @@ public class SyncDofus3DataUseCase implements SecuredUseCase {
         // MONSTERS
         // =====================================================
         SyncReport monsterReport = syncMonsterUseCase.execute(gameVersion);
+
+        // =====================================================
+        // BREEDS
+        // =====================================================
+        SyncReport breedReport = syncBreedUseCase.execute(gameVersion);
+
+        // =====================================================
+        // JOBS
+        // =====================================================
+        SyncReport jobReport = syncJobUseCase.execute(gameVersion);
 
         // =====================================================
         // FUTUR : AUTRES JSON
@@ -224,6 +242,26 @@ public class SyncDofus3DataUseCase implements SecuredUseCase {
         );
         globalCreated += monsterReport.createdCount();
         globalUpdated += monsterReport.updatedCount();
+
+        // ------------- BREEDS -------------
+        appendReportSection(
+            breedReport,
+            gameVersion,
+            body,
+            attachments
+        );
+        globalCreated += breedReport.createdCount();
+        globalUpdated += breedReport.updatedCount();
+
+        // ------------- JOBS -------------
+        appendReportSection(
+            jobReport,
+            gameVersion,
+            body,
+            attachments
+        );
+        globalCreated += jobReport.createdCount();
+        globalUpdated += jobReport.updatedCount();
 
         // ------------- TOTAL -------------
         int total = globalCreated + globalUpdated;

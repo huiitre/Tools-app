@@ -8,6 +8,8 @@ import fr.huiitre.tools.modules.dofus.sync.application.area.AreaDataProvider;
 import fr.huiitre.tools.modules.dofus.sync.application.item.ItemDataProvider;
 import fr.huiitre.tools.modules.dofus.sync.application.itemtype.ItemTypeDataProvider;
 import fr.huiitre.tools.modules.dofus.sync.application.monster.MonsterDataProvider;
+import fr.huiitre.tools.modules.dofus.sync.application.breed.BreedDataProvider;
+import fr.huiitre.tools.modules.dofus.sync.application.job.JobDataProvider;
 import fr.huiitre.tools.modules.dofus.sync.application.recipe.RecipeDataProvider;
 import fr.huiitre.tools.modules.dofus.sync.application.subarea.SubAreaDataProvider;
 import fr.huiitre.tools.modules.dofus.sync.application.sync.ports.Dofus3LanguageDataProvider;
@@ -18,6 +20,8 @@ import fr.huiitre.tools.modules.dofus.sync.infrastructure.dofus3.Dofus3ItemTypeD
 import fr.huiitre.tools.modules.dofus.sync.infrastructure.dofus3.Dofus3LanguageDataProviderImpl;
 import fr.huiitre.tools.modules.dofus.sync.infrastructure.dofus3.Dofus3LocalAssetsReader;
 import fr.huiitre.tools.modules.dofus.sync.infrastructure.dofus3.Dofus3MonsterDataProvider;
+import fr.huiitre.tools.modules.dofus.sync.infrastructure.dofus3.Dofus3BreedDataProvider;
+import fr.huiitre.tools.modules.dofus.sync.infrastructure.dofus3.Dofus3JobDataProvider;
 import fr.huiitre.tools.modules.dofus.sync.infrastructure.dofus3.Dofus3RecipeDataProvider;
 import fr.huiitre.tools.modules.dofus.sync.infrastructure.dofus3.Dofus3SubareaDataProvider;
 
@@ -67,6 +71,20 @@ public class DofusSyncConfig {
             Dofus3LocalAssetsReader assetsReader,
             Dofus3LanguageDataProvider languageDataProvider) {
         return new Dofus3MonsterDataProvider(assetsReader, languageDataProvider);
+    }
+
+    @Bean
+    public BreedDataProvider breedDataProvider(
+            Dofus3LocalAssetsReader assetsReader,
+            Dofus3LanguageDataProvider languageDataProvider) {
+        return new Dofus3BreedDataProvider(assetsReader, languageDataProvider);
+    }
+
+    @Bean
+    public JobDataProvider jobDataProvider(
+            Dofus3LocalAssetsReader assetsReader,
+            Dofus3LanguageDataProvider languageDataProvider) {
+        return new Dofus3JobDataProvider(assetsReader, languageDataProvider);
     }
 
     @Bean

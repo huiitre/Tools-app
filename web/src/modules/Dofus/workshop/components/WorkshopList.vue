@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useWorkshopStore } from '@/modules/Dofus/workshop/store/workshop.store'
 import { Workshop } from '@/modules/Dofus/workshop/types/workshop.types'
 import WorkshopTagSelector from '@/modules/Dofus/workshop/components/WorkshopTagSelector.vue'
 import WorkshopEditor from '@/modules/Dofus/workshop/components/WorkshopEditor.vue'
 import WorkshopLinkViewer from '@/modules/Dofus/workshop/components/WorkshopLinkViewer.vue'
+import WorkshopListFilters from '@/modules/Dofus/workshop/components/WorkshopListFilters.vue'
 import { getContrastColor } from '@/utils/color'
 
 const router = useRouter()
@@ -13,46 +14,37 @@ const store = useWorkshopStore()
 
 const route = useRoute()
 
-watchEffect(() => {
-  if (route.name !== 'dofus-workshop-tag') return
-
-  const tagId = Number(route.params.tagId)
-
-  if (Number.isNaN(tagId)) {
-    router.replace({ name: 'dofus-workshop-list' })
-    return
-  }
-
-  //* tag pas encore chargé, on attend
-  if (store.tags.length === 0) return
-
-  const exists = store.tags.some(t => t.id === tagId)
-
-  if (!exists) {
-    router.replace({ name: 'dofus-workshop-list' })
-  }
-})
-
 const selectedWorkshop = ref<Workshop | null>(null)
 const editedWorkshop = ref<Workshop | null>(null)
 const activeLink = ref<{ url: string; label: string } | null>(null)
 
-  const workshops = computed(() => {
-  // Archive
-  if (route.name === 'dofus-workshop-archive') {
-    return store.workshops.filter(w => !w.active)
-  }
+//* Archive ou ateliers actifs, avant filtre : base du compteur.
+const scopedWorkshops = computed(() =>
+  store.workshops.filter(w => route.name === 'dofus-workshop-archive' ? !w.active : w.active)
+)
 
-  // Tag
-  if (route.name === 'dofus-workshop-tag') {
-    const tagId = Number(route.params.tagId)
-    return store.workshops.filter(
-      w => w.active && w.tags.some(t => t.id === tagId)
-    )
-  }
+const matchesTags = (workshop: Workshop) =>
+  !store.selectedTagIds.size || workshop.tags.some(t => store.selectedTagIds.has(t.id))
 
-  // Liste par défaut
-  return store.workshops.filter(w => w.active)
+const newWorkshop = computed(() =>
+  store.workshops.find(w => w.id === store.newWorkshopId) ?? null
+)
+
+//* L'atelier tout juste créé passe devant tout, filtres compris ; puis épinglés, puis le tri choisi.
+const workshops = computed(() => {
+  const direction = store.sortDir === 'asc' ? 1 : -1
+  const sorted = scopedWorkshops.value
+    .filter(w => w.id !== store.newWorkshopId && matchesTags(w))
+    .sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+      return direction * a.name.localeCompare(b.name)
+    })
+  return newWorkshop.value ? [newWorkshop.value, ...sorted] : sorted
+})
+
+//* Quitter la liste (atelier ouvert, autre page) lui rend sa place.
+onBeforeUnmount(() => {
+  store.newWorkshopId = null
 })
 
 /* =========================
@@ -96,13 +88,21 @@ const pinWorkshop = async (workshop: Workshop) => {
 </script>
 
 <template>
+  <WorkshopListFilters
+    :visible-count="workshops.length"
+    :total-count="scopedWorkshops.length"
+  />
+
   <div class="workshops-grid">
     <article
       v-for="workshop in workshops"
       :key="workshop.id"
       class="workshop-card"
+      :class="{ 'is-new': workshop.id === store.newWorkshopId }"
       @click="openWorkshop(workshop)"
     >
+      <span v-if="workshop.id === store.newWorkshopId" class="new-badge">Nouveau</span>
+
       <!-- HEADER -->
       <div class="card-header">
         <h3>{{ workshop.name }}</h3>
@@ -229,6 +229,26 @@ const pinWorkshop = async (workshop: Workshop) => {
       opacity: 1;
     }
   }
+}
+
+/* NOUVEL ATELIER */
+.workshop-card.is-new {
+  border-color: #fbbf24;
+  box-shadow: 0 0 0.75rem color-mix(in srgb, #fbbf24 45%, transparent);
+}
+
+.new-badge {
+  position: absolute;
+  top: -0.6rem;
+  right: 0.75rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: #fbbf24;
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* HEADER */

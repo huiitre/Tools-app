@@ -661,6 +661,57 @@ contenu et de la colonne d'objets à 900, sous les popups à 1000). Au survol, e
 le clignotement) et à chaque changement de route. Survol uniquement : le clic sur l'ampoule mène
 toujours à la liste. Rien de spécial pour « Modifier les tags » (décision : on verra à l'usage).
 
+## Workshop — Chantier en cours (18/11/2026, reprendre ici)
+
+Travail découpé **étape par étape à la demande de l'utilisateur** : il valide chaque étape (« go ») avant
+qu'on code, et fait ses commits lui-même.
+
+**Fait** : filtres de la liste (tri + tags multi-sélection) et mise en avant de l'atelier tout juste
+créé (sections ci-dessous) ; côté API, tables et synchro des classes et métiers Dofus 3 (état détaillé,
+décisions et points ouverts : `api-java/AGENTS.md`, entrée « Dofus/Classes et métiers »).
+
+**Reste, dans l'ordre prévu** :
+1. **Routes classes et métiers** (Java) : liste par version du jeu, ajout/retrait sur un atelier,
+   classes et métiers dans `WorkshopDto`, entrées Bruno. Point à trancher d'abord : la valeur de `sex`
+   écrite à l'ajout d'une classe sur un atelier.
+2. **Front classes et métiers** : sur un atelier, ils se comportent **presque comme des tags sans en
+   être** : icônes, nom au survol, présélectionnables, filtrables dans la barre de filtres. Ce sont des
+   icônes système, non modifiables par les utilisateurs.
+3. **Tags système** (pas encore codé, schéma à valider) : tags présents chez tout le monde (PvP, PvM,
+   artisanat…) pour éviter d'en créer à la main. Idée retenue : dans `workshop_tag`, `user_id` à NULL
+   = tag système (pas de colonne `is_system`) ; colonne `icon` ajoutée ; `name` ou `icon`, l'un ou
+   l'autre (un tag système n'a pas de nom) ; `color` nullable. Lignes séparées par version du jeu, car
+   les icônes des assets diffèrent ; icônes prises dans `tools_assets`. Un utilisateur peut créer un tag
+   de n'importe quel nom. Les écritures du repository filtrent déjà sur `user_id = ?`, donc un tag
+   système est protégé d'office ; à adapter : la lecture (`OR user_id IS NULL`), l'ajout d'un tag
+   système à un atelier, l'unicité (deux NULL ne se heurtent pas dans une contrainte UNIQUE), l'éditeur
+   de tags du front.
+4. **Cartes d'atelier** : niveau min–max, nombre d'objets, prix ajusté et prix total ; aperçu des icônes
+   des objets ; cartes plus grandes façon « site de Huz », classe en grand s'il n'y en a qu'une, en
+   petit s'il y en a plusieurs (demande l'illustration en pied, absente des assets aujourd'hui).
+5. **Recherche par nom** dans la barre de filtres : notée « à voir » par l'utilisateur.
+
+## Workshop — Filtres de la liste (18/11/2026)
+
+`WorkshopListFilters.vue`, monté en tête de `WorkshopList.vue` (liste et archive), calqué sur la
+toolbar et les onglets de `PaldexView.vue` : tri (`select` + bouton asc/desc, seule clé « Nom » pour
+l'instant), compteur visibles / total, tags en sélection multiple (un atelier passe s'il porte **au
+moins un** des tags) et « Effacer les filtres ». Les épinglés restent toujours en tête, le tri choisi
+s'applique ensuite.
+
+- **Tri** : persisté en localStorage (`dofus.workshop.sort`), lu à la création du store, écrit par `setSort`.
+- **Tags sélectionnés** : `selectedTagIds` du store, **en mémoire seulement** (demande explicite) :
+  la sélection survit aux changements de page et de module, pas à un F5. `pruneSelectedTags` retire
+  les tags disparus (suppression, rechargement de la liste des tags).
+- Les tags ne sont plus dans la sidebar, ni sur la liste ni dans le détail, et la route
+  `dofus-workshop-tag` (`/workshop/tag/:tagId`) a été supprimée.
+- **Atelier tout juste créé** : `newWorkshopId` du store, posé par `createWorkshop`. Affiché en
+  **premier**, avant les épinglés et quels que soient les filtres, avec un contour jaune et un badge
+  « Nouveau ». Remis à `null` au démontage de `WorkshopList` : ouvrir un atelier, passer sur Archive
+  ou changer de module lui rend sa place (et un F5 aussi, l'état n'étant qu'en mémoire).
+- `sortWorkshops` du store est conservé : la sidebar (épinglés) et `AddToWorkshopModal` lisent
+  `store.workshops` dans cet ordre.
+
 ## Workshop — Liens et popup de visualisation
 
 Chaque atelier peut avoir jusqu'à 3 liens (source `DOFUSBOOK` ou `CUSTOM`).

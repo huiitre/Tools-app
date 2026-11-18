@@ -22,6 +22,10 @@ import fr.huiitre.tools.modules.dofus.item.infrastructure.PostgresItemRepository
 import fr.huiitre.tools.modules.dofus.itemtype.application.ports.ItemTypeRepository;
 import fr.huiitre.tools.modules.dofus.itemtype.infrastructure.PostgresItemTypeRepository;
 import fr.huiitre.tools.modules.dofus.monster.application.ports.MonsterRepository;
+import fr.huiitre.tools.modules.dofus.breed.application.ports.BreedRepository;
+import fr.huiitre.tools.modules.dofus.breed.infrastructure.PostgresBreedRepository;
+import fr.huiitre.tools.modules.dofus.job.application.ports.JobRepository;
+import fr.huiitre.tools.modules.dofus.job.infrastructure.PostgresJobRepository;
 import fr.huiitre.tools.modules.dofus.monster.domain.Monster;
 import fr.huiitre.tools.modules.dofus.monster.infrastructure.PostgresMonsterRepository;
 import fr.huiitre.tools.modules.dofus.pricing.application.ports.ItemPriceRepository;
@@ -126,6 +130,18 @@ public class DofusConfig {
                 return new PostgresMonsterRepository(
                         jdbcTemplate,
                 new NamedParameterJdbcTemplate(jdbcTemplate));
+        }
+
+        @Bean
+        public BreedRepository breedRepository(
+                        JdbcTemplate jdbcTemplate) {
+                return new PostgresBreedRepository(jdbcTemplate);
+        }
+
+        @Bean
+        public JobRepository jobRepository(
+                        JdbcTemplate jdbcTemplate) {
+                return new PostgresJobRepository(jdbcTemplate);
         }
 
         @Bean

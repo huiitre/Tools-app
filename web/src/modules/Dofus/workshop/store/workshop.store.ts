@@ -15,15 +15,40 @@ import {
   useRemoveTagFromWorkshop
 } from "@/modules/Dofus/workshop/fetch/workshopTag.fetch"
 
+export type WorkshopSortKey = 'name'
+export type WorkshopSortDir = 'asc' | 'desc'
+
+const STORAGE_KEY_SORT = 'dofus.workshop.sort'
+
+const readSort = (): { sortKey: WorkshopSortKey; sortDir: WorkshopSortDir } => {
+  const fallback = { sortKey: 'name' as const, sortDir: 'asc' as const }
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_SORT)
+    return raw ? { ...fallback, ...JSON.parse(raw) } : fallback
+  } catch (e) {
+    console.warn('Failed to hydrate workshop sort', e)
+    return fallback
+  }
+}
+
 type WorkshopState = {
   workshops: Workshop[]
   tags: WorkshopTag[]
+  //* Filtre de la liste : gardé en mémoire le temps de la session, pas en localStorage.
+  selectedTagIds: Set<number>
+  sortKey: WorkshopSortKey
+  sortDir: WorkshopSortDir
+  //* Atelier tout juste créé, affiché en tête de liste jusqu'à ce qu'on la quitte.
+  newWorkshopId: number | null
 }
 
 export const useWorkshopStore = defineStore('dofus.workshop', {
   state: (): WorkshopState => ({
     workshops: [],
-    tags: []
+    tags: [],
+    selectedTagIds: new Set(),
+    ...readSort(),
+    newWorkshopId: null
   }),
 
   getters: {
@@ -44,6 +69,29 @@ export const useWorkshopStore = defineStore('dofus.workshop', {
       })
     },
 
+    setSort(sortKey: WorkshopSortKey, sortDir: WorkshopSortDir) {
+      this.sortKey = sortKey
+      this.sortDir = sortDir
+      localStorage.setItem(STORAGE_KEY_SORT, JSON.stringify({ sortKey, sortDir }))
+    },
+
+    toggleSelectedTag(tagId: number) {
+      const next = new Set(this.selectedTagIds)
+      if (next.has(tagId)) next.delete(tagId)
+      else next.add(tagId)
+      this.selectedTagIds = next
+    },
+
+    clearSelectedTags() {
+      this.selectedTagIds = new Set()
+    },
+
+    //* Retire de la sélection les tags qui n'existent plus (supprimés, autre compte).
+    pruneSelectedTags() {
+      const existing = new Set(this.tags.map(t => t.id))
+      this.selectedTagIds = new Set([...this.selectedTagIds].filter(id => existing.has(id)))
+    },
+
     // Workshop CRUD
     async fetchWorkshops() {
       const response = await useFetchWorkshops()
@@ -54,6 +102,7 @@ export const useWorkshopStore = defineStore('dofus.workshop', {
       const response = await useCreateWorkshop({ name, tagIds })
       this.workshops.push(response.data)
       this.workshops = this.sortWorkshops(this.workshops)
+      this.newWorkshopId = response.data.id
       return response.data
     },
 
@@ -101,6 +150,7 @@ export const useWorkshopStore = defineStore('dofus.workshop', {
     async fetchTags() {
       const response = await useFetchWorkshopTags()
       this.tags = response.data
+      this.pruneSelectedTags()
     },
 
     async createTag(name: string, color: string) {
@@ -125,7 +175,8 @@ export const useWorkshopStore = defineStore('dofus.workshop', {
     async deleteTag(id: number) {
       await useDeleteWorkshopTag(id)
       this.tags = this.tags.filter(t => t.id !== id)
-      
+      this.pruneSelectedTags()
+
       this.workshops.forEach(workshop => {
         workshop.tags = workshop.tags.filter(t => t.id !== id)
       })

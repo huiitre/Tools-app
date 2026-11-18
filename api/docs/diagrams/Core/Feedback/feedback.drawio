@@ -26,7 +26,7 @@
           <mxGeometry x="0" y="306" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="CreateFeedbackUseCase" value="CreateFeedbackUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="270" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="414" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="DeleteFeedbacksUseCase" value="DeleteFeedbacksUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="301" y="342" width="200" height="40" as="geometry" />
@@ -50,7 +50,7 @@
           <mxGeometry x="903" y="378" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="UpdateFeedbackReadStatusUseCase" value="UpdateFeedbackReadStatusUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="414" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="270" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="UpdateReadStatusRequest" value="UpdateReadStatusRequest" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />

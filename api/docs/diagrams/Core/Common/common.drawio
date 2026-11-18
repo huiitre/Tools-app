@@ -20,43 +20,43 @@
           <mxGeometry x="600" y="0" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="ApiExceptionHandler" value="ApiExceptionHandler" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="234" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ApiProblemDetailsFactory" value="ApiProblemDetailsFactory" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="162" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="234" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="AppException" value="AppException" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="378" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="450" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="AppOptions" value="AppOptions" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="666" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="522" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="CommonModule" value="CommonModule" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="738" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ErrorKind" value="ErrorKind" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="450" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="378" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ITransaction" value="ITransaction" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="306" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ITransactionManager" value="ITransactionManager" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="522" width="200" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="InternalApiAttribute" value="InternalApiAttribute" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="234" width="200" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="PostgresConnectionString" value="PostgresConnectionString" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="594" width="200" height="40" as="geometry" />
         </mxCell>
+        <mxCell id="InternalApiAttribute" value="InternalApiAttribute" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="90" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="PostgresConnectionString" value="PostgresConnectionString" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="666" width="200" height="40" as="geometry" />
+        </mxCell>
         <mxCell id="PostgresSession" value="PostgresSession" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="522" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="594" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PostgresTransactionManager" value="PostgresTransactionManager" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="522" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="594" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RequestIdMiddleware" value="RequestIdMiddleware" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="90" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="ApiExceptionHandler" target="ApiProblemDetailsFactory">
           <mxGeometry relative="1" as="geometry" />
