@@ -23,25 +23,25 @@
           <mxGeometry x="750" y="0" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="ApiKey" value="ApiKey" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="1204" y="309" width="200" height="40" as="geometry" />
+          <mxGeometry x="1204" y="369" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ApiKeyAuthenticationHandler" value="ApiKeyAuthenticationHandler" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="462" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="544" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ApiKeyAuthenticator" value="ApiKeyAuthenticator" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="411" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="477" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ApiKeySecret" value="ApiKeySecret" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="306" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="444" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ApiKeyView" value="ApiKeyView" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="378" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="438" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ApiKeysController" value="ApiKeysController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="198" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ApiKeysModule" value="ApiKeysModule" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="534" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="616" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="CreateApiKeyCommand" value="CreateApiKeyCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="126" width="200" height="40" as="geometry" />
@@ -50,22 +50,22 @@
           <mxGeometry x="301" y="306" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="CreatedApiKeyView" value="CreatedApiKeyView" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="378" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="372" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IApiKeyRepository" value="IApiKeyRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="165" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="234" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ListApiKeyScopesUseCase" value="ListApiKeyScopesUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="234" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="90" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ListApiKeysUseCase" value="ListApiKeysUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="301" y="162" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PostgresApiKeyRepository" value="PostgresApiKeyRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="102" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="168" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RevokeApiKeyUseCase" value="RevokeApiKeyUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="90" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="234" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="ApiKeyAuthenticationHandler" target="ApiKeyAuthenticator">
           <mxGeometry relative="1" as="geometry" />

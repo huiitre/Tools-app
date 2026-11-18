@@ -30,13 +30,6 @@ export const routes = [
           import('@/modules/Dofus/workshop/views/WorkshopListPage.vue'),
       },
       {
-        path: 'tag/:tagId',
-        name: 'dofus-workshop-tag',
-        component: () =>
-          import('@/modules/Dofus/workshop/views/WorkshopListPage.vue'),
-        props: true,
-      },
-      {
         path: ':workshopId',
         name: 'dofus-workshop-detail',
         component: () =>

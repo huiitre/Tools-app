@@ -661,6 +661,23 @@ contenu et de la colonne d'objets à 900, sous les popups à 1000). Au survol, e
 le clignotement) et à chaque changement de route. Survol uniquement : le clic sur l'ampoule mène
 toujours à la liste. Rien de spécial pour « Modifier les tags » (décision : on verra à l'usage).
 
+## Workshop — Filtres de la liste (18/11/2026)
+
+`WorkshopListFilters.vue`, monté en tête de `WorkshopList.vue` (liste et archive), calqué sur la
+toolbar et les onglets de `PaldexView.vue` : tri (`select` + bouton asc/desc, seule clé « Nom » pour
+l'instant), compteur visibles / total, tags en sélection multiple (un atelier passe s'il porte **au
+moins un** des tags) et « Effacer les filtres ». Les épinglés restent toujours en tête, le tri choisi
+s'applique ensuite.
+
+- **Tri** : persisté en localStorage (`dofus.workshop.sort`), lu à la création du store, écrit par `setSort`.
+- **Tags sélectionnés** : `selectedTagIds` du store, **en mémoire seulement** (demande explicite) :
+  la sélection survit aux changements de page et de module, pas à un F5. `pruneSelectedTags` retire
+  les tags disparus (suppression, rechargement de la liste des tags).
+- Les tags ne sont plus dans la sidebar, ni sur la liste ni dans le détail, et la route
+  `dofus-workshop-tag` (`/workshop/tag/:tagId`) a été supprimée.
+- `sortWorkshops` du store est conservé : la sidebar (épinglés) et `AddToWorkshopModal` lisent
+  `store.workshops` dans cet ordre.
+
 ## Workshop — Liens et popup de visualisation
 
 Chaque atelier peut avoir jusqu'à 3 liens (source `DOFUSBOOK` ou `CUSTOM`).

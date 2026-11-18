@@ -18,12 +18,6 @@ const isArchive = computed(() =>
   route.name === 'dofus-workshop-archive'
 )
 
-const activeTagId = computed(() =>
-  route.name === 'dofus-workshop-tag'
-    ? Number(route.params.tagId)
-    : null
-)
-
 const activeWorkshopId = computed(() =>
   route.name === 'dofus-workshop-detail'
     ? Number(route.params.workshopId)
@@ -77,26 +71,11 @@ onBeforeUnmount(cancelClose)
         <RouterLink
           :to="{ name: 'dofus-workshop-list' }"
           class="nav-item"
-          :class="{ active: isList && activeTagId === null }"
+          :class="{ active: isList }"
         >
           <span class="mdi mdi-lightbulb-outline"></span>
           Ateliers
         </RouterLink>
-
-        <div class="nav-section" v-if="store.tags.length">
-          <span class="nav-label">Tags</span>
-
-          <RouterLink
-            v-for="tag in store.tags"
-            :key="tag.id"
-            :to="{ name: 'dofus-workshop-tag', params: { tagId: tag.id } }"
-            class="nav-item tag-item"
-            :class="{ active: activeTagId === tag.id }"
-          >
-            <i class="tag-color mdi mdi-tag icon" :style="{ color: tag.color }"></i>
-            {{ tag.name }}
-          </RouterLink>
-        </div>
 
         <RouterLink
           :to="{ name: 'dofus-workshop-archive' }"
@@ -168,11 +147,6 @@ onBeforeUnmount(cancelClose)
     color: var(--pico-primary-inverse);
     font-weight: 500;
   }
-
-  &.tag-item {
-    padding-left: 2.5rem;
-    font-size: 0.9rem;
-  }
 }
 
 .nav-section {
@@ -237,8 +211,5 @@ onBeforeUnmount(cancelClose)
   color: var(--pico-muted-color);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-.tag-color {
 }
 </style>
