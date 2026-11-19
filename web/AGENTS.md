@@ -737,8 +737,10 @@ atelier ».
   propriétaire ne sont jamais montrés). Liens d'origine repris et modifiables dans la popup (modifier, retirer,
   ajouter, 3 au plus) ; un lien ajouté sans libellé prend celui que l'API déduit de l'URL.
 - **Objets** : tuiles comme sur la carte, avec niveau et multiplicateur (×N), et le rappel qu'ils repartent de zéro.
-- **Rien n'est envoyé avant « Importer »** ; un clic en dehors ferme sans importer. Nom déjà pris : erreur sous le
-  champ, popup laissée ouverte, l'erreur s'efface dès qu'on tape.
+- **Rien n'est envoyé avant « Importer »** ; un clic en dehors ferme sans importer. Refus de l'API (nom déjà pris,
+  lien Dofusbook invalide…) : message dans le pied, à gauche d'« Importer », popup laissée ouverte, effacé à la
+  moindre modification. Pas sous le champ Nom : les deux refus arrivent sans code qui dise lequel est en cause
+  (un lien refusé y faisait accuser le nom, corrigé le 19/11/2026).
 - **Après l'import** : `workshop.store.importWorkshop` ajoute l'atelier à la liste comme un atelier tout juste créé
   (`newWorkshopId`), charge les prix de ses objets, et la popup emmène directement sur le nouvel atelier.
 
