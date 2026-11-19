@@ -1,0 +1,27 @@
+info:
+  name: Import d'un atelier
+  type: http
+  seq: 11
+
+http:
+  method: POST
+  url: "{{apiJavaUrl}}/dofus/workshops/{{workshopId}}/import"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Atelier importé",
+        "breedIds": [9],
+        "jobIds": [],
+        "tagIds": [],
+        "links": [
+          { "source": "CUSTOM", "url": "https://example.com", "label": "Lien perso" }
+        ]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

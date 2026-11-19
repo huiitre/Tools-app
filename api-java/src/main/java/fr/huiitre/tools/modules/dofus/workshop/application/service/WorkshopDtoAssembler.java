@@ -88,6 +88,14 @@ public class WorkshopDtoAssembler {
         return fileBaseName == null ? null : assetImageUrlBuilder.buildIcon(category, fileBaseName);
     }
 
+    public List<WorkshopBreedDto> breedsOf(Long workshopId) {
+        return breedsByWorkshopId(List.of(workshopId)).getOrDefault(workshopId, List.of());
+    }
+
+    public List<WorkshopJobDto> jobsOf(Long workshopId) {
+        return jobsByWorkshopId(List.of(workshopId)).getOrDefault(workshopId, List.of());
+    }
+
     private Map<Long, List<WorkshopBreedDto>> breedsByWorkshopId(Collection<Long> workshopIds) {
         return workshopRepository.findBreedsByWorkshopIds(workshopIds).stream()
             .collect(Collectors.groupingBy(

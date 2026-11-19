@@ -38,6 +38,8 @@ import fr.huiitre.tools.modules.dofus.workshop.application.usecase.DeleteWorksho
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.ListWorkshopsUseCase;
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.RemoveTagFromWorkshopUseCase;
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.UpdateWorkshopUseCase;
+import fr.huiitre.tools.modules.dofus.workshop.application.usecase.ImportWorkshopUseCase;
+import fr.huiitre.tools.modules.dofus.workshop.api.dto.ImportWorkshopRequest;
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.breed.AddBreedsToWorkshopUseCase;
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.breed.RemoveBreedFromWorkshopUseCase;
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.job.AddJobsToWorkshopUseCase;
@@ -78,6 +80,7 @@ public class WorkshopController {
     private final RemoveBreedFromWorkshopUseCase removeBreedFromWorkshopUseCase;
     private final AddJobsToWorkshopUseCase addJobsToWorkshopUseCase;
     private final RemoveJobFromWorkshopUseCase removeJobFromWorkshopUseCase;
+    private final ImportWorkshopUseCase importWorkshopUseCase;
 
     public WorkshopController(
         CreateWorkshopUseCase createWorkshopUseCase,
@@ -100,7 +103,8 @@ public class WorkshopController {
         AddBreedsToWorkshopUseCase addBreedsToWorkshopUseCase,
         RemoveBreedFromWorkshopUseCase removeBreedFromWorkshopUseCase,
         AddJobsToWorkshopUseCase addJobsToWorkshopUseCase,
-        RemoveJobFromWorkshopUseCase removeJobFromWorkshopUseCase
+        RemoveJobFromWorkshopUseCase removeJobFromWorkshopUseCase,
+        ImportWorkshopUseCase importWorkshopUseCase
     ) {
         this.createWorkshopUseCase = createWorkshopUseCase;
         this.updateWorkshopUseCase = updateWorkshopUseCase;
@@ -123,6 +127,7 @@ public class WorkshopController {
         this.removeBreedFromWorkshopUseCase = removeBreedFromWorkshopUseCase;
         this.addJobsToWorkshopUseCase = addJobsToWorkshopUseCase;
         this.removeJobFromWorkshopUseCase = removeJobFromWorkshopUseCase;
+        this.importWorkshopUseCase = importWorkshopUseCase;
     }
 
     @RequiredRole(RoleCode.USER)
@@ -316,5 +321,15 @@ public class WorkshopController {
             @PathVariable Long workshopId,
             @PathVariable Long jobId) {
         removeJobFromWorkshopUseCase.execute(workshopId, jobId);
+    }
+
+    @RequiredRole(RoleCode.USER)
+    @PostMapping("/{workshopId}/import")
+    @ResponseStatus(HttpStatus.CREATED)
+    public WorkshopDto importWorkshop(
+            @PathVariable Long workshopId,
+            @RequestHeader(value = "X-Game-Version-Id", required = true) Long gameVersionId,
+            @RequestBody ImportWorkshopRequest request) {
+        return importWorkshopUseCase.execute(workshopId, gameVersionId, request);
     }
 }

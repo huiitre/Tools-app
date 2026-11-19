@@ -2,7 +2,7 @@ import { useItemPrices } from '@/modules/Dofus/almanax/composables/useItemPrices
 import { useDofusStore } from '@/modules/Dofus/dofus.store'
 import { useFetchWorkshopDetail } from '@/modules/Dofus/workshop/fetch/workshop.fetch'
 import { useAddItemsToWorkshop, useCraftIngredient, useDeleteWorkshopItem, useUncraftIngredient, useUpdateIngredientQuantityObtained, useUpdateWorkshopItemQuantity } from '@/modules/Dofus/workshop/fetch/workshopItem.fetch'
-import { WorkshopItem, WorkshopLink, WorkshopSummary } from '@/modules/Dofus/workshop/types/workshop.types'
+import { WorkshopBreed, WorkshopItem, WorkshopJob, WorkshopLink, WorkshopSummary } from '@/modules/Dofus/workshop/types/workshop.types'
 import { defineStore } from 'pinia'
 
 const { refreshRecursive } = useItemPrices()
@@ -12,6 +12,10 @@ export type WorkshopSortOrder = 'asc' | 'desc'
 
 type WorkshopDetailState = {
   workshopId: number | null
+  //* Nom, classes et métiers de l'atelier ouvert, aussi en lecture seule : préremplissent la popup d'import.
+  name: string
+  breeds: WorkshopBreed[]
+  jobs: WorkshopJob[]
   items: WorkshopItem[]
   //* Liens renvoyés à l'ouverture de l'atelier : présents aussi en lecture seule.
   links: WorkshopLink[]
@@ -47,6 +51,9 @@ function sortItems(items: WorkshopItem[]): void {
 export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
   state: (): WorkshopDetailState => ({
     workshopId: null,
+    name: '',
+    breeds: [],
+    jobs: [],
     items: [],
     links: [],
     summary: null,
@@ -92,6 +99,9 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
       const response = await useFetchWorkshopDetail(workshopId)
       sortItems(response.data.items)
       this.items = response.data.items
+      this.name = response.data.name
+      this.breeds = response.data.breeds ?? []
+      this.jobs = response.data.jobs ?? []
       this.links = response.data.links ?? []
       this.owner = response.data.owner
     },
@@ -151,6 +161,9 @@ export const useWorkshopDetailStore = defineStore('dofus.workshop.detail', {
 
     close() {
       this.workshopId = null
+      this.name = ''
+      this.breeds = []
+      this.jobs = []
       this.items = []
       this.links = []
       this.summary = null

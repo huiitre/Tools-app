@@ -115,7 +115,8 @@ public class Almanax {
         }
     }
 
-    private String parseDescription(String raw) {
+    //* Les balises de lien du jeu ({{monsterRace,71::Herboricoles}}) deviennent du texte en gras.
+    public static String parseDescription(String raw) {
         return raw.replaceAll("\\{\\{monsterRace,\\d+::([^}]+)\\}\\}", "<b>$1</b>");
     }
 

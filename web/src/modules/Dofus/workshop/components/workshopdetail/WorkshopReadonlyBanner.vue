@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import WorkshopImportModal from '@/modules/Dofus/workshop/components/workshopdetail/WorkshopImportModal.vue'
+
 defineProps<{
   show: boolean
 }>()
+
+const showImport = ref(false)
 </script>
 
 <template>
@@ -11,9 +16,11 @@ defineProps<{
       Atelier en lecture seule
     </span>
 
-    <button disabled>
+    <button type="button" @click="showImport = true">
       Importer dans mes ateliers
     </button>
+
+    <WorkshopImportModal v-if="showImport" @close="showImport = false" />
   </div>
 </template>
 
