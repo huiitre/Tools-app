@@ -17,6 +17,7 @@ import fr.huiitre.tools.modules.dofus.workshop.application.dto.WorkshopItemDetai
 import fr.huiitre.tools.modules.dofus.workshop.application.dto.WorkshopLinkDto;
 import fr.huiitre.tools.modules.dofus.workshop.application.exception.WorkshopNotFoundException;
 import fr.huiitre.tools.modules.dofus.workshop.application.repository.WorkshopRepository;
+import fr.huiitre.tools.modules.dofus.workshop.application.service.WorkshopDtoAssembler;
 import fr.huiitre.tools.modules.dofus.workshop.application.service.WorkshopItemsBuilder;
 import fr.huiitre.tools.modules.dofus.workshop.domain.Workshop;
 
@@ -27,6 +28,7 @@ public class GetWorkshopDetailUseCase implements SecuredUseCase {
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final WorkshopRepository workshopRepository;
     private final WorkshopItemsBuilder workshopItemsBuilder;
+    private final WorkshopDtoAssembler workshopDtoAssembler;
     private final GameVersionRepository gameVersionRepository;
 
     @Override
@@ -43,10 +45,12 @@ public class GetWorkshopDetailUseCase implements SecuredUseCase {
             AuthenticatedUserProvider authenticatedUserProvider,
             WorkshopRepository workshopRepository,
             WorkshopItemsBuilder workshopItemsBuilder,
+            WorkshopDtoAssembler workshopDtoAssembler,
             GameVersionRepository gameVersionRepository) {
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.workshopRepository = workshopRepository;
         this.workshopItemsBuilder = workshopItemsBuilder;
+        this.workshopDtoAssembler = workshopDtoAssembler;
         this.gameVersionRepository = gameVersionRepository;
     }
 
@@ -72,6 +76,12 @@ public class GetWorkshopDetailUseCase implements SecuredUseCase {
             .map(link -> new WorkshopLinkDto(link.getId(), link.getSource(), link.getUrl(), link.getLabel()))
             .toList();
 
-        return new WorkshopDetailResponse(itemList, linksDto, isOwner);
+        return new WorkshopDetailResponse(
+            workshopDomain.getName(),
+            workshopDtoAssembler.breedsOf(workshopId),
+            workshopDtoAssembler.jobsOf(workshopId),
+            itemList,
+            linksDto,
+            isOwner);
     }
 }

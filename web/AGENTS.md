@@ -726,6 +726,22 @@ s'applique ensuite.
 - `sortWorkshops` du store est conservé : la sidebar (épinglés) et `AddToWorkshopModal` lisent
   `store.workshops` dans cet ordre.
 
+## Workshop — Import d'un atelier en lecture seule (19/11/2026)
+
+Bouton « Importer dans mes ateliers » du bandeau de lecture seule (`WorkshopReadonlyBanner.vue`) → popup
+`workshopdetail/WorkshopImportModal.vue`. Route et règles côté API : `api-java/AGENTS.md`, entrée « Dofus/Import d'un
+atelier ».
+
+- **Préremplissage** depuis le détail ouvert (`workshopDetail.store` garde maintenant `name`, `breeds`, `jobs` de la
+  réponse) : nom d'origine, classes et métiers du propriétaire cochés. **Mes tags** affichés, aucun coché (ceux du
+  propriétaire ne sont jamais montrés). Liens d'origine repris et modifiables dans la popup (modifier, retirer,
+  ajouter, 3 au plus) ; un lien ajouté sans libellé prend celui que l'API déduit de l'URL.
+- **Objets** : tuiles comme sur la carte, avec niveau et multiplicateur (×N), et le rappel qu'ils repartent de zéro.
+- **Rien n'est envoyé avant « Importer »** ; un clic en dehors ferme sans importer. Nom déjà pris : erreur sous le
+  champ, popup laissée ouverte, l'erreur s'efface dès qu'on tape.
+- **Après l'import** : `workshop.store.importWorkshop` ajoute l'atelier à la liste comme un atelier tout juste créé
+  (`newWorkshopId`), charge les prix de ses objets, et la popup emmène directement sur le nouvel atelier.
+
 ## Workshop — Popup « Modifier les tags » (19/11/2026)
 
 `WorkshopTagEditor.vue` (lien de la sidebar), refaite dans le même style que la popup d'édition d'atelier, sans

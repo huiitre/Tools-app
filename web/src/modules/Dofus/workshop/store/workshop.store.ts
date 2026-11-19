@@ -5,7 +5,9 @@ import {
   useFetchWorkshops, 
   useCreateWorkshop, 
   useUpdateWorkshop, 
-  useDeleteWorkshop
+  useDeleteWorkshop,
+  useImportWorkshop,
+  type ImportWorkshopBody
 } from "@/modules/Dofus/workshop/fetch/workshop.fetch"
 import { 
   useFetchWorkshopTags, 
@@ -157,6 +159,17 @@ export const useWorkshopStore = defineStore('dofus.workshop', {
       this.workshops = this.sortWorkshops(this.workshops)
       this.newWorkshopId = response.data.id
       return response.data
+    },
+
+    //* Copie l'atelier d'un autre utilisateur : il arrive dans la liste comme un atelier tout juste créé.
+    async importWorkshop(sourceWorkshopId: number, body: ImportWorkshopBody) {
+      const response = await useImportWorkshop(sourceWorkshopId, body)
+      this.workshops.push(response.data)
+      this.workshops = this.sortWorkshops(this.workshops)
+      this.newWorkshopId = response.data.id
+      const workshop = response.data as Workshop
+      await useItemPrices().load(workshop.items.flatMap(i => [i.item.id, ...i.ingredients.map(g => g.item.id)]))
+      return workshop
     },
 
     async updateWorkshop(id: number, data: { name?: string; active?: boolean; tagIds?: number[], pinned?: boolean }) {
