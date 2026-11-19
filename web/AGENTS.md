@@ -770,8 +770,9 @@ Pipeline :
    trigramme sur `name`, et `unaccent`. Top 3 à 5 candidats par nom avec leur score, quelques millisecondes pour
    20 noms. Probablement limitée aux objets craftables, comme la recherche de l'atelier
    (`SearchCraftableItemsUseCase`). Extensions : migration `V2.83.0__pg_trgm_unaccent.sql` (créée le 19/11/2026,
-   **pas encore appliquée**, ni en local ni en QA/prod) ; `unaccent` existait déjà en local, créée à la main hors
-   migration. L'index trigramme sur `name` reste à faire avec la fonctionnalité.
+   **pas encore appliquée**, ni en local ni en QA/prod) ; `unaccent` existait déjà en local, en QA et en prod (schéma
+   `public`), créée à la main hors migration ; `pg_trgm` est disponible sur le serveur du NAS (PostgreSQL 16.11),
+   et Flyway s'y connecte en superutilisateur (`huiitre`), vérifié le 19/11/2026. L'index trigramme sur `name` reste à faire avec la fonctionnalité.
 3. **IA, second passage, optionnel** : pour chaque nom, elle choisit le plus probable **parmi les candidats fournis**
    (tâche fermée, elle ne peut pas inventer d'objet), tous les noms en un seul appel. À n'ajouter que si le meilleur
    score de `pg_trgm` se trompe souvent, ce qui se mesure sur de vrais copier-coller.
