@@ -744,6 +744,62 @@ atelier ».
 - **Après l'import** : `workshop.store.importWorkshop` ajoute l'atelier à la liste comme un atelier tout juste créé
   (`newWorkshopId`), charge les prix de ses objets, et la popup emmène directement sur le nouvel atelier.
 
+## Workshop — Idée : ajout d'objets en vrac depuis un texte collé (19/11/2026, rien de codé)
+
+Besoin : coller dans un textarea une liste d'objets prise n'importe où (site web, message…), noms tronqués ou mal
+orthographiés (« coife du bouftu »), et ajouter tous les objets en une fois à un atelier, existant ou à créer, sans
+les chercher un par un.
+
+Discuté avec l'utilisateur hors du dépôt (Claude web). Principe : **la recherche est déterministe, l'IA ne sert qu'à
+comprendre le texte** (même conclusion que son moteur de recherche de documents chez Distrilog, et que la règle du Job
+Tracker : l'IA n'est jamais seule source de vérité). IA envisagée : un **modèle local (Ollama)**, avec sortie forcée
+sur un schéma JSON.
+
+Pipeline :
+1. **Extraction des noms** (quantités ignorées, saisies dans la popup). Le texte est sale : bruit (« ★ », « niv 10 »,
+   « 1.2k kamas »), plusieurs objets par ligne, fautes.
+   - Un objet par ligne : simple découpage, sans IA.
+   - En vrac : **IA, un seul appel pour tout le texte**, consigne « extrais uniquement les noms d'objets » + 2 ou 3
+     exemples texte sale → liste propre (le levier le plus efficace sur un petit modèle). Elle **recopie les fautes
+     sans les corriger** : corriger risquerait d'inventer un nom qui n'existe pas, et c'est l'étape 2 qui les absorbe.
+   - Alternative sans IA à comparer : balayer le texte par groupes de 1 à 5 mots consécutifs et chercher chaque
+     groupe à l'étape 2 ; déterministe et rapide, mais plus de faux positifs sur les mots courts ou communs.
+2. **Recherche floue en base** : `tools_dofus.item.name` (nom français déjà traduit, vérifié le 19/11/2026 : 11 415
+   objets en Retro, 22 382 en Dofus 3), filtrée sur la version du jeu. `pg_trgm` (`similarity`, trigrammes : tolère
+   les fautes, les mots manquants, l'ordre ; Levenshtein gère mal les noms partiels comme « coiffe bouf ») + index
+   trigramme sur `name`, et `unaccent`. Top 3 à 5 candidats par nom avec leur score, quelques millisecondes pour
+   20 noms. Probablement limitée aux objets craftables, comme la recherche de l'atelier
+   (`SearchCraftableItemsUseCase`). Extensions : migration `V2.83.0__pg_trgm_unaccent.sql` (créée le 19/11/2026,
+   **pas encore appliquée**, ni en local ni en QA/prod) ; `unaccent` existait déjà en local, créée à la main hors
+   migration. L'index trigramme sur `name` reste à faire avec la fonctionnalité.
+3. **IA, second passage, optionnel** : pour chaque nom, elle choisit le plus probable **parmi les candidats fournis**
+   (tâche fermée, elle ne peut pas inventer d'objet), tous les noms en un seul appel. À n'ajouter que si le meilleur
+   score de `pg_trgm` se trompe souvent, ce qui se mesure sur de vrais copier-coller.
+4. **Popup de confirmation** : meilleur candidat présélectionné si son score est élevé, sinon choix parmi les
+   candidats ; quantité à saisir pour chacun ; croix pour retirer une erreur (une ligne de bruit n'a de toute façon
+   aucune bonne correspondance) ; même barre de recherche que dans l'atelier pour ajouter un oubli. Rien n'est écrit
+   avant validation, l'ajout passe ensuite par le use case d'ajout existant.
+
+**À ne pas faire** : un appel au LLM par objet, ou un LLM qui « cherche » lui-même en base (outils ou SQL) : il ne
+ferait qu'appeler la même recherche trigramme en plus lent (un tour de génération par objet, de dizaines de secondes
+à quelques minutes en local), les petits modèles oublient ou doublent des appels, et un accès SQL brut est exclu
+(requêtes fausses, sécurité).
+
+Durée attendue : instantané sans IA ; avec IA, un appel de quelques secondes à ~10 s pour un modèle 7-8B (GPU ou CPU).
+
+Variante : coller un lien **Dofusbook / DofusDB** d'un stuff → objets retrouvés **par identifiant**, sans IA ni
+recherche floue (ce que chaque site expose n'a pas été vérifié).
+
+Découpage envisagé : use case `ProposeWorkshopItems` qui renvoie les candidats **sans rien écrire** ; ports
+`ItemListParser` (implémentations interchangeables : découpage par ligne, Ollama) et `ItemMatcher` (SQL trigramme) ;
+`DofusDbStuffProvider` pour les liens. Domaine inchangé.
+
+Ordre conseillé : d'abord **sans IA** (textarea, découpage par ligne, recherche floue, popup), puis le parseur IA
+seulement si les vrais copier-coller sont trop en vrac pour le découpage simple.
+
+Points ouverts, à trancher avec l'utilisateur avant de coder : quelle API porte la fonctionnalité (Java où vit Dofus,
+ou C#), où tourne Ollama et quel modèle, seuils de score, et si le second passage IA sert à quelque chose.
+
 ## Workshop — Popup « Modifier les tags » (19/11/2026)
 
 `WorkshopTagEditor.vue` (lien de la sidebar), refaite dans le même style que la popup d'édition d'atelier, sans
