@@ -111,9 +111,12 @@ public class SyncAlmanaxUseCase implements SecuredUseCase {
                                 continue;
                         }
 
+                        //* La base garde la description convertie : comparer brut et converti signalait à
+                        //* chaque synchro une fausse modification sur toutes les descriptions à balise.
+                        String externalDescription = Almanax.parseDescription(externalAlmanax.getDescription());
+
                         boolean nameChanged = !existing.getName().equals(externalAlmanax.getName());
-                        boolean descriptionChanged = !existing.getDescription()
-                                        .equals(externalAlmanax.getDescription());
+                        boolean descriptionChanged = !existing.getDescription().equals(externalDescription);
                         boolean datesChanged = !existing.getDates().equals(externalAlmanax.getDates());
                         boolean itemIdChanged = !Objects.equals(existing.getItemId(), resolvedItemId);
                         boolean itemQuantityChanged = !existing.getItemQuantity()
@@ -149,7 +152,7 @@ public class SyncAlmanaxUseCase implements SecuredUseCase {
                                                 oldName,
                                                 externalAlmanax.getName(),
                                                 oldDescription,
-                                                externalAlmanax.getDescription(),
+                                                externalDescription,
                                                 oldDates.toString(),
                                                 externalAlmanax.getDates().toString(),
                                                 oldItemId,
