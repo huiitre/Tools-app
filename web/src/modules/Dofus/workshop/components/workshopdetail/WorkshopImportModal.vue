@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useWorkshopStore } from '@/modules/Dofus/workshop/store/workshop.store'
@@ -87,6 +87,9 @@ const confirmAdd = () => {
 const importing = ref(false)
 const error = ref<string | null>(null)
 
+//* L'API ne dit pas quel champ elle refuse (nom, lien…) : l'erreur s'efface dès que la saisie change.
+watch([name, links, selectedBreedIds, selectedJobIds, selectedTagIds], () => { error.value = null }, { deep: true })
+
 const submit = async () => {
   if (!name.value.trim() || importing.value || !detailStore.workshopId) return
   importing.value = true
@@ -102,7 +105,7 @@ const submit = async () => {
     emit('close')
     router.push({ name: 'dofus-workshop-detail', params: { workshopId: workshop.id } })
   } catch (e: any) {
-    //* Nom déjà pris chez moi : on garde la popup ouverte pour le changer.
+    //* Nom déjà pris, lien refusé… : on garde la popup ouverte pour corriger.
     error.value = e instanceof Error ? e.message : "Erreur lors de l'import"
   } finally {
     importing.value = false
@@ -128,12 +131,9 @@ const submit = async () => {
           id="import-workshop-name"
           v-model="name"
           class="field"
-          :class="{ invalid: error }"
           placeholder="Nom de l'atelier"
-          @input="error = null"
           @keyup.enter="submit"
         />
-        <p v-if="error" class="error">{{ error }}</p>
 
         <!-- OBJETS -->
         <p class="section-label">
@@ -273,6 +273,7 @@ const submit = async () => {
       </div>
 
       <footer class="popup-footer">
+        <p v-if="error" class="error">{{ error }}</p>
         <button
           type="button"
           class="btn-primary"
@@ -333,7 +334,9 @@ const submit = async () => {
 
 .popup-footer {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 0.75rem;
   padding: 0.75rem 1.1rem 1rem;
   border-top: 1px solid var(--pico-muted-border-color);
 }
@@ -370,14 +373,11 @@ const submit = async () => {
   padding: 0 0.7rem;
   font-size: 0.85rem;
   border-radius: 8px;
-
-  &.invalid {
-    border-color: #e53e3e;
-  }
 }
 
 .error {
-  margin: 0.35rem 0 0;
+  flex: 1;
+  margin: 0;
   font-size: 0.78rem;
   color: #e53e3e;
 }
