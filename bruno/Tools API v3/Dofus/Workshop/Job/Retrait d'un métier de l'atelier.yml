@@ -1,0 +1,15 @@
+info:
+  name: Retrait d'un métier de l'atelier
+  type: http
+  seq: 3
+
+http:
+  method: DELETE
+  url: "{{apiJavaUrl}}/dofus/workshops/{{workshopId}}/jobs/{{jobId}}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

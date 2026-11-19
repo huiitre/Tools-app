@@ -1,6 +1,8 @@
 package fr.huiitre.tools.modules.dofus.breed.infrastructure;
 
 import java.nio.file.Path;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -89,5 +91,24 @@ public class PostgresBreedRepository implements BreedRepository {
     private boolean headImageExists(Long iconId) {
         return FileSystemChecker.exists(assetsBasePath.resolve(
                 "tools_dofus/dofus3/img/class_head/2x/Head_" + iconId + "-64.png"));
+    }
+
+    @Override
+    public Map<Long, Map<BreedSex, Long>> findHeadIconIdsByBreedId(Long gameVersionId) {
+        final String sql = """
+            SELECT bi.breed_id, bi.sex, bi.icon_id
+            FROM tools_dofus.breed_image bi
+            JOIN tools_dofus.breed b ON b.id = bi.breed_id
+            WHERE b.game_version_id = ?
+        """;
+
+        Map<Long, Map<BreedSex, Long>> result = new HashMap<>();
+
+        jdbcTemplate.query(sql, rs -> {
+            result.computeIfAbsent(rs.getLong("breed_id"), id -> new EnumMap<>(BreedSex.class))
+                .put(BreedSex.valueOf(rs.getString("sex")), rs.getLong("icon_id"));
+        }, gameVersionId);
+
+        return result;
     }
 }

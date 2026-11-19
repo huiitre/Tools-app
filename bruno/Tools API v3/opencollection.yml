@@ -39,6 +39,10 @@ request:
       value: ""
     - name: workshopTagId
       value: ""
+    - name: breedId
+      value: ""
+    - name: jobId
+      value: ""
     - name: workshopId
       value: ""
     - name: workshopItemId

@@ -137,81 +137,91 @@ const deleteLink = async (linkId: number) => {
   <div class="overlay" @click.self="emit('close')">
     <div class="popup">
 
-      <!-- NOM -->
-      <p class="section-label">Nom de l'atelier</p>
-      <div class="row">
-        <input
-          id="edit-workshop-name"
-          v-model="name"
-          placeholder="Nom de l'atelier"
-          @keyup.enter="save"
-        />
-        <span class="mdi mdi-check action" @click="save"></span>
-      </div>
+      <header class="popup-header">
+        <h3>Modifier l'atelier</h3>
+        <button type="button" class="icon-btn" title="Fermer" @click="emit('close')">
+          <i class="mdi mdi-close" />
+        </button>
+      </header>
 
-      <!-- SÉPARATEUR -->
-      <div class="divider"></div>
+      <!-- NOM -->
+      <label class="section-label" for="edit-workshop-name">Nom</label>
+      <input
+        id="edit-workshop-name"
+        v-model="name"
+        class="field"
+        placeholder="Nom de l'atelier"
+        @keyup.enter="save"
+      />
 
       <!-- LIENS -->
-      <p class="section-label">Liens</p>
+      <p class="section-label">
+        Liens
+        <span class="section-count">{{ links.length }} / 3</span>
+      </p>
 
       <div class="links-list">
-
-        <!-- Lien existant -->
         <template v-for="link in links" :key="link.id">
 
-          <!-- Mode lecture -->
+          <!-- Lecture -->
           <div v-if="editingId !== link.id" class="link-row">
-            <span class="mdi mdi-link-variant link-icon"></span>
-            <span class="link-label">{{ link.label }}</span>
-            <span class="mdi mdi-pencil-outline action" @click="startEditLink(link)"></span>
-            <span class="mdi mdi-delete-outline action" @click="deleteLink(link.id)"></span>
+            <span class="source-badge">{{ link.source === WorkshopLinkSource.DOFUSBOOK ? 'Dofusbook' : 'Perso' }}</span>
+            <div class="link-text">
+              <span class="link-label">{{ link.label }}</span>
+              <span class="link-url">{{ link.url }}</span>
+            </div>
+            <button type="button" class="icon-btn" title="Modifier le lien" @click="startEditLink(link)">
+              <i class="mdi mdi-pencil-outline" />
+            </button>
+            <button type="button" class="icon-btn danger" title="Supprimer le lien" @click="deleteLink(link.id)">
+              <i class="mdi mdi-delete-outline" />
+            </button>
           </div>
 
-          <!-- Mode édition -->
-          <div v-else class="link-edit">
-            <input v-model="editUrl" placeholder="URL" class="link-input" />
-            <div class="link-edit-row">
-              <input v-model="editLabel" placeholder="Label" class="link-input" @keyup.enter="saveEdit(link)" />
-              <span class="mdi mdi-check action" @click="saveEdit(link)"></span>
-              <span class="mdi mdi-close action" @click="cancelEdit"></span>
+          <!-- Édition -->
+          <div v-else class="link-form">
+            <input v-model="editLabel" class="field" placeholder="Libellé" @keyup.enter="saveEdit(link)" />
+            <input v-model="editUrl" class="field" placeholder="URL" @keyup.enter="saveEdit(link)" />
+            <div class="form-actions">
+              <button type="button" class="btn-ghost" @click="cancelEdit">Annuler</button>
+              <button type="button" class="btn-primary" :aria-busy="editLoading" @click="saveEdit(link)">Valider</button>
             </div>
           </div>
 
         </template>
 
-        <!-- Formulaire d'ajout -->
-        <div v-if="showAddForm" class="link-edit">
-          <div class="link-add-row">
-            <select v-model="newSource" class="source-select">
+        <!-- Ajout -->
+        <div v-if="showAddForm" class="link-form">
+          <div class="add-row">
+            <select v-model="newSource" class="field source-select">
               <option :value="WorkshopLinkSource.DOFUSBOOK">Dofusbook</option>
-              <option :value="WorkshopLinkSource.CUSTOM">Personnalisé</option>
+              <option :value="WorkshopLinkSource.CUSTOM">Perso</option>
             </select>
-            <input
-              v-model="newUrl"
-              placeholder="URL"
-              class="link-input"
-              @keyup.enter="confirmAdd"
-            />
+            <input v-model="newUrl" class="field" placeholder="URL" @keyup.enter="confirmAdd" />
           </div>
-          <div class="link-edit-actions">
-            <span class="mdi mdi-check action" @click="confirmAdd"></span>
-            <span class="mdi mdi-close action" @click="cancelAdd"></span>
+          <div class="form-actions">
+            <button type="button" class="btn-ghost" @click="cancelAdd">Annuler</button>
+            <button type="button" class="btn-primary" :aria-busy="addLoading" @click="confirmAdd">Ajouter</button>
           </div>
         </div>
 
+        <p v-if="!links.length && !showAddForm" class="links-empty">Aucun lien</p>
       </div>
 
-      <!-- BOUTON AJOUT -->
       <button
         v-if="!showAddForm"
+        type="button"
         class="add-link-btn"
         :disabled="links.length >= 3"
         @click="openAddForm"
       >
-        <span class="mdi mdi-plus"></span>
+        <i class="mdi mdi-plus" />
         Ajouter un lien
       </button>
+
+      <footer class="popup-footer">
+        <button type="button" class="btn-primary" @click="save">Enregistrer</button>
+      </footer>
 
     </div>
   </div>
@@ -221,7 +231,7 @@ const deleteLink = async (linkId: number) => {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, .45);
+  background: rgba(0, 0, 0, .5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -229,142 +239,163 @@ const deleteLink = async (linkId: number) => {
 }
 
 .popup {
+  width: 420px;
+  max-width: calc(100vw - 2rem);
+  padding: 1rem 1.1rem 1.1rem;
   background: var(--pico-card-background-color);
-  border-radius: var(--pico-border-radius);
-  width: 380px;
-  padding: 0.75rem;
+  border: 1px solid var(--pico-card-border-color);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .35);
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--pico-contrast);
+  }
 }
 
 .section-label {
-  margin: 0 0 0.35rem 0.25rem;
-  font-size: 0.75rem;
-  color: var(--pico-muted-color);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.divider {
-  border-top: 1px solid var(--pico-muted-border-color);
-  margin: 0.75rem 0;
-}
-
-/* Ligne nom */
-.row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.2rem 0.25rem;
-
-  input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    color: var(--pico-color);
-    font-size: 0.9rem;
-    margin: 0;
-  }
+  justify-content: space-between;
+  margin: 0 0 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--pico-muted-color);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-/* Liste des liens */
+.section-count {
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+//* Champs compacts : Pico les rend beaucoup trop hauts par défaut.
+.field {
+  width: 100%;
+  height: 2.2rem;
+  margin: 0;
+  padding: 0 0.7rem;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+#edit-workshop-name {
+  margin-bottom: 1.1rem;
+}
+
+/* LIENS */
 .links-list {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.4rem;
   margin-bottom: 0.5rem;
 }
 
-/* Lien en lecture */
 .link-row {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.25rem;
-  border-radius: var(--pico-border-radius);
-
-  &:hover {
-    background: var(--pico-muted-border-color);
-  }
+  gap: 0.5rem;
+  padding: 0.45rem 0.4rem 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--pico-contrast) 5%, transparent);
 }
 
-.link-icon {
-  font-size: 0.9rem;
-  color: var(--pico-muted-color);
+.source-badge {
   flex-shrink: 0;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pico-primary) 18%, transparent);
+  color: var(--pico-primary);
+  font-size: 0.65rem;
+  font-weight: 700;
 }
 
-.link-label {
+.link-text {
   flex: 1;
-  font-size: 0.85rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.link-label,
+.link-url {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Lien en édition / ajout */
-.link-edit {
+.link-label {
+  font-size: 0.85rem;
+  color: var(--pico-contrast);
+}
+
+.link-url {
+  font-size: 0.7rem;
+  color: var(--pico-muted-color);
+}
+
+.link-form {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
-  padding: 0.35rem 0.25rem;
-  background: var(--pico-muted-border-color);
-  border-radius: var(--pico-border-radius);
+  gap: 0.4rem;
+  padding: 0.55rem;
+  border-radius: 8px;
+  border: 1px solid var(--pico-card-border-color);
+  background: color-mix(in srgb, var(--pico-contrast) 3%, transparent);
 }
 
-.link-add-row {
+.add-row {
   display: flex;
   gap: 0.4rem;
 }
 
-.link-edit-row {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+.source-select {
+  width: auto;
+  flex-shrink: 0;
+  padding-right: 2rem;
 }
 
-.link-edit-actions {
+.form-actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.4rem;
 }
 
-.link-input {
-  flex: 1;
-  border: none;
-  border-bottom: 1px solid var(--pico-muted-color);
-  background: transparent;
-  color: var(--pico-color);
-  font-size: 0.85rem;
-  padding: 0.1rem 0;
+.links-empty {
   margin: 0;
-}
-
-.source-select {
-  flex-shrink: 0;
   font-size: 0.8rem;
-  padding: 0.1rem 0.3rem;
-  height: auto;
-  width: auto;
-  margin: 0;
+  font-style: italic;
+  color: var(--pico-muted-color);
 }
 
-/* Bouton ajout */
 .add-link-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
-  padding: 0.35rem 0.5rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.45rem;
   font-size: 0.8rem;
   background: transparent;
-  border: 2px dashed var(--pico-muted-border-color);
-  border-radius: var(--pico-border-radius);
+  border: 1px dashed var(--pico-muted-border-color);
+  border-radius: 8px;
   color: var(--pico-muted-color);
   cursor: pointer;
-  width: 100%;
-  justify-content: center;
   transition: border-color 0.15s, color 0.15s;
 
   &:hover:not(:disabled) {
-    border-color: var(--pico-primary-border);
+    border-color: var(--pico-primary);
     color: var(--pico-primary);
   }
 
@@ -372,20 +403,57 @@ const deleteLink = async (linkId: number) => {
     opacity: 0.4;
     cursor: not-allowed;
   }
+}
 
-  .mdi {
-    font-size: 0.9rem;
+.popup-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+/* BOUTONS */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.9rem;
+  height: 1.9rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pico-muted-color);
+  font-size: 1.05rem;
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--pico-contrast) 10%, transparent);
+    color: var(--pico-contrast);
+  }
+
+  &.danger:hover {
+    color: #e53e3e;
   }
 }
 
-.action {
-  font-size: 1.1rem;
-  cursor: pointer;
-  opacity: 0.6;
-  flex-shrink: 0;
+.btn-primary,
+.btn-ghost {
+  width: auto;
+  margin: 0;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+  border-radius: 8px;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--pico-muted-border-color);
+  color: inherit;
 
   &:hover {
-    opacity: 1;
+    border-color: var(--pico-contrast);
   }
 }
 </style>

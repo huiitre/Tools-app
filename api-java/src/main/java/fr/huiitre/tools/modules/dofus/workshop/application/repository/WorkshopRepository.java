@@ -10,6 +10,12 @@ import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopItemIngredient;
 import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopLink;
 import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopTag;
 
+import java.util.Collection;
+
+import fr.huiitre.tools.modules.dofus.breed.domain.BreedSex;
+import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopBreed;
+import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopJob;
+
 public interface WorkshopRepository {
     
     boolean existsByUserIdAndGameVersionIdAndName(Long userId, Long gameVersionId, String name);
@@ -70,4 +76,18 @@ public interface WorkshopRepository {
     Optional<Workshop> findById(Long id, Long gameVersionId);
 
     Long findOwnerUserId(Long workshopId);
+
+    List<WorkshopBreed> findBreedsByWorkshopIds(Collection<Long> workshopIds);
+
+    List<WorkshopJob> findJobsByWorkshopIds(Collection<Long> workshopIds);
+
+    void addBreedsToWorkshop(Long userId, Long workshopId, Long gameVersionId, Map<Long, BreedSex> sexByBreedId);
+
+    void removeBreedFromWorkshop(Long userId, Long workshopId, Long breedId);
+
+    void addJobsToWorkshop(Long userId, Long workshopId, Long gameVersionId, List<Long> jobIds);
+
+    void removeJobFromWorkshop(Long userId, Long workshopId, Long jobId);
+
+    Long findGameVersionId(Long workshopId);
 }

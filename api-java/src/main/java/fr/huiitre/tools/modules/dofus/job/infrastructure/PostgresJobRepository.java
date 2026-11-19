@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.JdbcUtils;
 
 import fr.huiitre.tools.modules.dofus.job.application.ports.JobRepository;
 import fr.huiitre.tools.modules.dofus.job.domain.Job;
@@ -21,7 +22,7 @@ public class PostgresJobRepository implements JobRepository {
             rs.getLong("asset_id"),
             rs.getLong("game_version_id"),
             rs.getString("name"),
-            rs.getObject("icon_id", Long.class)
+            (Long) JdbcUtils.getResultSetValue(rs, rs.findColumn("icon_id"), Long.class)
     );
 
     @Override

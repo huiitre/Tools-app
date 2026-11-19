@@ -20,6 +20,23 @@ export type Workshop = {
   tags: WorkshopTag[]
   pinned: boolean
   links: WorkshopLink[]
+  breeds: WorkshopBreed[]
+  jobs: WorkshopJob[]
+  //* Objets avec leur arbre d'ingrédients (sans zones de récolte) : chiffres des cartes de la liste.
+  items: WorkshopItem[]
+}
+
+//* Icônes système : non modifiables par l'utilisateur, URL déjà résolue par l'API.
+export type WorkshopBreed = {
+  id: number
+  name: string
+  iconUrl: string | null
+}
+
+export type WorkshopJob = {
+  id: number
+  name: string
+  iconUrl: string | null
 }
 
 export type WorkshopTag = {

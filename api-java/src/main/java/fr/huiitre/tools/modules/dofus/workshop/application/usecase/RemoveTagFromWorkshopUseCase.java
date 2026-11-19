@@ -16,6 +16,7 @@ import fr.huiitre.tools.modules.dofus.workshop.application.dto.WorkshopLinkDto;
 import fr.huiitre.tools.modules.dofus.workshop.application.dto.WorkshopTagDto;
 import fr.huiitre.tools.modules.dofus.workshop.application.exception.WorkshopNotFoundException;
 import fr.huiitre.tools.modules.dofus.workshop.application.repository.WorkshopRepository;
+import fr.huiitre.tools.modules.dofus.workshop.application.service.WorkshopDtoAssembler;
 import fr.huiitre.tools.modules.dofus.workshop.domain.Workshop;
 import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopLink;
 import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopTag;
@@ -26,6 +27,7 @@ public class RemoveTagFromWorkshopUseCase implements SecuredUseCase {
 
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final WorkshopRepository workshopRepository;
+    private final WorkshopDtoAssembler workshopDtoAssembler;
 
     @Override
     public Optional<ModuleCode> requiredModule() {
@@ -39,10 +41,12 @@ public class RemoveTagFromWorkshopUseCase implements SecuredUseCase {
 
     public RemoveTagFromWorkshopUseCase(
         AuthenticatedUserProvider authenticatedUserProvider,
-        WorkshopRepository workshopRepository
+        WorkshopRepository workshopRepository,
+        WorkshopDtoAssembler workshopDtoAssembler
     ) {
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.workshopRepository = workshopRepository;
+        this.workshopDtoAssembler = workshopDtoAssembler;
     }
 
     public WorkshopDto execute(Long workshopId, Long tagId) {
@@ -53,23 +57,6 @@ public class RemoveTagFromWorkshopUseCase implements SecuredUseCase {
 
         workshopRepository.removeTagFromWorkshop(userId, workshopId, tagId);
 
-        List<WorkshopTag> tags = workshopRepository.findAllTagsByUserIdAndWorkshopId(userId, workshopId);
-
-        List<WorkshopTagDto> tagsDto = tags.stream()
-            .map(tag -> new WorkshopTagDto(tag.getId(), tag.getName(), tag.getColor()))
-            .collect(Collectors.toList());
-
-        List<WorkshopLink> links = workshop.getLinks();
-
-        return new WorkshopDto(
-            workshop.getId(),
-            workshop.getName(),
-            workshop.isActive(),
-            tagsDto,
-            links.stream()
-                .map(link -> new WorkshopLinkDto(link.getId(), link.getSource(), link.getUrl(), link.getLabel()))
-                .collect(Collectors.toList()),
-            workshop.isPinned()
-        );
+        return workshopDtoAssembler.toDto(userId, workshop);
     }
 }

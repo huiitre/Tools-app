@@ -38,4 +38,9 @@ public class AssetImageUrlBuilder {
                 + scale + "/"
                 + iconId + "-" + size + ".png";
     }
+
+    //* Têtes de classes et métiers : 64 px en 2x, nommés librement (Head_91, 13…).
+    public String buildIcon(String category, String fileBaseName) {
+        return baseUrl + "/tools_dofus/dofus3/img/" + category + "/2x/" + fileBaseName + "-64.png";
+    }
 }

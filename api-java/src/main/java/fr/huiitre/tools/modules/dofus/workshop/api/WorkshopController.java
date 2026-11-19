@@ -38,6 +38,10 @@ import fr.huiitre.tools.modules.dofus.workshop.application.usecase.DeleteWorksho
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.ListWorkshopsUseCase;
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.RemoveTagFromWorkshopUseCase;
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.UpdateWorkshopUseCase;
+import fr.huiitre.tools.modules.dofus.workshop.application.usecase.breed.AddBreedsToWorkshopUseCase;
+import fr.huiitre.tools.modules.dofus.workshop.application.usecase.breed.RemoveBreedFromWorkshopUseCase;
+import fr.huiitre.tools.modules.dofus.workshop.application.usecase.job.AddJobsToWorkshopUseCase;
+import fr.huiitre.tools.modules.dofus.workshop.application.usecase.job.RemoveJobFromWorkshopUseCase;
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.item.AddItemsToWorkshopUseCase;
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.item.CraftIngredientUseCase;
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.item.DeleteWorkshopItemUseCase;
@@ -70,6 +74,10 @@ public class WorkshopController {
     private final AddWorkshopLinkUseCase addWorkshopLinkUseCase;
     private final UpdateWorkshopLinkUseCase updateWorkshopLinkUseCase;
     private final DeleteWorkshopLinkUseCase deleteWorkshopLinkUseCase;
+    private final AddBreedsToWorkshopUseCase addBreedsToWorkshopUseCase;
+    private final RemoveBreedFromWorkshopUseCase removeBreedFromWorkshopUseCase;
+    private final AddJobsToWorkshopUseCase addJobsToWorkshopUseCase;
+    private final RemoveJobFromWorkshopUseCase removeJobFromWorkshopUseCase;
 
     public WorkshopController(
         CreateWorkshopUseCase createWorkshopUseCase,
@@ -88,7 +96,11 @@ public class WorkshopController {
         RemoveTagFromWorkshopUseCase removeTagFromWorkshopUseCase,
         AddWorkshopLinkUseCase addWorkshopLinkUseCase,
         UpdateWorkshopLinkUseCase updateWorkshopLinkUseCase,
-        DeleteWorkshopLinkUseCase deleteWorkshopLinkUseCase
+        DeleteWorkshopLinkUseCase deleteWorkshopLinkUseCase,
+        AddBreedsToWorkshopUseCase addBreedsToWorkshopUseCase,
+        RemoveBreedFromWorkshopUseCase removeBreedFromWorkshopUseCase,
+        AddJobsToWorkshopUseCase addJobsToWorkshopUseCase,
+        RemoveJobFromWorkshopUseCase removeJobFromWorkshopUseCase
     ) {
         this.createWorkshopUseCase = createWorkshopUseCase;
         this.updateWorkshopUseCase = updateWorkshopUseCase;
@@ -107,6 +119,10 @@ public class WorkshopController {
         this.addWorkshopLinkUseCase = addWorkshopLinkUseCase;
         this.updateWorkshopLinkUseCase = updateWorkshopLinkUseCase;
         this.deleteWorkshopLinkUseCase = deleteWorkshopLinkUseCase;
+        this.addBreedsToWorkshopUseCase = addBreedsToWorkshopUseCase;
+        this.removeBreedFromWorkshopUseCase = removeBreedFromWorkshopUseCase;
+        this.addJobsToWorkshopUseCase = addJobsToWorkshopUseCase;
+        this.removeJobFromWorkshopUseCase = removeJobFromWorkshopUseCase;
     }
 
     @RequiredRole(RoleCode.USER)
@@ -264,5 +280,41 @@ public class WorkshopController {
             @PathVariable Long linkId,
             @RequestBody UpdateWorkshopLinkRequest request) {
         return updateWorkshopLinkUseCase.execute(workshopId, linkId, request);
+    }
+
+    @RequiredRole(RoleCode.USER)
+    @PostMapping("/{workshopId}/breeds")
+    public WorkshopDto addBreedsToWorkshop(
+            @PathVariable Long workshopId,
+            @RequestHeader(value = "X-Game-Version-Id", required = true) Long gameVersionId,
+            @RequestBody List<Long> breedIds) {
+        return addBreedsToWorkshopUseCase.execute(workshopId, gameVersionId, breedIds);
+    }
+
+    @RequiredRole(RoleCode.USER)
+    @DeleteMapping("/{workshopId}/breeds/{breedId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeBreedFromWorkshop(
+            @PathVariable Long workshopId,
+            @PathVariable Long breedId) {
+        removeBreedFromWorkshopUseCase.execute(workshopId, breedId);
+    }
+
+    @RequiredRole(RoleCode.USER)
+    @PostMapping("/{workshopId}/jobs")
+    public WorkshopDto addJobsToWorkshop(
+            @PathVariable Long workshopId,
+            @RequestHeader(value = "X-Game-Version-Id", required = true) Long gameVersionId,
+            @RequestBody List<Long> jobIds) {
+        return addJobsToWorkshopUseCase.execute(workshopId, gameVersionId, jobIds);
+    }
+
+    @RequiredRole(RoleCode.USER)
+    @DeleteMapping("/{workshopId}/jobs/{jobId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeJobFromWorkshop(
+            @PathVariable Long workshopId,
+            @PathVariable Long jobId) {
+        removeJobFromWorkshopUseCase.execute(workshopId, jobId);
     }
 }

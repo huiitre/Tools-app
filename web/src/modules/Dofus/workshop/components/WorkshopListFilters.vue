@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useWorkshopStore, WorkshopSortKey } from '@/modules/Dofus/workshop/store/workshop.store'
+import type { Workshop } from '@/modules/Dofus/workshop/types/workshop.types'
 
-defineProps<{
+const props = defineProps<{
   visibleCount: number
   totalCount: number
+  //* Ateliers de la page (actifs ou archivés), avant filtre : base des compteurs des boutons.
+  workshops: Workshop[]
 }>()
 
 const store = useWorkshopStore()
@@ -17,6 +20,19 @@ const sortKey = computed({
   get: () => store.sortKey,
   set: (value: WorkshopSortKey) => store.setSort(value, store.sortDir),
 })
+
+//* Nombre d'ateliers par id de classe, de métier ou de tag.
+const countBy = (lists: { id: number }[][]) => {
+  const counts = new Map<number, number>()
+  for (const list of lists) {
+    for (const { id } of list) counts.set(id, (counts.get(id) ?? 0) + 1)
+  }
+  return counts
+}
+
+const breedCounts = computed(() => countBy(props.workshops.map(w => w.breeds)))
+const jobCounts = computed(() => countBy(props.workshops.map(w => w.jobs)))
+const tagCounts = computed(() => countBy(props.workshops.map(w => w.tags)))
 
 const toggleSortDir = () => {
   store.setSort(store.sortKey, store.sortDir === 'asc' ? 'desc' : 'asc')
@@ -45,6 +61,47 @@ const toggleSortDir = () => {
         <span class="count-sep" />
         <strong>{{ visibleCount }}</strong> / {{ totalCount }} ateliers
       </span>
+
+      <button
+        v-if="store.hasFilters"
+        type="button"
+        class="clear-btn"
+        @click="store.clearFilters()"
+      >
+        Effacer les filtres
+      </button>
+    </div>
+
+    <div v-if="store.breeds.length" class="tag-tabs">
+      <button
+        v-for="breed in store.breeds"
+        :key="breed.id"
+        type="button"
+        class="tag-tab icon-tab named-tab"
+        :class="{ active: store.selectedBreedIds.has(breed.id) }"
+        :title="breed.name"
+        @click="store.toggleSelectedBreed(breed.id)"
+      >
+        <img :src="breed.iconUrl ?? undefined" :alt="breed.name">
+        {{ breed.name }}
+        <span v-if="breedCounts.get(breed.id)" class="count-badge">{{ breedCounts.get(breed.id) }}</span>
+      </button>
+    </div>
+
+    <div v-if="store.jobs.length" class="tag-tabs">
+      <button
+        v-for="job in store.jobs"
+        :key="job.id"
+        type="button"
+        class="tag-tab icon-tab named-tab"
+        :class="{ active: store.selectedJobIds.has(job.id) }"
+        :title="job.name"
+        @click="store.toggleSelectedJob(job.id)"
+      >
+        <img :src="job.iconUrl ?? undefined" :alt="job.name">
+        {{ job.name }}
+        <span v-if="jobCounts.get(job.id)" class="count-badge">{{ jobCounts.get(job.id) }}</span>
+      </button>
     </div>
 
     <div v-if="store.tags.length" class="tag-tabs">
@@ -58,16 +115,9 @@ const toggleSortDir = () => {
       >
         <i class="mdi mdi-tag" :style="{ color: tag.color }" />
         {{ tag.name }}
+        <span v-if="tagCounts.get(tag.id)" class="count-badge">{{ tagCounts.get(tag.id) }}</span>
       </button>
 
-      <button
-        v-if="store.selectedTagIds.size"
-        type="button"
-        class="clear-btn"
-        @click="store.clearSelectedTags()"
-      >
-        Effacer les filtres
-      </button>
     </div>
   </div>
 </template>
@@ -76,11 +126,12 @@ const toggleSortDir = () => {
 .workshop-filters {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.6rem;
   margin-bottom: 1.5rem;
 }
 
 .toolbar {
+  margin-bottom: 0.4rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -154,6 +205,7 @@ const toggleSortDir = () => {
 }
 
 .tag-tab {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -179,6 +231,30 @@ const toggleSortDir = () => {
     color: var(--pico-primary);
     font-weight: 700;
   }
+}
+
+.icon-tab {
+  padding: 0.15rem 0.35rem;
+
+  &.named-tab {
+    padding-right: 0.7rem;
+  }
+
+  img {
+    display: block;
+    width: 27px;
+    height: 27px;
+  }
+}
+
+.count-badge {
+  position: absolute;
+  top: -0.55rem;
+  right: -0.2rem;
+  color: var(--pico-primary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .clear-btn {

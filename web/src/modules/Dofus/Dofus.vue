@@ -60,6 +60,8 @@ watch(
     const workshopStore = useWorkshopStore()
     await Promise.all([
       workshopStore.fetchTags(),
+      workshopStore.fetchBreeds(),
+      workshopStore.fetchJobs(),
       workshopStore.fetchWorkshops()
     ])
   },
