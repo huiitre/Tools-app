@@ -798,8 +798,21 @@ Découpage envisagé : use case `ProposeWorkshopItems` qui renvoie les candidats
 Ordre conseillé : d'abord **sans IA** (textarea, découpage par ligne, recherche floue, popup), puis le parseur IA
 seulement si les vrais copier-coller sont trop en vrac pour le découpage simple.
 
-Points ouverts, à trancher avec l'utilisateur avant de coder : quelle API porte la fonctionnalité (Java où vit Dofus,
-ou C#), où tourne Ollama et quel modèle, seuils de score, et si le second passage IA sert à quelque chose.
+**Orientation retenue en R&D (19/11/2026)** : un module LLM **générique** dans l'API C# (port → adaptateur, l'adaptateur
+actuel étant Ollama sur le NAS, sur le modèle de Traduction → LibreTranslate). L'API Java (module Dofus) l'appelle par
+une route interne (`X-Internal-Token`, comme `/internal/notifications`) et **possède le prompt, les exemples, le schéma
+JSON attendu et la validation de la réponse** ; le module C# ne connaît rien de Dofus. Quand Dofus passera en C#, seul
+le saut Java → C# disparaît.
+
+Constat NAS (19/11/2026, lecture seule) : un Ollama tourne déjà (`ollama_llm`, réseau `network_tools`, modèles
+`qwen2.5:1.5b`, `qwen2.5:7b`, `qwen2.5vl:7b`, `nomic-embed-text`…). Le GPU est une GT 1030 de 2 Go, inutilisable pour
+un 7B : l'inférence se fera sur le CPU (Ryzen 7 5700X, 62 Go de RAM). Un 7B sur CPU, c'est plutôt de l'ordre de
+30 s à 1 min pour une liste de 20 objets, un 1.5B bien moins mais moins fiable : **à mesurer sur de vrais
+copier-coller** avant de choisir, et prévoir des délais d'attente longs côté Java et côté C# (`HttpClient` coupe à
+100 s par défaut).
+
+Points ouverts, à trancher avec l'utilisateur avant de coder : quel modèle (et qui le choisit : configuration du
+module C#, ou l'appelant), seuils de score, et si le second passage IA sert à quelque chose.
 
 ## Workshop — Popup « Modifier les tags » (19/11/2026)
 
