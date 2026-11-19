@@ -1,0 +1,18 @@
+info:
+  name: Ajout de classes à l'atelier
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiJavaUrl}}/dofus/workshops/{{workshopId}}/breeds"
+  body:
+    type: json
+    data: "[8, 9]"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

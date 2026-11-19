@@ -7,7 +7,8 @@ import WorkshopTagSelector from '@/modules/Dofus/workshop/components/WorkshopTag
 import WorkshopEditor from '@/modules/Dofus/workshop/components/WorkshopEditor.vue'
 import WorkshopLinkViewer from '@/modules/Dofus/workshop/components/WorkshopLinkViewer.vue'
 import WorkshopListFilters from '@/modules/Dofus/workshop/components/WorkshopListFilters.vue'
-import { getContrastColor } from '@/utils/color'
+import WorkshopCard from '@/modules/Dofus/workshop/components/WorkshopCard.vue'
+import WorkshopDeleteConfirm from '@/modules/Dofus/workshop/components/WorkshopDeleteConfirm.vue'
 
 const router = useRouter()
 const store = useWorkshopStore()
@@ -16,6 +17,7 @@ const route = useRoute()
 
 const selectedWorkshop = ref<Workshop | null>(null)
 const editedWorkshop = ref<Workshop | null>(null)
+const deletedWorkshop = ref<Workshop | null>(null)
 const activeLink = ref<{ url: string; label: string } | null>(null)
 
 //* Archive ou ateliers actifs, avant filtre : base du compteur.
@@ -23,8 +25,14 @@ const scopedWorkshops = computed(() =>
   store.workshops.filter(w => route.name === 'dofus-workshop-archive' ? !w.active : w.active)
 )
 
-const matchesTags = (workshop: Workshop) =>
-  !store.selectedTagIds.size || workshop.tags.some(t => store.selectedTagIds.has(t.id))
+const matchesAny = (selected: Set<number>, items: { id: number }[]) =>
+  !selected.size || items.some(item => selected.has(item.id))
+
+//* Au moins un des éléments choisis dans chaque famille (tags, classes, métiers).
+const matchesFilters = (workshop: Workshop) =>
+  matchesAny(store.selectedTagIds, workshop.tags)
+  && matchesAny(store.selectedBreedIds, workshop.breeds)
+  && matchesAny(store.selectedJobIds, workshop.jobs)
 
 const newWorkshop = computed(() =>
   store.workshops.find(w => w.id === store.newWorkshopId) ?? null
@@ -34,7 +42,7 @@ const newWorkshop = computed(() =>
 const workshops = computed(() => {
   const direction = store.sortDir === 'asc' ? 1 : -1
   const sorted = scopedWorkshops.value
-    .filter(w => w.id !== store.newWorkshopId && matchesTags(w))
+    .filter(w => w.id !== store.newWorkshopId && matchesFilters(w))
     .sort((a, b) => {
       if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
       return direction * a.name.localeCompare(b.name)
@@ -67,9 +75,6 @@ const archive = async (id: number, workshop: Workshop) => {
   })
 }
 
-const remove = async (id: number) => {
-  await store.deleteWorkshop(id)
-}
 
 const openTagSelector = (workshop: Workshop) => {
   selectedWorkshop.value = workshop
@@ -91,86 +96,23 @@ const pinWorkshop = async (workshop: Workshop) => {
   <WorkshopListFilters
     :visible-count="workshops.length"
     :total-count="scopedWorkshops.length"
+    :workshops="scopedWorkshops"
   />
 
   <div class="workshops-grid">
-    <article
+    <WorkshopCard
       v-for="workshop in workshops"
       :key="workshop.id"
-      class="workshop-card"
-      :class="{ 'is-new': workshop.id === store.newWorkshopId }"
-      @click="openWorkshop(workshop)"
-    >
-      <span v-if="workshop.id === store.newWorkshopId" class="new-badge">Nouveau</span>
-
-      <!-- HEADER -->
-      <div class="card-header">
-        <h3>{{ workshop.name }}</h3>
-
-        <span
-          class="mdi mdi-pin-outline pin action"
-          :class="{ pinned: workshop.pinned }"
-          title="Épingler"
-          @click.stop="pinWorkshop(workshop)"
-        ></span>
-      </div>
-
-      <!-- LINKS -->
-      <div v-if="workshop.links?.length" class="card-links" @click.stop>
-        <span
-          v-for="link in workshop.links"
-          :key="link.id"
-          class="card-link"
-          @click.stop="activeLink = { url: link.url, label: link.label }"
-        >
-          <span class="mdi mdi-link-variant"></span>
-          {{ link.label }}
-        </span>
-      </div>
-
-      <!-- CONTENT -->
-      <div class="card-content">
-        <div class="card-tags">
-          <span
-            v-for="tag in workshop.tags"
-            :key="tag.id"
-            class="tag"
-            :style="{ background: tag.color, color: getContrastColor(tag.color) }"
-          >
-            {{ tag.name }}
-          </span>
-
-          <span
-            class="tag tag-empty"
-            title="Ajouter des tags"
-            @click.stop="openTagSelector(workshop)"
-          >
-            <span class="mdi mdi-plus"></span>
-          </span>
-        </div>
-      </div>
-
-      <!-- FOOTER -->
-      <div class="card-footer">
-        <span
-          class="mdi mdi-pencil-outline action"
-          @click.stop="openEditor(workshop)"
-        ></span>
-
-        <span
-          class="mdi action"
-          :class="workshop.active
-            ? 'mdi-archive-outline'
-            : 'mdi-archive-arrow-up-outline'"
-          @click.stop="archive(workshop.id, workshop)"
-        ></span>
-
-        <span
-          class="mdi mdi-delete-outline action"
-          @click.stop="remove(workshop.id)"
-        ></span>
-      </div>
-    </article>
+      :workshop="workshop"
+      :is-new="workshop.id === store.newWorkshopId"
+      @open="openWorkshop(workshop)"
+      @pin="pinWorkshop(workshop)"
+      @edit="openEditor(workshop)"
+      @archive="archive(workshop.id, workshop)"
+      @remove="deletedWorkshop = workshop"
+      @edit-tags="openTagSelector(workshop)"
+      @open-link="link => activeLink = { url: link.url, label: link.label }"
+    />
   </div>
 
   <div
@@ -185,6 +127,12 @@ const pinWorkshop = async (workshop: Workshop) => {
     v-if="selectedWorkshop"
     :workshop="selectedWorkshop"
     @close="selectedWorkshop = null"
+  />
+
+  <WorkshopDeleteConfirm
+    v-if="deletedWorkshop"
+    :workshop="deletedWorkshop"
+    @close="deletedWorkshop = null"
   />
 
   <WorkshopEditor
@@ -204,169 +152,8 @@ const pinWorkshop = async (workshop: Workshop) => {
 <style scoped lang="scss">
 .workshops-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 1rem;
-}
-
-.workshop-card {
-  position: relative;
-  background: var(--pico-card-background-color);
-  border: 1px solid var(--pico-card-border-color);
-  border-radius: var(--pico-border-radius);
-  padding: 1rem;
-  cursor: pointer;
-  transition: box-shadow 0.2s, border-color 0.2s;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  &:hover {
-    border-color: var(--pico-primary-border);
-    box-shadow: var(--pico-card-box-shadow);
-
-    .pin,
-    .card-footer {
-      opacity: 1;
-    }
-  }
-}
-
-/* NOUVEL ATELIER */
-.workshop-card.is-new {
-  border-color: #fbbf24;
-  box-shadow: 0 0 0.75rem color-mix(in srgb, #fbbf24 45%, transparent);
-}
-
-.new-badge {
-  position: absolute;
-  top: -0.6rem;
-  right: 0.75rem;
-  padding: 0.1rem 0.5rem;
-  border-radius: 999px;
-  background: #fbbf24;
-  color: #000;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* HEADER */
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-
-  h3 {
-    margin: 0;
-    font-size: 1rem;
-    color: var(--pico-contrast);
-    flex: 1;
-  }
-}
-
-.pin {
-  opacity: 0.7 !important;
-  transition: opacity 0.15s;
-
-  &.pinned {
-    color: var(--pico-primary);
-    opacity: 1 !important;
-  }
-}
-
-/* LINKS */
-.card-links {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 0.75rem;
-}
-
-.card-link {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.8rem;
-  color: var(--pico-primary);
-  text-decoration: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-
-  .mdi {
-    flex-shrink: 0;
-    font-size: 0.9rem;
-  }
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-/* CONTENT */
-
-/* TAGS */
-.card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 1.4rem;
-  padding: 0 0.75rem;
-  font-size: 0.75rem;
-  border-radius: 1rem;
-  font-weight: 500;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.tag:not(.tag-empty) {
-  color: rgba(0, 0, 0, 0.87);
-}
-
-.tag-empty {
-  background: transparent;
-  border: 2px solid var(--pico-muted-border-color);
-  color: var(--pico-muted-color);
-  opacity: 0.7;
-
-  &:hover {
-    border-color: var(--pico-primary-border);
-    color: var(--pico-primary);
-    opacity: 1;
-  }
-
-  .mdi {
-    font-size: 0.9rem;
-  }
-}
-
-/* FOOTER */
-.card-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-
-.action {
-  font-size: 1.1rem;
-  cursor: pointer;
-  opacity: 0.7;
-
-  &:hover {
-    opacity: 1 !important;
-  }
 }
 
 /* EMPTY */

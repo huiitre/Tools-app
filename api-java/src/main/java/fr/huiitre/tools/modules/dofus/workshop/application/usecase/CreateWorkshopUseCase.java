@@ -70,7 +70,10 @@ public class CreateWorkshopUseCase implements SecuredUseCase {
             workshop.isActive(),
             List.of(),
             List.of(),
-            workshop.isPinned()
+            workshop.isPinned(),
+            List.of(),
+            List.of(),
+            List.of()
         );
     }
 }

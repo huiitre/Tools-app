@@ -1,5 +1,6 @@
-import { Workshop, WorkshopTag } from "@/modules/Dofus/workshop/types/workshop.types"
+import { Workshop, WorkshopBreed, WorkshopJob, WorkshopTag } from "@/modules/Dofus/workshop/types/workshop.types"
 import { defineStore } from "pinia"
+import { useItemPrices } from "@/modules/Dofus/almanax/composables/useItemPrices"
 import { 
   useFetchWorkshops, 
   useCreateWorkshop, 
@@ -14,6 +15,16 @@ import {
   useAddTagsToWorkshop,
   useRemoveTagFromWorkshop
 } from "@/modules/Dofus/workshop/fetch/workshopTag.fetch"
+import {
+  useFetchWorkshopBreeds,
+  useAddBreedsToWorkshop,
+  useRemoveBreedFromWorkshop
+} from "@/modules/Dofus/workshop/fetch/workshopBreed.fetch"
+import {
+  useFetchWorkshopJobs,
+  useAddJobsToWorkshop,
+  useRemoveJobFromWorkshop
+} from "@/modules/Dofus/workshop/fetch/workshopJob.fetch"
 
 export type WorkshopSortKey = 'name'
 export type WorkshopSortDir = 'asc' | 'desc'
@@ -31,11 +42,23 @@ const readSort = (): { sortKey: WorkshopSortKey; sortDir: WorkshopSortDir } => {
   }
 }
 
+const toggled = (ids: Set<number>, id: number) => {
+  const next = new Set(ids)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  return next
+}
+
 type WorkshopState = {
   workshops: Workshop[]
   tags: WorkshopTag[]
+  //* Catalogues des icônes système proposables sur un atelier.
+  breeds: WorkshopBreed[]
+  jobs: WorkshopJob[]
   //* Filtre de la liste : gardé en mémoire le temps de la session, pas en localStorage.
   selectedTagIds: Set<number>
+  selectedBreedIds: Set<number>
+  selectedJobIds: Set<number>
   sortKey: WorkshopSortKey
   sortDir: WorkshopSortDir
   //* Atelier tout juste créé, affiché en tête de liste jusqu'à ce qu'on la quitte.
@@ -46,7 +69,11 @@ export const useWorkshopStore = defineStore('dofus.workshop', {
   state: (): WorkshopState => ({
     workshops: [],
     tags: [],
+    breeds: [],
+    jobs: [],
     selectedTagIds: new Set(),
+    selectedBreedIds: new Set(),
+    selectedJobIds: new Set(),
     ...readSort(),
     newWorkshopId: null
   }),
@@ -55,6 +82,8 @@ export const useWorkshopStore = defineStore('dofus.workshop', {
     activeWorkshops: (state) => state.workshops.filter(w => w.active),
     
     archivedWorkshops: (state) => state.workshops.filter(w => !w.active),
+
+    hasFilters: (state) => state.selectedTagIds.size + state.selectedBreedIds.size + state.selectedJobIds.size > 0,
   },
 
   actions: {
@@ -76,14 +105,34 @@ export const useWorkshopStore = defineStore('dofus.workshop', {
     },
 
     toggleSelectedTag(tagId: number) {
-      const next = new Set(this.selectedTagIds)
-      if (next.has(tagId)) next.delete(tagId)
-      else next.add(tagId)
-      this.selectedTagIds = next
+      this.selectedTagIds = toggled(this.selectedTagIds, tagId)
     },
 
-    clearSelectedTags() {
+    toggleSelectedBreed(breedId: number) {
+      this.selectedBreedIds = toggled(this.selectedBreedIds, breedId)
+    },
+
+    toggleSelectedJob(jobId: number) {
+      this.selectedJobIds = toggled(this.selectedJobIds, jobId)
+    },
+
+    clearFilters() {
       this.selectedTagIds = new Set()
+      this.selectedBreedIds = new Set()
+      this.selectedJobIds = new Set()
+    },
+
+    //* Classes et métiers qui n'existent pas dans la version du jeu affichée sortent du filtre.
+    pruneSelectedBreedsAndJobs() {
+      const breedIds = new Set(this.breeds.map(b => b.id))
+      const jobIds = new Set(this.jobs.map(j => j.id))
+      this.selectedBreedIds = new Set([...this.selectedBreedIds].filter(id => breedIds.has(id)))
+      this.selectedJobIds = new Set([...this.selectedJobIds].filter(id => jobIds.has(id)))
+    },
+
+    replaceWorkshop(workshop: Workshop) {
+      const index = this.workshops.findIndex(w => w.id === workshop.id)
+      if (index !== -1) this.workshops[index] = workshop
     },
 
     //* Retire de la sélection les tags qui n'existent plus (supprimés, autre compte).
@@ -96,6 +145,10 @@ export const useWorkshopStore = defineStore('dofus.workshop', {
     async fetchWorkshops() {
       const response = await useFetchWorkshops()
       this.workshops = this.sortWorkshops(response.data)
+
+      //* Prix des objets et ingrédients de tous les ateliers, pour les chiffres des cartes (seuls ceux absents du cache partent).
+      const itemIds = new Set(this.workshops.flatMap(w => w.items.flatMap(i => [i.item.id, ...i.ingredients.map(g => g.item.id)])))
+      await useItemPrices().load([...itemIds])
     },
 
     async createWorkshop(name: string, tagIds?: number[]) {
@@ -180,6 +233,43 @@ export const useWorkshopStore = defineStore('dofus.workshop', {
       this.workshops.forEach(workshop => {
         workshop.tags = workshop.tags.filter(t => t.id !== id)
       })
-    }
+    },
+
+    // Classes et métiers
+    async fetchBreeds() {
+      const response = await useFetchWorkshopBreeds()
+      this.breeds = response.data
+      this.pruneSelectedBreedsAndJobs()
+    },
+
+    async fetchJobs() {
+      const response = await useFetchWorkshopJobs()
+      this.jobs = response.data
+      this.pruneSelectedBreedsAndJobs()
+    },
+
+    async addBreedsToWorkshop(workshopId: number, breedIds: number[]) {
+      const response = await useAddBreedsToWorkshop(workshopId, breedIds)
+      this.replaceWorkshop(response.data)
+    },
+
+    async removeBreedFromWorkshop(workshopId: number, breedId: number) {
+      await useRemoveBreedFromWorkshop(workshopId, breedId)
+
+      const workshop = this.workshops.find(w => w.id === workshopId)
+      if (workshop) workshop.breeds = workshop.breeds.filter(b => b.id !== breedId)
+    },
+
+    async addJobsToWorkshop(workshopId: number, jobIds: number[]) {
+      const response = await useAddJobsToWorkshop(workshopId, jobIds)
+      this.replaceWorkshop(response.data)
+    },
+
+    async removeJobFromWorkshop(workshopId: number, jobId: number) {
+      await useRemoveJobFromWorkshop(workshopId, jobId)
+
+      const workshop = this.workshops.find(w => w.id === workshopId)
+      if (workshop) workshop.jobs = workshop.jobs.filter(j => j.id !== jobId)
+    },
   }
 })

@@ -3,6 +3,7 @@ package fr.huiitre.tools.modules.dofus.workshop.infrastructure;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,10 +12,14 @@ import java.util.Optional;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.JdbcUtils;
 
+import fr.huiitre.tools.modules.dofus.breed.domain.BreedSex;
 import fr.huiitre.tools.modules.dofus.workshop.application.repository.WorkshopRepository;
 import fr.huiitre.tools.modules.dofus.workshop.domain.LinkSource;
 import fr.huiitre.tools.modules.dofus.workshop.domain.Workshop;
+import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopBreed;
+import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopJob;
 import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopItem;
 import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopItemIngredient;
 import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopLink;
@@ -561,4 +566,125 @@ public class PostgresWorkshopRepository implements WorkshopRepository {
         rs.getString("label"),
         rs.getTimestamp("created_at").toLocalDateTime()
     );
+
+    @Override
+    public List<WorkshopBreed> findBreedsByWorkshopIds(Collection<Long> workshopIds) {
+        if (workshopIds.isEmpty()) {
+            return List.of();
+        }
+
+        String sql = """
+            SELECT whb.workshop_id, b.id AS breed_id, b.name, bi.icon_id
+            FROM tools_dofus.workshop_has_breed whb
+            JOIN tools_dofus.breed b ON b.id = whb.breed_id
+            LEFT JOIN tools_dofus.breed_image bi ON bi.breed_id = whb.breed_id AND bi.sex = whb.sex
+            WHERE whb.workshop_id = ANY(?)
+            ORDER BY b.name
+        """;
+
+        return jdbcTemplate.query(
+            sql,
+            (rs, rowNum) -> new WorkshopBreed(
+                rs.getLong("workshop_id"),
+                rs.getLong("breed_id"),
+                rs.getString("name"),
+                (Long) JdbcUtils.getResultSetValue(rs, rs.findColumn("icon_id"), Long.class)),
+            (Object) workshopIds.toArray(Long[]::new));
+    }
+
+    @Override
+    public List<WorkshopJob> findJobsByWorkshopIds(Collection<Long> workshopIds) {
+        if (workshopIds.isEmpty()) {
+            return List.of();
+        }
+
+        String sql = """
+            SELECT whj.workshop_id, j.id AS job_id, j.name, j.icon_id
+            FROM tools_dofus.workshop_has_job whj
+            JOIN tools_dofus.job j ON j.id = whj.job_id
+            WHERE whj.workshop_id = ANY(?)
+            ORDER BY j.name
+        """;
+
+        return jdbcTemplate.query(
+            sql,
+            (rs, rowNum) -> new WorkshopJob(
+                rs.getLong("workshop_id"),
+                rs.getLong("job_id"),
+                rs.getString("name"),
+                (Long) JdbcUtils.getResultSetValue(rs, rs.findColumn("icon_id"), Long.class)),
+            (Object) workshopIds.toArray(Long[]::new));
+    }
+
+    //* N'insère que pour un atelier de l'utilisateur et une classe de la même version du jeu.
+    @Override
+    public void addBreedsToWorkshop(Long userId, Long workshopId, Long gameVersionId, Map<Long, BreedSex> sexByBreedId) {
+        String sql = """
+            INSERT INTO tools_dofus.workshop_has_breed (workshop_id, breed_id, sex)
+            SELECT w.id, b.id, ?
+            FROM tools_dofus.workshop w
+            JOIN tools_dofus.breed b ON b.id = ? AND b.game_version_id = w.game_version_id
+            WHERE w.id = ? AND w.user_id = ? AND w.game_version_id = ?
+            ON CONFLICT DO NOTHING
+        """;
+
+        sexByBreedId.forEach((breedId, sex) ->
+            jdbcTemplate.update(sql, sex.name(), breedId, workshopId, userId, gameVersionId));
+    }
+
+    @Override
+    public void removeBreedFromWorkshop(Long userId, Long workshopId, Long breedId) {
+        String sql = """
+            DELETE FROM tools_dofus.workshop_has_breed whb
+            USING tools_dofus.workshop w
+            WHERE whb.workshop_id = ?
+            AND whb.breed_id = ?
+            AND w.id = whb.workshop_id
+            AND w.user_id = ?
+        """;
+
+        jdbcTemplate.update(sql, workshopId, breedId, userId);
+    }
+
+    //* N'insère que pour un atelier de l'utilisateur et un métier de la même version du jeu.
+    @Override
+    public void addJobsToWorkshop(Long userId, Long workshopId, Long gameVersionId, List<Long> jobIds) {
+        String sql = """
+            INSERT INTO tools_dofus.workshop_has_job (workshop_id, job_id)
+            SELECT w.id, j.id
+            FROM tools_dofus.workshop w
+            JOIN tools_dofus.job j ON j.id = ? AND j.game_version_id = w.game_version_id
+            WHERE w.id = ? AND w.user_id = ? AND w.game_version_id = ?
+            ON CONFLICT DO NOTHING
+        """;
+
+        for (Long jobId : jobIds) {
+            jdbcTemplate.update(sql, jobId, workshopId, userId, gameVersionId);
+        }
+    }
+
+    @Override
+    public void removeJobFromWorkshop(Long userId, Long workshopId, Long jobId) {
+        String sql = """
+            DELETE FROM tools_dofus.workshop_has_job whj
+            USING tools_dofus.workshop w
+            WHERE whj.workshop_id = ?
+            AND whj.job_id = ?
+            AND w.id = whj.workshop_id
+            AND w.user_id = ?
+        """;
+
+        jdbcTemplate.update(sql, workshopId, jobId, userId);
+    }
+
+    @Override
+    public Long findGameVersionId(Long workshopId) {
+        String sql = """
+            SELECT game_version_id
+            FROM tools_dofus.workshop
+            WHERE id = ?
+        """;
+
+        return jdbcTemplate.queryForObject(sql, Long.class, workshopId);
+    }
 }

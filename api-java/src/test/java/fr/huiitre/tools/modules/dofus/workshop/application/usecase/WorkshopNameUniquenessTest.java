@@ -22,6 +22,11 @@ import fr.huiitre.tools.modules.dofus.workshop.api.dto.UpdateWorkshopRequest;
 import fr.huiitre.tools.modules.dofus.workshop.api.dto.UpdateWorkshopTagRequest;
 import fr.huiitre.tools.modules.dofus.workshop.application.repository.WorkshopRepository;
 import fr.huiitre.tools.modules.dofus.workshop.application.repository.WorkshopTagRepository;
+import fr.huiitre.tools.modules.dofus.workshop.application.service.WorkshopDtoAssembler;
+import fr.huiitre.tools.modules.dofus.workshop.application.service.WorkshopItemsBuilder;
+import fr.huiitre.tools.modules.dofus.game.application.ports.GameVersionRepository;
+import fr.huiitre.tools.modules.dofus.game.application.view.GameVersionData;
+import fr.huiitre.tools.modules.dofus.sync.application.views.AssetImageUrlBuilder;
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.tag.CreateWorkshopTagUseCase;
 import fr.huiitre.tools.modules.dofus.workshop.application.usecase.tag.UpdateWorkshopTagUseCase;
 import fr.huiitre.tools.modules.dofus.workshop.domain.Workshop;
@@ -37,6 +42,8 @@ class WorkshopNameUniquenessTest {
     private final AuthenticatedUserProvider user = () -> USER;
     private final WorkshopRepository workshops = mock(WorkshopRepository.class);
     private final WorkshopTagRepository tags = mock(WorkshopTagRepository.class);
+    private final GameVersionRepository gameVersions = mock(GameVersionRepository.class);
+    private final WorkshopDtoAssembler assembler = new WorkshopDtoAssembler(workshops, new AssetImageUrlBuilder("http://assets"), mock(WorkshopItemsBuilder.class), gameVersions);
 
     @Test
     void workshopCreationChecksTheNameInTheRequestedGameVersionOnly() {
@@ -63,8 +70,9 @@ class WorkshopNameUniquenessTest {
         when(workshops.findByIdAndUserId(USER, 8L))
             .thenReturn(Optional.of(Workshop.rehydrate(8L, "Trophées", true, false, List.of())));
         when(workshops.findAllTagsByUserIdAndWorkshopId(USER, 8L)).thenReturn(List.of());
+        when(gameVersions.findById(any())).thenReturn(Optional.of(new GameVersionData(DOFUS_3, "Dofus 3", "dofus3")));
 
-        new UpdateWorkshopUseCase(user, workshops).execute(8L, new UpdateWorkshopRequest("Bijoutier 100", null, null));
+        new UpdateWorkshopUseCase(user, workshops, assembler).execute(8L, new UpdateWorkshopRequest("Bijoutier 100", null, null));
 
         verify(workshops).existsOtherWithNameInSameGameVersion(USER, 8L, "Bijoutier 100");
         verify(workshops).update(anyLong(), any());
@@ -76,7 +84,7 @@ class WorkshopNameUniquenessTest {
             .thenReturn(Optional.of(Workshop.rehydrate(8L, "Trophées", true, false, List.of())));
         when(workshops.existsOtherWithNameInSameGameVersion(USER, 8L, "Bijoutier 100")).thenReturn(true);
 
-        UpdateWorkshopUseCase useCase = new UpdateWorkshopUseCase(user, workshops);
+        UpdateWorkshopUseCase useCase = new UpdateWorkshopUseCase(user, workshops, assembler);
         assertThrows(IllegalArgumentException.class,
             () -> useCase.execute(8L, new UpdateWorkshopRequest("Bijoutier 100", null, null)));
         verify(workshops, never()).update(anyLong(), any());

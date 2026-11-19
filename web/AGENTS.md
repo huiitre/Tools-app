@@ -659,7 +659,12 @@ La sidebar y est `position: sticky` (l'ampoule reste visible au scroll) et z-ind
 contenu et de la colonne d'objets à 900, sous les popups à 1000). Au survol, elle passe à 220 px
 **par-dessus** le contenu, sans le pousser ; elle se replie 150 ms après la sortie de la souris (évite
 le clignotement) et à chaque changement de route. Survol uniquement : le clic sur l'ampoule mène
-toujours à la liste. Rien de spécial pour « Modifier les tags » (décision : on verra à l'usage).
+toujours à la liste.
+
+Style refait le 19/11/2026 (fonctionnement inchangé, demande explicite) : entrées arrondies avec icône dans une
+pastille (`.nav-icon`), entrée active teintée de l'accent avec un liseré à gauche et pastille pleine, titre de
+section « Épinglés » suivi d'un trait, épinglés plus petits avec une épingle et le nom tronqué (nom complet au
+survol). En mode replié, le liseré de l'ampoule est masqué ; l'icône tient dans la colonne de 56 px. Rien de spécial pour « Modifier les tags » (décision : on verra à l'usage).
 
 ## Workshop — Chantier en cours (18/11/2026, reprendre ici)
 
@@ -671,25 +676,34 @@ créé (sections ci-dessous) ; côté API, tables et synchro des classes et mét
 décisions et points ouverts : `api-java/AGENTS.md`, entrée « Dofus/Classes et métiers »).
 
 **Reste, dans l'ordre prévu** :
-1. **Routes classes et métiers** (Java) : liste par version du jeu, ajout/retrait sur un atelier,
-   classes et métiers dans `WorkshopDto`, entrées Bruno. Point à trancher d'abord : la valeur de `sex`
-   écrite à l'ajout d'une classe sur un atelier.
-2. **Front classes et métiers** : sur un atelier, ils se comportent **presque comme des tags sans en
+1. **Routes classes et métiers** (Java) — **codées et vérifiées le 19/11/2026**, voir `api-java/AGENTS.md` : liste par version du jeu, ajout/retrait sur un atelier,
+   classes et métiers dans `WorkshopDto`, entrées Bruno. Le `sex` écrit à l'ajout
+   d'une classe vient d'une liste en dur du module atelier (voir `api-java/AGENTS.md`).
+2. **Front classes et métiers** — **codé et vérifié le 19/11/2026** (voir la section « Workshop — Classes et métiers » plus bas) : sur un atelier, ils se comportent **presque comme des tags sans en
    être** : icônes, nom au survol, présélectionnables, filtrables dans la barre de filtres. Ce sont des
    icônes système, non modifiables par les utilisateurs.
-3. **Tags système** (pas encore codé, schéma à valider) : tags présents chez tout le monde (PvP, PvM,
-   artisanat…) pour éviter d'en créer à la main. Idée retenue : dans `workshop_tag`, `user_id` à NULL
-   = tag système (pas de colonne `is_system`) ; colonne `icon` ajoutée ; `name` ou `icon`, l'un ou
-   l'autre (un tag système n'a pas de nom) ; `color` nullable. Lignes séparées par version du jeu, car
-   les icônes des assets diffèrent ; icônes prises dans `tools_assets`. Un utilisateur peut créer un tag
-   de n'importe quel nom. Les écritures du repository filtrent déjà sur `user_id = ?`, donc un tag
-   système est protégé d'office ; à adapter : la lecture (`OR user_id IS NULL`), l'ajout d'un tag
-   système à un atelier, l'unicité (deux NULL ne se heurtent pas dans une contrainte UNIQUE), l'éditeur
-   de tags du front.
-4. **Cartes d'atelier** : niveau min–max, nombre d'objets, prix ajusté et prix total ; aperçu des icônes
-   des objets ; cartes plus grandes façon « site de Huz », classe en grand s'il n'y en a qu'une, en
-   petit s'il y en a plusieurs (demande l'illustration en pied, absente des assets aujourd'hui).
-5. **Recherche par nom** dans la barre de filtres : notée « à voir » par l'utilisateur.
+3. ~~Tags système~~, ~~recherche par nom~~, ~~grandes cartes avec la classe en pied~~ : **abandonnés** par
+   l'utilisateur le 19/11/2026, ne pas les reproposer.
+
+## Workshop — Carte d'atelier (19/11/2026, premier jet)
+
+`WorkshopCard.vue`, rendu par `WorkshopList.vue` (qui garde la navigation, les actions et les popups). Inspirée
+des stuffs de Huzounet (huzounet.fr/equipments) : bannière en haut, grille d'icônes d'objets sur fond sombre.
+L'utilisateur juge sur pièce : si ça ne va pas, on recommence de zéro.
+
+- **Bannière** : une seule classe → grande tête (48 px) et la même tête agrandie et estompée en décor à
+  droite ; plusieurs classes → petites têtes. Nom, puis métiers, tags et bouton « + » **en haut** (l'utilisateur
+  ne veut pas les tags au milieu ni en bas). Épingle en haut à droite.
+- **Chiffres** : niveau min–max, nombre d'objets, « meilleur prix ajusté / meilleur prix total » (`₭`).
+  Calcul pur `utils/workshopCard.ts` (+ `.spec.ts`), sur `Workshop.items` et les mêmes fonctions que le résumé
+  (`mixedCost`), avec le prix unitaire du mode d'affichage choisi (`useWorkshopPriceCalculator`). Les prix de
+  tous les objets et ingrédients sont chargés à la fin de `fetchWorkshops` (`useItemPrices().load`, seuls ceux
+  absents du cache partent).
+- **Objets** : 12 icônes au plus, puis « +N ». Nom et niveau au survol.
+- **Pied** : liens à gauche ; modifier, archiver, supprimer à droite, estompés jusqu'au survol de la carte.
+  La suppression passe par une popup de confirmation (`WorkshopDeleteConfirm.vue` : nom de l'atelier,
+  « Annuler » / « Supprimer » en rouge, clic en dehors = annuler).
+- Grille de la liste : colonnes de 340 px minimum.
 
 ## Workshop — Filtres de la liste (18/11/2026)
 
@@ -711,6 +725,24 @@ s'applique ensuite.
   ou changer de module lui rend sa place (et un F5 aussi, l'état n'étant qu'en mémoire).
 - `sortWorkshops` du store est conservé : la sidebar (épinglés) et `AddToWorkshopModal` lisent
   `store.workshops` dans cet ordre.
+
+## Workshop — Popup « Modifier les tags » (19/11/2026)
+
+`WorkshopTagEditor.vue` (lien de la sidebar), refaite dans le même style que la popup d'édition d'atelier, sans
+changer son fonctionnement : en-tête « Mes tags » + croix ; création avec pastille de couleur, champ compact et
+bouton « Ajouter » (grisé tant que le nom est vide) ; une ligne par tag avec pastille, nom, nombre d'ateliers qui
+le portent (version du jeu affichée, actifs et archivés), modifier, supprimer (visible au survol). Édition en
+ligne : pastille de couleur cliquable, champ, valider / annuler (Entrée / Échap). Les sélecteurs de couleur sont
+des `input type="color"` invisibles posés sur la pastille (`.swatch`).
+
+## Workshop — Popup d'édition d'un atelier (19/11/2026)
+
+`WorkshopEditor.vue`, refaite (l'ancienne était jugée illisible : champ énorme, coche minuscule). Même
+comportement, autre présentation : en-tête « Modifier l'atelier » + croix, champ « Nom » compact (`.field`,
+2,2 rem : les champs Pico sont trop hauts par défaut), liste des liens en lignes (badge Dofusbook / Perso,
+libellé et URL, icônes modifier / supprimer), formulaires d'ajout et d'édition avec boutons « Annuler » /
+« Valider » lisibles, « Enregistrer » en pied pour le nom. Les liens restent enregistrés immédiatement ; le nom
+seulement à « Enregistrer » ou Entrée. Un clic en dehors ferme la popup.
 
 ## Workshop — Liens et popup de visualisation
 

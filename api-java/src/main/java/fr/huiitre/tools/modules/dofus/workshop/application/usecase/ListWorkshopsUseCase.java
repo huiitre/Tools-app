@@ -16,6 +16,7 @@ import fr.huiitre.tools.modules.dofus.workshop.application.dto.WorkshopDto;
 import fr.huiitre.tools.modules.dofus.workshop.application.dto.WorkshopLinkDto;
 import fr.huiitre.tools.modules.dofus.workshop.application.dto.WorkshopTagDto;
 import fr.huiitre.tools.modules.dofus.workshop.application.repository.WorkshopRepository;
+import fr.huiitre.tools.modules.dofus.workshop.application.service.WorkshopDtoAssembler;
 import fr.huiitre.tools.modules.dofus.workshop.domain.Workshop;
 import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopLink;
 import fr.huiitre.tools.modules.dofus.workshop.domain.WorkshopTag;
@@ -27,6 +28,7 @@ public class ListWorkshopsUseCase implements SecuredUseCase {
     private final AuthenticatedUserProvider authenticatedUserProvider;
 
     private final WorkshopRepository workshopRepository;
+    private final WorkshopDtoAssembler workshopDtoAssembler;
 
     @Override
     public Optional<ModuleCode> requiredModule() {
@@ -40,10 +42,12 @@ public class ListWorkshopsUseCase implements SecuredUseCase {
 
     public ListWorkshopsUseCase(
         AuthenticatedUserProvider authenticatedUserProvider,
-        WorkshopRepository workshopRepository
+        WorkshopRepository workshopRepository,
+        WorkshopDtoAssembler workshopDtoAssembler
     ) {
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.workshopRepository = workshopRepository;
+        this.workshopDtoAssembler = workshopDtoAssembler;
     }
 
     public List<WorkshopDto> execute(Long gameVersionId) {
@@ -54,38 +58,6 @@ public class ListWorkshopsUseCase implements SecuredUseCase {
 
         Map<Long, List<WorkshopLink>> linksByWorkshopId = workshopRepository.findAllLinksByUserIdGroupedByWorkshopId(userId);
 
-        List<WorkshopDto> workshopsDto = new ArrayList<>();
-
-        for (Workshop workshop : workshops) {
-            List<WorkshopTag> tags = workshopRepository.findAllTagsByUserIdAndWorkshopId(userId, workshop.getId());
-
-            List<WorkshopTagDto> tagsDto =
-                tags.stream()
-                    .map(tag -> {
-                        return new WorkshopTagDto(
-                            tag.getId(),
-                            tag.getName(),
-                            tag.getColor()
-                        );
-                    })
-                    .toList();
-
-            List<WorkshopLinkDto> linksDto = linksByWorkshopId.getOrDefault(workshop.getId(), List.of()).stream()
-                .map(link -> new WorkshopLinkDto(link.getId(), link.getSource(), link.getUrl(), link.getLabel()))
-                .toList();
-
-            workshopsDto.add(
-                new WorkshopDto(
-                    workshop.getId(),
-                    workshop.getName(),
-                    workshop.isActive(),
-                    tagsDto,
-                    linksDto,
-                    workshop.isPinned()
-                )
-            );
-        }
-
-        return workshopsDto;
+        return workshopDtoAssembler.toDtos(userId, workshops, linksByWorkshopId);
     }
 }

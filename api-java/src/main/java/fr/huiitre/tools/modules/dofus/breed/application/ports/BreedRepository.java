@@ -15,4 +15,6 @@ public interface BreedRepository {
     void update(Breed breed);
 
     void refreshImages(Long breedId, Map<BreedSex, Long> iconIdsBySex);
+
+    Map<Long, Map<BreedSex, Long>> findHeadIconIdsByBreedId(Long gameVersionId);
 }

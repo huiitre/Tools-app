@@ -73,7 +73,7 @@ onBeforeUnmount(cancelClose)
           class="nav-item"
           :class="{ active: isList }"
         >
-          <span class="mdi mdi-lightbulb-outline"></span>
+          <span class="nav-icon mdi mdi-lightbulb-outline"></span>
           Ateliers
         </RouterLink>
 
@@ -82,7 +82,7 @@ onBeforeUnmount(cancelClose)
           class="nav-item"
           :class="{ active: isArchive }"
         >
-          <span class="mdi mdi-archive"></span>
+          <span class="nav-icon mdi mdi-archive-outline"></span>
           Archive
         </RouterLink>
 
@@ -91,20 +91,22 @@ onBeforeUnmount(cancelClose)
           class="nav-item"
           @click.prevent="showEditor = true"
         >
-          <span class="mdi mdi-pencil"></span>
+          <span class="nav-icon mdi mdi-tag-multiple-outline"></span>
           Modifier les tags
         </a>
 
         <div class="nav-section">
-          <span class="nav-label">ÉPINGLÉS</span>
+          <span class="nav-label">Épinglés</span>
           <RouterLink
             v-for="workshop in pinnedWorkshops"
             :key="workshop.id"
             :to="{ name: 'dofus-workshop-detail', params: { workshopId: workshop.id } }"
-            class="nav-item"
+            class="nav-item pinned-item"
             :class="{ active: activeWorkshopId === workshop.id }"
+            :title="workshop.name"
           >
-            {{ workshop.name }}
+            <span class="mdi mdi-pin pinned-icon"></span>
+            <span class="pinned-name">{{ workshop.name }}</span>
           </RouterLink>
         </div>
 
@@ -123,34 +125,118 @@ onBeforeUnmount(cancelClose)
   width: 220px;
   height: 100%;
   flex-shrink: 0;
-  border-right: 1px solid var(--pico-muted-border-color);
   padding: 1rem 0;
-  background: var(--pico-background-color);
+  border-right: 1px solid var(--pico-muted-border-color);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--pico-primary) 6%, transparent), transparent 220px),
+    var(--pico-background-color);
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .nav-item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.5rem;
+  gap: 0.65rem;
+  margin: 0 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  color: var(--pico-color);
   text-decoration: none;
-  border-radius: 0 1.5rem 1.5rem 0;
-  margin: 0.25rem 0.5rem 0.25rem 0;
-  transition: background 0.2s;
+  transition: background 0.15s, color 0.15s;
 
   &:hover {
-    background: var(--pico-muted-border-color);
+    background: color-mix(in srgb, var(--pico-contrast) 7%, transparent);
   }
 
   &.active {
-    background: var(--pico-primary-background);
-    color: var(--pico-primary-inverse);
-    font-weight: 500;
+    background: color-mix(in srgb, var(--pico-primary) 16%, transparent);
+    color: var(--pico-primary);
+    font-weight: 600;
+
+    //* Liseré d'accent à gauche de l'entrée active.
+    &::before {
+      content: '';
+      position: absolute;
+      left: -0.6rem;
+      top: 22%;
+      bottom: 22%;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: var(--pico-primary);
+    }
+
+    .nav-icon {
+      background: var(--pico-primary);
+      color: var(--pico-primary-inverse);
+    }
   }
 }
 
+.nav-icon {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--pico-contrast) 7%, transparent);
+  font-size: 1rem;
+  transition: background 0.15s, color 0.15s;
+}
+
 .nav-section {
-  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin-top: 1rem;
+}
+
+.nav-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1.2rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--pico-muted-color);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--pico-muted-border-color);
+  }
+}
+
+.pinned-item {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.82rem;
+}
+
+.pinned-icon {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--pico-muted-color);
+}
+
+.pinned-item.active .pinned-icon {
+  color: var(--pico-primary);
+}
+
+.pinned-name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Hors détail d'atelier, le conteneur est transparent : la mise en page ne change pas. */
@@ -191,6 +277,10 @@ onBeforeUnmount(cancelClose)
       .mdi {
         font-size: 1rem;
       }
+
+      &::before {
+        display: none;
+      }
     }
   }
 
@@ -201,15 +291,5 @@ onBeforeUnmount(cancelClose)
     border-right: 1px solid var(--pico-muted-border-color);
     box-shadow: var(--pico-card-box-shadow);
   }
-}
-
-.nav-label {
-  display: block;
-  padding: 0.5rem 1.5rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--pico-muted-color);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 </style>
