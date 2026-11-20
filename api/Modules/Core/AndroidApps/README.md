@@ -12,7 +12,7 @@ dans `huihuistore/AGENTS.md` (dépôt à part).
 
 | Chantier | État |
 |---|---|
-| Migration `V2.83.0__android_apps.sql` | appliquée en local |
+| Migration `V2.84.0__android_apps.sql` | appliquée en local |
 | Lecture d'un APK (`aapt2`, `apksigner`) | écrite, tests unitaires sur les sorties réelles des outils |
 | US-1 à US-6 (API, Bruno) | écrites ; catalogue vérifié en local (`200`, admin `401` sans jeton) ; import à tester avec un compte admin |
 | Front (onglet admin) | à faire |
@@ -152,7 +152,7 @@ catalogue ne contient aucun secret).
 
 ## Modèle de données
 
-Migration : `V2.83.0__android_apps.sql`.
+Migration : `V2.84.0__android_apps.sql`.
 
 ### `tools_core.android_apps`
 
