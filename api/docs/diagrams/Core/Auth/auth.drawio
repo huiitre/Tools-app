@@ -26,100 +26,100 @@
           <mxGeometry x="0" y="738" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="AdminSignupNotifier" value="AdminSignupNotifier" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="2065" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="1178" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="AuthController" value="AuthController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="1746" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="1773" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="AuthModule" value="AuthModule" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="1818" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="1845" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="AuthSession" value="AuthSession" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="882" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="954" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="AuthSessionService" value="AuthSessionService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="1213" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="1538" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="AuthUser" value="AuthUser" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="1505" y="1118" width="200" height="40" as="geometry" />
+          <mxGeometry x="1505" y="1563" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="BCryptPasswordHasher" value="BCryptPasswordHasher" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="1993" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="1880" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="CompleteGoogleOAuthLoginUseCase" value="CompleteGoogleOAuthLoginUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="1429" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="1394" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="CreateElectronSessionUseCase" value="CreateElectronSessionUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="943" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="1808" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="EmailVerificationCleanupService" value="EmailVerificationCleanupService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="90" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="GetGoogleAuthorizationUrlUseCase" value="GetGoogleAuthorizationUrlUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="1501" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="1466" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="GoogleAuthenticationResult" value="GoogleAuthenticationResult" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="1204" y="939" width="200" height="40" as="geometry" />
+          <mxGeometry x="1204" y="1459" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="GoogleAuthorizationUrlResponse" value="GoogleAuthorizationUrlResponse" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="1530" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="1533" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="GoogleIdentity" value="GoogleIdentity" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="954" width="200" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="GoogleIdentityAuthenticationService" value="GoogleIdentityAuthenticationService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="1357" width="200" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="GoogleOAuthClient" value="GoogleOAuthClient" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="1570" width="200" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="GoogleOAuthLoginResult" value="GoogleOAuthLoginResult" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="882" width="200" height="40" as="geometry" />
         </mxCell>
+        <mxCell id="GoogleIdentityAuthenticationService" value="GoogleIdentityAuthenticationService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="602" y="1322" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GoogleOAuthClient" value="GoogleOAuthClient" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="903" y="1589" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GoogleOAuthLoginResult" value="GoogleOAuthLoginResult" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="954" width="200" height="40" as="geometry" />
+        </mxCell>
         <mxCell id="GoogleOAuthOptions" value="GoogleOAuthOptions" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="1204" y="1746" width="200" height="40" as="geometry" />
+          <mxGeometry x="1204" y="1998" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="GoogleOAuthStateStore" value="GoogleOAuthStateStore" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="1429" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="1661" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="GoogleOidcTokenVerifier" value="GoogleOidcTokenVerifier" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="1285" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="1250" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IAuthRepository" value="IAuthRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="1146" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="1805" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IEmailVerificationRepository" value="IEmailVerificationRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="2281" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="1034" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IGoogleAuthRepository" value="IGoogleAuthRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="1357" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="1322" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IGoogleIdentityVerifier" value="IGoogleIdentityVerifier" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="1285" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="1250" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IGoogleOAuthClient" value="IGoogleOAuthClient" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="1501" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="1394" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IGoogleOAuthStateStore" value="IGoogleOAuthStateStore" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="1429" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="1466" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IPasswordHasher" value="IPasswordHasher" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="1993" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="1880" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IPasswordResetRepository" value="IPasswordResetRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="1849" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="2162" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IRegistrationRepository" value="IRegistrationRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="2209" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="962" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ITokenService" value="ITokenService" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="1011" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="1733" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IUserAuthProviderRepository" value="IUserAuthProviderRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="1711" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="2090" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IUserCredentialsRepository" value="IUserCredentialsRepository" style="rounded=1;arcSize=40;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="1921" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="2018" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="IssuedToken" value="IssuedToken" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="810" width="200" height="40" as="geometry" />
@@ -128,61 +128,61 @@
           <mxGeometry x="0" y="306" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="JwtOptions" value="JwtOptions" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="1505" y="1364" width="200" height="40" as="geometry" />
+          <mxGeometry x="1505" y="1774" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="JwtTokenParameters" value="JwtTokenParameters" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="234" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="JwtTokenService" value="JwtTokenService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="1204" y="1011" width="200" height="40" as="geometry" />
+          <mxGeometry x="1204" y="1667" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="LoginRequest" value="LoginRequest" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="1674" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="1687" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="LoginResponse" value="LoginResponse" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="1602" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="1608" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="LoginUseCase" value="LoginUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="1285" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="1615" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PasswordResetCleanupService" value="PasswordResetCleanupService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="162" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="90" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PasswordResetOptions" value="PasswordResetOptions" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="1639" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="2234" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PasswordResetRequest" value="PasswordResetRequest" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="1458" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="1459" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PasswordResetRequestResponse" value="PasswordResetRequestResponse" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="1386" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PostgresAuthRepository" value="PostgresAuthRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="1204" y="1083" width="200" height="40" as="geometry" />
+          <mxGeometry x="1204" y="1805" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PostgresEmailVerificationRepository" value="PostgresEmailVerificationRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="2281" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="1034" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PostgresGoogleAuthRepository" value="PostgresGoogleAuthRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="1204" y="1355" width="200" height="40" as="geometry" />
+          <mxGeometry x="1204" y="1387" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PostgresPasswordResetRepository" value="PostgresPasswordResetRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="1849" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="2162" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PostgresRegistrationRepository" value="PostgresRegistrationRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="2209" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="962" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PostgresUserAuthProviderRepository" value="PostgresUserAuthProviderRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="1711" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="2090" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="PostgresUserCredentialsRepository" value="PostgresUserCredentialsRepository" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="903" y="1921" width="200" height="40" as="geometry" />
+          <mxGeometry x="903" y="2018" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RefreshSessionUseCase" value="RefreshSessionUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="1145" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="1717" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RefreshTokenCookieManager" value="RefreshTokenCookieManager" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="1204" y="2239" width="200" height="40" as="geometry" />
+          <mxGeometry x="1204" y="2311" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RefreshTokenData" value="RefreshTokenData" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="666" width="200" height="40" as="geometry" />
@@ -194,43 +194,43 @@
           <mxGeometry x="0" y="1098" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RegisterUserCommand" value="RegisterUserCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="450" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="522" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RegisterUserUseCase" value="RegisterUserUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="2101" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="1111" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RegisteredAccount" value="RegisteredAccount" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="594" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RegistrationOptions" value="RegistrationOptions" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="602" y="2137" width="200" height="40" as="geometry" />
+          <mxGeometry x="602" y="1106" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="RequestPasswordResetUseCase" value="RequestPasswordResetUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="1710" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="2162" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ResetPasswordRequest" value="ResetPasswordRequest" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="1314" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="ResetPasswordUseCase" value="ResetPasswordUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="1887" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="2018" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="SetPasswordRequest" value="SetPasswordRequest" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="1242" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="SetUserPasswordCommand" value="SetUserPasswordCommand" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="522" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="378" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="SetUserPasswordUseCase" value="SetUserPasswordUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="1782" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="1946" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="VerifyEmailResponse" value="VerifyEmailResponse" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#666666;" vertex="1" parent="1">
           <mxGeometry x="0" y="1026" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="VerifyEmailResult" value="VerifyEmailResult" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="0" y="378" width="200" height="40" as="geometry" />
+          <mxGeometry x="0" y="450" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="VerifyEmailUseCase" value="VerifyEmailUseCase" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#666666;" vertex="1" parent="1">
-          <mxGeometry x="301" y="2209" width="200" height="40" as="geometry" />
+          <mxGeometry x="301" y="1035" width="200" height="40" as="geometry" />
         </mxCell>
         <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;jettySize=auto;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;strokeColor=#666666;" edge="1" parent="1" source="AuthController" target="CompleteGoogleOAuthLoginUseCase">
           <mxGeometry relative="1" as="geometry" />

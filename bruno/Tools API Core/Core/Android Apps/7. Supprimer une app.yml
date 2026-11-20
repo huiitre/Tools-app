@@ -1,0 +1,23 @@
+info:
+  name: Supprimer une app
+  type: http
+  seq: 8
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/admin/android-apps/{{androidAppId}}"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-5. **Supprime l'app, toutes ses releases et tous leurs fichiers APK**, `204`. Le front fait
+  confirmer. Pour seulement retirer l'app du catalogue : `isActive: false` (« Modifier une app »).
+
+  - `404 ANDROID_APP_NOT_FOUND`.

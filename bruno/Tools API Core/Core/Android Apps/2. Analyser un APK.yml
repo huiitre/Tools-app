@@ -1,0 +1,54 @@
+info:
+  name: Analyser un APK
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/admin/android-apps/imports"
+  body:
+    type: multipartForm
+    data:
+      - name: File
+        type: file
+        value:
+          - /chemin/vers/app.apk
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const json = res.getBody();
+        if (json && json.importId) {
+          bru.setVar('androidImportId', json.importId);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-1, premier temps. **Requête multipart**, seul champ : `File` (200 Mo au plus). Rien n'est
+  créé : l'APK est mis en attente une heure et lu par `aapt2` et `apksigner`. Rend `importId`
+  (rangé dans `androidImportId`), `expiresAt`, `apk` (paquet, versions, minSdk, libellé,
+  taille, empreintes, DN du certificat, schémas de signature), `existingApp`, `suggestedLabel` et
+  `warnings` :
+
+  - `NEW_APP` — paquet inconnu, l'app sera créée à la confirmation.
+  - `CERTIFICATE_CHANGED` — certificat différent de celui de la version recommandée.
+  - `OLDER_THAN_RECOMMENDED` — `versionCode` inférieur à celui de la version recommandée.
+  - `MIN_SDK_RAISED` — Android minimum plus élevé que celui de la version recommandée.
+
+  `existingApp` porte la version recommandée (version, minSdk, taille, certificat) : la popup du front
+  s'ouvre à chaque import et compare.
+
+  Erreurs (le fichier en attente est alors supprimé) :
+
+  - `400 ANDROID_APK_INVALID` — pas un APK lisible, signature invalide ou plusieurs signataires.
+  - `409 ANDROID_APP_VERSION_EXISTS` — ce `versionCode` est déjà importé pour cette app.
+  - `503 ANDROID_BUILD_TOOLS_MISSING` — `AndroidApps:BuildToolsPath` absent ou invalide.

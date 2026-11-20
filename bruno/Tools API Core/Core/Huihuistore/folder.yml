@@ -1,0 +1,9 @@
+info:
+  name: Huihuistore
+  type: folder
+  seq: 16
+
+docs: |-
+  Mise à jour de huihuistore lui-même. Voir `api/Modules/Core/Huihuistore/README.md`.
+  La publication est faite par la CI de huihuistore avec une clé d'API (scope
+  `huihuistore:publish`) ; la lecture est publique.

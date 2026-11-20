@@ -1,0 +1,21 @@
+info:
+  name: Lister les apps
+  type: http
+  seq: 5
+
+http:
+  method: GET
+  url: "{{apiUrl}}/admin/android-apps"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-2. Toutes les apps, actives ou non, chacune avec toutes ses releases (`versionCode`
+  décroissant) ; `isRecommended` marque celle proposée aux TV. Rôle minimum : ADMIN.

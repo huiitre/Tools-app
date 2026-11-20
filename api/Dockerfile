@@ -18,6 +18,22 @@ RUN apt-get update \
     && apt-get install --yes --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Lecture des APK (Core/AndroidApps, Core/Huihuistore) : aapt2 et apksigner, les outils officiels du
+# SDK Android. apksigner est un script Java, d'où le JRE headless. Seuls ces deux outils et leurs
+# bibliothèques sont gardés, pas tout le dossier build-tools. Chemin lu par AndroidApps:BuildToolsPath.
+ARG ANDROID_BUILD_TOOLS_ZIP=build-tools_r34-linux.zip
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends openjdk-17-jre-headless unzip \
+    && curl --fail --silent --show-error --location \
+        "https://dl.google.com/android/repository/${ANDROID_BUILD_TOOLS_ZIP}" --output /tmp/build-tools.zip \
+    && unzip -q /tmp/build-tools.zip -d /tmp/build-tools \
+    && mkdir -p /opt/android-build-tools \
+    && cd /tmp/build-tools/* \
+    && cp -r aapt2 apksigner lib lib64 /opt/android-build-tools/ \
+    && chmod +x /opt/android-build-tools/aapt2 /opt/android-build-tools/apksigner \
+    && apt-get purge --yes unzip \
+    && rm -rf /tmp/build-tools /tmp/build-tools.zip /var/lib/apt/lists/*
+
 ARG APPLICATION_VERSION=0.1.0
 ARG GIT_SHA=unknown
 

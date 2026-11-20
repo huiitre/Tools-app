@@ -1,0 +1,55 @@
+info:
+  name: Confirmer l'import
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{apiUrl}}/admin/android-apps/imports/{{androidImportId}}/confirm"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "label": null,
+        "recommend": true,
+        "releaseNotes": null
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const json = res.getBody();
+        if (json && json.id) {
+          bru.setVar('androidAppId', json.id);
+          if (json.releases && json.releases.length) {
+            bru.setVar('androidReleaseId', json.releases[json.releases.length - 1].id);
+          }
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-1, second temps. L'APK est **relu** (rien de l'analyse n'est cru), rangé dans
+  `tools_core/android_apps/<env>/<package>/<versionCode>.apk`, puis l'app (si nouvelle) et la
+  release sont créées. Rend l'app complète (`AndroidAppView`) ; le script pose `androidAppId` et
+  `androidReleaseId` (la plus ancienne release, pour tester sa suppression).
+
+  - `label` — libellé d'une **nouvelle** app ; `null` = celui de l'APK. Ignoré pour une app connue.
+  - `recommend` — `true` par défaut : la version devient celle proposée aux TV. `false` pour une
+    nightly à tester.
+  - `releaseNotes` — facultatif, 2000 caractères au plus.
+
+  - `404 ANDROID_APP_IMPORT_NOT_FOUND` — import inconnu, déjà confirmé, annulé ou expiré.
+  - `409 ANDROID_APP_VERSION_EXISTS` — version importée entre-temps.
+  - `400 ANDROID_APP_LABEL_INVALID` — libellé vide ou au-delà de 100 caractères.

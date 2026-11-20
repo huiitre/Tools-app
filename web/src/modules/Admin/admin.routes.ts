@@ -31,6 +31,12 @@ export const routes = [
         meta: { label: "Clés d'API" },
       },
       {
+        name: 'admin-android-apps',
+        path: 'android-apps',
+        component: () => import('@/modules/Admin/androidApps/views/AdminAndroidApps.vue'),
+        meta: { label: 'Apps Android' },
+      },
+      {
         name: 'admin-vpn',
         path: 'vpn',
         component: () => import('@/modules/Admin/vpn/views/AdminVpn.vue'),

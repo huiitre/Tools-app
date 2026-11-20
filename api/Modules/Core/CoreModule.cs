@@ -1,5 +1,6 @@
 using Tools.Api.Modules.Core.Access;
 using Tools.Api.Modules.Core.Admin;
+using Tools.Api.Modules.Core.AndroidApps;
 using Tools.Api.Modules.Core.ApiKeys;
 using Tools.Api.Modules.Core.AppLogs;
 using Tools.Api.Modules.Core.Auth;
@@ -7,6 +8,7 @@ using Tools.Api.Modules.Core.Common;
 using Tools.Api.Modules.Core.Feedback;
 using Tools.Api.Modules.Core.GameServers;
 using Tools.Api.Modules.Core.Health;
+using Tools.Api.Modules.Core.Huihuistore;
 using Tools.Api.Modules.Core.Mail;
 using Tools.Api.Modules.Core.Notifications;
 using Tools.Api.Modules.Core.Realtime;
@@ -48,6 +50,8 @@ public static class CoreModule
             .AddHealthModule()
             .AddGameServersModule()
             .AddVpnModule()
-            .AddApiKeysModule();
+            .AddApiKeysModule()
+            .AddAndroidAppsModule()
+            .AddHuihuistoreModule();
     }
 }
