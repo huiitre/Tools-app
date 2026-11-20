@@ -60,6 +60,7 @@ utilisateur (même use case, jugé sur son rôle) : **TECH** pour les cinq premi
 | `riot.valorant:sync` | `POST /internal/riot/valorant/sync` | `SyncValorantUseCase` |
 | `temtem:sync` | `POST /internal/temtem/sync` | `SyncTemtemCatalogueUseCase` |
 | `translation:translate` | `POST /translation/translate`, `GET /translation/languages`, `POST /translation/detect` | use cases du module Traduction (membres READ_ONLY côté utilisateur, pas TECH) |
+| `huihuistore:publish` | `POST /huihuistore/releases` | `PublishHuihuistoreReleaseUseCase` (CI de huihuistore, une clé par environnement ; côté utilisateur : ADMIN) |
 
 ### Appelants à migrer
 

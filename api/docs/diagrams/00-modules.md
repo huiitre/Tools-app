@@ -6,6 +6,7 @@
 flowchart LR
   Access["Access<br/>23 types"]
   Admin["Admin<br/>7 types"]
+  AndroidApps["AndroidApps<br/>37 types"]
   Api["Api<br/>1 types"]
   ApiKeys["ApiKeys<br/>15 types"]
   AppLogs["AppLogs<br/>21 types"]
@@ -17,19 +18,20 @@ flowchart LR
   Feedback["Feedback<br/>12 types"]
   GameServers["GameServers<br/>81 types"]
   Health["Health<br/>5 types"]
+  Huihuistore["Huihuistore<br/>10 types"]
   Infrastructure["Infrastructure<br/>2 types"]
   Mail["Mail<br/>12 types"]
   Notifications["Notifications<br/>17 types"]
   Realtime["Realtime<br/>11 types"]
   RoadToRiches["RoadToRiches<br/>21 types"]
-  Security["Security<br/>26 types"]
+  Security["Security<br/>25 types"]
   Settings["Settings<br/>18 types"]
   Sync["Sync<br/>58 types"]
   Teams["Teams<br/>20 types"]
   Techniques["Techniques<br/>4 types"]
   Traits["Traits<br/>1 types"]
   Types["Types<br/>8 types"]
-  Users["Users<br/>16 types"]
+  Users["Users<br/>17 types"]
   Valorant["Valorant<br/>83 types"]
   Vpn["Vpn<br/>15 types"]
   Access --> Common
@@ -37,6 +39,8 @@ flowchart LR
   Access --> Security
   Access --> Users
   Admin --> Security
+  AndroidApps --> Common
+  AndroidApps --> Security
   Api --> Application
   ApiKeys --> AppLogs
   ApiKeys --> Common
@@ -60,6 +64,8 @@ flowchart LR
   GameServers --> Realtime
   GameServers --> Security
   GameServers --> Users
+  Huihuistore --> AndroidApps
+  Huihuistore --> Security
   Mail --> Security
   Notifications --> Realtime
   Notifications --> Security

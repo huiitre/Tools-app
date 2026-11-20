@@ -1,0 +1,38 @@
+info:
+  name: Modifier une app
+  type: http
+  seq: 6
+
+http:
+  method: PATCH
+  url: "{{apiUrl}}/admin/android-apps/{{androidAppId}}"
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "label": "Zen IPTV",
+        "displayOrder": 0,
+        "isActive": true,
+        "recommendedReleaseId": null
+      }
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-3. Champ absent ou `null` = inchangé. `recommendedReleaseId` choisit la version proposée aux
+  TV parmi les releases de l'app. On ne revient pas à « aucune version » : pour retirer l'app du
+  catalogue, `isActive: false`. Rend l'app complète.
+
+  - `404 ANDROID_APP_NOT_FOUND` — app inconnue.
+  - `400 ANDROID_APP_RELEASE_MISMATCH` — release d'une autre app.
+  - `400 ANDROID_APP_LABEL_INVALID` — libellé vide ou au-delà de 100 caractères.

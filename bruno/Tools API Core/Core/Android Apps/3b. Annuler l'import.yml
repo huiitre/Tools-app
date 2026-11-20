@@ -1,0 +1,21 @@
+info:
+  name: Annuler l'import
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: "{{apiUrl}}/admin/android-apps/imports/{{androidImportId}}"
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-1, popup fermée sans valider. Supprime le fichier en attente, `204`, même s'il n'existe déjà
+  plus (sinon il expire seul au bout d'une heure).

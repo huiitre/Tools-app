@@ -1,0 +1,23 @@
+info:
+  name: Version publiée
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiUrl}}/huihuistore/update"
+  auth:
+    type: none
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-2. **Public** : ce que lit huihuistore pour savoir s'il doit se mettre à jour. Rend
+  `packageName`, `versionCode`, `versionName`, `minSdk`, `url` (sur les assets), `size`, `sha256`,
+  `certSha256`, `releaseNotes`, `publishedAt`.
+
+  - `404 HUIHUISTORE_NOT_PUBLISHED` — rien de publié pour cet environnement.

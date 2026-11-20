@@ -1,0 +1,16 @@
+info:
+  name: Android Apps
+  type: folder
+  seq: 15
+
+request:
+  auth:
+    type: bearer
+    token: "{{authToken}}"
+
+docs: |-
+  Apps Android tierces distribuées par huihuistore (store des TV). Voir
+  `api/Modules/Core/AndroidApps/README.md`. Toutes les routes exigent ADMIN, sauf le catalogue
+  (public, lu par les TV).
+
+  Ordre de test : 1 → 2 (pose `androidImportId`) → 3 → 4 (pose `androidAppId`) → 5 → 6.

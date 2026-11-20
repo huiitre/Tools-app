@@ -13,6 +13,7 @@ flowchart LR
   GetMyProfileUseCase["GetMyProfileUseCase"]
   IUserRepository(["IUserRepository"])
   ListUsersUseCase["ListUsersUseCase"]
+  RoleDto["RoleDto"]
   SetUserActiveCommand["SetUserActiveCommand"]
   SetUserActiveUseCase["SetUserActiveUseCase"]
   SetUserGlobalRoleCommand["SetUserGlobalRoleCommand"]
@@ -35,6 +36,7 @@ flowchart LR
   PostgresUserRepository -.-> IUserRepository
   SetUserActiveUseCase --> IUserRepository
   SetUserGlobalRoleUseCase --> IUserRepository
+  UserModuleDto --> RoleDto
   UsersController --> GetMyProfileUseCase
   UsersController --> ListUsersUseCase
   UsersController --> SetUserActiveUseCase

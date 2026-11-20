@@ -1,0 +1,22 @@
+info:
+  name: Catalogue (TV)
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{apiUrl}}/android-apps/catalogue"
+  auth:
+    type: none
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-6. **Public**, sans jeton : c'est ce que lit huihuistore sur la TV. Seules les apps actives
+  ayant une version recommandée, triées par ordre d'affichage puis libellé, avec cette seule
+  version. `url` pointe vers `AssetsBaseUrl` (les TV téléchargent sur les assets, pas sur l'API).
+  Empreintes `sha256` et `certSha256` en hexadécimal minuscule.

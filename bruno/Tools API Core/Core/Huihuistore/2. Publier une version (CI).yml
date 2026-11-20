@@ -1,0 +1,42 @@
+info:
+  name: Publier une version (CI)
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{apiUrl}}/huihuistore/releases"
+  headers:
+    - name: X-Api-Key
+      value: "{{apiKeyValue}}"
+  body:
+    type: multipartForm
+    data:
+      - name: File
+        type: file
+        value:
+          - /chemin/vers/huihuistore.apk
+      - name: ReleaseNotes
+        type: text
+        value: ""
+  auth:
+    type: none
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+
+docs: |-
+  US-1. Appelée par la CI de huihuistore avec une clé portant `huihuistore:publish` (créer la clé
+  dans « API Keys », elle est rangée dans `apiKeyValue`). Un admin peut aussi l'appeler avec son jeton
+  (remplacer l'en-tête par l'auth bearer). **Multipart** : `File` (200 Mo au plus), `ReleaseNotes`
+  facultatif. Tout est lu dans l'APK.
+
+  - `400 ANDROID_APK_INVALID` — APK illisible ou signature invalide.
+  - `400 HUIHUISTORE_PACKAGE_MISMATCH` — pas le paquet de cet environnement (`Huihuistore:PackageName`).
+  - `400 HUIHUISTORE_CERTIFICATE_MISMATCH` — pas signé par la clé de cet environnement.
+  - `409 HUIHUISTORE_VERSION_NOT_NEWER` — `versionCode` pas plus récent que la version publiée.
+  - `503 HUIHUISTORE_NOT_CONFIGURED` — paquet ou certificat attendus non configurés.
+  - `403 INSUFFICIENT_SCOPE` — la clé n'a pas `huihuistore:publish`.
