@@ -8,9 +8,10 @@ public sealed record ConfirmAndroidAppImportCommand(
     string? ReleaseNotes);
 
 // Champ absent = inchangé. Une app ne peut pas revenir à « aucune version recommandée » : pour la
-// retirer du catalogue, on la désactive.
+// retirer du catalogue, on la désactive. AdminNotes vide efface les notes.
 public sealed record UpdateAndroidAppCommand(
     string? Label,
     int? DisplayOrder,
     bool? IsActive,
-    long? RecommendedReleaseId);
+    long? RecommendedReleaseId,
+    string? AdminNotes);

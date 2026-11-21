@@ -18,7 +18,7 @@ public sealed class AndroidAppImportRulesTests
         1000, new byte[32], cert, null, DateTimeOffset.UtcNow, 1, null);
 
     private static AndroidApp App(long? recommendedReleaseId, params AndroidAppRelease[] releases) => new(
-        1, "app.zeniptv.mobile", "Zen", 0, true, recommendedReleaseId, DateTimeOffset.UtcNow, releases);
+        1, "app.zeniptv.mobile", "Zen", 0, true, recommendedReleaseId, null, DateTimeOffset.UtcNow, releases);
 
     [Fact]
     public void Un_paquet_inconnu_leve_NEW_APP_et_rien_d_autre()
@@ -109,5 +109,22 @@ public sealed class AndroidAppImportRulesTests
     {
         Assert.Equal("Zen Player", AndroidAppImportRules.DefaultLabel(Apk(1, CertA)));
         Assert.Equal("app.zeniptv.mobile", AndroidAppImportRules.DefaultLabel(Apk(1, CertA, label: null)));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   \n  ")]
+    public void Des_notes_vides_effacent_les_notes(string notes)
+    {
+        Assert.Null(AndroidApp.NormalizeAdminNotes(notes));
+    }
+
+    [Fact]
+    public void Les_notes_sont_rognees_et_bornees_a_5000_caracteres()
+    {
+        Assert.Equal("https://github.com/x/y", AndroidApp.NormalizeAdminNotes("  https://github.com/x/y \n"));
+
+        var exception = Assert.Throws<AppException>(() => AndroidApp.NormalizeAdminNotes(new string('a', 5001)));
+        Assert.Equal("ANDROID_APP_ADMIN_NOTES_TOO_LONG", exception.Code);
     }
 }

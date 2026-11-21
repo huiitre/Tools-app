@@ -12,6 +12,7 @@ import {
 } from '../types/adminAndroidApps.types'
 import AndroidAppReleaseRow from './AndroidAppReleaseRow.vue'
 import AndroidAppEditModal from './AndroidAppEditModal.vue'
+import AndroidAppNotesModal from './AndroidAppNotesModal.vue'
 import AndroidAppConfirmModal from './AndroidAppConfirmModal.vue'
 import { formatBytes } from '@/utils/formatBytes'
 import { ApiException } from '@/services/ApiException'
@@ -24,6 +25,7 @@ const store = useAdminAndroidAppsStore()
 
 const expanded = ref(false)
 const editOpen = ref(false)
+const notesOpen = ref(false)
 const deleteAppOpen = ref(false)
 const releaseToDelete = ref<AndroidAppRelease | null>(null)
 const saving = ref(false)
@@ -137,6 +139,15 @@ const confirmDeleteApp = async () => {
 
     <!-- ACTIONS -->
     <div class="cell cell--actions">
+      <!-- Coloré quand l'app a des notes : on voit d'un coup d'œil où il y a de quoi lire. -->
+      <button
+        class="action-btn"
+        :class="{ 'action-btn--filled': app.adminNotes }"
+        :title="app.adminNotes ? 'Voir les notes' : 'Ajouter des notes'"
+        @click="notesOpen = true"
+      >
+        <i class="mdi" :class="app.adminNotes ? 'mdi-note-text' : 'mdi-note-plus-outline'" />
+      </button>
       <button class="action-btn" title="Modifier" @click="editOpen = true">
         <i class="mdi mdi-pencil-outline" />
       </button>
@@ -169,6 +180,13 @@ const confirmDeleteApp = async () => {
       @delete="releaseToDelete = release"
     />
   </div>
+
+  <AndroidAppNotesModal
+    v-if="notesOpen"
+    :app="app"
+    @updated="updated => { store.upsertLocally(updated); notesOpen = false }"
+    @cancel="notesOpen = false"
+  />
 
   <AndroidAppEditModal
     v-if="editOpen"
@@ -315,4 +333,6 @@ $danger: #ef4444;
   &:disabled { opacity: 0.4; cursor: not-allowed; }
   &--danger:hover:not(:disabled) { border-color: $danger; color: $danger; }
 }
+
+.action-btn--filled { color: var(--pico-primary); }
 </style>

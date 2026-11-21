@@ -68,7 +68,7 @@ public sealed class AndroidAppsAdminController : ControllerBase
         UpdateAndroidAppRequest request)
     {
         return updateAndroidAppUseCase.Execute(appId, new UpdateAndroidAppCommand(
-            request.Label, request.DisplayOrder, request.IsActive, request.RecommendedReleaseId));
+            request.Label, request.DisplayOrder, request.IsActive, request.RecommendedReleaseId, request.AdminNotes));
     }
 
     [HttpDelete("{appId:long}/releases/{releaseId:long}")]
@@ -102,5 +102,6 @@ public sealed class AndroidAppsAdminController : ControllerBase
         string? Label,
         int? DisplayOrder,
         bool? IsActive,
-        long? RecommendedReleaseId);
+        long? RecommendedReleaseId,
+        string? AdminNotes);
 }
