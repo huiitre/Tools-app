@@ -24,6 +24,8 @@ export type AndroidApp = {
   displayOrder: number
   isActive: boolean
   recommendedReleaseId: number | null
+  // Notes libres de l'admin (URL du dépôt, page de téléchargement…), jamais montrées aux appareils.
+  adminNotes: string | null
   createdAt: string
   // versionCode décroissant.
   releases: AndroidAppRelease[]
@@ -86,10 +88,13 @@ export type UpdateAndroidAppPayload = {
   displayOrder?: number
   isActive?: boolean
   recommendedReleaseId?: number
+  // "" efface les notes.
+  adminNotes?: string
 }
 
 // Mêmes bornes que l'API : les refuser ici évite d'envoyer 100 Mo pour rien.
 export const ANDROID_APP_LABEL_MAX_LENGTH = 100
+export const ANDROID_APP_ADMIN_NOTES_MAX_LENGTH = 5000
 export const ANDROID_APP_RELEASE_NOTES_MAX_LENGTH = 2000
 export const ANDROID_APK_MAX_BYTES = 200 * 1024 * 1024
 
@@ -103,7 +108,7 @@ export const ANDROID_VERSION_BY_SDK: Record<number, string> = {
 // Colonnes des apps : chevron, nom, paquet, version sur le store, Android minimum, taille, nombre de
 // versions, dernier import, actif, actions.
 export const ANDROID_APPS_GRID =
-  '24px minmax(140px, 1.2fr) minmax(170px, 1.5fr) minmax(120px, 1fr) 120px 80px 70px 150px 56px 64px'
+  '24px minmax(140px, 1.2fr) minmax(170px, 1.5fr) minmax(120px, 1fr) 120px 80px 70px 150px 56px 100px'
 
 // Colonnes des versions : version, Android minimum, taille, certificat, import, notes, statut,
 // actions.

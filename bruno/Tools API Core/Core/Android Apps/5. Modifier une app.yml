@@ -16,7 +16,8 @@ http:
         "label": "Zen IPTV",
         "displayOrder": 0,
         "isActive": true,
-        "recommendedReleaseId": null
+        "recommendedReleaseId": null,
+        "adminNotes": null
       }
   auth:
     type: bearer
@@ -31,8 +32,10 @@ settings:
 docs: |-
   US-3. Champ absent ou `null` = inchangé. `recommendedReleaseId` choisit la version proposée aux
   TV parmi les releases de l'app. On ne revient pas à « aucune version » : pour retirer l'app du
-  catalogue, `isActive: false`. Rend l'app complète.
+  catalogue, `isActive: false`. `adminNotes` : notes libres de l'admin (URL du dépôt, page de
+  téléchargement…), `""` les efface ; jamais exposées au catalogue public. Rend l'app complète.
 
   - `404 ANDROID_APP_NOT_FOUND` — app inconnue.
   - `400 ANDROID_APP_RELEASE_MISMATCH` — release d'une autre app.
   - `400 ANDROID_APP_LABEL_INVALID` — libellé vide ou au-delà de 100 caractères.
+  - `400 ANDROID_APP_ADMIN_NOTES_TOO_LONG` — notes au-delà de 5000 caractères.

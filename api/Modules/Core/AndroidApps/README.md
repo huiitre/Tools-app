@@ -95,12 +95,15 @@ Droits : ADMIN.
 
 ### US-3 — Modifier une app
 
-**En tant qu'**admin, **je veux** changer le libellé, l'ordre, l'état actif ou la version recommandée
-d'une app **afin de** piloter ce que voient les TV.
+**En tant qu'**admin, **je veux** changer le libellé, l'ordre, l'état actif, la version recommandée ou
+les notes d'une app **afin de** piloter ce que voient les TV et retrouver où chercher ses APK.
 
 Critères d'acceptation :
 - [ ] La version recommandée se choisit parmi les releases de l'app (select).
+- [ ] Les notes (texte libre : URL du dépôt, page de téléchargement…) se modifient dans une popup ;
+      des notes vides les effacent. Elles n'apparaissent jamais dans le catalogue public.
 - [ ] Cas d'erreur : release d'une autre app → `400 ANDROID_APP_RELEASE_MISMATCH`.
+- [ ] Cas d'erreur : notes de plus de 5000 caractères → `400 ANDROID_APP_ADMIN_NOTES_TOO_LONG`.
 
 Droits : ADMIN.
 
@@ -152,7 +155,7 @@ catalogue ne contient aucun secret).
 
 ## Modèle de données
 
-Migration : `V2.84.0__android_apps.sql`.
+Migrations : `V2.84.0__android_apps.sql`, `V2.85.0__android_apps_admin_notes.sql`.
 
 ### `tools_core.android_apps`
 
@@ -164,6 +167,7 @@ Migration : `V2.84.0__android_apps.sql`.
 | `display_order` | `INT` | non | Ordre d'affichage, croissant. |
 | `is_active` | `BOOLEAN` | non | `FALSE` retire l'app du catalogue sans rien supprimer. |
 | `recommended_release_id` | `BIGINT` | oui | Version proposée aux TV ; `NULL` : absente du catalogue. |
+| `admin_notes` | `TEXT` | oui | Notes libres de l'admin (5000 caractères au plus), jamais exposées au catalogue. |
 | `created_at` | `TIMESTAMPTZ` | non | Création. |
 
 | Contrainte | Garantit |
@@ -262,3 +266,5 @@ Section `AndroidApps` (par déploiement : `appsettings.Production.json`, `appset
 - *20/11/2026* — Pas de colonne « source » ni de suivi des releases GitHub : tout APK tiers est importé à
   la main.
 - *20/11/2026* — Pas de `withdrawn_at` : retirer une version = en recommander une autre.
+- *21/11/2026* — Notes libres par app (`admin_notes`) pour retrouver où télécharger ses APK ; administration
+  seulement, absentes du catalogue public.

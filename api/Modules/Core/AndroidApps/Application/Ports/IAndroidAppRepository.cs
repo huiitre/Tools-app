@@ -18,7 +18,7 @@ public interface IAndroidAppRepository
 
     Task<long> CreateRelease(long appId, ApkInfo apk, string filePath, string? releaseNotes, long uploadedBy);
 
-    Task UpdateApp(long appId, string label, int displayOrder, bool isActive, long? recommendedReleaseId);
+    Task UpdateApp(long appId, string label, int displayOrder, bool isActive, long? recommendedReleaseId, string? adminNotes);
 
     Task SetRecommendedRelease(long appId, long releaseId);
 

@@ -14,6 +14,7 @@ public sealed class PostgresAndroidAppRepository(
     private const string SelectApps = """
         SELECT a.id, a.package_name AS PackageName, a.label, a.display_order AS DisplayOrder,
                a.is_active AS IsActive, a.recommended_release_id AS RecommendedReleaseId,
+               a.admin_notes AS AdminNotes,
                a.created_at AS CreatedAt
         FROM tools_core.android_apps a
         """;
@@ -103,12 +104,12 @@ public sealed class PostgresAndroidAppRepository(
             session.Transaction));
     }
 
-    public async Task UpdateApp(long appId, string label, int displayOrder, bool isActive, long? recommendedReleaseId)
+    public async Task UpdateApp(long appId, string label, int displayOrder, bool isActive, long? recommendedReleaseId, string? adminNotes)
     {
         const string sql = """
             UPDATE tools_core.android_apps
             SET label = @Label, display_order = @DisplayOrder, is_active = @IsActive,
-                recommended_release_id = @RecommendedReleaseId
+                recommended_release_id = @RecommendedReleaseId, admin_notes = @AdminNotes
             WHERE id = @AppId
             """;
 
@@ -120,7 +121,8 @@ public sealed class PostgresAndroidAppRepository(
                 Label = label,
                 DisplayOrder = displayOrder,
                 IsActive = isActive,
-                RecommendedReleaseId = recommendedReleaseId
+                RecommendedReleaseId = recommendedReleaseId,
+                AdminNotes = adminNotes
             },
             session.Transaction));
     }
@@ -179,6 +181,7 @@ public sealed class PostgresAndroidAppRepository(
                 app.DisplayOrder,
                 app.IsActive,
                 app.RecommendedReleaseId,
+                app.AdminNotes,
                 new DateTimeOffset(DateTime.SpecifyKind(app.CreatedAt, DateTimeKind.Utc)),
                 releasesByApp[app.Id].OrderByDescending(release => release.VersionCode).ToList()))
             .ToList();
@@ -210,6 +213,7 @@ public sealed class PostgresAndroidAppRepository(
         public int DisplayOrder { get; init; }
         public bool IsActive { get; init; }
         public long? RecommendedReleaseId { get; init; }
+        public string? AdminNotes { get; init; }
         public DateTime CreatedAt { get; init; }
     }
 

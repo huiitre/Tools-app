@@ -50,6 +50,7 @@ public sealed record AndroidAppView(
     int DisplayOrder,
     bool IsActive,
     long? RecommendedReleaseId,
+    string? AdminNotes,
     DateTimeOffset CreatedAt,
     IReadOnlyList<AndroidAppReleaseView> Releases)
 {
@@ -60,6 +61,7 @@ public sealed record AndroidAppView(
         app.DisplayOrder,
         app.IsActive,
         app.RecommendedReleaseId,
+        app.AdminNotes,
         app.CreatedAt,
         app.Releases.Select(release => AndroidAppReleaseView.From(release, app.RecommendedReleaseId, urls)).ToList());
 }
