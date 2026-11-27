@@ -77,6 +77,7 @@ declare global {
 
       // Google OAuth
       openExternal: (url: string) => Promise<void>;
+      startGoogleLoopback: () => Promise<number>;
       onGoogleAuthToken: (callback: (token: string) => void) => void;
     }
     switcher?: {

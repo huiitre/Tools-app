@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.WebUtilities;
+using Tools.Api.Modules.Core.Auth.Application;
 using Tools.Api.Modules.Core.Auth.Application.Ports;
 using Tools.Api.Modules.Core.Common.Application.Exceptions;
 using Tools.Api.Modules.Core.Auth.Application.Ports.Google;
@@ -13,27 +14,22 @@ public sealed class GoogleOAuthStateStore : IGoogleOAuthStateStore
     private static readonly TimeSpan Lifetime = TimeSpan.FromMinutes(10);
     private readonly ConcurrentDictionary<string, StateEntry> pendingStates = new();
 
-    public string Create(string source)
+    public string Create(GoogleOAuthOrigin origin)
     {
-        if (source is not ("web" or "electron"))
-        {
-            throw AppException.Validation("GOOGLE_SOURCE_INVALID", "Source Google invalide.");
-        }
-
         RemoveExpiredStates();
         var state = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
-        pendingStates[state] = new StateEntry(source, DateTimeOffset.UtcNow.Add(Lifetime));
+        pendingStates[state] = new StateEntry(origin, DateTimeOffset.UtcNow.Add(Lifetime));
         return state;
     }
 
-    public string Consume(string state)
+    public GoogleOAuthOrigin Consume(string state)
     {
         if (!pendingStates.TryRemove(state, out var entry) || DateTimeOffset.UtcNow > entry.ExpiresAt)
         {
             throw AppException.Unauthorized("GOOGLE_STATE_INVALID", "Authentification Google invalide.");
         }
 
-        return entry.Source;
+        return entry.Origin;
     }
 
     private void RemoveExpiredStates()
@@ -44,5 +40,5 @@ public sealed class GoogleOAuthStateStore : IGoogleOAuthStateStore
         }
     }
 
-    private sealed record StateEntry(string Source, DateTimeOffset ExpiresAt);
+    private sealed record StateEntry(GoogleOAuthOrigin Origin, DateTimeOffset ExpiresAt);
 }

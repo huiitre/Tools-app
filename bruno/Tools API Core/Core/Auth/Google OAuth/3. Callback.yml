@@ -19,7 +19,8 @@ docs: |-
 
   Succès :
   - web      → `{App:FrontendBaseUrl}/auth/callback?token=<access token>`
-  - electron → `tools://auth?token=<access token>`
+  - electron avec `port` → `http://127.0.0.1:<port>/auth/callback?token=<access token>`
+  - electron sans `port` (versions antérieures au serveur local) → `tools://auth?token=<access token>`
 
   Le refresh token part dans le cookie HttpOnly, jamais dans l'URL.
 

@@ -5,9 +5,15 @@ info:
 
 http:
   method: GET
-  url: "{{apiUrl}}/auth/google/url?source=electron"
+  url: "{{apiUrl}}/auth/google/url?source=electron&port=45123"
   auth:
     type: none
+
+docs: |-
+  `port` : port local où Electron attend le token, attribué par le système à chaque connexion
+  (1024-65535, refusé hors `source=electron` : `GOOGLE_LOOPBACK_PORT_INVALID`). Le callback
+  redirige alors vers `http://127.0.0.1:<port>/auth/callback?token=...`. Sans `port`, il garde
+  l'ancien lien `tools://auth?token=...`.
 
 settings:
   encodeUrl: true

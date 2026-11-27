@@ -98,7 +98,7 @@ public sealed class AuthController(
     public async Task<IActionResult> CreateElectronSession(
         [FromServices] CreateElectronSessionUseCase createElectronSessionUseCase)
     {
-        // Electron appelle cette route avec l'access token reçu par le deep link tools://auth?token=... .
+        // Electron appelle cette route avec l'access token reçu à la fin de la connexion Google.
         var authorization = Request.Headers.Authorization.ToString();
         if (!authorization.StartsWith("Bearer ", StringComparison.Ordinal))
         {
@@ -114,9 +114,10 @@ public sealed class AuthController(
     [HttpGet("google/url")]
     public ActionResult<GoogleAuthorizationUrlResponse> GetGoogleAuthorizationUrl(
         [FromServices] GetGoogleAuthorizationUrlUseCase getGoogleAuthorizationUrlUseCase,
-        [FromQuery] string source = "web")
+        [FromQuery] string source = "web",
+        [FromQuery] int? port = null)
     {
-        return Ok(new GoogleAuthorizationUrlResponse(getGoogleAuthorizationUrlUseCase.Execute(source)));
+        return Ok(new GoogleAuthorizationUrlResponse(getGoogleAuthorizationUrlUseCase.Execute(source, port)));
     }
 
     // Cette route est atteinte par une redirection de Google, donc par le navigateur lui-même :
@@ -153,9 +154,16 @@ public sealed class AuthController(
         refreshTokenCookieManager.Set(Response, result.Session.RefreshToken, result.Session.RefreshTokenExpiresAt);
 
         // Compatibilité temporaire avec le front actuel : il lit l'access token dans query.token.
-        var redirectUrl = result.Source == "electron"
-            ? $"tools://auth?token={Uri.EscapeDataString(result.Session.AccessToken)}"
-            : $"{googleOAuthOptions.Value.FrontendBaseUrl}/auth/callback?token={Uri.EscapeDataString(result.Session.AccessToken)}";
+        var token = Uri.EscapeDataString(result.Session.AccessToken);
+        var redirectUrl = result.Origin switch
+        {
+            // Electron écoute sur ce port le temps de la connexion. Le navigateur refusait parfois
+            // d'ouvrir tools:// après les redirections de Google, sans rien afficher.
+            { Source: "electron", LoopbackPort: { } port } => $"http://127.0.0.1:{port}/auth/callback?token={token}",
+            // Versions d'Electron antérieures au serveur local.
+            { Source: "electron" } => $"tools://auth?token={token}",
+            _ => $"{googleOAuthOptions.Value.FrontendBaseUrl}/auth/callback?token={token}",
+        };
         return Redirect(redirectUrl);
     }
 

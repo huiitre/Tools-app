@@ -64,7 +64,8 @@ const loginWithGoogle = async () => {
   try {
     isGoogleLoading.value = true
     if (isElectron) {
-      const { data } = await useFetchGoogleAuthUrl('electron')
+      const port = await window.electron!.startGoogleLoopback()
+      const { data } = await useFetchGoogleAuthUrl('electron', port)
       await window.electron!.openExternal(data.url)
     } else {
       const { data } = await useFetchGoogleAuthUrl('web')

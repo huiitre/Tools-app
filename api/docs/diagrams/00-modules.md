@@ -11,7 +11,7 @@ flowchart LR
   ApiKeys["ApiKeys<br/>15 types"]
   AppLogs["AppLogs<br/>21 types"]
   Application["Application<br/>10 types"]
-  Auth["Auth<br/>70 types"]
+  Auth["Auth<br/>71 types"]
   Common["Common<br/>18 types"]
   Creatures["Creatures<br/>10 types"]
   Domain["Domain<br/>1 types"]

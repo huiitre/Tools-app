@@ -29,6 +29,7 @@ flowchart LR
   GoogleIdentity["GoogleIdentity"]
   GoogleIdentityAuthenticationService["GoogleIdentityAuthenticationService"]
   GoogleOAuthLoginResult["GoogleOAuthLoginResult"]
+  GoogleOAuthOrigin["GoogleOAuthOrigin"]
   IAuthRepository(["IAuthRepository"])
   IEmailVerificationRepository(["IEmailVerificationRepository"])
   IGoogleAuthRepository(["IGoogleAuthRepository"])
@@ -115,6 +116,7 @@ flowchart LR
   GoogleOAuthClient --> GoogleOAuthOptions
   GoogleOAuthClient -.-> IGoogleOAuthClient
   GoogleOAuthLoginResult --> AuthSession
+  GoogleOAuthLoginResult --> GoogleOAuthOrigin
   GoogleOAuthStateStore -.-> IGoogleOAuthStateStore
   GoogleOidcTokenVerifier -.-> IGoogleIdentityVerifier
   IAuthRepository --> AuthUser

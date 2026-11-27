@@ -15,8 +15,8 @@ export const useFetchLogin = async (credentials: useFetchLoginType) => {
   return await clientCore.post('/auth/login', { ...credentials });
 };
 
-export const useFetchGoogleAuthUrl = async (source: 'web' | 'electron') => {
-  return await clientCore.get<{ url: string }>(`/auth/google/url?source=${source}`);
+export const useFetchGoogleAuthUrl = async (source: 'web' | 'electron', port?: number) => {
+  return await clientCore.get<{ url: string }>('/auth/google/url', { params: { source, port } });
 };
 
 export const useFetchLogout = async () => {
