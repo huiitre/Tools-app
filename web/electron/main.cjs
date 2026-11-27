@@ -8,6 +8,7 @@ const { registerProxyIpc } = require('./ipc/proxy.ipc.cjs')
 const { registerAutofocusIpc } = require('./ipc/autofocus.ipc.cjs')
 const { registerLogsIpc } = require('./ipc/logs.ipc.cjs')
 const { registerCaptureIpc } = require('./ipc/capture.ipc.cjs')
+const { registerAuthIpc } = require('./ipc/auth.ipc.cjs')
 const logger = require('./logger/LoggerService.cjs')
 
 // Lancée depuis le menu ou un raccourci, l'AppImage n'a pas de terminal : stdout/stderr sont des
@@ -250,6 +251,7 @@ app.whenReady().then(() => {
   registerProxyIpc()
   registerAutofocusIpc(switcherService)
   registerCaptureIpc()
+  registerAuthIpc(() => mainWindow)
   createWindow()
 
   app.on('activate', () => {

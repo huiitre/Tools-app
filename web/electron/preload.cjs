@@ -68,5 +68,6 @@ contextBridge.exposeInMainWorld('electron', {
 
   // Google OAuth
   openExternal: (url) => ipcRenderer.invoke('shell:open-external', url),
+  startGoogleLoopback: () => ipcRenderer.invoke('auth:google-loopback-start'),
   onGoogleAuthToken: (callback) => ipcRenderer.on('google-auth-token', (_, token) => callback(token)),
 })

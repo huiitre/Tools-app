@@ -21,7 +21,7 @@ public sealed class CompleteGoogleOAuthLoginUseCase(
         string code,
         string state)
     {
-        var source = stateStore.Consume(state);
+        var origin = stateStore.Consume(state);
         var idToken = await googleOAuthClient.ExchangeCodeForIdTokenAsync(code);
         var googleIdentity = await googleIdentityVerifier.VerifyAsync(idToken);
         var authentication = await googleIdentityAuthenticationService.AuthenticateAsync(googleIdentity);
@@ -56,8 +56,8 @@ public sealed class CompleteGoogleOAuthLoginUseCase(
             UserId: authentication.User.Id,
             Metadata: new { AuthenticationMethod = "GOOGLE" }));
 
-        return new GoogleOAuthLoginResult(source, session);
+        return new GoogleOAuthLoginResult(origin, session);
     }
 }
 
-public sealed record GoogleOAuthLoginResult(string Source, AuthSession Session);
+public sealed record GoogleOAuthLoginResult(GoogleOAuthOrigin Origin, AuthSession Session);

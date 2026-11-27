@@ -92,6 +92,18 @@ fenêtre Electron n'a pas les sessions de l'utilisateur (Google Agenda de l'Alma
 Une fenêtre Tools ne s'ouvre plus qu'en repli, si `openExternal` échoue ; les autres schémas gardent
 le comportement par défaut d'Electron.
 
+**Connexion Google (27/11/2026)** : le token ne revient plus par le lien `tools://` mais par un
+serveur HTTP local (`electron/auth/GoogleLoopbackServer.cjs`, IPC `auth:google-loopback-start`
+dans `electron/ipc/auth.ipc.cjs`). Au clic, Electron écoute sur `127.0.0.1`, port `0` (attribué par
+le système, donc jamais en conflit avec un autre serveur local), et `Auth.vue` passe ce port à
+`GET /auth/google/url?source=electron&port=…`. Le callback de l'API redirige vers
+`http://127.0.0.1:<port>/auth/callback?token=…` ; le serveur affiche « Connexion réussie », envoie
+`google-auth-token` à la fenêtre et s'arrête (sinon au bout de 5 min, ou à la connexion suivante).
+Pourquoi : Chrome refusait parfois d'ouvrir `tools://` au bout des redirections Google, sans rien
+afficher (page Google figée, aucun lancement du handler dans `journalctl --user`). Le deep link
+`tools://` et `handleDeepLink` restent pour les versions d'Electron antérieures (API appelée sans
+`port`).
+
 **Mises à jour Electron** : vérifiées au chargement de la fenêtre principale **et toutes les 5 minutes**
 (`UPDATE_CHECK_INTERVAL_MS` dans `main.cjs`), en production seulement ; la vérification périodique
 s'arrête dès qu'une version est trouvée. Plus fréquent risquerait d'être limité par GitHub.
